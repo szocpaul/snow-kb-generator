@@ -114,3 +114,23 @@ snow_kb_generator/
 
 - The `snow_rag` project in the parent directory is an example for the ServiceNow integration and the `.gitignore`/`.env` conventions.
 - The `.venv` is shared in the parent directory; there is no separate virtual environment (until the dependencies diverge).
+
+## 9. Where we are (last update: 2024-07-10)
+
+- [x] **The core pipeline is fully done and works in production!**
+- [x] ServiceNow connection configured (test-instance instance).
+- [x] LM authentication configured: Pi Agent GLM-5.2 (via Z.ai endpoint).
+- [x] CLI installed (`pip install -e .` was run).
+- [x] Live test successful: STRY0010012 processed, KB article created in the ServiceNow IT KB.
+
+### Next step: GEPA optimization (DSPy steps 6-7)
+
+1. Implement `eval/dataset.py`:
+   - Collect 3-5 "gold" example pairs (Story text -> expected KB article) in the `data/examples/` folder.
+2. Implement `eval/metric.py`:
+   - A `rich_metric` function that returns `dspy.Prediction(score, feedback)`.
+3. Baseline measurement:
+   - Run `dspy.Evaluate` on the current (not yet optimized) program.
+4. GEPA optimization:
+   - Run `dspy.GEPA(auto="medium")` with the reflection model.
+   - Save the optimized program into the `artifacts/` folder.
