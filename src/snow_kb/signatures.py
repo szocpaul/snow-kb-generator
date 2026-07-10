@@ -1,43 +1,106 @@
-# signatures.py — DSPy Signatures (DESIGN, not implemented)
-# ===========================================================================
-#
-# Responsibility: to describe the Input/Output contracts of the pipeline steps.
-# Every instruction comes from the Signature class docstring — THERE ARE NO
-# hardcode-olt prompt-string.
-#
-# Planned Signatures (reconciling field names with schemas.py):
-#
-#   ExtractChange
-#     """Analyze a completed ServiceNow Story and extract what changed,
-#        for whom, and the reproducible steps."""
-#     Input:  story_text: str          # the full Story text (merged)
-#     Output:  change_summary: str      # what changed, 1-2 sentences
-#                key_steps: list[str]    # reproducible steps
-#                audience: str           # helpdesk | end-user | dev
-#     Predictor: ChainOfThought (reasoning needed for the extraction)
-#
-#   DraftSections
-#     """Draft Knowledge Base article sections from the extracted change info,
-#        tailored to the audience."""
-#     Input:  change_summary, key_steps, audience
-#     Output:  title, problem, solution_steps (list[str]), summary
-#     Prediktor: ChainOfThought
-#
-#   FormatKB
-#     """Format drafted sections into ServiceNow-compatible HTML."""
-#     Input:  title, problem, solution_steps, summary
-#     Output:  html: str
-#     Predictor: Predict (transformation, no reasoning needed)
-#
-# Open questions (decision in the implementation step):
-#   - Should ExtractChange get a single story_text, or the Story fields
-#     as a separate InputField (short_description, description, ...)?
-#       -> separate fields are more accurate, but they increase the size of the Signature.
-#   - key_steps / solution_steps: list[str] vagy egyetlen Markdown-string?
-#       -> list[str] is clean, but requires a DSPy Pydantic type.
-#   - Should category / knowledge_base be determined in the pipeline, or come from the config?
-#       -> by default config, but ExtractChange can optionally suggest it.
-#   - Should there be a separate Signature for title generation (the title is often critical)?
-#
-# GEPA consideration: every Signature goes into its own predictor in program.py,
-#   named, so that GEPA can target them separately.
+"""signatures.py — DSPy Signatures for the steps of the Story → KB pipeline.
+
+Three Signatures, each with a clean Input/Output contract:
+  - ExtractChange : Story text → structured change information
+  - DraftSections : extracted info → KB article sections (title, problem, solution, summary)
+  - FormatKB      : sections → ServiceNow-compatible HTML
+
+The instruction comes from the docstring of every Signature — there is NO hardcoded prompt.
+The predictors (Predict / ChainOfThought) are attached to them in program.py.
+
+The field names strictly match the Pydantic models of schemas.py, so that the
+The steps of the program Forward should typically pass the data along.
+"""
+
+from __future__ import annotations
+
+import dspy
+
+
+# ---------------------------------------------------------------------------
+# 1. ExtractChange — extracts what happened from the Story text
+# ---------------------------------------------------------------------------
+
+class ExtractChange(dspy.Signature):
+    """Analyze a completed ServiceNow Story and extract what changed, for whom,
+    and the reproducible steps.
+
+    Read the story text carefully. Identify the technical change that was
+    implemented, distill it into a one-or-two sentence summary, extract the
+    concrete reproducible steps, and determine the primary audience for a
+    knowledge base article about this change.
+    """
+    story_text: str = dspy.InputField(
+        desc="The full text of a completed ServiceNow Story, including its "
+             "description, technical specification, acceptance criteria, "
+             "work notes, and comments — assembled into labeled sections."
+    )
+    change_summary: str = dspy.OutputField(
+        desc="What changed, in one or two sentences. Focus on the outcome, "
+             "not the process."
+    )
+    key_steps: list[str] = dspy.OutputField(
+        desc="Concrete, reproducible steps that a reader would follow to "
+             "understand or replicate the change. Each step is a single "
+             "string, no numbering prefix."
+    )
+    audience: str = dspy.OutputField(
+        desc="Primary audience for a KB article: one of "
+             "'helpdesk', 'end-user', or 'developer'."
+    )
+
+
+# ---------------------------------------------------------------------------
+# 2. DraftSections — edits KB article sections from the extracted info
+# ---------------------------------------------------------------------------
+
+class DraftSections(dspy.Signature):
+    """Draft Knowledge Base article sections from the extracted change info,
+    tailored to the audience.
+
+    Write a clear, actionable title; a concise problem statement explaining
+    why the change was needed; a numbered-style solution with reproducible
+    steps; and a one-or-two sentence summary for the top of the article.
+    Match the depth and terminology to the audience.
+    """
+    change_summary: str = dspy.InputField(desc="What changed (from ExtractChange).")
+    key_steps: list[str] = dspy.InputField(desc="Reproducible steps (from ExtractChange).")
+    audience: str = dspy.InputField(desc="Target audience: helpdesk | end-user | developer.")
+
+    title: str = dspy.OutputField(
+        desc="Article title, 8-120 characters, descriptive and specific."
+    )
+    problem: str = dspy.OutputField(
+        desc="What was the problem or need that prompted this change? "
+             "1-3 sentences."
+    )
+    solution_steps: list[str] = dspy.OutputField(
+        desc="Reproducible solution steps, refined and ordered. Each step "
+             "is a single string without numbering prefix."
+    )
+    summary: str = dspy.OutputField(
+        desc="One-or-two sentence abstract for the top of the article."
+    )
+
+
+# ---------------------------------------------------------------------------
+# 3. FormatKB — converts the sections into ServiceNow-compatible HTML
+# ---------------------------------------------------------------------------
+
+class FormatKB(dspy.Signature):
+    """Format drafted article sections into ServiceNow-compatible HTML.
+
+    Produce clean, semantic HTML suitable for a ServiceNow Knowledge Base
+    article body. Use <h2> for section headings, <p> for paragraphs, and
+    <ol> with <li> for the solution steps. Do NOT include <html>, <head>,
+    or <body> tags — only the body fragment.
+    """
+    title: str = dspy.InputField(desc="Article title.")
+    problem: str = dspy.InputField(desc="Problem statement.")
+    solution_steps: list[str] = dspy.InputField(desc="Ordered solution steps.")
+    summary: str = dspy.InputField(desc="Article summary.")
+
+    html: str = dspy.OutputField(
+        desc="ServiceNow KB article body as HTML. Must contain at least one "
+             "<p>, <ol>, or <ul> block. No <html>/<head>/<body> wrappers."
+    )
