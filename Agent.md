@@ -27,17 +27,18 @@
 
 In ServiceNow, developers work on implementing **Stories** (`STRY...`). When the work is done and the Story is closed, a **Knowledge Base Article (KB)** should be created automatically. A **DSPy AI pipeline** performs this transformation: it generates a structured, audience-specific, ServiceNow-compatible KB article from the Story data.
 
-**Input:** fields of the closed ServiceNow Story — `short_description`, `description`, `acceptance_criteria`, `work_notes`, `comments`, `state`, etc.
+**Input:** the fields of the closed ServiceNow Story — `short_description`, `description`, `acceptance_criteria`, `u_technical_specification`, `work_notes`, `comments`, `state`, etc.
 **Output:** KB Article (HTML) — `title`, `summary`, `problem/symptoms`, `solution` (reproducible steps), `category`, `audience`.
 
 ## 2. Technology stack
 
 - **Language:** Python 3.12
-- ** framework:** DSPy 3.2.x (Signatures + Modules, GEPA optimization)
+- **Framework:** DSPy 3.2.x (Signatures + Modules, GEPA optimization)
 - **ServiceNow integration:** Table API (`requests`) — Story fetch, KB creation (CRUD)
-- **Adatmodell:** Pydantic v2
+- **Data model:** Pydantic v2 + pydantic-settings
 - **Configuration:** `.env` (secrets) + `config.yaml` (settings)
-- **Environment:** the `.venv` of the parent directory (dspy, pydantic, requests, python-dotenv, pyyaml available)
+- **LM authentication:** Pi Agent GLM-5.2 via the Z.ai API (`use_pi_auth: true`)
+- **Environment:** the `.venv` of the parent directory; installable with `pip install -e .` (pyproject.toml)
 
 ## 3. DSPy pipeline (the core of the program)
 
@@ -49,44 +50,57 @@ Multi-step `dspy.Module`, with every predictor named (so GEPA can target it):
 
 `StoryToKBArticle(dspy.Module)` chains these together. **There is no hard-coded prompt** — every instruction comes from the Signature docstring.
 
-## 4. Folder structure (planned)
+## 4. Folder structure (current)
 
 ```
 snow_kb_generator/
 ├── Agent.md                    # this file
 ├── README.md                   # overview, setup, usage
+├── pyproject.toml              # package definition (pip install -e .)
 ├── .gitignore
 ├── .env.example                # SNOW instance/user/password + LM API keys
+├── .env                        # REAL secrets (NOT version controlled)
 ├── requirements.txt
 ├── config.yaml                 # kb_knowledge_base, category, model names
 ├── src/snow_kb/
-│   ├── config.py               # .env + config.yaml loading
-│   ├── servicenow_client.py    # Table API: fetching Story + creating KB
-│   ├── schemas.py              # Pydantic: StoryData, KBArticle, ArticleSections
-│   ├── signatures.py           # dspy.Signature parts
+│   ├── __init__.py
+│   ├── __main__.py             # python -m snow_kb entry point
+│   ├── config.py               # .env + config.yaml loading (Settings, Secrets)
+│   ├── servicenow_client.py    # ServiceNowClient (Table API + dry_run mock)
+│   ├── schemas.py              # Pydantic: StoryData, ArticleSections, KBArticle
+│   ├── signatures.py           # DSPy Signatures (ExtractChange, DraftSections, FormatKB)
 │   ├── program.py              # StoryToKBArticle(dspy.Module)
-│   ├── pipeline.py             # orchestrator: fetch → generate → push
-│   └── cli.py                  # `python -m snow_kb <story_id>`
+│   ├── pipeline.py             # orchestrator + assemble_story_text + configure_lm
+│   └── cli.py                  # argparse CLI (python -m snow_kb)
+├── tests/                      # pytest test suite (160 tests)
+│   ├── conftest.py             # shared fixtures
+│   ├── test_config.py
+│   ├── test_schemas.py
+│   ├── test_signatures.py
+│   ├── test_program.py
+│   ├── test_pipeline.py
+│   ├── test_servicenow_client.py
+│   └── test_cli.py
 ├── data/
-│   ├── examples/               # gold (Story → KB) example pairs for eval
-│   └── sample_stories/         # sample Story JSON mock data
-├── eval/
-│   ├── dataset.py              # train/val/test split (dspy.Example)
-│   └── metric.py               # rich_metric (score + feedback) GEPA-hoz
-├── runs/                       # baseline.json, optimized.json
-├── artifacts/                  # saved optimized program
-└── gepa_logs/                  # GEPA reflection logok
+│   ├── examples/               # gold (Story → KB) example pairs for eval (STILL EMPTY)
+│   └── sample_stories/         # sample Story JSON (STRY0012345.json)
+├── eval/                       # dataset + rich metric (STILL JUST A PLAN)
+│   ├── dataset.py
+│   └── metric.py
+├── runs/                       # baseline.json, optimized.json (STILL EMPTY)
+├── artifacts/                  # saved optimized program (STILL EMPTY)
+└── gepa_logs/                  # GEPA reflection logs (STILL EMPTY)
 ```
 
 ## 5. Workflow (DSPy advanced workflow)
 
-1. **Spec** — the task in one sentence (see above).
-2. **Program** — Signatures + Module according to `dspy-fundamentals`.
-3. **Data** — gold `Story → KB` example pairs, separate `trainset`/`valset`/`testset`.
-4. **Rich metric** — `dspy.Prediction(score=.., feedback=..)`; the feedback is "load-bearing" for GEPA.
-5. **Baseline** — `dspy.Evaluate` on the valset, result `runs/baseline.json`.
-6. **GEPA optimization** — `auto="medium"`, separate `reflection_lm`, Pareto selection.
-7. **Export & deploy** — `program.save(...)`, CLI/FastAPI wrapper, CI regression test.
+1. **Spec** — the task in one sentence (see above). ✅
+2. **Program** — Signatures + Module per `dspy-fundamentals`. ✅
+3. **Data** — gold `Story → KB` example pairs, separate `trainset`/`valset`/`testset`. ⏳
+4. **Rich metric** — `dspy.Prediction(score=.., feedback=..)`; the feedback is "load-bearing" for GEPA. ⏳
+5. **Baseline** — `dspy.Evaluate` on the valset, result in `runs/baseline.json`. ⏳
+6. **GEPA optimization** — `auto="medium"`, separate `reflection_lm`, Pareto selection. ⏳
+7. **Export & deploy** — `program.save(...)`, CLI/FastAPI wrapper, CI regression test. ⏳
 
 ## 6. Operating principles (stick to these)
 
@@ -98,17 +112,22 @@ snow_kb_generator/
 - **No optimization before the baseline** — "no baseline, no claim".
 - **Every predictor must be named** — so GEPA can target it.
 - **English comments** in the code, docstrings in English.
+- **The code is self-contained** — no external project dependency.
 
 ## 7. Status
 
 - [x] Project folder + `Agent.md` created
-- [ ] Skeleton files (`README`, `.gitignore`, `.env.example`, `config.yaml`, `requirements.txt`)
-- [ ] `src/snow_kb/` skeleton (config, client, schemas, signatures, program, pipeline, cli)
-- [ ] Mock Story + `data/`
-- [ ] Eval harness (dataset + rich metric)
+- [x] GitHub repo created (`szocpaul/snow-kb-generator`, private)
+- [x] Skeleton files + non-code files (README, config.yaml, etc.)
+- [x] `src/snow_kb/` implemented (config, client, schemas, signatures, program, pipeline, cli)
+- [x] Mock Story + `data/` folder
+- [x] Pytest test suite (160 tests, all green)
+- [x] `pyproject.toml` (pip install -e . works)
+- [x] **Production ServiceNow + LM (GLM-5.2) integration tested**
+- [ ] Eval harness (dataset + rich metric) — **next step**
 - [ ] Baseline measurement
 - [ ] GEPA optimization
-- [ ] Export + CLI
+- [ ] Export + deploy
 
 ## 8. Notes
 
