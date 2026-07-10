@@ -1,0 +1,18 @@
+# snow-kb-generator függőségek
+# A környezet már tartalmazza ezeket a szülő .venv-ben, de itt dokumentálva.
+
+# DSPy pipeline
+dspy>=3.2.0,<3.4
+
+# Adatmodell + konfiguráció
+pydantic>=2.0
+python-dotenv>=1.0
+PyYAML>=6.0
+
+# ServiceNow Table API
+requests>=2.31
+
+# (később, eval/deploy fázishoz)
+# mlflow            # cost/latency observability
+# fastapi           # deploy wrapper
+# pytest            # CI regressziós tesztek
