@@ -162,20 +162,21 @@ def generate_kb_article(
     # 3. Merging the Story into a single text
     story_text = assemble_story_text(story, settings)
 
-    # 4. LM configuration (only if not dry_run — in dry_run the program is a mock)
-    if not settings.dry_run:
+    # 4. Dry-run: skipping the program call (no LM), mock article from the Story
+    if settings.dry_run:
+        article = _mock_article_from_story(story, settings)
+    else:
+        # 5. LM configuration + running the program
         configure_lm(settings)
+        if program is None:
+            program = StoryToKBArticle()
 
-    # 5. Running the program
-    if program is None:
-        program = StoryToKBArticle()
-
-    pred = program(
-        story_text=story_text,
-        category=settings.snow.default_category,
-        knowledge_base_id=settings.snow.knowledge_base_id,
-    )
-    article: KBArticle = pred.article
+        pred = program(
+            story_text=story_text,
+            category=settings.snow.default_category,
+            knowledge_base_id=settings.snow.knowledge_base_id,
+        )
+        article: KBArticle = pred.article
 
     # 6. Push to the ServiceNow KB (if requested and not dry_run)
     if push and not settings.dry_run:
@@ -205,3 +206,42 @@ class _KBArticleWithSysId(KBArticle):
             **kwargs,
         )
         self.sys_id = sys_id
+
+
+# ---------------------------------------------------------------------------
+# Helper: mock article for the dry-run
+# ---------------------------------------------------------------------------
+
+def _mock_article_from_story(story: StoryData, settings: Settings) -> KBArticle:
+    """Generates a simple mock article from the Story data in dry-run mode.
+
+    It does not call an LM — it builds an HTML skeleton from the Story's
+    short_description and the essential fields. This makes it possible to test
+    the whole pipeline without an LM key.
+    """
+    title = (
+        story.short_description[:120]
+        if story.short_description
+        else f"Story {story.number}"
+    )
+
+    sections_html = []
+    if story.description:
+        sections_html.append(f"<h2>Problem</h2><p>{story.description}</p>")
+    if story.u_technical_specification:
+        sections_html.append(
+            f"<h2>Technical Details</h2><p>{story.u_technical_specification}</p>"
+        )
+    if story.work_notes:
+        sections_html.append(f"<h2>Work Notes</h2><p>{story.work_notes}</p>")
+    if not sections_html:
+        sections_html.append("<p>(There is no content in the Story.)</p>")
+
+    html = "\n".join(sections_html)
+
+    return KBArticle(
+        title=title,
+        html=html,
+        category=settings.snow.default_category,
+        knowledge_base_id=settings.snow.knowledge_base_id,
+    )

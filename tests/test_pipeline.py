@@ -199,18 +199,24 @@ class TestGenerateKbArticle:
         client.get_story.assert_called_once_with("STRY0012345")
 
     def test_program_called_with_story_text(self, sample_story, dry_run_settings):
+        """Outside dry_run mode the program receives the story_text."""
         client = self._make_mock_client(sample_story)
         program = self._make_mock_program()
-        generate_kb_article("STRY0012345", client, dry_run_settings, program=program)
+        dry_run_settings.dry_run = False
+        with patch("snow_kb.pipeline.configure_lm"):
+            generate_kb_article("STRY0012345", client, dry_run_settings, program=program)
         program.assert_called_once()
         call_kwargs = program.call_args.kwargs
         assert "STRY0012345" in call_kwargs["story_text"]
         assert "Fix SSO" in call_kwargs["story_text"]
 
     def test_program_called_with_category(self, sample_story, dry_run_settings):
+        """Outside dry_run mode the program receives the category."""
         client = self._make_mock_client(sample_story)
         program = self._make_mock_program()
-        generate_kb_article("STRY0012345", client, dry_run_settings, program=program)
+        dry_run_settings.dry_run = False
+        with patch("snow_kb.pipeline.configure_lm"):
+            generate_kb_article("STRY0012345", client, dry_run_settings, program=program)
         call_kwargs = program.call_args.kwargs
         assert call_kwargs["category"] == "IT"  # dry_run_settings default_category
 
@@ -222,6 +228,22 @@ class TestGenerateKbArticle:
             "STRY0012345", client, dry_run_settings, program=program, push=True
         )
         client.create_kb_article.assert_not_called()
+
+    def test_dry_run_does_not_call_program(self, sample_story, dry_run_settings):
+        """In dry_run it does not call the program (it uses a mock article)."""
+        client = self._make_mock_client(sample_story)
+        program = self._make_mock_program()
+        generate_kb_article("STRY0012345", client, dry_run_settings, program=program)
+        program.assert_not_called()
+
+    def test_dry_run_returns_mock_article_from_story(self, sample_story, dry_run_settings):
+        """In dry_run the mock article is built from the data of the Story."""
+        client = self._make_mock_client(sample_story)
+        result = generate_kb_article("STRY0012345", client, dry_run_settings)
+        assert isinstance(result, KBArticle)
+        assert "SSO" in result.title  # from the short_description
+        assert "<h2>Problem</h2>" in result.html  # from the description
+        assert "Technical Details" in result.html  # from the u_technical_specification
 
     def test_dry_run_does_not_configure_lm(self, sample_story, dry_run_settings):
         """In dry_run it does not configure an LM."""
