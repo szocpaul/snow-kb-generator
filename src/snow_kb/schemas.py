@@ -64,17 +64,17 @@ class ArticleSections(BaseModel):
 
     @field_validator("solution_steps")
     @classmethod
-    def _non_empty_steps(cls, v: list[str]) -> list[str]:
-        if not v:
+    def _non_empty_steps(cls, value: list[str]) -> list[str]:
+        if not value:
             raise ValueError("solution_steps must not be an empty list")
-        return v
+        return value
 
     @field_validator("title")
     @classmethod
-    def _title_nonempty(cls, v: str) -> str:
-        if not v.strip():
+    def _title_nonempty(cls, value: str) -> str:
+        if not value.strip():
             raise ValueError("title must not be empty")
-        return v
+        return value
 
 
 class KBArticle(BaseModel):
@@ -92,20 +92,20 @@ class KBArticle(BaseModel):
 
     @field_validator("title")
     @classmethod
-    def _title_length(cls, v: str) -> str:
-        if not (8 <= len(v) <= 120):
+    def _title_length(cls, value: str) -> str:
+        if not (8 <= len(value) <= 120):
             raise ValueError(
-                f"title length {len(v)} — must be between 8..120 characters"
+                f"title length {len(value)} — it must be between 8 and 120 characters"
             )
-        return v
+        return value
 
     @field_validator("html")
     @classmethod
-    def _html_has_block(cls, v: str) -> str:
+    def _html_has_block(cls, value: str) -> str:
         """The HTML must contain at least one block-level element."""
-        lowered = v.lower()
+        lowered = value.lower()
         if "<p>" not in lowered and "<ol" not in lowered and "<ul" not in lowered:
             raise ValueError(
                 "the html must contain at least one <p>, <ol> or <ul> block"
             )
-        return v
+        return value
