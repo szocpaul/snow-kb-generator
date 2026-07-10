@@ -93,3 +93,23 @@ snow_kb_generator/
 
 - A szülőkönyvtárban lévő `snow_rag` project minta a ServiceNow integrációra és a `.gitignore`/`.env` konvenciókra.
 - A `.venv` közös a szülőkönyvtárban; nincs saját virtuális környezet (amíg el nem térnek a függőségek).
+
+## 9. Hol tartunk (utolsó frissítés: 2024-07-10)
+
+- [x] **Core pipeline teljesen kész és működik élesben!**
+- [x] ServiceNow kapcsolat beállítva (dev300344 instance).
+- [x] LM hitelesítés beállítva: Pi Agent GLM-5.2 (via Z.ai endpoint).
+- [x] CLI telepítve (`pip install -e .` megtörtént).
+- [x] Éles teszt sikeres: STRY0010012 feldolgozva, KB cikk létrehozva a ServiceNow IT KB-ben.
+
+### Következő lépés: GEPA optimalizáció (DSPy 6-7. lépés)
+
+1. `eval/dataset.py` implementálása:
+   - `data/examples/` mappába kell gyűjteni 3-5 "arany" (gold) példapárt (Story szöveg -> várt KB cikk).
+2. `eval/metric.py` implementálása:
+   - Egy `rich_metric` függvény, ami `dspy.Prediction(score, feedback)`-ot ad vissza.
+3. Baseline mérés:
+   - `dspy.Evaluate` lefuttatása a jelenlegi (nem optimalizált) programon.
+4. GEPA optimalizáció:
+   - `dspy.GEPA(auto="medium")` lefuttatása a reflection modellel.
+   - Optimalizált program elmentése az `artifacts/` mappába.
