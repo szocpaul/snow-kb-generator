@@ -14,6 +14,7 @@ mock clienttel is tesztelhető, amíg a valódi client nincs implementálva.
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Protocol
 
 import dspy
@@ -118,16 +119,42 @@ def configure_lm(settings: Settings) -> None:
     (Pi Agent GLM előfizetés hitelesítéshez). Egyébként a szabványos dspy.LM-et.
     """
     if settings.pipeline.use_pi_auth:
-        try:
-            from dspy_lm_auth import LM as PiAuthLM
-        except ImportError as exc:
-            raise RuntimeError(
-                "A pipeline.use_pi_auth=True, de a dspy-lm-auth nincs telepítve. "
-                "Telepítsd: pip install dspy-lm-auth"
-            ) from exc
+        # A Pi Agent GLM előfizetés (zai-glm) közvetlen használata.
+        # A dspy_lm_auth csak OpenAI Codex/ChatGPT route-okat ismer,
+        # ezert a GLM kulcsot közvetlenül a Pi auth fájlból olvassuk.
+        import json
 
-        lm = PiAuthLM(
+        pi_auth_path = Path.home() / ".pi" / "agent" / "auth.json"
+        if not pi_auth_path.exists():
+            raise RuntimeError(
+                "A pipeline.use_pi_auth=True, de nem található a Pi Agent "
+                "auth fájl (~/.pi/agent/auth.json)."
+            )
+
+        auth_data = json.loads(pi_auth_path.read_text(encoding="utf-8"))
+
+        # Preferált sorrend: GLM előfizetés -> Kimi -> OpenAI Codex
+        provider_keys = ["zai-glm", "kimi-coding", "openai-codex"]
+        api_key = None
+        for provider in provider_keys:
+            cred = auth_data.get(provider, {})
+            # Kulcs neve lehet 'apiKey', 'key', vagy 'access' a provider-től függően
+            api_key = cred.get("apiKey") or cred.get("key") or cred.get("access")
+            if api_key:
+                break
+
+        if not api_key:
+            raise RuntimeError(
+                "Nem található API kulcs a Pi auth fájlban a támogatott "
+                f"provider-ek között: {provider_keys}"
+            )
+
+        # A GLM/Kimi API-k OpenAI-kompatibilisak.
+        # LiteLLM: "openai/<model>" + api_base + api_key
+        lm = dspy.LM(
             settings.models.main,
+            api_key=api_key,
+            api_base=settings.pipeline.api_base,
             temperature=settings.pipeline.default_temperature,
             max_tokens=settings.pipeline.max_tokens,
         )
