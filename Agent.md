@@ -97,7 +97,7 @@ snow_kb_generator/
 - **Secrets are never committed** — `.env` is in `.gitignore`, only `.env.example` is versioned.
 - **No optimization before the baseline** — "no baseline, no claim".
 - **Every predictor must be named** — so GEPA can target it.
-- **Hungarian comments** in the code (the convention of the `snow_rag` project), docstrings may stay English.
+- **English comments** in the code, docstrings in English.
 
 ## 7. Status
 
@@ -112,7 +112,6 @@ snow_kb_generator/
 
 ## 8. Notes
 
-- The `snow_rag` project in the parent directory is an example for the ServiceNow integration and the `.gitignore`/`.env` conventions.
 - The `.venv` is shared in the parent directory; there is no separate virtual environment (until the dependencies diverge).
 
 ## 9. Where we are (last update: 2024-07-10)
