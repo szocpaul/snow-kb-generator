@@ -1,0 +1,18 @@
+# the dependencies of snow-kb-generator
+# The environment already contains these in the parent .venv, but they are documented here.
+
+# DSPy pipeline
+dspy>=3.2.0,<3.4
+
+# The data model + the configuration
+pydantic>=2.0
+python-dotenv>=1.0
+PyYAML>=6.0
+
+# ServiceNow Table API
+requests>=2.31
+
+# (later, for the eval/deploy phase)
+# mlflow            # cost/latency observability
+# fastapi           # deploy wrapper
+# pytest            # CI regression tests
