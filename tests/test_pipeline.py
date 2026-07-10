@@ -156,6 +156,25 @@ class TestConfigureLM:
                 model = args[0] if args else kwargs.get("model")
                 assert model == "openai/gpt-4o-mini"
 
+    def test_pi_auth_uses_dspy_lm_auth(self, dry_run_settings):
+        """Ha use_pi_auth=True, a dspy_lm_auth.LM-et használja."""
+        dry_run_settings.pipeline.use_pi_auth = True
+        with patch.dict("sys.modules", {"dspy_lm_auth": MagicMock()}):
+            import sys
+            mock_module = sys.modules["dspy_lm_auth"]
+            mock_pi_lm = MagicMock()
+            mock_module.LM = mock_pi_lm
+            with patch("snow_kb.pipeline.dspy.configure"):
+                configure_lm(dry_run_settings)
+                mock_pi_lm.assert_called_once()
+
+    def test_pi_auth_missing_module_raises(self, dry_run_settings):
+        """Ha use_pi_auth=True de nincs telepítve a modul, hiba."""
+        dry_run_settings.pipeline.use_pi_auth = True
+        with patch.dict("sys.modules", {"dspy_lm_auth": None}):
+            with pytest.raises(RuntimeError, match="dspy-lm-auth"):
+                configure_lm(dry_run_settings)
+
 
 # ---------------------------------------------------------------------------
 # generate_kb_article (mock client + mock program)

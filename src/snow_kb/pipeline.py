@@ -112,13 +112,32 @@ def configure_lm(settings: Settings) -> None:
 
     A skill szerint: dspy.configure(lm=..., track_usage=True) — globálisan,
     modulonként csak indokolt esetben override. A track_usage a cost/latency
-    megfigyelhetőséghez kell.
+    megfigyelhetőségséhez kell.
+
+    Ha settings.pipeline.use_pi_auth True, a dspy_lm_auth.LM osztályt használja
+    (Pi Agent GLM előfizetés hitelesítéshez). Egyébként a szabványos dspy.LM-et.
     """
-    lm = dspy.LM(
-        settings.models.main,
-        temperature=settings.pipeline.default_temperature,
-        max_tokens=settings.pipeline.max_tokens,
-    )
+    if settings.pipeline.use_pi_auth:
+        try:
+            from dspy_lm_auth import LM as PiAuthLM
+        except ImportError as exc:
+            raise RuntimeError(
+                "A pipeline.use_pi_auth=True, de a dspy-lm-auth nincs telepítve. "
+                "Telepítsd: pip install dspy-lm-auth"
+            ) from exc
+
+        lm = PiAuthLM(
+            settings.models.main,
+            temperature=settings.pipeline.default_temperature,
+            max_tokens=settings.pipeline.max_tokens,
+        )
+    else:
+        lm = dspy.LM(
+            settings.models.main,
+            temperature=settings.pipeline.default_temperature,
+            max_tokens=settings.pipeline.max_tokens,
+        )
+
     dspy.configure(lm=lm, track_usage=True)
 
 

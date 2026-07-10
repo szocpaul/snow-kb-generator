@@ -27,6 +27,9 @@ deploy = [
     "mlflow",        # cost/latency observability
     "fastapi",       # deploy wrapper
 ]
+pi-auth = [
+    "dspy-lm-auth",  # Pi Agent GLM hitelesítés
+]
 
 [project.scripts]
 snow-kb = "snow_kb.cli:main"

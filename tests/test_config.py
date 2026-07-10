@@ -96,6 +96,18 @@ class TestMissingSecrets:
         assert s.snow_instance == ""
         assert s.openai_api_key.get_secret_value() == ""
 
+    def test_pi_auth_allows_missing_openai_key(self, make_yaml, monkeypatch):
+        """Ha use_pi_auth=True, nem követel OPENAI_API_KEY-t."""
+        monkeypatch.setenv("SNOW_INSTANCE", "x.service-now.com")
+        monkeypatch.setenv("SNOW_USERNAME", "u")
+        monkeypatch.setenv("SNOW_PASSWORD", "p")
+        path = make_yaml({
+            "servicenow": {"knowledge_base_id": "kb1"},
+            "pipeline": {"use_pi_auth": True},
+        })
+        s = load_settings(path)  # nem dob ConfigError-t hiányzó API kulcsra
+        assert s.pipeline.use_pi_auth is True
+
 
 class TestSecretStrProtection:
     """A titkok nem szivárognak ki a Settings __repr__-jén."""
