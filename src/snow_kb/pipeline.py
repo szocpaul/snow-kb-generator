@@ -1,42 +1,207 @@
-# pipeline.py — orchestrator (DESIGN, not implemented)
-# ===========================================================================
-#
-# Responsibility: taking care of the entire end-to-end flow.
-# This layer connects the ServiceNow client, the DSPy program and the export.
-# The program itself (program.py) knows nothing about ServiceNow — that is the client's job.
-#
-# Planned functions:
-#
-#   generate_kb_article(
-#       story_identifier: str,           # STRY... vagy sys_id
-#       dry_run: bool = False,
-#       push: bool = True                # False -> only generates, does not write to SNOW
-#   ) -> KBArticle:
-#
-#     1. settings = load_settings()
-#     2. client   = ServiceNowClient(settings, dry_run=dry_run)
-#     3. story    = client.get_story(story_identifier)          -> StoryData
-#     4. story_text = assemble_story_text(story)                # merging the fields
-#     5. dspy.configure(lm=dspy.LM(settings.models.main), track_usage=True)
-#     6. program   = StoryToKBArticle()
-#     7. pred      = program(story_text=story_text)             -> Prediction
-#     8. article   = pred.article                               -> KBArticle
-#     9. if push and not dry_run:
-#            article.sys_id = client.create_kb_article(article)
-#       10. return article
-#
-#   assemble_story_text(story: StoryData) -> str:
-#     It weaves the fields into a single text in the order of config.story_fields,
-#     marks the sections with a heading (e.g. "## Description: ...").
-#     This is the context that ExtractChange receives.
-#
-# Error handling (planned):
-#   - StoryNotFound -> clean error message, exit
-#   - LM error -> retry (dspy retries by default, but we log it)
-#   - create_kb_article fails -> the article remains locally (artifacts/),
-#     does not throw the work away
-#
-# Notes:
-#   - The formatting of assemble_story_text affects the quality -> we fix it before GEPA,
-#     but let it not change in the Signatures (a separate thing).
-#   - Later: batch mode, processing multiple Stories at once.
+"""pipeline.py — the end-to-end orchestrator: fetch → assemble → generate → push.
+
+This layer connects:
+  - the ServiceNow client (Story fetch + KB creation)
+  - a DSPy programot (StoryToKBArticle)
+  - the configuration (Settings)
+
+The program (program.py) knows nothing about ServiceNow. The client
+(servicenow_client.py) knows nothing about DSPy. This module is the glue between them.
+
+It expects the ServiceNowClient in the form of a Protocol (an interface), so the
+pipeline can also be tested with a mock client while the real client is not implemented.
+"""
+
+from __future__ import annotations
+
+from typing import Protocol
+
+import dspy
+
+from snow_kb.config import Settings, load_settings
+from snow_kb.program import StoryToKBArticle
+from snow_kb.schemas import KBArticle, StoryData
+
+
+# ---------------------------------------------------------------------------
+# The ServiceNowClient Protocol (interface)
+# ---------------------------------------------------------------------------
+
+class ServiceNowClientProtocol(Protocol):
+    """The ServiceNow client interface expected by the pipeline.
+
+    The real implementation (servicenow_client.py) will implement this.
+    The pipeline calls only these two methods — it knows nothing about the HTTP details.
+    """
+
+    def get_story(self, story_identifier: str) -> StoryData: ...
+
+    def create_kb_article(self, article: KBArticle) -> str:
+        """Returns the sys_id of the new KB article."""
+        ...
+
+
+# ---------------------------------------------------------------------------
+# Merging the Story into a single text
+# ---------------------------------------------------------------------------
+
+# The field label map: human readable labels for the internal field names.
+# Only the content fields that go into the context (not the identifiers).
+_FIELD_LABELS: dict[str, str] = {
+    "short_description": "Short Description",
+    "description": "Description",
+    "acceptance_criteria": "Acceptance Criteria",
+    "u_technical_specification": "Technical Specification",
+    "work_notes": "Work Notes",
+    "comments": "Comments",
+    "state": "State",
+    "assigned_to": "Assigned To",
+}
+
+
+def assemble_story_text(story: StoryData, settings: Settings | None = None) -> str:
+    """Merges the fields of the Story into a single labelled text.
+
+    It goes through the fields in the order of config.story_fields and gives every
+    field a heading (e.g. "## Description: ..."). It skips the empty fields — they
+    would only clutter the context with empty sections.
+
+    This text is the input of the ExtractChange Signature (story_text).
+
+    Args:
+        story: the data of the Story fetched from ServiceNow.
+        settings: if given, the order of the story_fields is taken from here;
+            otherwise it starts from the order of the StoryData fields.
+
+    Returns:
+        A single text, split into sections, with labels.
+    """
+    # The order of the fields to process
+    field_order: list[str]
+    if settings is not None:
+        field_order = settings.story_fields
+    else:
+        field_order = list(_FIELD_LABELS.keys())
+
+    sections: list[str] = []
+
+    # The Story number goes to the top (if there is one)
+    if story.number:
+        sections.append(f"# Story: {story.number}")
+
+    # Content fields, labelled, the empty ones skipped
+    for field_name in field_order:
+        value = getattr(story, field_name, None)
+        if not value or not str(value).strip():
+            continue
+        label = _FIELD_LABELS.get(field_name, field_name.replace("_", " ").title())
+        sections.append(f"## {label}\n{value}")
+
+    if not sections:
+        return "(The Story contains no processable content.)"
+
+    return "\n\n".join(sections)
+
+
+# ---------------------------------------------------------------------------
+# LM configuration (according to dspy-fundamentals / dspy-advanced-workflow)
+# ---------------------------------------------------------------------------
+
+def configure_lm(settings: Settings) -> None:
+    """Configures the DSPy LM globally from the settings.
+
+    According to the skill: dspy.configure(lm=..., track_usage=True) — globally,
+    override only in justified cases per module. The track_usage for the cost/latency
+    is needed for observability.
+    """
+    lm = dspy.LM(
+        settings.models.main,
+        temperature=settings.pipeline.default_temperature,
+        max_tokens=settings.pipeline.max_tokens,
+    )
+    dspy.configure(lm=lm, track_usage=True)
+
+
+# ---------------------------------------------------------------------------
+# Main orchestrator
+# ---------------------------------------------------------------------------
+
+def generate_kb_article(
+    story_identifier: str,
+    client: ServiceNowClientProtocol,
+    settings: Settings | None = None,
+    *,
+    program: StoryToKBArticle | None = None,
+    push: bool = True,
+) -> KBArticle:
+    """Lefuttatja a teljes pipeline-t: Story → KB Article.
+
+    Args:
+        story_identifier: the number of the Story (STRY...) or its sys_id.
+        client: the ServiceNow client (or mock) that implements the Protocol.
+        settings: if None, loads them using load_settings().
+        program: if None, creates a new StoryToKBArticle(). When testing
+            you can also pass a pre-configured/mock program.
+        push: if True, writes the article back to the ServiceNow KB with the client.
+            in dry_run mode this will automatically be False.
+
+    Returns:
+        The generated KBArticle (filled with its sys_id in case of push).
+
+    Raises:
+        ConfigError: if the settings are invalid.
+        The client errors (e.g. StoryNotFound) propagate.
+    """
+    # 1. Load the settings (if not given)
+    if settings is None:
+        settings = load_settings()
+
+    # 2. Fetch the Story
+    story = client.get_story(story_identifier)
+
+    # 3. Merging the Story into a single text
+    story_text = assemble_story_text(story, settings)
+
+    # 4. LM configuration (only if not dry_run — in dry_run the program is a mock)
+    if not settings.dry_run:
+        configure_lm(settings)
+
+    # 5. Running the program
+    if program is None:
+        program = StoryToKBArticle()
+
+    pred = program(
+        story_text=story_text,
+        category=settings.snow.default_category,
+        knowledge_base_id=settings.snow.knowledge_base_id,
+    )
+    article: KBArticle = pred.article
+
+    # 6. Push to the ServiceNow KB (if requested and not dry_run)
+    if push and not settings.dry_run:
+        sys_id = client.create_kb_article(article)
+        # We write the sys_id back to the article (extending it with a new field)
+        # the KBArticle does not contain a sys_id field; the caller receives it separately
+        return _KBArticleWithSysId(article, sys_id)
+
+    return article
+
+
+# ---------------------------------------------------------------------------
+# Helper: the article + sys_id pair (the result of the push)
+# ---------------------------------------------------------------------------
+
+class _KBArticleWithSysId(KBArticle):
+    """A KBArticle that contains the sys_id of the created article (after the push)."""
+
+    sys_id: str = ""
+
+    def __init__(self, base: KBArticle, sys_id: str, **kwargs):
+        super().__init__(
+            title=base.title,
+            html=base.html,
+            category=base.category,
+            knowledge_base_id=base.knowledge_base_id,
+            **kwargs,
+        )
+        self.sys_id = sys_id
