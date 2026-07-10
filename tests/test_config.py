@@ -75,14 +75,16 @@ class TestMissingSecrets:
         with pytest.raises(ConfigError, match="snow_instance"):
             load_settings(path)
 
-    def test_missing_snow_username_rejected(self, make_yaml, monkeypatch):
+    def test_missing_snow_username_rejected(self, make_yaml, monkeypatch, tmp_path):
+        monkeypatch.chdir(tmp_path)
         monkeypatch.setenv("SNOW_INSTANCE", "x.service-now.com")
         # username/password hiányzik
         path = make_yaml({"servicenow": {"knowledge_base_id": "kb1"}})
         with pytest.raises(ConfigError, match="snow_username"):
             load_settings(path)
 
-    def test_missing_openai_key_rejected(self, make_yaml, monkeypatch):
+    def test_missing_openai_key_rejected(self, make_yaml, monkeypatch, tmp_path):
+        monkeypatch.chdir(tmp_path)
         monkeypatch.setenv("SNOW_INSTANCE", "x.service-now.com")
         monkeypatch.setenv("SNOW_USERNAME", "u")
         monkeypatch.setenv("SNOW_PASSWORD", "p")

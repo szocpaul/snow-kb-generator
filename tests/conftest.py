@@ -26,10 +26,11 @@ if str(SRC) not in sys.path:
 # ---------------------------------------------------------------------------
 
 @pytest.fixture
-def clean_env(monkeypatch):
-    """Törli az összes ServiceNow / OpenAI környezeti változót.
-
-    Hasznos, ha egy teszt tiszta lappal indul (pl. dry_run tesztek).
+def clean_env(monkeypatch, tmp_path):
+    """Tiszta környezet: törli a ServiceNow / OpenAI változókat ÉS egy
+    olyan mappába lép, ahol nincs .env fájl.
+    Erre azért van szükség, mert a pydantic-settings automatikusan beolvassa
+    a cwd .env fájlját, ami a projektben már tartalmazza a valós adatokat.
     """
     for key in (
         "SNOW_INSTANCE", "SNOW_USERNAME", "SNOW_PASSWORD",
@@ -37,12 +38,16 @@ def clean_env(monkeypatch):
         "ANTHROPIC_API_KEY", "AZURE_OPENAI_API_KEY",
     ):
         monkeypatch.delenv(key, raising=False)
+    monkeypatch.chdir(tmp_path)
     yield
 
 
 @pytest.fixture
-def set_env(monkeypatch):
-    """Beállítja a minimálisan szükséges környezeti változókat (nem dry_run)."""
+def set_env(monkeypatch, tmp_path):
+    """Beállítja a minimálisan szükséges környezeti változókat (nem dry_run).
+    tmp_path-be lépünk, hogy a projekt .env fájlja ne szóljon közbe.
+    """
+    monkeypatch.chdir(tmp_path)
     monkeypatch.setenv("SNOW_INSTANCE", "demo.service-now.com")
     monkeypatch.setenv("SNOW_USERNAME", "api-user")
     monkeypatch.setenv("SNOW_PASSWORD", "secret-pw")

@@ -156,23 +156,42 @@ class TestConfigureLM:
                 model = args[0] if args else kwargs.get("model")
                 assert model == "openai/gpt-4o-mini"
 
-    def test_pi_auth_uses_dspy_lm_auth(self, dry_run_settings):
-        """Ha use_pi_auth=True, a dspy_lm_auth.LM-et használja."""
+    def test_pi_auth_reads_key_from_auth_file(self, dry_run_settings):
+        """Ha use_pi_auth=True, a zai-glm kulcsot olvassa a Pi auth fájlból."""
         dry_run_settings.pipeline.use_pi_auth = True
-        with patch.dict("sys.modules", {"dspy_lm_auth": MagicMock()}):
-            import sys
-            mock_module = sys.modules["dspy_lm_auth"]
-            mock_pi_lm = MagicMock()
-            mock_module.LM = mock_pi_lm
-            with patch("snow_kb.pipeline.dspy.configure"):
-                configure_lm(dry_run_settings)
-                mock_pi_lm.assert_called_once()
+        dry_run_settings.models.main = "openai/glm-5.2"
+        dry_run_settings.pipeline.api_base = "https://api.z.ai/api/coding/paas/v4"
 
-    def test_pi_auth_missing_module_raises(self, dry_run_settings):
-        """Ha use_pi_auth=True de nincs telepítve a modul, hiba."""
+        # A fájlolvasást és JSON parse-t mockoljuk, a Path-tel együtt
+        mock_auth_path = MagicMock()
+        mock_auth_path.exists.return_value = True
+
+        with patch("snow_kb.pipeline.Path") as mock_path_class:
+            # Path.home() / ... láncot egy mockká egyszerűsítjük
+            mock_path_class.home.return_value = MagicMock(
+                __truediv__=MagicMock(return_value=MagicMock(
+                    __truediv__=MagicMock(return_value=MagicMock(
+                        __truediv__=MagicMock(return_value=mock_auth_path)
+                    ))
+                ))
+            )
+            mock_auth_path.read_text.return_value = '{"zai-glm": {"key": "test-glm-key"}}'
+
+            with patch("snow_kb.pipeline.dspy.LM") as mock_lm:
+                mock_lm.return_value = MagicMock()
+                with patch("snow_kb.pipeline.dspy.configure"):
+                    configure_lm(dry_run_settings)
+                    mock_lm.assert_called_once()
+                    kwargs = mock_lm.call_args.kwargs
+                    assert kwargs["api_key"] == "test-glm-key"
+                    assert kwargs["api_base"] == "https://api.z.ai/api/coding/paas/v4"
+
+    def test_pi_auth_missing_file_raises(self, dry_run_settings, tmp_path):
+        """Ha use_pi_auth=True de nincs auth fájl, hiba."""
         dry_run_settings.pipeline.use_pi_auth = True
-        with patch.dict("sys.modules", {"dspy_lm_auth": None}):
-            with pytest.raises(RuntimeError, match="dspy-lm-auth"):
+        with patch("snow_kb.pipeline.Path") as mock_path:
+            mock_path.home.return_value = tmp_path  # tmp_path/auth.json nem létezik
+            with pytest.raises(RuntimeError, match="auth fájl"):
                 configure_lm(dry_run_settings)
 
 
