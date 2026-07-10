@@ -16,4 +16,6 @@ requests>=2.31
 # (később, eval/deploy fázishoz)
 # mlflow            # cost/latency observability
 # fastapi           # deploy wrapper
-# pytest            # CI regressziós tesztek
+
+# --- Dev / teszt ---
+pytest>=8.0                # CI regressziós tesztek
