@@ -1,44 +1,273 @@
-# servicenow_client.py — ServiceNow Table API kliens (TERV, nincs implementálva)
-# ===========================================================================
-#
-# Felelősség: a ServiceNow-mal való ÖSSZES HTTP kommunikáció itt zajlik.
-# A pipeline többi része nem tud a requests/httpx-ről.
-#
-# Hitelesítés (tervezett):
-#   Basic Auth (username + password) a .env-ből, vagy OAuth token (később).
-#   Alap URL: https://<SNOW_INSTANCE>/api/now/table/
-#
-# Tervezett osztály: ServiceNowClient
-#   Konstruktor bemenete: settings (a config.py-ból)
-#
-# Tervezett metódusok:
-#
-#   get_story(story_sys_id_or_number: str) -> StoryData
-#       Végpont: GET /table/story/<sys_id>?sysparm_query=number=<STRY...>
-#       Lekéri a config.story_fields-ben felsorolt mezőket.
-#       sysparm_display_value=true a munkajegyzetek/hivatkozások feloldásához.
-#       Hibakezelés: 404 -> StoryNotFound, 401 -> AuthError, timeout -> retry.
-#
-#   create_kb_article(article: KBArticle) -> str
-#       Végpont: POST /table/kb_knowledge
-#       body: {
-#         knowledge_base: settings.servicenow.knowledge_base_id,
-#         short_description: article.title,
-#         text: article.html,            # vagy kb_knowledge.text
-#         category: article.category,
-#         article_type: "text",
-#       }
-#       Visszatér: az új KB sys_id (vagy article URL).
-#
-#   (később) list_stories(state="Closed Complete") -> Iterator[StoryData]
-#       Batch lekérés döngyölt pagination-nel (sysparm_limit + offset).
-#
-# Dry-run támogatás:
-#   A Client kapjon egy `dry_run=True` flag-et (a settings-ből vagy CLI-ből).
-#   dry_run=True esetén get_story mock fájlból olvas (data/sample_stories/),
-#   create_kb_article csak log-ol és egy dummy sys_id-t ad vissza.
-#
-# Megjegyzések:
-#   - A Story tábla neve instance-onként eltérhet ("story" vs "rm_story").
-#     Ezt config-ba kell tenni, ne hardcode-oljuk.
-#   - A work_notes/comments mezők list of journal entry; ezeket egyesíteni kell.
+"""servicenow_client.py — ServiceNow Table API kliens.
+
+Ez a modul felel a ServiceNow-mal való ÖSSZES HTTP kommunikációért.
+A pipeline többi része (program.py, signatures.py) nem tud róla.
+
+Hitelesítés: Basic Auth (username + password) a settings-ből.
+Alap URL: https://<SNOW_INSTANCE>/api/now/table/
+
+Dry-run támogatás: ha settings.dry_run=True (vagy a konstruktor dry_run=True),
+a get_story helyi mock fájlból olvas (data/sample_stories/),
+a create_kb_article csak logol és dummy sys_id-t ad vissza.
+
+A Story tábla neve instance-onként eltérhet ("story" vs "rm_story") —
+ezt a settings.snow.story_table-ből veszi, nem hardcode-olt.
+"""
+
+from __future__ import annotations
+
+import json
+import logging
+from pathlib import Path
+from typing import Any
+
+import requests
+from requests.auth import HTTPBasicAuth
+
+from snow_kb.config import Settings
+from snow_kb.schemas import KBArticle, StoryData
+
+logger = logging.getLogger(__name__)
+
+
+# ---------------------------------------------------------------------------
+# Kivételek
+# ---------------------------------------------------------------------------
+
+class ServiceNowError(Exception):
+    """Általános ServiceNow API hiba."""
+
+
+class StoryNotFound(ServiceNowError):
+    """A kért Story nem található (404 vagy üres eredmény)."""
+
+
+class AuthError(ServiceNowError):
+    """Hitelesítési hiba (401/403)."""
+
+
+# ---------------------------------------------------------------------------
+# Mock adatok helye (dry_run-hoz)
+# ---------------------------------------------------------------------------
+
+DEFAULT_SAMPLE_DIR = Path(__file__).resolve().parent.parent.parent / "data" / "sample_stories"
+
+
+# ---------------------------------------------------------------------------
+# ServiceNowClient
+# ---------------------------------------------------------------------------
+
+class ServiceNowClient:
+    """ServiceNow Table API kliens.
+
+    Implementálja a pipeline.ServiceNowClientProtocol-t (get_story, create_kb_article).
+
+    Args:
+        settings: a config.py Settings objektuma.
+        dry_run: ha felül akarjuk bírálni a settings.dry_run-t.
+        sample_dir: a mock Story fájlok mappája (dry_run-hoz).
+    """
+
+    def __init__(
+        self,
+        settings: Settings,
+        *,
+        dry_run: bool | None = None,
+        sample_dir: Path | str | None = None,
+    ) -> None:
+        self.settings = settings
+        self.dry_run = settings.dry_run if dry_run is None else dry_run
+        self.sample_dir = Path(sample_dir) if sample_dir else DEFAULT_SAMPLE_DIR
+
+        # HTTP session (normal mode-only; dry_run-ban nem használt)
+        self._session: requests.Session | None = None
+
+    # ------------------------------------------------------------------
+    # Privát helper: HTTP session
+    # ------------------------------------------------------------------
+
+    @property
+    def session(self) -> requests.Session:
+        if self._session is None:
+            self._session = requests.Session()
+            self._session.auth = HTTPBasicAuth(
+                self.settings.snow_username,
+                self.settings.snow_password.get_secret_value(),
+            )
+            self._session.headers.update({
+                "Accept": "application/json",
+                "Content-Type": "application/json",
+            })
+        return self._session
+
+    @property
+    def base_url(self) -> str:
+        return f"https://{self.settings.snow_instance}/api/now/table"
+
+    # ------------------------------------------------------------------
+    # get_story — Story lekérése
+    # ------------------------------------------------------------------
+
+    def get_story(self, story_identifier: str) -> StoryData:
+        """Lekér egy Story-t a ServiceNow-ból (vagy mock fájlból).
+
+        Args:
+            story_identifier: a Story száma (pl. "STRY0012345") vagy sys_id-ja.
+
+        Returns:
+            StoryData a lekért mezőkkel.
+
+        Raises:
+            StoryNotFound: ha a Story nem található.
+            AuthError: ha a hitelesítés sikertelen.
+            ServiceNowError: egyéb API hibák.
+        """
+        if self.dry_run:
+            return self._get_story_mock(story_identifier)
+        return self._get_story_live(story_identifier)
+
+    def _get_story_mock(self, story_identifier: str) -> StoryData:
+        """Dry-run: mock Story JSON fájlból olvas."""
+        # Próbáljuk több fájlnév-mintával
+        candidates = [
+            self.sample_dir / f"{story_identifier}.json",
+            self.sample_dir / f"{story_identifier}.JSON",
+        ]
+        for path in candidates:
+            if path.exists():
+                logger.info("[dry-run] Story betöltése: %s", path)
+                data = json.loads(path.read_text(encoding="utf-8"))
+                return StoryData(**data)
+        raise StoryNotFound(
+            f"[dry-run] Nincs mock Story fájl: {candidates[0]} "
+            f"(keresett: {story_identifier})"
+        )
+
+    def _get_story_live(self, story_identifier: str) -> StoryData:
+        """Éles: ServiceNow Table API GET hívás."""
+        table = self.settings.snow.story_table
+        fields = ",".join(self.settings.story_fields + ["number", "sys_id"])
+
+        # Ha sys_id-nak tűnik (32 hexa), közvetlenül; egyébként number query
+        if len(story_identifier) == 32:
+            url = f"{self.base_url}/{table}/{story_identifier}"
+            params = {"sysparm_display_value": "true", "sysparm_fields": fields}
+        else:
+            url = f"{self.base_url}/{table}"
+            params = {
+                "sysparm_query": f"number={story_identifier}",
+                "sysparm_limit": "1",
+                "sysparm_display_value": "true",
+                "sysparm_fields": fields,
+            }
+
+        resp = self._request("GET", url, params=params)
+
+        # Válasz feldolgozása
+        body = resp.json()
+        if "result" not in body:
+            raise ServiceNowError(f"Váratlan válaszformátum: {body}")
+
+        results = body["result"]
+        if isinstance(results, list):
+            if not results:
+                raise StoryNotFound(f"Story nem található: {story_identifier}")
+            record = results[0]
+        else:
+            record = results  # sys_id alapú GET egyetlen objektumot ad
+
+        return StoryData(**record)
+
+    # ------------------------------------------------------------------
+    # create_kb_article — KB cikk létrehozása
+    # ------------------------------------------------------------------
+
+    def create_kb_article(self, article: KBArticle) -> str:
+        """Létrehoz egy KB cikket a ServiceNow-ban (vagy dry-run-ban szimulál).
+
+        Args:
+            article: a publikálandó KB cikk.
+
+        Returns:
+            Az új KB cikk sys_id-ja (dry-run-ban dummy).
+
+        Raises:
+            AuthError: ha a hitelesítés sikertelen.
+            ServiceNowError: egyéb API hibák.
+        """
+        if self.dry_run:
+            return self._create_kb_article_mock(article)
+        return self._create_kb_article_live(article)
+
+    def _create_kb_article_mock(self, article: KBArticle) -> str:
+        """Dry-run: csak logol, dummy sys_id-t ad vissza."""
+        dummy_sys_id = "dry_run_dummy_sys_id"
+        logger.info("[dry-run] KB cikk létrehozása (szimulált):")
+        logger.info("  title:    %s", article.title)
+        logger.info("  category: %s", article.category)
+        logger.info("  kb_id:    %s", article.knowledge_base_id)
+        logger.info("  html len: %d", len(article.html))
+        logger.info("  -> sys_id: %s", dummy_sys_id)
+        return dummy_sys_id
+
+    def _create_kb_article_live(self, article: KBArticle) -> str:
+        """Éles: ServiceNow Table API POST hívás."""
+        url = f"{self.base_url}/kb_knowledge"
+        payload = {
+            "knowledge_base": article.knowledge_base_id
+            or self.settings.snow.knowledge_base_id,
+            "short_description": article.title,
+            "text": article.html,
+            "category": article.category,
+            "article_type": "text",
+        }
+
+        resp = self._request("POST", url, json=payload)
+        body = resp.json()
+
+        if "result" not in body or "sys_id" not in body["result"]:
+            raise ServiceNowError(f"Váratlan válasz KB létrehozásnál: {body}")
+
+        sys_id = body["result"]["sys_id"]
+        logger.info("KB cikk létrehozva: sys_id=%s", sys_id)
+        return sys_id
+
+    # ------------------------------------------------------------------
+    # Privát: egységes HTTP kérés hibakezeléssel
+    # ------------------------------------------------------------------
+
+    def _request(
+        self,
+        method: str,
+        url: str,
+        *,
+        params: dict | None = None,
+        json: dict | None = None,
+    ) -> requests.Response:
+        """Egységes HTTP kérés hibakezeléssel.
+
+        Raises:
+            AuthError: 401/403.
+            StoryNotFound: 404.
+            ServiceNowError: egyéb HTTP vagy hálózati hibák.
+        """
+        try:
+            resp = self.session.request(method, url, params=params, json=json, timeout=30)
+        except requests.ConnectionError as exc:
+            raise ServiceNowError(f"Kapcsolódási hiba: {exc}") from exc
+        except requests.Timeout as exc:
+            raise ServiceNowError(f"Időtúllépés: {exc}") from exc
+
+        if resp.status_code in (401, 403):
+            raise AuthError(
+                f"Hitelesítési hiba ({resp.status_code}): "
+                f"ellenőrizd SNOW_USERNAME/SNOW_PASSWORD"
+            )
+        if resp.status_code == 404:
+            raise StoryNotFound(f"Nem található (404): {url}")
+        if not resp.ok:
+            raise ServiceNowError(
+                f"ServiceNow API hiba {resp.status_code}: {resp.text[:500]}"
+            )
+
+        return resp
