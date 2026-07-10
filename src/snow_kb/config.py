@@ -70,7 +70,8 @@ class ServiceNowConfig(BaseModel):
 class PipelineConfig(BaseModel):
     default_temperature: float = 0.0
     max_tokens: int = 2000
-    use_pi_auth: bool = False  # If True, uses dspy_lm_auth.LM (Pi Agent GLM)
+    use_pi_auth: bool = False  # If True, uses the Pi Agent auth.json (GLM/Kimi)
+    api_base: str = ""         # Optional API endpoint (e.g. a GLM proxy)
 
 
 class ModelsConfig(BaseModel):
