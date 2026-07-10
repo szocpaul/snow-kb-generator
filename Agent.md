@@ -76,7 +76,7 @@ snow_kb_generator/
 - **Titkok sosem commitolódnak** — `.env` a `.gitignore`-ban, csak `.env.example` verziózik.
 - **Baseline előtt nincs optimalizáció** — "no baseline, no claim".
 - **Minden prediktor legyen elnevezve** — a GEPA tudja célozni.
-- **Magyar kommentek** a kódban (a `snow_rag` project konvenciója), docstring-ek angolul maradhatnak.
+- **Magyar kommentek** a kódban, docstring-ek angolul maradhatnak.
 
 ## 7. Állapot
 
@@ -91,7 +91,6 @@ snow_kb_generator/
 
 ## 8. Megjegyzések
 
-- A szülőkönyvtárban lévő `snow_rag` project minta a ServiceNow integrációra és a `.gitignore`/`.env` konvenciókra.
 - A `.venv` közös a szülőkönyvtárban; nincs saját virtuális környezet (amíg el nem térnek a függőségek).
 
 ## 9. Hol tartunk (utolsó frissítés: 2024-07-10)
