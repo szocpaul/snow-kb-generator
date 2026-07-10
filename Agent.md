@@ -6,17 +6,18 @@
 
 ServiceNow-ban a fejlesztők **Story-k** (`STRY...`) megvalósításán dolgoznak. Amikor a munka elkészül és a Story lezárul, erről automatikusan **Knowledge Base Article (KB)** készüljön. Ezt az átalakítást egy **DSPy AI pipeline** végzi: a Story adataiból strukturált, célközönségnek szóló, ServiceNow-kompatibilis KB cikket generál.
 
-**Bemenet:** lezárt ServiceNow Story mezői — `short_description`, `description`, `acceptance_criteria`, `work_notes`, `comments`, `state`, stb.
+**Bemenet:** lezárt ServiceNow Story mezői — `short_description`, `description`, `acceptance_criteria`, `u_technical_specification`, `work_notes`, `comments`, `state`, stb.
 **Kimenet:** KB Article (HTML) — `title`, `summary`, `problem/symptoms`, `solution` (reprodukálható lépések), `category`, `audience`.
 
 ## 2. Technológiai verem
 
 - **Nyelv:** Python 3.12
-- ** keretrendszer:** DSPy 3.2.x (Signatures + Modules, GEPA optimalizáció)
+- **Keretrendszer:** DSPy 3.2.x (Signatures + Modules, GEPA optimalizáció)
 - **ServiceNow integráció:** Table API (`requests`) — Story lekérés, KB létrehozás (CRUD)
-- **Adatmodell:** Pydantic v2
+- **Adatmodell:** Pydantic v2 + pydantic-settings
 - **Konfiguráció:** `.env` (titkok) + `config.yaml` (beállítások)
-- **Környezet:** a szülőkönyvtár `.venv`-je (dspy, pydantic, requests, python-dotenv, pyyaml elérhető)
+- **LM hitelesítés:** Pi Agent GLM-5.2 a Z.ai API-n keresztül (`use_pi_auth: true`)
+- **Környezet:** a szülőkönyvtár `.venv`-je; telepíthető `pip install -e .` (pyproject.toml)
 
 ## 3. DSPy pipeline (a program magja)
 
@@ -28,44 +29,57 @@ Többlépcsős `dspy.Module`, minden predictor névvel ellátva (GEPA tudja cél
 
 Ezeket a `StoryToKBArticle(dspy.Module)` láncolja össze. **Nincs hardcode-olt prompt** — minden utasítás a Signature docstring-ből jön.
 
-## 4. Mappa-struktúra (tervezett)
+## 4. Mappa-struktúra (jelenlegi)
 
 ```
 snow_kb_generator/
 ├── Agent.md                    # ez a fájl
 ├── README.md                   # áttekintés, beállítás, használat
+├── pyproject.toml              # csomag definíció (pip install -e .)
 ├── .gitignore
 ├── .env.example                # SNOW instance/user/password + LM API kulcsok
+├── .env                        # TÉNYLEGES titkok (NEM verziókezelve)
 ├── requirements.txt
 ├── config.yaml                 # kb_knowledge_base, kategória, model nevek
 ├── src/snow_kb/
-│   ├── config.py               # .env + config.yaml betöltés
-│   ├── servicenow_client.py    # Table API: Story lekérés + KB létrehozás
-│   ├── schemas.py              # Pydantic: StoryData, KBArticle, ArticleSections
-│   ├── signatures.py           # dspy.Signature részek
+│   ├── __init__.py
+│   ├── __main__.py             # python -m snow_kb belépési pont
+│   ├── config.py               # .env + config.yaml betöltés (Settings, Secrets)
+│   ├── servicenow_client.py    # ServiceNowClient (Table API + dry_run mock)
+│   ├── schemas.py              # Pydantic: StoryData, ArticleSections, KBArticle
+│   ├── signatures.py           # DSPy Signatures (ExtractChange, DraftSections, FormatKB)
 │   ├── program.py              # StoryToKBArticle(dspy.Module)
-│   ├── pipeline.py             # orchestrátor: fetch → generate → push
-│   └── cli.py                  # `python -m snow_kb <story_id>`
+│   ├── pipeline.py             # orchestrátor + assemble_story_text + configure_lm
+│   └── cli.py                  # argparse CLI (python -m snow_kb)
+├── tests/                      # pytest tesztcsomag (160 teszt)
+│   ├── conftest.py             # közös fixture-k
+│   ├── test_config.py
+│   ├── test_schemas.py
+│   ├── test_signatures.py
+│   ├── test_program.py
+│   ├── test_pipeline.py
+│   ├── test_servicenow_client.py
+│   └── test_cli.py
 ├── data/
-│   ├── examples/               # gold (Story → KB) példapárok evalhez
-│   └── sample_stories/         # minta Story JSON mock adatokkal
-├── eval/
-│   ├── dataset.py              # train/val/test split (dspy.Example)
-│   └── metric.py               # rich_metric (score + feedback) GEPA-hoz
-├── runs/                       # baseline.json, optimized.json
-├── artifacts/                  # lementett optimalizált program
-└── gepa_logs/                  # GEPA reflection logok
+│   ├── examples/               # gold (Story → KB) példapárok evalhez (MÉG ÜRES)
+│   └── sample_stories/         # minta Story JSON (STRY0012345.json)
+├── eval/                       # dataset + rich metric (MÉG CSAK TERV)
+│   ├── dataset.py
+│   └── metric.py
+├── runs/                       # baseline.json, optimized.json (MÉG ÜRES)
+├── artifacts/                  # lementett optimalizált program (MÉG ÜRES)
+└── gepa_logs/                  # GEPA reflection logok (MÉG ÜRES)
 ```
 
 ## 5. Munkafolyamat (DSPy advanced workflow)
 
-1. **Spec** — egy mondatban a feladat (lásd fent).
-2. **Program** — Signatures + Module a `dspy-fundamentals` szerint.
-3. **Data** — gold `Story → KB` példapárok, külön `trainset`/`valset`/`testset`.
-4. **Rich metric** — `dspy.Prediction(score=.., feedback=..)`; a feedback "load-bearing" a GEPA számára.
-5. **Baseline** — `dspy.Evaluate` a valset-en, eredmény `runs/baseline.json`.
-6. **GEPA optimalizáció** — `auto="medium"`, `reflection_lm` külön, Pareto szelekció.
-7. **Export & deploy** — `program.save(...)`, CLI/FastAPI burkolat, CI regressziós teszt.
+1. **Spec** — egy mondatban a feladat (lásd fent). ✅
+2. **Program** — Signatures + Module a `dspy-fundamentals` szerint. ✅
+3. **Data** — gold `Story → KB` példapárok, külön `trainset`/`valset`/`testset`. ⏳
+4. **Rich metric** — `dspy.Prediction(score=.., feedback=..)`; a feedback "load-bearing" a GEPA számára. ⏳
+5. **Baseline** — `dspy.Evaluate` a valset-en, eredmény `runs/baseline.json`. ⏳
+6. **GEPA optimalizáció** — `auto="medium"`, `reflection_lm` külön, Pareto szelekció. ⏳
+7. **Export & deploy** — `program.save(...)`, CLI/FastAPI burkolat, CI regressziós teszt. ⏳
 
 ## 6. Működési elvek (álljunk ezekhez)
 
@@ -77,17 +91,22 @@ snow_kb_generator/
 - **Baseline előtt nincs optimalizáció** — "no baseline, no claim".
 - **Minden prediktor legyen elnevezve** — a GEPA tudja célozni.
 - **Magyar kommentek** a kódban, docstring-ek angolul maradhatnak.
+- **A kód önálló** — nincs külső projekt-függőség.
 
 ## 7. Állapot
 
 - [x] Project mappa + `Agent.md` létrehozva
-- [ ] Skeleton fájlok (`README`, `.gitignore`, `.env.example`, `config.yaml`, `requirements.txt`)
-- [ ] `src/snow_kb/` csontváz (config, client, schemas, signatures, program, pipeline, cli)
-- [ ] Mock Story + `data/`
-- [ ] Eval harness (dataset + rich metric)
+- [x] GitHub repo létrehozva (`szocpaul/snow-kb-generator`, private)
+- [x] Skeleton fájlok + nem-kód fájlok (README, config.yaml, stb.)
+- [x] `src/snow_kb/` implementálva (config, client, schemas, signatures, program, pipeline, cli)
+- [x] Mock Story + `data/` mappa
+- [x] Pytest tesztcsomag (160 teszt, mind zöld)
+- [x] `pyproject.toml` (pip install -e . működik)
+- [x] **Éles ServiceNow + LM (GLM-5.2) integráció tesztelve**
+- [ ] Eval harness (dataset + rich metric) — **következő lépés**
 - [ ] Baseline mérés
 - [ ] GEPA optimalizáció
-- [ ] Export + CLI
+- [ ] Export + deploy
 
 ## 8. Megjegyzések
 
