@@ -70,6 +70,7 @@ class ServiceNowConfig(BaseModel):
 class PipelineConfig(BaseModel):
     default_temperature: float = 0.0
     max_tokens: int = 2000
+    use_pi_auth: bool = False  # If True, uses dspy_lm_auth.LM (Pi Agent GLM)
 
 
 class ModelsConfig(BaseModel):
@@ -230,8 +231,13 @@ def _validate_at_load(settings: Settings) -> None:
             "Set the target KB sys_id."
         )
 
-    # LM key is mandatory if not dry_run
-    if not settings.dry_run and not settings.openai_api_key.get_secret_value():
+    # LM key is mandatory if not dry_run AND not Pi Auth (because Pi Auth does not
+    # uses OPENAI_API_KEY)
+    if (
+        not settings.dry_run
+        and not settings.pipeline.use_pi_auth
+        and not settings.openai_api_key.get_secret_value()
+    ):
         raise ConfigError(
-            "openai_api_key is missing from the .env (or --dry-run)."
+            "openai_api_key is missing from the .env (or --dry-run, or pipeline.use_pi_auth=true)."
         )

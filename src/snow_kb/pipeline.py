@@ -113,12 +113,31 @@ def configure_lm(settings: Settings) -> None:
     According to the skill: dspy.configure(lm=..., track_usage=True) — globally,
     override only in justified cases per module. The track_usage for the cost/latency
     is needed for observability.
+
+    If settings.pipeline.use_pi_auth is True, it uses the dspy_lm_auth.LM class
+    (Pi Agent GLM subscription for authentication). Otherwise the standard dspy.LM.
     """
-    lm = dspy.LM(
-        settings.models.main,
-        temperature=settings.pipeline.default_temperature,
-        max_tokens=settings.pipeline.max_tokens,
-    )
+    if settings.pipeline.use_pi_auth:
+        try:
+            from dspy_lm_auth import LM as PiAuthLM
+        except ImportError as exc:
+            raise RuntimeError(
+                "pipeline.use_pi_auth=True, but dspy-lm-auth is not installed. "
+                "Install it: pip install dspy-lm-auth"
+            ) from exc
+
+        lm = PiAuthLM(
+            settings.models.main,
+            temperature=settings.pipeline.default_temperature,
+            max_tokens=settings.pipeline.max_tokens,
+        )
+    else:
+        lm = dspy.LM(
+            settings.models.main,
+            temperature=settings.pipeline.default_temperature,
+            max_tokens=settings.pipeline.max_tokens,
+        )
+
     dspy.configure(lm=lm, track_usage=True)
 
 

@@ -96,6 +96,18 @@ class TestMissingSecrets:
         assert s.snow_instance == ""
         assert s.openai_api_key.get_secret_value() == ""
 
+    def test_pi_auth_allows_missing_openai_key(self, make_yaml, monkeypatch):
+        """If use_pi_auth=True, it does not require an OPENAI_API_KEY."""
+        monkeypatch.setenv("SNOW_INSTANCE", "x.service-now.com")
+        monkeypatch.setenv("SNOW_USERNAME", "u")
+        monkeypatch.setenv("SNOW_PASSWORD", "p")
+        path = make_yaml({
+            "servicenow": {"knowledge_base_id": "kb1"},
+            "pipeline": {"use_pi_auth": True},
+        })
+        s = load_settings(path)  # it does not raise a ConfigError for a missing API key
+        assert s.pipeline.use_pi_auth is True
+
 
 class TestSecretStrProtection:
     """The secrets do not leak into the Settings __repr__."""

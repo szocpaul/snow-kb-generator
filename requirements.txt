@@ -13,6 +13,9 @@ PyYAML>=6.0
 # ServiceNow Table API
 requests>=2.31
 
+# The Pi Agent GLM authentication (optional — if pipeline.use_pi_auth=true)
+dspy-lm-auth>=0.1.3
+
 # (later, for the eval/deploy phase)
 # mlflow            # cost/latency observability
 # fastapi           # deploy wrapper
