@@ -16,4 +16,6 @@ requests>=2.31
 # (later, for the eval/deploy phase)
 # mlflow            # cost/latency observability
 # fastapi           # deploy wrapper
-# pytest            # CI regression tests
+
+# --- Dev / test ---
+pytest>=8.0                # the CI regression tests
