@@ -103,6 +103,7 @@ class Settings(BaseModel):
             "short_description",
             "description",
             "acceptance_criteria",
+            "u_technical_specification",
             "work_notes",
             "comments",
             "state",
