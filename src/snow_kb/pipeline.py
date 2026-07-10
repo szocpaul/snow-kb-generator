@@ -162,20 +162,21 @@ def generate_kb_article(
     # 3. Story szöveggé egyítése
     story_text = assemble_story_text(story, settings)
 
-    # 4. LM konfigurálása (csak ha nem dry_run — dry_run-ban a program mock)
-    if not settings.dry_run:
+    # 4. Dry-run: a program hívás kihagyása (nincs LM), mock cikk a Story-ból
+    if settings.dry_run:
+        article = _mock_article_from_story(story, settings)
+    else:
+        # 5. LM konfigurálása + program futtatása
         configure_lm(settings)
+        if program is None:
+            program = StoryToKBArticle()
 
-    # 5. Program futtatása
-    if program is None:
-        program = StoryToKBArticle()
-
-    pred = program(
-        story_text=story_text,
-        category=settings.snow.default_category,
-        knowledge_base_id=settings.snow.knowledge_base_id,
-    )
-    article: KBArticle = pred.article
+        pred = program(
+            story_text=story_text,
+            category=settings.snow.default_category,
+            knowledge_base_id=settings.snow.knowledge_base_id,
+        )
+        article: KBArticle = pred.article
 
     # 6. Push a ServiceNow KB-be (ha kértük és nem dry_run)
     if push and not settings.dry_run:
@@ -205,3 +206,42 @@ class _KBArticleWithSysId(KBArticle):
             **kwargs,
         )
         self.sys_id = sys_id
+
+
+# ---------------------------------------------------------------------------
+# Helper: mock cikk dry-run-hoz
+# ---------------------------------------------------------------------------
+
+def _mock_article_from_story(story: StoryData, settings: Settings) -> KBArticle:
+    """Dry-run módban generál egy egyszerű mock cikket a Story adataiból.
+
+    Nem hív LM-et — a Story short_description-ből és a lényeges mezőkből
+    épít fel egy HTML vázat. Ez teszi lehetővé a teljes pipeline tesztelését
+    LM kulcs nélkül.
+    """
+    title = (
+        story.short_description[:120]
+        if story.short_description
+        else f"Story {story.number}"
+    )
+
+    sections_html = []
+    if story.description:
+        sections_html.append(f"<h2>Problem</h2><p>{story.description}</p>")
+    if story.u_technical_specification:
+        sections_html.append(
+            f"<h2>Technical Details</h2><p>{story.u_technical_specification}</p>"
+        )
+    if story.work_notes:
+        sections_html.append(f"<h2>Work Notes</h2><p>{story.work_notes}</p>")
+    if not sections_html:
+        sections_html.append("<p>(Nincs tartalom a Story-ban.)</p>")
+
+    html = "\n".join(sections_html)
+
+    return KBArticle(
+        title=title,
+        html=html,
+        category=settings.snow.default_category,
+        knowledge_base_id=settings.snow.knowledge_base_id,
+    )

@@ -1,0 +1,39 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "snow-kb-generator"
+version = "0.1.0"
+description = "DSPy pipeline that turns completed ServiceNow Stories into Knowledge Base articles"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "Proprietary" }
+authors = [{ name = "Pal" }]
+dependencies = [
+    "dspy>=3.2.0,<3.4",
+    "pydantic>=2.0",
+    "pydantic-settings>=2.0",
+    "python-dotenv>=1.0",
+    "PyYAML>=6.0",
+    "requests>=2.31",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+]
+deploy = [
+    "mlflow",        # cost/latency observability
+    "fastapi",       # deploy wrapper
+]
+
+[project.scripts]
+snow-kb = "snow_kb.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
