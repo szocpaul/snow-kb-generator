@@ -1,0 +1,23 @@
+services:
+  snow-kb-generator:
+    build: .
+    container_name: snow-kb-generator
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    volumes:
+      # Mounting the config and the secrets (not part of the image)
+      - ./config.yaml:/app/config.yaml:ro
+      - ./.env:/app/.env:ro
+      # The Pi Agent auth file (the GLM API key)
+      - /etc/snow-kb/pi-auth.json:/etc/snow-kb/pi-auth.json:ro
+      # Data directory (mock Stories)
+      - ./data:/app/data:ro
+    environment:
+      - SNOW_WEBHOOK_API_KEY=${SNOW_WEBHOOK_API_KEY:-change-me}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
