@@ -40,10 +40,24 @@ function createKbArticle() {
             action.disabled = false;
         }
 
-        var answer = response.responseXML.documentElement.getAttribute("answer");
-        var result = JSON.parse(answer);
+        var result;
+        try {
+            // A ServiceNow GlideAjax válaszát biztonságosan olvassuk ki
+            var answerText = response.responseXML.documentElement.getAttribute('answer');
+            
+            // Ha a ServiceNow duplán escape-elte a JSON-t (gyakori hiba)
+            if (typeof answerText === 'string' && answerText.startsWith("{")) {
+                result = JSON.parse(answerText);
+            } else {
+                // Ha valamiért mégis objektumként jön
+                result = answerText;
+            }
+        } catch (e) {
+            g_form.addErrorMessage("Hiba a szerver válaszának feldolgozásakor: " + e.message);
+            return;
+        }
 
-        if (result.success) {
+        if (result && result.success) {
             // Sikeres generálás
             var kbUrl = result.kb_url || '';
             var title = result.title || 'KB cikk';
@@ -55,13 +69,12 @@ function createKbArticle() {
                 g_form.addInfoMessage("KB cikk generálva (push nélkül): " + title);
             }
 
-            // Work notes frissítése
-            // (A Script Include már frissíti, de itt is jelezzük)
-            g_form.addInfoMessage("A Story work_notes mezője frissítve lett a KB linkkel.");
+            // Oldal újratöltése, hogy frissüljön a work_notes mező (megtörtént a szerver oldalon)
+            window.location.reload();
         } else {
             // Hiba
-            var errorMsg = result.message || 'Ismeretlen hiba történt.';
-            g_form.addErrorMessage("Hiba a KB cikk generálásakor: " + errorMsg);
+            var errorMsg = (result && result.message) ? result.message : 'Ismeretlen hiba történt a generálás során.';
+            g_form.addErrorMessage("Hiba: " + errorMsg);
         }
     }
 }
