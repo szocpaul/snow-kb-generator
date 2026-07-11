@@ -1,0 +1,23 @@
+services:
+  snow-kb-generator:
+    build: .
+    container_name: snow-kb-generator
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    volumes:
+      # Config és titkok mountolása (nem a kép része)
+      - ./config.yaml:/app/config.yaml:ro
+      - ./.env:/app/.env:ro
+      # Pi Agent auth fájl (GLM API kulcs)
+      - /home/ubuntu/.pi/agent/auth.json:/root/.pi/agent/auth.json:ro
+      # Data mappa (mock Story-k)
+      - ./data:/app/data:ro
+    environment:
+      - SNOW_WEBHOOK_API_KEY=${SNOW_WEBHOOK_API_KEY:-change-me}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s

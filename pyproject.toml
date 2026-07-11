@@ -22,10 +22,12 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
     "pytest>=8.0",
+    "httpx>=0.28",    # FastAPI TestClient függősége
 ]
 deploy = [
-    "mlflow",        # cost/latency observability
-    "fastapi",       # deploy wrapper
+    "mlflow",         # cost/latency observability
+    "fastapi>=0.115", # HTTP API szerver (UI Action webhook)
+    "uvicorn>=0.34",  # ASGI szerver a FastAPI-hoz
 ]
 pi-auth = [
     "dspy-lm-auth",  # Pi Agent GLM hitelesítés
