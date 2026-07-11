@@ -133,15 +133,31 @@ snow_kb_generator/
 
 - The `.venv` is shared in the parent directory; there is no separate virtual environment (until the dependencies diverge).
 
-## 9. Where we are (last update: 2024-07-10)
+## 9. Where we are (last update: 2024-07-11)
 
 - [x] **The core pipeline is fully done and works in production!**
 - [x] ServiceNow connection configured (test-instance instance).
 - [x] LM authentication configured: Pi Agent GLM-5.2 (via Z.ai endpoint).
 - [x] CLI installed (`pip install -e .` was run).
 - [x] Live test successful: STRY0010012 processed, KB article created in the ServiceNow IT KB.
+- [x] **FastAPI web server and ServiceNow UI Action integration implemented.**
+- [x] The VPS server (Hetzner, public IP: 192.0.2.10) and port 8000 configured.
+- [x] The server is successfully reached with a ServiceNow Script Include REST call (proven via a `sys.scripts.do` test).
+- [x] The server successfully generates and pushes a KB article, then updates the Story's `work_notes` field via the Table API.
+- [x] The FastAPI `async` error fixed (the endpoints were rewritten to `def` so that DSPy runs stably in the threadpool).
 
-### Next step: GEPA optimization (DSPy steps 6-7)
+### KB UI Action Button Debugging (IN PROGRESS)
+When the User clicks the "Create KB Article" button on the ServiceNow form, the info message appears, but the process hits a JavaScript error in the browser:
+- **Error in the browser console (F12):** `Uncaught TypeError: Cannot read properties of null (reading 'success')`
+- **Cause:** The return value of the ServiceNow `GlideAjax` (JSON string) cannot be parsed correctly on the client side.
+- **Solution attempt:** `servicenow/create_kb_client_script.js` was updated with a `try...catch` block and `window.location.reload()`. The User has to copy this into the ServiceNow UI Action script and test it.
+- **Next step here:** If the client script throws an error, the console message or the `e.message` will reveal why ServiceNow cannot parse the JSON (e.g. a too long response or double escaping). This must be fixed by modifying the server (`server.py` / `GenerateKBResponse`) or the Script Include (`SnowKbGenerator`).
+
+### UI Action tesztelve?
+
+- [ ] Testing the UI Action button on the interface (error troubleshooting)
+
+### Next step: GEPA optimization (DSPy step 6-7)
 
 1. Implement `eval/dataset.py`:
    - Collect 3-5 "gold" example pairs (Story text -> expected KB article) in the `data/examples/` folder.
