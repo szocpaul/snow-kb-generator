@@ -40,10 +40,24 @@ function createKbArticle() {
             action.disabled = false;
         }
 
-        var answer = response.responseXML.documentElement.getAttribute("answer");
-        var result = JSON.parse(answer);
+        var result;
+        try {
+            // Read the ServiceNow GlideAjax response safely
+            var answerText = response.responseXML.documentElement.getAttribute('answer');
+            
+            // If ServiceNow has double-escaped the JSON (a common error)
+            if (typeof answerText === 'string' && answerText.startsWith("{")) {
+                result = JSON.parse(answerText);
+            } else {
+                // If for some reason it still comes as an object
+                result = answerText;
+            }
+        } catch (e) {
+            g_form.addErrorMessage("Error while processing the server response: " + e.message);
+            return;
+        }
 
-        if (result.success) {
+        if (result && result.success) {
             // Successful generation
             var kbUrl = result.kb_url || '';
             var title = result.title || 'KB article';
@@ -55,13 +69,12 @@ function createKbArticle() {
                 g_form.addInfoMessage("KB article generated (without push): " + title);
             }
 
-            // Updating work notes
-            // (The Script Include already updates it, but we signal it here too)
-            g_form.addInfoMessage("The Story work_notes field has been updated with the KB link.");
+            // Reload the page so the work_notes field is refreshed (it already happened server-side)
+            window.location.reload();
         } else {
             // Error
-            var errorMsg = result.message || 'An unknown error occurred.';
-            g_form.addErrorMessage("Error while generating the KB article: " + errorMsg);
+            var errorMsg = (result && result.message) ? result.message : 'An unknown error occurred during generation.';
+            g_form.addErrorMessage("Error: " + errorMsg);
         }
     }
 }
