@@ -182,11 +182,12 @@ class ServiceNowClient:
     # create_kb_article — creation of the KB article
     # ------------------------------------------------------------------
 
-    def create_kb_article(self, article: KBArticle) -> str:
+    def create_kb_article(self, article: KBArticle, story_sys_id: str = "") -> str:
         """Creates a KB article in ServiceNow (or simulates it in dry-run).
 
         Args:
             article: the KB article to publish.
+            story_sys_id: the sys_id of the source Story (for updating the work_notes).
 
         Returns:
             The sys_id of the new KB article (dummy in dry-run).
@@ -197,7 +198,7 @@ class ServiceNowClient:
         """
         if self.dry_run:
             return self._create_kb_article_mock(article)
-        return self._create_kb_article_live(article)
+        return self._create_kb_article_live(article, story_sys_id)
 
     def _create_kb_article_mock(self, article: KBArticle) -> str:
         """Dry-run: it only logs and returns a dummy sys_id."""
@@ -210,8 +211,8 @@ class ServiceNowClient:
         logger.info("  -> sys_id: %s", dummy_sys_id)
         return dummy_sys_id
 
-    def _create_kb_article_live(self, article: KBArticle) -> str:
-        """Live: ServiceNow Table API POST call."""
+    def _create_kb_article_live(self, article: KBArticle, story_sys_id: str = "") -> str:
+        """Live: ServiceNow Table API POST call + work_notes update."""
         url = f"{self.base_url}/kb_knowledge"
         payload = {
             "knowledge_base": article.knowledge_base_id
@@ -230,7 +231,29 @@ class ServiceNowClient:
 
         sys_id = body["result"]["sys_id"]
         logger.info("KB article created: sys_id=%s", sys_id)
+
+        # Updating the work notes on the Story, if sys_id is given
+        if story_sys_id:
+            self._update_story_work_note(story_sys_id, sys_id, article.title)
+
         return sys_id
+
+    def _update_story_work_note(self, story_sys_id: str, kb_sys_id: str, title: str) -> None:
+        """Updates the Story work_notes field with the KB article link."""
+        table = self.settings.snow.story_table
+        url = f"{self.base_url}/{table}/{story_sys_id}"
+        kb_url = f"https://{self.settings.snow_instance}/kb_view.do?sys_kb_id={kb_sys_id}"
+        
+        payload = {
+            "work_notes": f"KB article created: {kb_url} ({title})"
+        }
+        
+        try:
+            self._request("PATCH", url, json=payload)
+            logger.info("Story work_notes updated: %s", story_sys_id)
+        except ServiceNowError as exc:
+            # The whole process must not fall apart if the work_notes write fails
+            logger.warning("Work_notes update failed (Story: %s): %s", story_sys_id, exc)
 
     # ------------------------------------------------------------------
     # Private: a uniform HTTP request with error handling
