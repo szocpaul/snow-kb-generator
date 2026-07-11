@@ -182,11 +182,12 @@ class ServiceNowClient:
     # create_kb_article — KB cikk létrehozása
     # ------------------------------------------------------------------
 
-    def create_kb_article(self, article: KBArticle) -> str:
+    def create_kb_article(self, article: KBArticle, story_sys_id: str = "") -> str:
         """Létrehoz egy KB cikket a ServiceNow-ban (vagy dry-run-ban szimulál).
 
         Args:
             article: a publikálandó KB cikk.
+            story_sys_id: a forrás Story sys_id-ja (a work_notes frissítéséhez).
 
         Returns:
             Az új KB cikk sys_id-ja (dry-run-ban dummy).
@@ -197,7 +198,7 @@ class ServiceNowClient:
         """
         if self.dry_run:
             return self._create_kb_article_mock(article)
-        return self._create_kb_article_live(article)
+        return self._create_kb_article_live(article, story_sys_id)
 
     def _create_kb_article_mock(self, article: KBArticle) -> str:
         """Dry-run: csak logol, dummy sys_id-t ad vissza."""
@@ -210,8 +211,8 @@ class ServiceNowClient:
         logger.info("  -> sys_id: %s", dummy_sys_id)
         return dummy_sys_id
 
-    def _create_kb_article_live(self, article: KBArticle) -> str:
-        """Éles: ServiceNow Table API POST hívás."""
+    def _create_kb_article_live(self, article: KBArticle, story_sys_id: str = "") -> str:
+        """Éles: ServiceNow Table API POST hívás + work_notes frissítés."""
         url = f"{self.base_url}/kb_knowledge"
         payload = {
             "knowledge_base": article.knowledge_base_id
@@ -230,7 +231,29 @@ class ServiceNowClient:
 
         sys_id = body["result"]["sys_id"]
         logger.info("KB cikk létrehozva: sys_id=%s", sys_id)
+
+        # Work notes frissítése a Story-n, ha meg van adva sys_id
+        if story_sys_id:
+            self._update_story_work_note(story_sys_id, sys_id, article.title)
+
         return sys_id
+
+    def _update_story_work_note(self, story_sys_id: str, kb_sys_id: str, title: str) -> None:
+        """Frissíti a Story work_notes mezőjét a KB cikk linkjével."""
+        table = self.settings.snow.story_table
+        url = f"{self.base_url}/{table}/{story_sys_id}"
+        kb_url = f"https://{self.settings.snow_instance}/kb_view.do?sys_kb_id={kb_sys_id}"
+        
+        payload = {
+            "work_notes": f"KB article created: {kb_url} ({title})"
+        }
+        
+        try:
+            self._request("PATCH", url, json=payload)
+            logger.info("Story work_notes frissítve: %s", story_sys_id)
+        except ServiceNowError as exc:
+            # Ne döjjön el a egész folyamat, ha a work_notes írás sikertelen
+            logger.warning("Work_notes frissítés sikertelen (Story: %s): %s", story_sys_id, exc)
 
     # ------------------------------------------------------------------
     # Privát: egységes HTTP kérés hibakezeléssel

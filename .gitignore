@@ -51,3 +51,4 @@ gepa_logs/
 # ServiceNow exports
 sample_stories/*.json
 !sample_stories/.gitkeep
+server.log

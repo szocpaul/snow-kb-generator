@@ -226,7 +226,7 @@ def generate_kb_article(
 
     # 6. Push a ServiceNow KB-be (ha kértük és nem dry_run)
     if push and not settings.dry_run:
-        sys_id = client.create_kb_article(article)
+        sys_id = client.create_kb_article(article, story_sys_id=story.sys_id)
         # Visszaírjuk a sys_id-t az article-re (új mezővel bővítjük)
         # a KBArticle nem tartalmaz sys_id mezőt; a hívó kapja meg külön
         return _KBArticleWithSysId(article, sys_id)

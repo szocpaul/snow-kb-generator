@@ -95,7 +95,7 @@ def _verify_api_key(x_api_key: str | None) -> None:
 
 
 @app.get("/health", response_model=HealthResponse)
-async def health() -> HealthResponse:
+def health() -> HealthResponse:
     """Egészségügyi ellenőrzés (Docker/systemd healthcheck-hez)."""
     try:
         settings = _get_settings()
@@ -105,7 +105,7 @@ async def health() -> HealthResponse:
 
 
 @app.post("/generate-kb", response_model=GenerateKBResponse)
-async def generate_kb(
+def generate_kb(
     request: GenerateKBRequest,
     x_api_key: str | None = Header(default=None),
 ) -> GenerateKBResponse:
