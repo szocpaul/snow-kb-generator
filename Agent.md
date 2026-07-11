@@ -112,15 +112,31 @@ snow_kb_generator/
 
 - A `.venv` közös a szülőkönyvtárban; nincs saját virtuális környezet (amíg el nem térnek a függőségek).
 
-## 9. Hol tartunk (utolsó frissítés: 2024-07-10)
+## 9. Hol tartunk (utolsó frissítés: 2024-07-11)
 
 - [x] **Core pipeline teljesen kész és működik élesben!**
 - [x] ServiceNow kapcsolat beállítva (dev300344 instance).
 - [x] LM hitelesítés beállítva: Pi Agent GLM-5.2 (via Z.ai endpoint).
 - [x] CLI telepítve (`pip install -e .` megtörtént).
 - [x] Éles teszt sikeres: STRY0010012 feldolgozva, KB cikk létrehozva a ServiceNow IT KB-ben.
+- [x] **FastAPI webszerver és ServiceNow UI Action integráció implementálva.**
+- [x] A VPS szerver (Hetzner, publikus IP: 91.99.175.157) és a 8000-as port beállítva.
+- [x] A ServiceNow Script Include REST hívással sikeresen eléri a szervert (`sys.scripts.do` teszten keresztül bizonyítva).
+- [x] A szerver sikeresen generál és pushol KB cikket, majd a Table API-n keresztül frissíti a Story `work_notes` mezőjét.
+- [x] A FastAPI `async` hiba javítva (az endpointok `def`-re lettírva, hogy a DSPy стабилisan fusson a threadpoolban).
 
-### Következő lépés: GEPA optimalizáció (DSPy 6-7. lépés)
+### KB UI Action Gomb hibakeresés (FOLYAMATBAN)
+Amikor a User a ServiceNow formon nyomja a "Create KB Article" gombot, az info message megjelenik, de a böngészőben a folyamat JavaScript hibába ütközik:
+- **Hiba a böngésző konzoljában (F12):** `Uncaught TypeError: Cannot read properties of null (reading 'success')`
+- **Oka:** A ServiceNow `GlideAjax` visszatérési értéke (JSON string) a kliens oldalon nem parse-olható helyesen.
+- **Megoldási kísérlet:** A `servicenow/create_kb_client_script.js` frissítve lett egy `try...catch` blokkal és `window.location.reload()`-dal. Ezt a Usernek be kell másolnia a ServiceNow UI Action scriptjébe és tesztelnie kell.
+- **Következő lépés itt:** Ha a kliens script hibáteldob, a konzol üzenetből vagy az `e.message`-ből kiderül, miért nem tudja a ServiceNow parse-olni a JSON-t (pl. túl hosszú válasz vagy dupla escape-elés). Ezt kell javítani a szerver (`server.py` / `GenerateKBResponse`) vagy a Script Include (`SnowKbGenerator`) módosításával.
+
+### UI Action tesztelve?
+
+- [ ] UI Action gomb tesztelése a felületen (hiba elhárítása)
+
+### Utáánkövetkező lépés: GEPA optimalizáció (DSPy 6-7. lépés)
 
 1. `eval/dataset.py` implementálása:
    - `data/examples/` mappába kell gyűjteni 3-5 "arany" (gold) példapárt (Story szöveg -> várt KB cikk).
