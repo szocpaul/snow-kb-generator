@@ -112,7 +112,7 @@ snow_kb_generator/
 
 - A `.venv` közös a szülőkönyvtárban; nincs saját virtuális környezet (amíg el nem térnek a függőségek).
 
-## 9. Hol tartunk (utolsó frissítés: 2024-07-11)
+## 9. Hol tartunk (utolsó frissítés: 2024-07-13 (GEPA phase starts))
 
 - [x] **Core pipeline teljesen kész és működik élesben!**
 - [x] ServiceNow kapcsolat beállítva (dev300344 instance).
@@ -134,9 +134,9 @@ Amikor a User a ServiceNow formon nyomja a "Create KB Article" gombot, az info m
 
 ### UI Action tesztelve?
 
-- [ ] UI Action gomb tesztelése a felületen (hiba elhárítása)
+- [x] UI Action gomb tesztelése a felületen (hiba elhárítva, minden mukodik!)
 
-### Utáánkövetkező lépés: GEPA optimalizáció (DSPy 6-7. lépés)
+### Következő lépés: GEPA optimalizáció (DSPy 6-7. lépés)
 
 1. `eval/dataset.py` implementálása:
    - `data/examples/` mappába kell gyűjteni 3-5 "arany" (gold) példapárt (Story szöveg -> várt KB cikk).
