@@ -16,10 +16,12 @@ var apiUrl = 'http://91.99.175.157:8000/generate-kb';
 var apiKey = 'snow-kb-test-key-2024';
 
 // 2. REST hívás indítása a VPS szerverünknek
-var requestBody = JSON.stringify({
-    story_id: storyId,
-    push: true
-});
+// A ServiceNow beépített JSON encoder-ét használjuk a stabilitás miatt
+var payload = {};
+payload.story_id = storyId + ''; // string-ként kényszerítés
+payload.push = true;
+
+var requestBody = new JSON().encode(payload);
 
 var restMessage = new sn_ws.RESTMessageV2();
 restMessage.setEndpoint(apiUrl);
