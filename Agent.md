@@ -133,7 +133,7 @@ snow_kb_generator/
 
 - The `.venv` is shared in the parent directory; there is no separate virtual environment (until the dependencies diverge).
 
-## 9. Where we are (last update: 2024-07-11)
+## 9. Where we are (last update: 2024-07-13 (GEPA phase starts))
 
 - [x] **The core pipeline is fully done and works in production!**
 - [x] ServiceNow connection configured (test-instance instance).
@@ -155,9 +155,9 @@ When the User clicks the "Create KB Article" button on the ServiceNow form, the 
 
 ### UI Action tesztelve?
 
-- [ ] Testing the UI Action button on the interface (error troubleshooting)
+- [x] Testing the UI Action button on the interface (error resolved, everything works!)
 
-### Next step: GEPA optimization (DSPy step 6-7)
+### Next step: GEPA optimization (DSPy steps 6-7)
 
 1. Implement `eval/dataset.py`:
    - Collect 3-5 "gold" example pairs (Story text -> expected KB article) in the `data/examples/` folder.
