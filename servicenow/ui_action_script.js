@@ -3,8 +3,6 @@
 // ============================================================================
 // This script has to be copied into the "Script" field of the UI Action.
 // IMPORTANT: The "Client" field on the UI Action record must be UNCHECKED (false)!
-// This is a server-side script, so it avoids the asynchronous limitations of GlideAjax
-// and it works exactly like a background script (sys.scripts.do).
 // ============================================================================
 
 // 1. The 'current' variable automatically contains the opened Story
@@ -16,12 +14,12 @@ var apiUrl = 'http://192.0.2.10:8000/generate-kb';
 var apiKey = 'REPLACE_WITH_RANDOM_KEY';
 
 // 2. Starting the REST call to our VPS server
-// We use the ServiceNow built-in JSON encoder for stability
 var payload = {};
 payload.story_id = storyId + ''; // coerce to string
 payload.push = true;
 
-var requestBody = new JSON().encode(payload);
+// Using the standard JSON.stringify
+var requestBody = JSON.stringify(payload);
 
 var restMessage = new sn_ws.RESTMessageV2();
 restMessage.setEndpoint(apiUrl);
@@ -41,18 +39,21 @@ try {
         
         if (result.success && result.kb_url) {
             // 3. On successful generation put the link into the Story work_notes field
+            // We do NOT call current.update()!
+            // After the UI Action has run, ServiceNow automatically saves the form,
+            // so we avoid the double work_notes entry.
             current.work_notes = "KB article created: " + result.kb_url + " (" + result.title + ")";
-            current.update(); // Saving the Story
         } else {
+            current.work_notes = "KB article generation failed: Invalid server response.";
             gs.addErrorMessage("Error: the server response was invalid.");
         }
     } else {
         // If the server returned a 500 or another error code
         current.work_notes = "KB article generation FAILED: HTTP " + httpStatus + " - " + responseBody.substring(0, 200);
-        current.update();
         gs.addErrorMessage("Error during generation (HTTP " + httpStatus + ")");
     }
 } catch (ex) {
+    current.work_notes = "KB script exception: " + ex.message;
     gs.addErrorMessage("An exception was thrown during the REST call: " + ex.message);
 }
 
