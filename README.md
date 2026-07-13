@@ -1,74 +1,132 @@
 # snow-kb-generator
 
-> DSPy pipeline that turns completed ServiceNow **Stories** into **Knowledge Base articles** — automatically.
+> DSPy pipeline that turns completed ServiceNow **Stories** into **Knowledge Base articles** — automatically, powered by GLM-5.2 and a ServiceNow UI Action button.
 
 ## Mi ez?
 
-Amikor a fejlesztők befejeznek egy ServiceNow Story-t (`STRY...`), arról manuálisan kellene Knowledge Base (KB) cikket írni. Ez a project automatizálja: egy AI pipeline (DSPy) a Story mezőiből strukturált, célközönségnek szóló, ServiceNow-kompatibilis KB cikket generál, és visszaíratja a KB-be.
+Amikor a fejlesztők befejeznek egy ServiceNow Story-t (`STRY...`), kézzel kellene Knowledge Base (KB) cikket írni a megoldásról. Ez a project **teljesen automatizálja** ezt:
+1. A fejlesztő rákattint a **"Create KB Article"** gombra a ServiceNow felületen.
+2. A Story adatai egy FastAPI webszerverre kerülnek (VPS-en fut).
+3. Egy AI pipeline (DSPy + GLM-5.2) strukturált KB cikket generál.
+4. A cikk automatikusan létrejön a ServiceNow KB-ben, a linkje pedig bekerül a Story `work_notes` mezőjébe.
 
-**Bemenet:** lezárt ServiceNow Story — `short_description`, `description`, `acceptance_criteria`, `work_notes`, `comments`, `state`, …
+**Bemenet:** lezárt ServiceNow Story — `short_description`, `description`, `acceptance_criteria`, `u_technical_specification`, `work_notes`, `comments`, `state`.
 **Kimenet:** KB Article (HTML) — `title`, `summary`, `problem`, `solution` (reprodukálható lépések), `category`, `audience`.
 
 ## Technológiai verem
 
 - **Python 3.12**
 - **DSPy 3.2.x** — Signatures + Modules, GEPA optimalizáció
+- **LM:** GLM-5.2 (Pi Agent előfizetés, Z.ai API-n keresztül)
 - **ServiceNow Table API** (`requests`) — Story lekérés + KB létrehozás (CRUD)
-- **Pydantic v2** — adatmodell
-- **python-dotenv + PyYAML** — konfiguráció (`.env` titkok, `config.yaml` beállítások)
+- **FastAPI + Uvicorn** — Webhook szerver a ServiceNow UI Action-nek
+- **Pydantic v2** — adatmodell és validáció
+- **Docker** — deploy és konténerizáció
+
+## Architektúra
+
+```
+ServiceNow (Fejlesztői UI)
+    │
+    │  [Create KB] UI Action gomb (Server-side script)
+    │  → RESTMessageV2 (POST)
+    ▼
+FastAPI szerver (VPS - Hetzner, 8000-as port)
+    │  1. ServiceNowClient.get_story() – Elkéri a Story-t
+    │  2. StoryToKBArticle (DSPy + GLM-5.2) – Legenerálja a cikket
+    │  3. ServiceNowClient.create_kb_article() – Pusholja a KB-be
+    ▼
+Válasz a ServiceNow-nak:
+    {"kb_sys_id", "kb_url", "title"}
+    │
+    ▼
+UI Action frissíti a Story work_notes mezőjét a linkkel.
+```
+
+## Telepítés és futtatás
+
+### 1. Követelmények
+- Python 3.12+
+- ServiceNow instance (hozzáférés a Table API-hoz és UI Action-ökhoz)
+- GLM API kulcs (vagy más DSPy által támogatott LM)
+
+### 2. Beállítás
+```bash
+git clone https://github.com/szocpaul/snow-kb-generator.git
+cd snow-kb-generator
+
+# Függőségek telepítése
+pip install -e ".[deploy,pi-auth]"
+
+# Konfiguráció
+cp .env.example .env
+# Szerkeszd a .env fájlt: SNOW_INSTANCE, SNOW_USERNAME, SNOW_PASSWORD, SNOW_WEBHOOK_API_KEY
+# Szerkeszd a config.yaml fájlt: models.main, knowledge_base_id, story_table
+```
+
+### 3. Futtatás CLI-ből (teszteléshez)
+```bash
+# Csak generálás, push nélkül (dry-run, lokális mock Story-val)
+python -m snow_kb STRY0012345 --dry-run
+
+# Éles generálás ServiceNow-ból, KB push nélkül
+python -m snow_kb STRY0010012 --no-push --json
+
+# Teljes pipeline: lekérés + generálás + push a KB-be
+python -m snow_kb STRY0010012
+```
+
+### 4. Futtatás Webszerverként (ServiceNow UI Action-höz)
+
+**Dockerrel (ajánlott VPS-re):**
+```bash
+docker-compose up -d
+```
+
+**Manuálisan:**
+```bash
+uvicorn snow_kb.server:app --host 0.0.0.0 --port 8000
+```
+
+A szerver elérhető lesz a `http://<VPS_IP>:8000` címen.
+- `GET /health` — Egészségügyi ellenőrzés
+- `POST /generate-kb` — Story-ból KB cikket generál (API kulcs szükséges)
+
+### 5. ServiceNow beállítása
+A `servicenow/` mappában található `README.md` lépésről lépésre leírja, hogyan kell beállítani az UI Action gombot és a scriptet a ServiceNow rendszerben.
 
 ## Mappa-struktúra
 
 ```
 snow_kb_generator/
-├── Agent.md                    # a project célja, határai, működési elvei
-├── README.md                   # ez a fájl
-├── .env.example                # sablon a titkokhoz
-├── requirements.txt            # függőségek
-├── config.yaml                 # beállítások (KB id, kategóriák, modellek)
-└── src/snow_kb/
-    ├── __init__.py
-    ├── config.py               # .env + config.yaml betöltés
-    ├── servicenow_client.py    # ServiceNow Table API kliens
-    ├── schemas.py              # Pydantic adatmodellek
-    ├── signatures.py           # DSPy Signatures (a pipeline lépései)
-    ├── program.py              # StoryToKBArticle(dspy.Module)
-    ├── pipeline.py             # orchestrátor: fetch → generate → push
-    └── cli.py                  # parancssori felület
-data/                           # minta / gold adatok
-eval/                           # dataset + rich metric
-runs/                           # baseline / optimized JSON eredmények
-artifacts/                      # lementett optimalizált program
-gepa_logs/                      # GEPA reflection logok
+├── Agent.md                    # AI ágens számára: cél, elvek, státusz
+├── pyproject.toml              # Csomag definíció
+├── Dockerfile                  # Deploy konténer
+├── docker-compose.yml          # Deploy konfiguráció
+├── config.yaml                 # Modell, KB ID, táblanevek
+├── src/snow_kb/
+│   ├── server.py               # FastAPI webszerver
+│   ├── pipeline.py             # Orchestrátor (fetch → generate → push)
+│   ├── servicenow_client.py    # ServiceNow Table API kliens
+│   ├── signatures.py           # DSPy Signatures (ExtractChange, DraftSections, FormatKB)
+│   ├── program.py              # StoryToKBArticle(dspy.Module)
+│   └── ...                     # config, schemas, cli
+├── servicenow/                 # ServiceNow-ba másolandó UI Action script
+├── tests/                      # 171 pytest teszt
+├── eval/                       # GEPA metrika és dataset (fejlesztés alatt)
+└── data/                       # Minta Story-k és Gold példapárok
 ```
 
-## Állapot
+## DSPy Workflow állapota
 
-Ez a project jelenleg **tervezési fázisban** van. A `src/snow_kb/*.py` fájlok csak
-**komment-formájú terveket** tartalmaznak (nincs még implementált kód). A teljes
-cél és a 7 lépéses DSPy workflow leírása az [`Agent.md`](Agent.md)-ben található.
-
-## Munkafolyamat (tervezett)
-
-1. **Spec** → 2. **Program** → 3. **Data** → 4. **Rich metric** →
-5. **Baseline** → 6. **GEPA optimalizáció** → 7. **Export & deploy**
-
-Részletek: lásd `Agent.md` 5. szakasz.
-
-## Használat (tervezett)
-
-```bash
-# egyszeri beállítás
-cp .env.example .env   # és töltsd ki
-pip install -r requirements.txt
-
-# egy Story-ból KB cikk
-python -m snow_kb STRY0012345
-
-# dry-run: csak generál, nem ír a ServiceNow-ba
-python -m snow_kb STRY0012345 --dry-run
-```
+1. **Spec** — ✅ Kész
+2. **Program** — ✅ Kész (Signatures + Module)
+3. **Data** — ⏳ Gold példapárok gyűjtése alatt
+4. **Rich metric** — ⏳ Következő lépés
+5. **Baseline** — ⏳
+6. **GEPA optimalizáció** — ⏳
+7. **Export & deploy** — ✅ Kész (FastAPI + Docker + ServiceNow UI Action)
 
 ## Licenc
 
-Még nincs megadva (private project).
+Private project.
