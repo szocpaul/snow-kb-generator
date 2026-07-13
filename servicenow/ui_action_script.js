@@ -43,8 +43,6 @@ try {
             // 3. Sikeres generálás esetén a link berakása a Story work_notes mezőjébe
             current.work_notes = "KB article created: " + result.kb_url + " (" + result.title + ")";
             current.update(); // Story mentése
-            
-            gs.addInfoMessage("KB cikk sikeresen létrehozva: " + result.title);
         } else {
             gs.addErrorMessage("Hiba: A szerver válasza érvénytelen volt.");
         }
