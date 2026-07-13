@@ -43,8 +43,6 @@ try {
             // 3. On successful generation put the link into the Story work_notes field
             current.work_notes = "KB article created: " + result.kb_url + " (" + result.title + ")";
             current.update(); // Saving the Story
-            
-            gs.addInfoMessage("KB article created successfully: " + result.title);
         } else {
             gs.addErrorMessage("Error: the server response was invalid.");
         }
