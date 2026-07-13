@@ -1,46 +1,37 @@
-# ServiceNow UI Action: "Create KB"
+# ServiceNow UI Action: "Create KB" (server-side solution)
 
-This folder contains the ServiceNow-side scripts that you have to copy
-a ServiceNow instance-odra (UI Action record + script).
-**These do not run on our server** — they run on the ServiceNow server.
+This folder contains the ServiceNow-side script that you must copy into the UI Action record.
+**This script runs on the ServiceNow server** and calls our FastAPI server on the VPS directly from there. (Much more stable than GlideAjax calls started from the browser).
 
-## Installation
+## Installation steps
 
-### 1. Collect the data
+### 1. Create the UI Action record
+Open ServiceNow and create a new UI Action record (System UI > UI Actions > New).
 
-You will need the details of your FastAPI server:
-- **API URL**: pl. `http://your-vps-ip:8000/generate-kb`
-- **API Key**: the `SNOW_WEBHOOK_API_KEY` that you put into the `.env`
+Fill it in like this:
+- **Name:** `Create KB Article`
+- **Table:** `rm_story`
+- **Client:** `false` (NO checkmark! This is critical, it will run server-side)
+- **Form button:** `true` (so that the button is visible)
+- **Condition:** `current.state == '3'` (only show it on closed Stories)
 
-### 2. Creating the UI Action record
+### 2. Paste the script
+Paste the content of the `ui_action_script.js` file into the UI Action **"Script"** field.
 
-Open ServiceNow and create a new UI Action record:
+**Check the settings in the script:**
+- `apiUrl`: The IP address and port of your VPS server (currently: `http://192.0.2.10:8000/generate-kb`)
+- `apiKey`: The API key of the server (currently: `REPLACE_WITH_RANDOM_KEY`)
 
-- **Name**: `Create KB Article`
-- **Table**: `rm_story` (or `story`, depending on which one exists on your instance)
-- **Client**: `true` (client-side script)
-- **Onclick**: `createKbArticle()` (the name of the Client Script that you find below)
-- **Condition**: `current.state == '3' || current.state == 'Closed Complete'`
-  (The button should appear only on closed Stories)
+### 3. Operation
+When a developer presses the button on a closed Story:
+1. The ServiceNow server assembles the Story identifier.
+2. It sends a REST POST request to your VPS server.
+3. The VPS server (FastAPI + DSPy + GLM) generates the KB article.
+4. The generated article is uploaded to the ServiceNow KB immediately.
+5. The server returns the article URL to ServiceNow.
+6. The script automatically writes the KB article link into the Story's `work_notes` field.
+7. A success message appears on the screen.
 
-### 3. Client Script (into the UI Action Script field)
-
-Copy the content of `create_kb_client_script.js` into the "Script" field of the UI Action.
-Do not forget to change the `API_URL` and `API_KEY` values in it!
-
-## How does it work?
-
-1. The developer opens a closed Story.
-2. The "Create KB Article" button appears at the top of the Story form.
-3. When the button is clicked, on the ServiceNow client side (in the browser) a `GlideAjax`
-   call, which on the server side calls a Script Include.
-4. The Script Include (on the ServiceNow server side) makes a REST call to the FastAPI
-   szerverednek (`POST /generate-kb`).
-5. The FastAPI server runs the pipeline and creates the KB article.
-6. The Script Include gets back the KB article link and writes it into the Story
-   into the `work_notes` field.
-
-> **Note:** The `create_kb_script_include.js` is a Script Include that must be
-> you must create in ServiceNow, because the client-side script cannot directly
-> called by a separate external URL (for CORS and security reasons). The Script Include runs on the
-> on the server, and there a REST call can already be made.
+## Troubleshooting
+- **Connection refused:** check whether port 8000 is allowed through the VPS firewall (UFW / Hetzner Cloud).
+- **Timeout:** generating with the GLM-5.2 model takes 10-20 seconds. The timeout in the script is set to 120 seconds (`120000` ms), which is more than enough.
