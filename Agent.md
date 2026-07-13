@@ -38,6 +38,7 @@ In ServiceNow, developers work on implementing **Stories** (`STRY...`). When the
 - **Data model:** Pydantic v2 + pydantic-settings
 - **Configuration:** `.env` (secrets) + `config.yaml` (settings)
 - **LM authentication:** Pi Agent GLM-5.2 via the Z.ai API (`use_pi_auth: true`)
+- **Deploy:** FastAPI web server (uvicorn) in a Docker container, received by a server-side ServiceNow UI Action webhook.
 - **Environment:** the `.venv` of the parent directory; installable with `pip install -e .` (pyproject.toml)
 
 ## 3. DSPy pipeline (the core of the program)
@@ -57,6 +58,8 @@ snow_kb_generator/
 ├── Agent.md                    # this file
 ├── README.md                   # overview, setup, usage
 ├── pyproject.toml              # package definition (pip install -e .)
+├── Dockerfile                  # FastAPI deploy container
+├── docker-compose.yml          # deploy configuration
 ├── .gitignore
 ├── .env.example                # SNOW instance/user/password + LM API keys
 ├── .env                        # REAL secrets (NOT version controlled)
@@ -71,8 +74,12 @@ snow_kb_generator/
 │   ├── signatures.py           # DSPy Signatures (ExtractChange, DraftSections, FormatKB)
 │   ├── program.py              # StoryToKBArticle(dspy.Module)
 │   ├── pipeline.py             # orchestrator + assemble_story_text + configure_lm
+│   ├── server.py               # FastAPI web server for the ServiceNow webhook
 │   └── cli.py                  # argparse CLI (python -m snow_kb)
-├── tests/                      # pytest test suite (160 tests)
+├── servicenow/                 # scripts to copy into ServiceNow
+│   ├── README.md               # installation guide
+│   └── ui_action_script.js     # server-side UI Action script (REST call + work_notes update)
+├── tests/                      # pytest test suite (171 tests)
 │   ├── conftest.py             # shared fixtures
 │   ├── test_config.py
 │   ├── test_schemas.py
@@ -80,6 +87,7 @@ snow_kb_generator/
 │   ├── test_program.py
 │   ├── test_pipeline.py
 │   ├── test_servicenow_client.py
+│   ├── test_server.py
 │   └── test_cli.py
 ├── data/
 │   ├── examples/               # gold (Story → KB) example pairs for eval (STILL EMPTY)
@@ -100,7 +108,7 @@ snow_kb_generator/
 4. **Rich metric** — `dspy.Prediction(score=.., feedback=..)`; the feedback is "load-bearing" for GEPA. ⏳
 5. **Baseline** — `dspy.Evaluate` on the valset, result in `runs/baseline.json`. ⏳
 6. **GEPA optimization** — `auto="medium"`, separate `reflection_lm`, Pareto selection. ⏳
-7. **Export & deploy** — `program.save(...)`, CLI/FastAPI wrapper, CI regression test. ⏳
+7. **Export & deploy** — `program.save(...)`, CLI/FastAPI wrapper, CI regression test. ✅
 
 ## 6. Operating principles (stick to these)
 
@@ -119,43 +127,35 @@ snow_kb_generator/
 - [x] Project folder + `Agent.md` created
 - [x] GitHub repo created (`szocpaul/snow-kb-generator`, private)
 - [x] Skeleton files + non-code files (README, config.yaml, etc.)
-- [x] `src/snow_kb/` implemented (config, client, schemas, signatures, program, pipeline, cli)
+- [x] `src/snow_kb/` implemented (config, client, schemas, signatures, program, pipeline, cli, server)
 - [x] Mock Story + `data/` folder
-- [x] Pytest test suite (160 tests, all green)
+- [x] Pytest test suite (171 tests, all green)
 - [x] `pyproject.toml` (pip install -e . works)
 - [x] **Production ServiceNow + LM (GLM-5.2) integration tested**
+- [x] **Deploy: FastAPI web server + ServiceNow UI Action ready**
 - [ ] Eval harness (dataset + rich metric) — **next step**
 - [ ] Baseline measurement
 - [ ] GEPA optimization
-- [ ] Export + deploy
+- [ ] Export optimized model
 
 ## 8. Notes
 
 - The `.venv` is shared in the parent directory; there is no separate virtual environment (until the dependencies diverge).
+- Production ServiceNow PDI instance: `dev.service-now.com`.
 
-## 9. Where we are (last update: 2024-07-13 (GEPA phase starts))
+## 9. Where we are (last update: 2024-07-13)
 
 - [x] **The core pipeline is fully done and works in production!**
-- [x] ServiceNow connection configured (test-instance instance).
+- [x] ServiceNow connection configured (dev-instance instance).
 - [x] LM authentication configured: Pi Agent GLM-5.2 (via Z.ai endpoint).
 - [x] CLI installed (`pip install -e .` was run).
-- [x] Live test successful: STRY0010012 processed, KB article created in the ServiceNow IT KB.
+- [x] Production test successful: Story processed, KB article created in the ServiceNow IT KB.
 - [x] **FastAPI web server and ServiceNow UI Action integration implemented.**
 - [x] The VPS server (Hetzner, public IP: 192.0.2.10) and port 8000 configured.
-- [x] The server is successfully reached with a ServiceNow Script Include REST call (proven via a `sys.scripts.do` test).
+- [x] The ServiceNow Script Include reaches the server successfully via a REST call.
 - [x] The server successfully generates and pushes a KB article, then updates the Story's `work_notes` field via the Table API.
-- [x] The FastAPI `async` error fixed (the endpoints were rewritten to `def` so that DSPy runs stably in the threadpool).
-
-### KB UI Action Button Debugging (IN PROGRESS)
-When the User clicks the "Create KB Article" button on the ServiceNow form, the info message appears, but the process hits a JavaScript error in the browser:
-- **Error in the browser console (F12):** `Uncaught TypeError: Cannot read properties of null (reading 'success')`
-- **Cause:** The return value of the ServiceNow `GlideAjax` (JSON string) cannot be parsed correctly on the client side.
-- **Solution attempt:** `servicenow/create_kb_client_script.js` was updated with a `try...catch` block and `window.location.reload()`. The User has to copy this into the ServiceNow UI Action script and test it.
-- **Next step here:** If the client script throws an error, the console message or the `e.message` will reveal why ServiceNow cannot parse the JSON (e.g. a too long response or double escaping). This must be fixed by modifying the server (`server.py` / `GenerateKBResponse`) or the Script Include (`SnowKbGenerator`).
-
-### UI Action tesztelve?
-
-- [x] Testing the UI Action button on the interface (error resolved, everything works!)
+- [x] Tested the UI Action button in the UI (error fixed, works with the server-side script).
+- [x] Fixed the duplicate `work_notes` entry (dropping the `current.update()` solved it).
 
 ### Next step: GEPA optimization (DSPy steps 6-7)
 
