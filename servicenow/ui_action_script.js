@@ -16,10 +16,12 @@ var apiUrl = 'http://192.0.2.10:8000/generate-kb';
 var apiKey = 'REPLACE_WITH_RANDOM_KEY';
 
 // 2. Starting the REST call to our VPS server
-var requestBody = JSON.stringify({
-    story_id: storyId,
-    push: true
-});
+// We use the ServiceNow built-in JSON encoder for stability
+var payload = {};
+payload.story_id = storyId + ''; // coerce to string
+payload.push = true;
+
+var requestBody = new JSON().encode(payload);
 
 var restMessage = new sn_ws.RESTMessageV2();
 restMessage.setEndpoint(apiUrl);
