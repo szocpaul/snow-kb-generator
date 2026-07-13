@@ -17,6 +17,7 @@ ServiceNow-ban a fejlesztők **Story-k** (`STRY...`) megvalósításán dolgozna
 - **Adatmodell:** Pydantic v2 + pydantic-settings
 - **Konfiguráció:** `.env` (titkok) + `config.yaml` (beállítások)
 - **LM hitelesítés:** Pi Agent GLM-5.2 a Z.ai API-n keresztül (`use_pi_auth: true`)
+- **Deploy:** FastAPI webszerver (uvicorn) Docker konténerben, ServiceNow szerveroldali UI Action webhook fogadja.
 - **Környezet:** a szülőkönyvtár `.venv`-je; telepíthető `pip install -e .` (pyproject.toml)
 
 ## 3. DSPy pipeline (a program magja)
@@ -36,6 +37,8 @@ snow_kb_generator/
 ├── Agent.md                    # ez a fájl
 ├── README.md                   # áttekintés, beállítás, használat
 ├── pyproject.toml              # csomag definíció (pip install -e .)
+├── Dockerfile                  # FastAPI deploy konténer
+├── docker-compose.yml          # Deploy konfiguráció
 ├── .gitignore
 ├── .env.example                # SNOW instance/user/password + LM API kulcsok
 ├── .env                        # TÉNYLEGES titkok (NEM verziókezelve)
@@ -50,8 +53,12 @@ snow_kb_generator/
 │   ├── signatures.py           # DSPy Signatures (ExtractChange, DraftSections, FormatKB)
 │   ├── program.py              # StoryToKBArticle(dspy.Module)
 │   ├── pipeline.py             # orchestrátor + assemble_story_text + configure_lm
+│   ├── server.py               # FastAPI webszerver a ServiceNow webhook-nak
 │   └── cli.py                  # argparse CLI (python -m snow_kb)
-├── tests/                      # pytest tesztcsomag (160 teszt)
+├── servicenow/                 # ServiceNow-ba másolandó scriptek
+│   ├── README.md               # Telepítési útmutató
+│   └── ui_action_script.js     # Szerveroldali UI Action script (REST hívás + work_notes update)
+├── tests/                      # pytest tesztcsomag (171 teszt)
 │   ├── conftest.py             # közös fixture-k
 │   ├── test_config.py
 │   ├── test_schemas.py
@@ -59,6 +66,7 @@ snow_kb_generator/
 │   ├── test_program.py
 │   ├── test_pipeline.py
 │   ├── test_servicenow_client.py
+│   ├── test_server.py
 │   └── test_cli.py
 ├── data/
 │   ├── examples/               # gold (Story → KB) példapárok evalhez (MÉG ÜRES)
@@ -79,7 +87,7 @@ snow_kb_generator/
 4. **Rich metric** — `dspy.Prediction(score=.., feedback=..)`; a feedback "load-bearing" a GEPA számára. ⏳
 5. **Baseline** — `dspy.Evaluate` a valset-en, eredmény `runs/baseline.json`. ⏳
 6. **GEPA optimalizáció** — `auto="medium"`, `reflection_lm` külön, Pareto szelekció. ⏳
-7. **Export & deploy** — `program.save(...)`, CLI/FastAPI burkolat, CI regressziós teszt. ⏳
+7. **Export & deploy** — `program.save(...)`, CLI/FastAPI burkolat, CI regressziós teszt. ✅
 
 ## 6. Működési elvek (álljunk ezekhez)
 
@@ -98,43 +106,35 @@ snow_kb_generator/
 - [x] Project mappa + `Agent.md` létrehozva
 - [x] GitHub repo létrehozva (`szocpaul/snow-kb-generator`, private)
 - [x] Skeleton fájlok + nem-kód fájlok (README, config.yaml, stb.)
-- [x] `src/snow_kb/` implementálva (config, client, schemas, signatures, program, pipeline, cli)
+- [x] `src/snow_kb/` implementálva (config, client, schemas, signatures, program, pipeline, cli, server)
 - [x] Mock Story + `data/` mappa
-- [x] Pytest tesztcsomag (160 teszt, mind zöld)
+- [x] Pytest tesztcsomag (171 teszt, mind zöld)
 - [x] `pyproject.toml` (pip install -e . működik)
 - [x] **Éles ServiceNow + LM (GLM-5.2) integráció tesztelve**
+- [x] **Deploy: FastAPI webszerver + ServiceNow UI Action készen áll**
 - [ ] Eval harness (dataset + rich metric) — **következő lépés**
 - [ ] Baseline mérés
 - [ ] GEPA optimalizáció
-- [ ] Export + deploy
+- [ ] Export optimalizált modell
 
 ## 8. Megjegyzések
 
 - A `.venv` közös a szülőkönyvtárban; nincs saját virtuális környezet (amíg el nem térnek a függőségek).
+- Éles ServiceNow PDI instance: `dev433980.service-now.com`.
 
-## 9. Hol tartunk (utolsó frissítés: 2024-07-13 (GEPA phase starts))
+## 9. Hol tartunk (utolsó frissítés: 2024-07-13)
 
 - [x] **Core pipeline teljesen kész és működik élesben!**
-- [x] ServiceNow kapcsolat beállítva (dev300344 instance).
+- [x] ServiceNow kapcsolat beállítva (dev433980 instance).
 - [x] LM hitelesítés beállítva: Pi Agent GLM-5.2 (via Z.ai endpoint).
 - [x] CLI telepítve (`pip install -e .` megtörtént).
-- [x] Éles teszt sikeres: STRY0010012 feldolgozva, KB cikk létrehozva a ServiceNow IT KB-ben.
+- [x] Éles teszt sikeres: Story feldolgozva, KB cikk létrehozva a ServiceNow IT KB-ben.
 - [x] **FastAPI webszerver és ServiceNow UI Action integráció implementálva.**
 - [x] A VPS szerver (Hetzner, publikus IP: 91.99.175.157) és a 8000-as port beállítva.
-- [x] A ServiceNow Script Include REST hívással sikeresen eléri a szervert (`sys.scripts.do` teszten keresztül bizonyítva).
+- [x] A ServiceNow Script Include REST hívással sikeresen eléri a szervert.
 - [x] A szerver sikeresen generál és pushol KB cikket, majd a Table API-n keresztül frissíti a Story `work_notes` mezőjét.
-- [x] A FastAPI `async` hiba javítva (az endpointok `def`-re lettírva, hogy a DSPy стабилisan fusson a threadpoolban).
-
-### KB UI Action Gomb hibakeresés (FOLYAMATBAN)
-Amikor a User a ServiceNow formon nyomja a "Create KB Article" gombot, az info message megjelenik, de a böngészőben a folyamat JavaScript hibába ütközik:
-- **Hiba a böngésző konzoljában (F12):** `Uncaught TypeError: Cannot read properties of null (reading 'success')`
-- **Oka:** A ServiceNow `GlideAjax` visszatérési értéke (JSON string) a kliens oldalon nem parse-olható helyesen.
-- **Megoldási kísérlet:** A `servicenow/create_kb_client_script.js` frissítve lett egy `try...catch` blokkal és `window.location.reload()`-dal. Ezt a Usernek be kell másolnia a ServiceNow UI Action scriptjébe és tesztelnie kell.
-- **Következő lépés itt:** Ha a kliens script hibáteldob, a konzol üzenetből vagy az `e.message`-ből kiderül, miért nem tudja a ServiceNow parse-olni a JSON-t (pl. túl hosszú válasz vagy dupla escape-elés). Ezt kell javítani a szerver (`server.py` / `GenerateKBResponse`) vagy a Script Include (`SnowKbGenerator`) módosításával.
-
-### UI Action tesztelve?
-
-- [x] UI Action gomb tesztelése a felületen (hiba elhárítva, minden mukodik!)
+- [x] UI Action gomb tesztelése a felületen (hiba elhárítva, szerveroldali scripttel működik).
+- [x] A dupla `work_notes` bejegyzés javítva (a `current.update()` elhagyása megoldotta).
 
 ### Következő lépés: GEPA optimalizáció (DSPy 6-7. lépés)
 
