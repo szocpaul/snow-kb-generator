@@ -147,3 +147,20 @@ snow_kb_generator/
 4. GEPA optimalizáció:
    - `dspy.GEPA(auto="medium")` lefuttatása a reflection modellel.
    - Optimalizált program elmentése az `artifacts/` mappába.
+
+## 10. Hol tartunk a GEPA optimalizációban (utolsó frissítés: 2024-07-14)
+
+- [x] **Update Set Code Analysis beépítve és élesben tesztelve!**
+- [x] A pipeline sikeresen lekéri az Update Set módosításokat (XML payloadok), és a GLM-5.2 elemzi a tényleges forráskódot (Script Include, UI Action).
+- [x] Az RLM (Deno sandbox) egy ismert bug (#9643) miatt stabil `dspy.ChainOfThought` lépésre lett cserélve, ami tökéletesen működik a GLM nagy kontextusablakával.
+
+### Következő lépés: GEPA optimalizáció (Data + Metric)
+
+A User megoldása: **Valós HTML KB Article template és legalább 5 meglévő cikk** lesz a Gold Set alapja.
+1. **Adatgyűjtés (Holnap):** A User megkeresi és megadja a HTML formátumú sablonokat és a meglévő cikkeket.
+2. **Feldolgozás:** Ezeket elmentjük a `data/examples/` mappába (template.html, article_1.html, stb.).
+3. **`eval/metric.py` implementálása:** Egy rich_metric, ami összehasonlítja a generált HTML-t a User sablonjával és a Gold cikkekkel (struktúra, címsorok, stb.), és `dspy.Prediction(score, feedback)`-ot ad vissza.
+4. **`eval/dataset.py`:** A cikkekből `dspy.Example` halmazt építünk train/val split-tel.
+5. **Baseline mérés:** `dspy.Evaluate` a jelenlegi programon.
+6. **GEPA futtatás:** `dspy.GEPA(auto="medium")` a reflection modellel.
+7. **Mentés:** Optimalizált program elmentése az `artifacts/` mappába.
