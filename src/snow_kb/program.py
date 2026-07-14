@@ -43,13 +43,7 @@ class StoryToKBArticle(dspy.Module):
     def __init__(self) -> None:
         super().__init__()
         # Named predictors — GEPA targets these.
-        # The RLM step (dspy.RLM) is only initialized and run when needed.
-        self.analyze_changes = dspy.RLM(
-            AnalyzeChanges,
-            max_iterations=15,
-            max_llm_calls=30,
-            max_output_chars=10_000,
-        )
+        self.analyze_changes = dspy.ChainOfThought(AnalyzeChanges)
         self.extract = dspy.ChainOfThought(ExtractChange)
         self.draft = dspy.ChainOfThought(DraftSections)
         self.format = dspy.Predict(FormatKB)
@@ -79,18 +73,23 @@ class StoryToKBArticle(dspy.Module):
         """
         full_context = story_text
 
-        # 0. RLM step: It only runs if the raw payloads are large (> 15.000 characters)
-        if update_set_payloads and len(update_set_payloads) > RLM_THRESHOLD_CHARS:
-            rlm_result = self.analyze_changes(
-                context=update_set_payloads,
+        # 0. AnalyzeChanges step: if there are modifications (raw payloads),
+        # the GLM extracts the scripts/JSDocs from them. Since GLM-5.2 has a
+        # huge (1M token) context window, the 15,000 character limit does not
+        # have to be strict, but we keep it for optimization purposes.
+        if update_set_payloads:
+            # If the payload is very large, we pass only the first 50,000
+            # characters so that we do not overload the context unnecessarily.
+            payload_snippet = update_set_payloads[:50000]
+            if len(update_set_payloads) > 50000:
+                payload_snippet += "\n... (payload truncated at 50,000 characters)"
+                
+            analysis = self.analyze_changes(
+                update_set_xml=payload_snippet,
                 query="Extract all technical details: JSDoc comments, descriptions, function names, and Flow steps.",
             )
-            full_context += "\n\n## Update Set Technical Summary (via RLM)\n"
-            full_context += rlm_result.technical_summary
-        elif update_set_payloads:
-            # The payload is small, it fits in the context, no RLM needed
-            full_context += "\n\n## Update Set Raw Modifications\n"
-            full_context += update_set_payloads
+            full_context += "\n\n## Update Set Technical Summary (via LLM)\n"
+            full_context += analysis.technical_summary
 
         # 1. Extraction: what happened, the steps, the audience
         extracted = self.extract(story_text=full_context)

@@ -27,11 +27,10 @@ class AnalyzeChanges(dspy.Signature):
 
     You are given raw XML payloads from a ServiceNow Update Set. These may contain
     Script Includes, Business Rules, Flow Designer definitions, or ACLs.
-    Write and run Python code to parse the XML, extract JSDoc comments, descriptions,
-    function signatures, or Flow steps, and compile a concise technical summary
-    of the actual implementation work done.
+    Extract JSDoc comments, descriptions, function signatures, or Flow steps, 
+    and compile a concise technical summary of the actual implementation work done.
     """
-    context: str = dspy.InputField(
+    update_set_xml: str = dspy.InputField(
         desc="Raw XML payloads from ServiceNow sys_update_xml records."
     )
     query: str = dspy.InputField(
