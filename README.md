@@ -120,7 +120,7 @@ snow_kb_generator/
 ## DSPy workflow status
 
 1. **Spec** — ✅ Done
-2. **Program** — ✅ Done (Signatures + Module)
+2. **Program** — ✅ Done (Signatures + Module + Update Set Code Analyzer)
 3. **Data** — ⏳ Collecting gold example pairs
 4. **Rich metric** — ⏳ Next step
 5. **Baseline** — ⏳
