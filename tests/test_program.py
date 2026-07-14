@@ -35,10 +35,10 @@ class TestProgramConstruction:
         program = StoryToKBArticle()
         assert isinstance(program, dspy.Module)
 
-    def test_has_five_predictors(self):
+    def test_has_four_predictors(self):
         program = StoryToKBArticle()
-        # analyze_changes (RLM: 2 belső) + extract + draft + format
-        assert len(program.predictors()) == 5
+        # analyze_changes + extract + draft + format
+        assert len(program.predictors()) == 4
 
     def test_predictors_are_named(self):
         """Minden prediktor kapott nevet — a GEPA ezeket célozza."""
@@ -63,7 +63,7 @@ class TestProgramConstruction:
 
         # Legalább egy ChainOfThought-ból jövő Predict és egy sima Predict
         # (ChainOfThought belsőleg Predict-et tartalmaz)
-        assert len(types_by_name) == 5
+        assert len(types_by_name) == 4
 
     def test_signatures_attached(self):
         """A prediktorok a megfelelő Signature-kat használják.

@@ -43,13 +43,7 @@ class StoryToKBArticle(dspy.Module):
     def __init__(self) -> None:
         super().__init__()
         # Névvel ellátott prediktorok — a GEPA ezeket célozza.
-        # Az RLM lépés (dspy.RLM) csak akkor inicializálódik és fut, ha szükséges.
-        self.analyze_changes = dspy.RLM(
-            AnalyzeChanges,
-            max_iterations=15,
-            max_llm_calls=30,
-            max_output_chars=10_000,
-        )
+        self.analyze_changes = dspy.ChainOfThought(AnalyzeChanges)
         self.extract = dspy.ChainOfThought(ExtractChange)
         self.draft = dspy.ChainOfThought(DraftSections)
         self.format = dspy.Predict(FormatKB)
@@ -79,18 +73,23 @@ class StoryToKBArticle(dspy.Module):
         """
         full_context = story_text
 
-        # 0. RLM lépés: Csak akkor fut, ha a nyers payloadok nagyok (> 15.000 karakter)
-        if update_set_payloads and len(update_set_payloads) > RLM_THRESHOLD_CHARS:
-            rlm_result = self.analyze_changes(
-                context=update_set_payloads,
+        # 0. AnalyzeChanges lépés: Ha vannak módosítások (raw payloadok),
+        # a GLM kinyeri belőlük a scripteket/JSDoc-okat. Mivel a GLM-5.2-nek
+        # hatalmas (1M token) kontextusablaka van, a 15.000 karakteres korlátot
+        # nem kell szigorúan vennünk, de meghagyjuk optimalizálás céljából.
+        if update_set_payloads:
+            # Ha nagyon nagy a payload, csak az első 50.000 karaktert adjuk át
+            # hogy ne terheljük túl a kontextust feleslegesen.
+            payload_snippet = update_set_payloads[:50000]
+            if len(update_set_payloads) > 50000:
+                payload_snippet += "\n... (payload csonkítva 50.000 karakternél)"
+                
+            analysis = self.analyze_changes(
+                update_set_xml=payload_snippet,
                 query="Extract all technical details: JSDoc comments, descriptions, function names, and Flow steps.",
             )
-            full_context += "\n\n## Update Set Technical Summary (via RLM)\n"
-            full_context += rlm_result.technical_summary
-        elif update_set_payloads:
-            # Kicsi a payload, elfér a kontextusban, nem kell RLM
-            full_context += "\n\n## Update Set Raw Modifications\n"
-            full_context += update_set_payloads
+            full_context += "\n\n## Update Set Technical Summary (via LLM)\n"
+            full_context += analysis.technical_summary
 
         # 1. Kinyerés: mi történt, lépések, célközönség
         extracted = self.extract(story_text=full_context)
