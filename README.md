@@ -11,6 +11,7 @@ Amikor a fejlesztők befejeznek egy ServiceNow Story-t (`STRY...`), kézzel kell
 4. A cikk automatikusan létrejön a ServiceNow KB-ben, a linkje pedig bekerül a Story `work_notes` mezőjébe.
 
 **Bemenet:** lezárt ServiceNow Story — `short_description`, `description`, `acceptance_criteria`, `u_technical_specification`, `work_notes`, `comments`, `state`.
+**Kiegészítő bemenet:** A Story nevével megegyező nevű **Update Set** modulekérés és a benne lévő módosított forráskódok (Script Include, Business Rule, UI Action XML payloadok).
 **Kimenet:** KB Article (HTML) — `title`, `summary`, `problem`, `solution` (reprodukálható lépések), `category`, `audience`.
 
 ## Technológiai verem
@@ -33,8 +34,9 @@ ServiceNow (Fejlesztői UI)
     ▼
 FastAPI szerver (VPS - Hetzner, 8000-as port)
     │  1. ServiceNowClient.get_story() – Elkéri a Story-t
-    │  2. StoryToKBArticle (DSPy + GLM-5.2) – Legenerálja a cikket
-    │  3. ServiceNowClient.create_kb_article() – Pusholja a KB-be
+    │  2. ServiceNowClient.get_update_set_changes() – Lekéri a módosított kódokat (XML)
+    │  3. StoryToKBArticle (DSPy + GLM-5.2) – Kódok elemzése és cikk generálása
+    │  4. ServiceNowClient.create_kb_article() – Pusholja a KB-be
     ▼
 Válasz a ServiceNow-nak:
     {"kb_sys_id", "kb_url", "title"}
@@ -112,7 +114,7 @@ snow_kb_generator/
 │   ├── program.py              # StoryToKBArticle(dspy.Module)
 │   └── ...                     # config, schemas, cli
 ├── servicenow/                 # ServiceNow-ba másolandó UI Action script
-├── tests/                      # 171 pytest teszt
+├── tests/                      # 173 pytest teszt
 ├── eval/                       # GEPA metrika és dataset (fejlesztés alatt)
 └── data/                       # Minta Story-k és Gold példapárok
 ```
