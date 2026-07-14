@@ -11,6 +11,7 @@ When the developers finish a ServiceNow Story (`STRY...`), a Knowledge Base (KB)
 4. The article is created automatically in the ServiceNow KB, and its link is inserted into the Story `work_notes` field.
 
 **Input:** closed ServiceNow Story — `short_description`, `description`, `acceptance_criteria`, `u_technical_specification`, `work_notes`, `comments`, `state`.
+**Additional input:** The **Update Set** module request with the same name as the Story and the modified source code it contains (Script Include, Business Rule, UI Action XML payloads).
 **Output:** KB Article (HTML) — `title`, `summary`, `problem`, `solution` (reproducible steps), `category`, `audience`.
 
 ## Tech stack
@@ -33,8 +34,9 @@ ServiceNow (Developer UI)
     ▼
 FastAPI server (VPS - Hetzner, port 8000)
     │  1. ServiceNowClient.get_story() – requests the Story
-    │  2. StoryToKBArticle (DSPy + GLM-5.2) – generates the article
-    │  3. ServiceNowClient.create_kb_article() – Pusholja a KB-be
+    │  2. ServiceNowClient.get_update_set_changes() – fetches the modified code (XML)
+    │  3. StoryToKBArticle (DSPy + GLM-5.2) – code analysis and article generation
+    │  4. ServiceNowClient.create_kb_article() – Pusholja a KB-be
     ▼
 Response to ServiceNow:
     {"kb_sys_id", "kb_url", "title"}
@@ -112,7 +114,7 @@ snow_kb_generator/
 │   ├── program.py              # StoryToKBArticle(dspy.Module)
 │   └── ...                     # config, schemas, cli
 ├── servicenow/                 # UI Action script to copy into ServiceNow
-├── tests/                      # 171 pytest tests
+├── tests/                      # 173 pytest tests
 ├── eval/                       # GEPA metric and dataset (in development)
 └── data/                       # Sample Stories and Gold example pairs
 ```
