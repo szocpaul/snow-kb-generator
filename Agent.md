@@ -168,3 +168,20 @@ snow_kb_generator/
 4. GEPA optimization:
    - Run `dspy.GEPA(auto="medium")` with the reflection model.
    - Save the optimized program into the `artifacts/` folder.
+
+## 10. Where we are in the GEPA optimization (last update: 2024-07-14)
+
+- [x] **Update Set Code Analysis integrated and tested in production!**
+- [x] The pipeline successfully fetches the Update Set changes (XML payloads), and GLM-5.2 analyzes the actual source code (Script Include, UI Action).
+- [x] The RLM (Deno sandbox) was replaced by a stable `dspy.ChainOfThought` step because of a known bug (#9643); it works perfectly with GLM's large context window.
+
+### Next step: GEPA optimization (Data + Metric)
+
+The User's solution: the Gold Set will be based on a **real HTML KB Article template and at least 5 existing articles**.
+1. **Data collection (Tomorrow):** The User finds and provides the templates in HTML format and the existing articles.
+2. **Processing:** We save these into the `data/examples/` folder (template.html, article_1.html, etc.).
+3. **Implement `eval/metric.py`:** A rich_metric that compares the generated HTML with the User's template and the Gold articles (structure, headings, etc.) and returns `dspy.Prediction(score, feedback)`.
+4. **`eval/dataset.py`:** We build a `dspy.Example` set from the articles, with a train/val split.
+5. **Baseline measurement:** `dspy.Evaluate` on the current program.
+6. **GEPA run:** `dspy.GEPA(auto="medium")` with the reflection model.
+7. **Save:** Save the optimized program into the `artifacts/` folder.
