@@ -14,12 +14,15 @@ pipeline can also be tested with a mock client while the real client is not impl
 
 from __future__ import annotations
 
+import logging
 from pathlib import Path
 from typing import Protocol
 
 import dspy
 
 from snow_kb.config import Settings, load_settings
+
+logger = logging.getLogger(__name__)
 from snow_kb.program import StoryToKBArticle
 from snow_kb.schemas import KBArticle, StoryData
 
@@ -39,6 +42,10 @@ class ServiceNowClientProtocol(Protocol):
 
     def create_kb_article(self, article: KBArticle) -> str:
         """Returns the sys_id of the new KB article."""
+        ...
+
+    def get_update_set_changes(self, update_set_name: str) -> str:
+        """Returns the modifications of the Update Set (optional, may be empty)."""
         ...
 
 
@@ -207,6 +214,16 @@ def generate_kb_article(
 
     # 3. Merging the Story into a single text
     story_text = assemble_story_text(story, settings)
+
+    # 3b. Appending the Update Set modifications (if any)
+    try:
+        update_set_changes = client.get_update_set_changes(story_identifier)
+        if update_set_changes:
+            story_text += "\n\n" + update_set_changes
+            logger.info("Update Set modifications added to the Story text.")
+    except Exception as exc:
+        # The pipeline must not crash if the Update Set fetch fails
+        logger.warning("Update Set fetch failed: %s", exc)
 
     # 4. Dry-run: skipping the program call (no LM), mock article from the Story
     if settings.dry_run:

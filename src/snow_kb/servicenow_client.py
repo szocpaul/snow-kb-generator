@@ -179,6 +179,69 @@ class ServiceNowClient:
         return StoryData(**record)
 
     # ------------------------------------------------------------------
+    # get_update_set_changes — fetching the Update Set modifications
+    # ------------------------------------------------------------------
+
+    def get_update_set_changes(self, update_set_name: str) -> str:
+        """Fetches the modifications of an Update Set (Customer Updates).
+
+        In ServiceNow the name of the Update Set often matches the Story number.
+        This method returns the list of the modified elements (e.g. Script Include,
+        Business Rule, UI Action names), which the pipeline can append to the Story
+        text so that the GLM can generate more accurate KB articles.
+
+        Args:
+            update_set_name: the name of the Update Set (usually the Story number).
+
+        Returns:
+            The formatted text of the modifications, or an empty string if there is no Update Set.
+        """
+        if self.dry_run:
+            return ""  # In dry-run mode we do not call another API
+
+        # 1. Searching the Update Set record by name
+        url = f"{self.base_url}/sys_update_set"
+        params = {
+            "sysparm_query": f"name={update_set_name}",
+            "sysparm_limit": "1",
+            "sysparm_fields": "sys_id,name,state",
+        }
+        resp = self._request("GET", url, params=params)
+        body = resp.json()
+
+        results = body.get("result", [])
+        if not results:
+            return ""  # There is no Update Set with this name
+
+        update_set_sys_id = results[0]["sys_id"]
+        logger.info("Update Set found: %s (state: %s)",
+                    update_set_name, results[0].get("state", "unknown"))
+
+        # 2. Fetching the modifications (sys_update_xml)
+        url = f"{self.base_url}/sys_update_xml"
+        params = {
+            "sysparm_query": f"update_set={update_set_sys_id}",
+            "sysparm_limit": "50",  # at most 50 modifications
+            "sysparm_fields": "name,type,action,target_name",
+        }
+        resp = self._request("GET", url, params=params)
+        body = resp.json()
+
+        changes = body.get("result", [])
+        if not changes:
+            return ""
+
+        # 3. Assembling the formatted text
+        lines = [f"Update Set '{update_set_name}' modifications:"]
+        for change in changes:
+            change_type = change.get("type", "Unknown")
+            target = change.get("target_name", change.get("name", "unknown"))
+            action = change.get("action", "UPDATE")
+            lines.append(f"  - [{action}] {change_type}: {target}")
+
+        return "\n".join(lines)
+
+    # ------------------------------------------------------------------
     # create_kb_article — creation of the KB article
     # ------------------------------------------------------------------
 

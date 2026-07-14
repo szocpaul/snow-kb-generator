@@ -206,6 +206,7 @@ class TestGenerateKbArticle:
         client = MagicMock()
         client.get_story.return_value = story
         client.create_kb_article.return_value = "new_kb_sys_id_123"
+        client.get_update_set_changes.return_value = ""  # empty by default
         return client
 
     def _make_mock_program(self) -> MagicMock:
@@ -333,3 +334,34 @@ class TestGenerateKbArticle:
         with patch("snow_kb.pipeline.load_settings", return_value=mock_settings):
             generate_kb_article("STRY0012345", client, program=program)
         # If we get here, load_settings was called
+
+    def test_update_set_changes_appended_to_story_text(self, sample_story):
+        """If the client returns Update Set modifications, they end up in the text."""
+        client = self._make_mock_client(sample_story)
+        client.get_update_set_changes.return_value = "Update Set changes:\n  - Script Include: SnowKbGenerator"
+        program = self._make_mock_program()
+        # A separate settings that is not dry_run (so that the program runs)
+        settings = Settings(
+            dry_run=False,
+            snow=ServiceNowConfig(knowledge_base_id="kb1", default_category="IT"),
+        )
+        with patch("snow_kb.pipeline.configure_lm"):
+            generate_kb_article("STRY0012345", client, settings, program=program)
+        # The program received the story_text, which contains the Update Set
+        call_kwargs = program.call_args.kwargs
+        assert "Update Set modifications" in call_kwargs["story_text"]
+        assert "SnowKbGenerator" in call_kwargs["story_text"]
+
+    def test_update_set_failure_does_not_break_pipeline(self, sample_story):
+        """If the get_update_set_changes raises, the pipeline continues."""
+        client = self._make_mock_client(sample_story)
+        client.get_update_set_changes.side_effect = Exception("API error")
+        program = self._make_mock_program()
+        settings = Settings(
+            dry_run=False,
+            snow=ServiceNowConfig(knowledge_base_id="kb1", default_category="IT"),
+        )
+        with patch("snow_kb.pipeline.configure_lm"):
+            # It does not raise
+            result = generate_kb_article("STRY0012345", client, settings, program=program)
+        assert isinstance(result, KBArticle)
