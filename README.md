@@ -120,7 +120,7 @@ snow_kb_generator/
 ## DSPy Workflow állapota
 
 1. **Spec** — ✅ Kész
-2. **Program** — ✅ Kész (Signatures + Module)
+2. **Program** — ✅ Kész (Signatures + Module + Update Set Code Analyzer)
 3. **Data** — ⏳ Gold példapárok gyűjtése alatt
 4. **Rich metric** — ⏳ Következő lépés
 5. **Baseline** — ⏳
