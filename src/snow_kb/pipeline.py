@@ -44,8 +44,8 @@ class ServiceNowClientProtocol(Protocol):
         """Visszaadja az új KB cikk sys_id-ját."""
         ...
 
-    def get_update_set_changes(self, update_set_name: str) -> str:
-        """Visszaadja az Update Set módosításait (opcionális, lehet üres)."""
+    def get_update_set_changes(self, update_set_name: str) -> tuple[str, str]:
+        """Visszaadja az Update Set módosításait (summary, raw_payloads)."""
         ...
 
 
@@ -216,10 +216,12 @@ def generate_kb_article(
     story_text = assemble_story_text(story, settings)
 
     # 3b. Update Set módosítások hozzáfűzése (ha vannak)
+    update_set_summary = ""
+    update_set_payloads = ""
     try:
-        update_set_changes = client.get_update_set_changes(story_identifier)
-        if update_set_changes:
-            story_text += "\n\n" + update_set_changes
+        update_set_summary, update_set_payloads = client.get_update_set_changes(story_identifier)
+        if update_set_summary:
+            story_text += "\n\n" + update_set_summary
             logger.info("Update Set módosítások hozzáadva a Story szövegéhez.")
     except Exception as exc:
         # Ne döjjön le a pipeline, ha az Update Set lekérés sikertelen
@@ -236,6 +238,7 @@ def generate_kb_article(
 
         pred = program(
             story_text=story_text,
+            update_set_payloads=update_set_payloads,
             category=settings.snow.default_category,
             knowledge_base_id=settings.snow.knowledge_base_id,
         )

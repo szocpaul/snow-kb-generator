@@ -18,6 +18,31 @@ import dspy
 
 
 # ---------------------------------------------------------------------------
+# 0. AnalyzeChanges (RLM) — Rekurzívan elemzi a nagy módosításokat
+# ---------------------------------------------------------------------------
+
+class AnalyzeChanges(dspy.Signature):
+    """Analyze ServiceNow Update Set changes (XML payloads) and extract a structured
+    summary of what was technically modified.
+
+    You are given raw XML payloads from a ServiceNow Update Set. These may contain
+    Script Includes, Business Rules, Flow Designer definitions, or ACLs.
+    Write and run Python code to parse the XML, extract JSDoc comments, descriptions,
+    function signatures, or Flow steps, and compile a concise technical summary
+    of the actual implementation work done.
+    """
+    context: str = dspy.InputField(
+        desc="Raw XML payloads from ServiceNow sys_update_xml records."
+    )
+    query: str = dspy.InputField(
+        desc="The instruction on what to extract from the modifications."
+    )
+    technical_summary: str = dspy.OutputField(
+        desc="A concise, structured summary of the technical changes found in the XML data."
+    )
+
+
+# ---------------------------------------------------------------------------
 # 1. ExtractChange — Story szövegből kinyeri, mi történt
 # ---------------------------------------------------------------------------
 

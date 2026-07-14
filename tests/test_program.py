@@ -35,9 +35,10 @@ class TestProgramConstruction:
         program = StoryToKBArticle()
         assert isinstance(program, dspy.Module)
 
-    def test_has_three_predictors(self):
+    def test_has_five_predictors(self):
         program = StoryToKBArticle()
-        assert len(program.predictors()) == 3
+        # analyze_changes (RLM: 2 belső) + extract + draft + format
+        assert len(program.predictors()) == 5
 
     def test_predictors_are_named(self):
         """Minden prediktor kapott nevet — a GEPA ezeket célozza."""
@@ -62,7 +63,7 @@ class TestProgramConstruction:
 
         # Legalább egy ChainOfThought-ból jövő Predict és egy sima Predict
         # (ChainOfThought belsőleg Predict-et tartalmaz)
-        assert len(types_by_name) == 3
+        assert len(types_by_name) == 5
 
     def test_signatures_attached(self):
         """A prediktorok a megfelelő Signature-kat használják.
@@ -82,7 +83,7 @@ class TestProgramConstruction:
             pred_fields[name] = (ins, outs)
 
         # Extract: story_text -> reasoning + change_summary + key_steps + audience
-        extract_key = [k for k in pred_fields if "extract" in k][0]
+        extract_key = [k for k in pred_fields if k.startswith("extract")][0]
         ext_ins, ext_outs = pred_fields[extract_key]
         assert "story_text" in ext_ins
         assert "change_summary" in ext_outs
@@ -91,13 +92,13 @@ class TestProgramConstruction:
         assert "reasoning" in ext_outs  # ChainOfThought hozzáadja
 
         # Draft: change_summary/key_steps/audience -> title/problem/solution_steps/summary
-        draft_key = [k for k in pred_fields if "draft" in k][0]
+        draft_key = [k for k in pred_fields if k.startswith("draft")][0]
         _, draft_outs = pred_fields[draft_key]
         assert "title" in draft_outs
         assert "solution_steps" in draft_outs
 
         # Format: title/problem/solution_steps/summary -> html
-        format_key = [k for k in pred_fields if "format" in k][0]
+        format_key = [k for k in pred_fields if k.startswith("format")][0]
         _, fmt_outs = pred_fields[format_key]
         assert "html" in fmt_outs
         assert "reasoning" not in fmt_outs  # Predict, nem ChainOfThought

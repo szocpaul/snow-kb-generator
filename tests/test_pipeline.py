@@ -206,7 +206,7 @@ class TestGenerateKbArticle:
         client = MagicMock()
         client.get_story.return_value = story
         client.create_kb_article.return_value = "new_kb_sys_id_123"
-        client.get_update_set_changes.return_value = ""  # alapból üres
+        client.get_update_set_changes.return_value = ("", "")  # alapból üres
         return client
 
     def _make_mock_program(self) -> MagicMock:
@@ -338,7 +338,7 @@ class TestGenerateKbArticle:
     def test_update_set_changes_appended_to_story_text(self, sample_story):
         """Ha a client visszaad Update Set módosításokat, azok bekerülnek a szövegbe."""
         client = self._make_mock_client(sample_story)
-        client.get_update_set_changes.return_value = "Update Set módosítások:\n  - Script Include: SnowKbGenerator"
+        client.get_update_set_changes.return_value = ("Update Set módosítások:\n  - Script Include: SnowKbGenerator", "")
         program = self._make_mock_program()
         # Külön settings, ami nem dry_run (hogy a program lefusson)
         settings = Settings(

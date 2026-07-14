@@ -197,7 +197,7 @@ class ServiceNowClient:
             Formázott szöveg a módosításokkal, vagy üres string, ha nincs Update Set.
         """
         if self.dry_run:
-            return ""  # Dry-run módban nem hívunk újabb API-t
+            return "", ""  # Dry-run módban nem hívunk újabb API-t
 
         # 1. Update Set rekord keresése a név alapján
         url = f"{self.base_url}/sys_update_set"
@@ -211,7 +211,7 @@ class ServiceNowClient:
 
         results = body.get("result", [])
         if not results:
-            return ""  # Nincs Update Set ezen a néven
+            return "", ""  # Nincs Update Set ezen a néven
 
         update_set_sys_id = results[0]["sys_id"]
         logger.info("Update Set található: %s (state: %s)",
@@ -222,24 +222,30 @@ class ServiceNowClient:
         params = {
             "sysparm_query": f"update_set={update_set_sys_id}",
             "sysparm_limit": "50",  # maximálisan 50 módosítás
-            "sysparm_fields": "name,type,action,target_name",
+            "sysparm_fields": "name,type,action,target_name,payload",
         }
         resp = self._request("GET", url, params=params)
         body = resp.json()
 
         changes = body.get("result", [])
         if not changes:
-            return ""
+            return "", ""
 
-        # 3. Formázott szöveg összeállítása
+        # 3. Formázott szöveg összeállítása a nevekből + a nyers payloadok kigyűjtése
         lines = [f"Update Set '{update_set_name}' módosításai:"]
+        payloads = []
+
         for change in changes:
             change_type = change.get("type", "Unknown")
             target = change.get("target_name", change.get("name", "ismeretlen"))
             action = change.get("action", "UPDATE")
             lines.append(f"  - [{action}] {change_type}: {target}")
 
-        return "\n".join(lines)
+            payload = change.get("payload", "")
+            if payload:
+                payloads.append(payload)
+
+        return "\n".join(lines), "\n\n".join(payloads)
 
     # ------------------------------------------------------------------
     # create_kb_article — KB cikk létrehozása
