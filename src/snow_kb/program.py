@@ -1,9 +1,10 @@
 """program.py — StoryToKBArticle(dspy.Module), a pipeline magja.
 
-The three DSPy Signatures (signatures.py) into a single composite Module chain
-chains. This is the "program" that we baseline and optimize with GEPA.
+Chains the DSPy Signatures into a single composite Module chain. This is the "program",
+which we baseline and optimize with GEPA.
 
 Steps:
+  0. AnalyzeChanges (RLM) — If the Update Set is large, it analyzes it recursively (optional)
   1. ExtractChange — extracts the essence of the change from the Story text (ChainOfThought)
   2. DraftSections — edits KB article sections from the extracted info (ChainOfThought)
   3. FormatKB     — converts the sections into ServiceNow-compatible HTML (Predict)
@@ -18,7 +19,17 @@ from __future__ import annotations
 import dspy
 
 from snow_kb.schemas import ArticleSections, KBArticle
-from snow_kb.signatures import DraftSections, ExtractChange, FormatKB
+from snow_kb.signatures import (
+    AnalyzeChanges,
+    DraftSections,
+    ExtractChange,
+    FormatKB,
+)
+
+# Character limit: if the Update Set payloads together exceed this value,
+# switches on the RLM (Recursive Language Model) step, which recursively processes
+# the big data. Below that the plain LLM handles the context.
+RLM_THRESHOLD_CHARS = 15000
 
 
 class StoryToKBArticle(dspy.Module):
@@ -32,6 +43,13 @@ class StoryToKBArticle(dspy.Module):
     def __init__(self) -> None:
         super().__init__()
         # Named predictors — GEPA targets these.
+        # The RLM step (dspy.RLM) is only initialized and run when needed.
+        self.analyze_changes = dspy.RLM(
+            AnalyzeChanges,
+            max_iterations=15,
+            max_llm_calls=30,
+            max_output_chars=10_000,
+        )
         self.extract = dspy.ChainOfThought(ExtractChange)
         self.draft = dspy.ChainOfThought(DraftSections)
         self.format = dspy.Predict(FormatKB)
@@ -40,13 +58,15 @@ class StoryToKBArticle(dspy.Module):
         self,
         story_text: str,
         *,
+        update_set_payloads: str = "",
         category: str = "General",
         knowledge_base_id: str = "",
     ) -> dspy.Prediction:
-        """Runs the three-step pipeline.
+        """Lefuttatja a pipeline-t.
 
         Args:
             story_text: the full Story text (output of assemble_story_text).
+            update_set_payloads: the raw XML payloads of the modifications (if any).
             category: KB category (from the config, by default "General").
             knowledge_base_id: target KB sys_id (from the config).
 
@@ -57,8 +77,23 @@ class StoryToKBArticle(dspy.Module):
               - change_summary, key_steps, audience: from the Extract step
                 (can be useful for the metric)
         """
-        # 1. Extraction: what happened, steps, audience
-        extracted = self.extract(story_text=story_text)
+        full_context = story_text
+
+        # 0. RLM step: It only runs if the raw payloads are large (> 15.000 characters)
+        if update_set_payloads and len(update_set_payloads) > RLM_THRESHOLD_CHARS:
+            rlm_result = self.analyze_changes(
+                context=update_set_payloads,
+                query="Extract all technical details: JSDoc comments, descriptions, function names, and Flow steps.",
+            )
+            full_context += "\n\n## Update Set Technical Summary (via RLM)\n"
+            full_context += rlm_result.technical_summary
+        elif update_set_payloads:
+            # The payload is small, it fits in the context, no RLM needed
+            full_context += "\n\n## Update Set Raw Modifications\n"
+            full_context += update_set_payloads
+
+        # 1. Extraction: what happened, the steps, the audience
+        extracted = self.extract(story_text=full_context)
 
         # 2. Touch-up: editing sections for the audience
         drafted = self.draft(

@@ -197,7 +197,7 @@ class ServiceNowClient:
             The formatted text of the modifications, or an empty string if there is no Update Set.
         """
         if self.dry_run:
-            return ""  # In dry-run mode we do not call another API
+            return "", ""  # in dry-run mode we do not call another API
 
         # 1. Searching the Update Set record by name
         url = f"{self.base_url}/sys_update_set"
@@ -211,7 +211,7 @@ class ServiceNowClient:
 
         results = body.get("result", [])
         if not results:
-            return ""  # There is no Update Set with this name
+            return "", ""  # there is no Update Set with this name
 
         update_set_sys_id = results[0]["sys_id"]
         logger.info("Update Set found: %s (state: %s)",
@@ -222,24 +222,30 @@ class ServiceNowClient:
         params = {
             "sysparm_query": f"update_set={update_set_sys_id}",
             "sysparm_limit": "50",  # at most 50 modifications
-            "sysparm_fields": "name,type,action,target_name",
+            "sysparm_fields": "name,type,action,target_name,payload",
         }
         resp = self._request("GET", url, params=params)
         body = resp.json()
 
         changes = body.get("result", [])
         if not changes:
-            return ""
+            return "", ""
 
-        # 3. Assembling the formatted text
+        # 3. Building the formatted text from the names + collecting the raw payloads
         lines = [f"Update Set '{update_set_name}' modifications:"]
+        payloads = []
+
         for change in changes:
             change_type = change.get("type", "Unknown")
             target = change.get("target_name", change.get("name", "unknown"))
             action = change.get("action", "UPDATE")
             lines.append(f"  - [{action}] {change_type}: {target}")
 
-        return "\n".join(lines)
+            payload = change.get("payload", "")
+            if payload:
+                payloads.append(payload)
+
+        return "\n".join(lines), "\n\n".join(payloads)
 
     # ------------------------------------------------------------------
     # create_kb_article — creation of the KB article

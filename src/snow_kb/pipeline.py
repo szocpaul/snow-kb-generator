@@ -44,8 +44,8 @@ class ServiceNowClientProtocol(Protocol):
         """Returns the sys_id of the new KB article."""
         ...
 
-    def get_update_set_changes(self, update_set_name: str) -> str:
-        """Returns the modifications of the Update Set (optional, may be empty)."""
+    def get_update_set_changes(self, update_set_name: str) -> tuple[str, str]:
+        """Returns the modifications of the Update Set (summary, raw_payloads)."""
         ...
 
 
@@ -215,11 +215,13 @@ def generate_kb_article(
     # 3. Merging the Story into a single text
     story_text = assemble_story_text(story, settings)
 
-    # 3b. Appending the Update Set modifications (if any)
+    # 3b. Append the Update Set modifications (if there are any)
+    update_set_summary = ""
+    update_set_payloads = ""
     try:
-        update_set_changes = client.get_update_set_changes(story_identifier)
-        if update_set_changes:
-            story_text += "\n\n" + update_set_changes
+        update_set_summary, update_set_payloads = client.get_update_set_changes(story_identifier)
+        if update_set_summary:
+            story_text += "\n\n" + update_set_summary
             logger.info("Update Set modifications added to the Story text.")
     except Exception as exc:
         # The pipeline must not crash if the Update Set fetch fails
@@ -236,6 +238,7 @@ def generate_kb_article(
 
         pred = program(
             story_text=story_text,
+            update_set_payloads=update_set_payloads,
             category=settings.snow.default_category,
             knowledge_base_id=settings.snow.knowledge_base_id,
         )
