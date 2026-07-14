@@ -179,6 +179,69 @@ class ServiceNowClient:
         return StoryData(**record)
 
     # ------------------------------------------------------------------
+    # get_update_set_changes — Update Set módosítások lekérése
+    # ------------------------------------------------------------------
+
+    def get_update_set_changes(self, update_set_name: str) -> str:
+        """Lekéri egy Update Set módosításait (Customer Updates).
+
+        A ServiceNow-ban az Update Set neve gyakran megegyezik a Story számával.
+        Ez a metódus visszaadja a módosított elemek listáját (pl. Script Include,
+        Business Rule, UI Action nevek), amit a pipeline hozzáfűzhet a Story
+        szövegéhez, hogy a GLM pontosabb KB cikkeket generálhasson.
+
+        Args:
+            update_set_name: Az Update Set neve (általában a Story száma).
+
+        Returns:
+            Formázott szöveg a módosításokkal, vagy üres string, ha nincs Update Set.
+        """
+        if self.dry_run:
+            return ""  # Dry-run módban nem hívunk újabb API-t
+
+        # 1. Update Set rekord keresése a név alapján
+        url = f"{self.base_url}/sys_update_set"
+        params = {
+            "sysparm_query": f"name={update_set_name}",
+            "sysparm_limit": "1",
+            "sysparm_fields": "sys_id,name,state",
+        }
+        resp = self._request("GET", url, params=params)
+        body = resp.json()
+
+        results = body.get("result", [])
+        if not results:
+            return ""  # Nincs Update Set ezen a néven
+
+        update_set_sys_id = results[0]["sys_id"]
+        logger.info("Update Set található: %s (state: %s)",
+                    update_set_name, results[0].get("state", "unknown"))
+
+        # 2. Módosítások lekérése (sys_update_xml)
+        url = f"{self.base_url}/sys_update_xml"
+        params = {
+            "sysparm_query": f"update_set={update_set_sys_id}",
+            "sysparm_limit": "50",  # maximálisan 50 módosítás
+            "sysparm_fields": "name,type,action,target_name",
+        }
+        resp = self._request("GET", url, params=params)
+        body = resp.json()
+
+        changes = body.get("result", [])
+        if not changes:
+            return ""
+
+        # 3. Formázott szöveg összeállítása
+        lines = [f"Update Set '{update_set_name}' módosításai:"]
+        for change in changes:
+            change_type = change.get("type", "Unknown")
+            target = change.get("target_name", change.get("name", "ismeretlen"))
+            action = change.get("action", "UPDATE")
+            lines.append(f"  - [{action}] {change_type}: {target}")
+
+        return "\n".join(lines)
+
+    # ------------------------------------------------------------------
     # create_kb_article — KB cikk létrehozása
     # ------------------------------------------------------------------
 

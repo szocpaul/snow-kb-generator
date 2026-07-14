@@ -14,12 +14,15 @@ mock clienttel is tesztelhető, amíg a valódi client nincs implementálva.
 
 from __future__ import annotations
 
+import logging
 from pathlib import Path
 from typing import Protocol
 
 import dspy
 
 from snow_kb.config import Settings, load_settings
+
+logger = logging.getLogger(__name__)
 from snow_kb.program import StoryToKBArticle
 from snow_kb.schemas import KBArticle, StoryData
 
@@ -39,6 +42,10 @@ class ServiceNowClientProtocol(Protocol):
 
     def create_kb_article(self, article: KBArticle) -> str:
         """Visszaadja az új KB cikk sys_id-ját."""
+        ...
+
+    def get_update_set_changes(self, update_set_name: str) -> str:
+        """Visszaadja az Update Set módosításait (opcionális, lehet üres)."""
         ...
 
 
@@ -207,6 +214,16 @@ def generate_kb_article(
 
     # 3. Story szöveggé egyítése
     story_text = assemble_story_text(story, settings)
+
+    # 3b. Update Set módosítások hozzáfűzése (ha vannak)
+    try:
+        update_set_changes = client.get_update_set_changes(story_identifier)
+        if update_set_changes:
+            story_text += "\n\n" + update_set_changes
+            logger.info("Update Set módosítások hozzáadva a Story szövegéhez.")
+    except Exception as exc:
+        # Ne döjjön le a pipeline, ha az Update Set lekérés sikertelen
+        logger.warning("Update Set lekérés sikertelen: %s", exc)
 
     # 4. Dry-run: a program hívás kihagyása (nincs LM), mock cikk a Story-ból
     if settings.dry_run:

@@ -206,6 +206,7 @@ class TestGenerateKbArticle:
         client = MagicMock()
         client.get_story.return_value = story
         client.create_kb_article.return_value = "new_kb_sys_id_123"
+        client.get_update_set_changes.return_value = ""  # alapból üres
         return client
 
     def _make_mock_program(self) -> MagicMock:
@@ -333,3 +334,34 @@ class TestGenerateKbArticle:
         with patch("snow_kb.pipeline.load_settings", return_value=mock_settings):
             generate_kb_article("STRY0012345", client, program=program)
         # Ha ide eljutunk, a load_settings lett meghívva
+
+    def test_update_set_changes_appended_to_story_text(self, sample_story):
+        """Ha a client visszaad Update Set módosításokat, azok bekerülnek a szövegbe."""
+        client = self._make_mock_client(sample_story)
+        client.get_update_set_changes.return_value = "Update Set módosítások:\n  - Script Include: SnowKbGenerator"
+        program = self._make_mock_program()
+        # Külön settings, ami nem dry_run (hogy a program lefusson)
+        settings = Settings(
+            dry_run=False,
+            snow=ServiceNowConfig(knowledge_base_id="kb1", default_category="IT"),
+        )
+        with patch("snow_kb.pipeline.configure_lm"):
+            generate_kb_article("STRY0012345", client, settings, program=program)
+        # A program megkapta a story_text-et, ami tartalmazza az Update Set-et
+        call_kwargs = program.call_args.kwargs
+        assert "Update Set módosítások" in call_kwargs["story_text"]
+        assert "SnowKbGenerator" in call_kwargs["story_text"]
+
+    def test_update_set_failure_does_not_break_pipeline(self, sample_story):
+        """Ha a get_update_set_changes kivételt dob, a pipeline tovább fut."""
+        client = self._make_mock_client(sample_story)
+        client.get_update_set_changes.side_effect = Exception("API hiba")
+        program = self._make_mock_program()
+        settings = Settings(
+            dry_run=False,
+            snow=ServiceNowConfig(knowledge_base_id="kb1", default_category="IT"),
+        )
+        with patch("snow_kb.pipeline.configure_lm"):
+            # Nem dob kivételt
+            result = generate_kb_article("STRY0012345", client, settings, program=program)
+        assert isinstance(result, KBArticle)
