@@ -167,7 +167,7 @@ A User megoldása: **Valós HTML KB Article template és legalább 5 meglévő c
 
 ## 11. Feature: KB Duplicate Prevention & Update (SDD - spec-kit)
 
-**Status**: ✅ Implementálva (várja az éles ServiceNow konfigurációt)
+**Status**: ✅ Implementálva és élesben tesztelve (SDD)
 
 A spec-kit (Spec-Driven Development) módszertan szerint került implementálásra.
 - **Spec**: `specs/001-kb-duplicate-prevention/spec.md`
@@ -181,5 +181,6 @@ Megakadályozza, hogy egy Story-hoz többször létrejöjjön KB cikk.
 3. Ha VAN és a felhasználó nem erősíti meg a frissítést: HTTP 409 (Abort).
 4. Ha a felhasználó megerősíti (`force_update=true`): a meglévő cikk tartalmát FRISSÍTI (PATCH) ahelyett, hogy újat hozna létre.
 
-**Szükséges ServiceNow konfiguráció (Manual Action - T018)**:
-A `kb_knowledge` táblához hozzá kell adni egy új String mezőt: `u_source_story`.
+**Szükséges ServiceNow konfiguráció (Manual Action - T018 - TÖRTÉNT)**:
+A `kb_knowledge` táblához hozzá lett adva egy új String mező: `u_source_story`.
+A ServiceNow UI Action script támogatja a felugró ablakos (confirm) megerősítést, és a `gsftSubmit` használatával hívja meg a szervert.

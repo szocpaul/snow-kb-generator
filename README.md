@@ -13,6 +13,7 @@ Amikor a fejlesztők befejeznek egy ServiceNow Story-t (`STRY...`), kézzel kell
 **Bemenet:** lezárt ServiceNow Story — `short_description`, `description`, `acceptance_criteria`, `u_technical_specification`, `work_notes`, `comments`, `state`.
 **Kiegészítő bemenet:** A Story nevével megegyező nevű **Update Set** modulekérés és a benne lévő módosított forráskódok (Script Include, Business Rule, UI Action XML payloadok).
 **Kimenet:** KB Article (HTML) — `title`, `summary`, `problem`, `solution` (reprodukálható lépések), `category`, `audience`.
+**Funkciók:** Duplikáció megakadályozása (`u_source_story` mezővel) és Felülírás (Update) felhasználói megerősítés (confirm dialog) után.
 
 ## Technológiai verem
 
@@ -128,6 +129,9 @@ snow_kb_generator/
 5. **Baseline** — ⏳
 6. **GEPA optimalizáció** — ⏳
 7. **Export & deploy** — ✅ Kész (FastAPI + Docker + ServiceNow UI Action)
+
+**SDD (Spec-Driven Development):** A project aktívan használja a `spec-kit` módszertant.
+- 1. Kész Feature: `001-kb-duplicate-prevention` (Duplikáció megakadályozása és felülírás).
 
 ## Licenc
 
