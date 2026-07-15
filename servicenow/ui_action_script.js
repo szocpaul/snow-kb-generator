@@ -1,10 +1,7 @@
 // ============================================================================
 // UI Action Script: Create KB Article (SERVER-SIDE)
 // ============================================================================
-// This script has to be copied into the "Script" field of the UI Action.
-// IMPORTANT: The "Client" field on the UI Action record must be UNCHECKED (false)!
-// This is a server-side script, so it avoids the asynchronous limitations of GlideAjax
-// and it works exactly like a background script (sys.scripts.do).
+// Duplicate handling with the hidden u_kb_force_update field.
 // ============================================================================
 
 // 1. The 'current' variable automatically contains the opened Story
@@ -15,61 +12,48 @@ var storySysId = current.sys_id;
 var apiUrl = 'http://192.0.2.10:8000/generate-kb';
 var apiKey = 'REPLACE_WITH_RANDOM_KEY';
 
-// 2. Starting the REST call to our VPS server
-// We use the ServiceNow built-in JSON encoder for stability
+// 2. Read the force_update value from the current.u_kb_force_update field.
+// If the field is true, the user has already confirmed the overwrite.
+var forceUpdate = (current.u_kb_force_update == 'true' || current.u_kb_force_update === true);
+
 var payload = {};
-payload.story_id = storyId + ''; // coerce to string
+payload.story_id = storyId + '';
 payload.push = true;
+payload.force_update = forceUpdate; // The decision comes from the field
 
-// US2/US3: Duplicate handling. If the duplicate warning is already in the work_notes
-// (that is, this is the SECOND click), then we send force_update = true so that the server overwrites the old one!
-payload.force_update = false;
-
-var wn = current.work_notes + '';
-if (wn.indexOf('Warning: a KB article already exists for this Story') !== -1) {
-    payload.force_update = true;
-}
-
-// Duplicate handling: first we check whether an article already exists
+// 3. Starting the REST call
 var restMessage = new sn_ws.RESTMessageV2();
 restMessage.setEndpoint(apiUrl);
 restMessage.setHttpMethod('POST');
 restMessage.setRequestHeader('Content-Type', 'application/json');
 restMessage.setRequestHeader('X-API-Key', apiKey);
 restMessage.setRequestBody(new JSON().encode(payload));
-restMessage.setRequestTimeout(120000); // 120 second timeout because the GLM generation takes time
+restMessage.setRequestTimeout(120000);
 
 var response = restMessage.execute();
 var httpStatus = response.getStatusCode();
 var responseBody = response.getBody();
 
+// 4. Processing the response
 if (httpStatus === 409) {
-    // US2/US3: Duplicate detected. We ask the user.
-    var dupData = JSON.parse(responseBody).detail;
-    var kbUrl = dupData.kb_url;
-    
-    // User confirmation (UI Action specific)
-    // Since we run on the server side, confirm() does not work directly.
-    // Instead we write the information into work_notes, and on the next button press
-    // (force_update=true) is what is sent.
-    current.work_notes = "Warning: a KB article already exists for this Story: " + kbUrl +
-                         ". If you want to regenerate, click the button again (the system will overwrite it).";
-    current.update();
-    gs.addInfoMessage("A KB article already exists. See the work_notes field. Click the button again to regenerate.");
+    // Duplicate! We set the flag to true so that the next click overwrites it.
+    current.u_kb_force_update = true;
+    current.work_notes = "A KB article already exists for this Story. Pressing the button again OVERWRITES the old one.";
+    gs.addInfoMessage("A KB article already exists. Click the button AGAIN to overwrite it!");
     
 } else if (httpStatus === 200) {
     var result = JSON.parse(responseBody);
     if (result.success && result.kb_url) {
-        // 3. On successful generation put the link into the Story work_notes field
-        // We do NOT call current.update()!
-        current.work_notes = "KB article created: " + result.kb_url + " (" + result.title + ")";
+        // Successful creation or update. We reset the flag!
+        current.u_kb_force_update = false;
+        current.work_notes = "KB article created/updated: " + result.kb_url + " (" + result.title + ")";
     }
 } else {
-    // If the server returned a 500 or another error code
+    // We reset it also in the error case
+    current.u_kb_force_update = false;
     current.work_notes = "KB article generation FAILED: HTTP " + httpStatus + " - " + responseBody.substring(0, 200);
     gs.addErrorMessage("Error during generation (HTTP " + httpStatus + ")");
 }
 
-// 4. Setting the redirect: stay on the Story after the refresh
 action.setRedirectURL(current);
 action.setReturnURL(current);
