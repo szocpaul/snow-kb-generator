@@ -179,6 +179,37 @@ class ServiceNowClient:
         return StoryData(**record)
 
     # ------------------------------------------------------------------
+    # find_existing_kb_article — the duplication check
+    # ------------------------------------------------------------------
+
+    def find_existing_kb_article(self, story_number: str) -> str | None:
+        """Queries whether a KB article was already created for a Story (u_source_story).
+
+        Args:
+            story_number: the Story number (e.g. STRY0010005).
+
+        Returns:
+            The sys_id of the existing KB article, or None if not found.
+        """
+        if self.dry_run:
+            return None  # in dry-run mode there is no duplication
+
+        url = f"{self.base_url}/kb_knowledge"
+        params = {
+            "sysparm_query": f"u_source_story={story_number}",
+            "sysparm_limit": "1",
+            "sysparm_fields": "sys_id",
+        }
+        resp = self._request("GET", url, params=params)
+        body = resp.json()
+
+        results = body.get("result", [])
+        if not results:
+            return None
+
+        return results[0].get("sys_id")
+
+    # ------------------------------------------------------------------
     # get_update_set_changes — fetching the Update Set modifications
     # ------------------------------------------------------------------
 
@@ -251,15 +282,17 @@ class ServiceNowClient:
     # create_kb_article — creation of the KB article
     # ------------------------------------------------------------------
 
-    def create_kb_article(self, article: KBArticle, story_sys_id: str = "") -> str:
-        """Creates a KB article in ServiceNow (or simulates it in dry-run).
+    def create_kb_article(self, article: KBArticle, story_sys_id: str = "", existing_sys_id: str = "") -> str:
+        """Creates or updates a KB article in ServiceNow.
 
         Args:
             article: the KB article to publish.
             story_sys_id: the sys_id of the source Story (for updating the work_notes).
+            existing_sys_id: if given, updates the existing article (PATCH)
+                instead of creating a new one (preventing duplication).
 
         Returns:
-            The sys_id of the new KB article (dummy in dry-run).
+            The sys_id of the KB article (dummy in dry-run).
 
         Raises:
             AuthError: if the authentication fails.
@@ -267,7 +300,7 @@ class ServiceNowClient:
         """
         if self.dry_run:
             return self._create_kb_article_mock(article)
-        return self._create_kb_article_live(article, story_sys_id)
+        return self._create_kb_article_live(article, story_sys_id, existing_sys_id)
 
     def _create_kb_article_mock(self, article: KBArticle) -> str:
         """Dry-run: it only logs and returns a dummy sys_id."""
@@ -280,26 +313,44 @@ class ServiceNowClient:
         logger.info("  -> sys_id: %s", dummy_sys_id)
         return dummy_sys_id
 
-    def _create_kb_article_live(self, article: KBArticle, story_sys_id: str = "") -> str:
-        """Live: ServiceNow Table API POST call + work_notes update."""
-        url = f"{self.base_url}/kb_knowledge"
-        payload = {
-            "knowledge_base": article.knowledge_base_id
-            or self.settings.snow.knowledge_base_id,
-            "short_description": article.title,
-            "text": article.html,
-            "category": article.category,
-            "article_type": "text",
-        }
-
-        resp = self._request("POST", url, json=payload)
-        body = resp.json()
-
-        if "result" not in body or "sys_id" not in body["result"]:
-            raise ServiceNowError(f"Unexpected response on KB creation: {body}")
-
-        sys_id = body["result"]["sys_id"]
-        logger.info("KB article created: sys_id=%s", sys_id)
+    def _create_kb_article_live(self, article: KBArticle, story_sys_id: str = "", existing_sys_id: str = "") -> str:
+        """Live: ServiceNow Table API POST/PATCH call + work_notes update."""
+        
+        # If there is an existing_sys_id, we update it with a PATCH
+        if existing_sys_id:
+            url = f"{self.base_url}/kb_knowledge/{existing_sys_id}"
+            payload = {
+                "short_description": article.title,
+                "text": article.html,
+                "category": article.category,
+            }
+            resp = self._request("PATCH", url, json=payload)
+            body = resp.json()
+            if "result" not in body or "sys_id" not in body["result"]:
+                raise ServiceNowError(f"Unexpected response on KB update: {body}")
+            sys_id = body["result"]["sys_id"]
+            logger.info("KB article updated: sys_id=%s", sys_id)
+        else:
+            # Creating a new article with a POST
+            url = f"{self.base_url}/kb_knowledge"
+            payload = {
+                "knowledge_base": article.knowledge_base_id
+                or self.settings.snow.knowledge_base_id,
+                "short_description": article.title,
+                "text": article.html,
+                "category": article.category,
+                "article_type": "text",
+            }
+            # Preventing duplication: setting the source_story field
+            if article.source_story:
+                payload["u_source_story"] = article.source_story
+            
+            resp = self._request("POST", url, json=payload)
+            body = resp.json()
+            if "result" not in body or "sys_id" not in body["result"]:
+                raise ServiceNowError(f"Unexpected response on KB creation: {body}")
+            sys_id = body["result"]["sys_id"]
+            logger.info("KB article created: sys_id=%s", sys_id)
 
         # Updating the work notes on the Story, if sys_id is given
         if story_sys_id:

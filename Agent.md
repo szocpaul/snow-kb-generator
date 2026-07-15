@@ -185,3 +185,22 @@ The User's solution: the Gold Set will be based on a **real HTML KB Article temp
 5. **Baseline measurement:** `dspy.Evaluate` on the current program.
 6. **GEPA run:** `dspy.GEPA(auto="medium")` with the reflection model.
 7. **Save:** Save the optimized program into the `artifacts/` folder.
+
+## 11. Feature: KB Duplicate Prevention & Update (SDD - spec-kit)
+
+**Status**: ✅ Implemented (waiting for the production ServiceNow configuration)
+
+It was implemented following the spec-kit (Spec-Driven Development) methodology.
+- **Spec**: `specs/001-kb-duplicate-prevention/spec.md`
+- **Plan**: `specs/001-kb-duplicate-prevention/plan.md`
+- **Tasks**: `specs/001-kb-duplicate-prevention/tasks.md`
+
+**What does it do?**
+It prevents a KB article from being created more than once for a Story.
+1. It creates a `u_source_story` custom field on the KB article.
+2. Before generation the pipeline queries whether an article already exists for the Story.
+3. If there IS one and the user does not confirm the update: HTTP 409 (Abort).
+4. If the user confirms (`force_update=true`): it UPDATES (PATCH) the content of the existing article instead of creating a new one.
+
+**Required ServiceNow configuration (Manual Action - T018)**:
+A new String field has to be added to the `kb_knowledge` table: `u_source_story`.

@@ -278,6 +278,67 @@ class TestCreateKbArticleLive:
 
 
 # ---------------------------------------------------------------------------
+# T003/T005: Foundation tests (find_existing_kb_article, PATCH update)
+# ---------------------------------------------------------------------------
+
+class TestKbDuplicatePrevention:
+    """The tests of the client methods needed to prevent duplication."""
+
+    def test_find_existing_kb_article_returns_sys_id(self, live_settings):
+        """If an article with the source_story field already exists, it returns the sys_id."""
+        client = ServiceNowClient(live_settings)
+        mock_resp = MagicMock(spec=requests.Response)
+        mock_resp.json.return_value = {"result": [{"sys_id": "existing_kb_123"}]}
+        mock_resp.ok = True
+        with patch.object(client, "_request", return_value=mock_resp) as mock_req:
+            sys_id = client.find_existing_kb_article("STRY0010005")
+            assert sys_id == "existing_kb_123"
+            # We check that the query goes for the source_story
+            args, kwargs = mock_req.call_args
+            assert "u_source_story=STRY0010005" in kwargs["params"]["sysparm_query"]
+
+    def test_find_existing_kb_article_returns_none_if_not_found(self, live_settings):
+        """If there is no article, it returns None."""
+        client = ServiceNowClient(live_settings)
+        mock_resp = MagicMock(spec=requests.Response)
+        mock_resp.json.return_value = {"result": []}
+        mock_resp.ok = True
+        with patch.object(client, "_request", return_value=mock_resp):
+            assert client.find_existing_kb_article("STRY9999") is None
+
+    def test_create_kb_article_patches_when_existing_sys_id_given(self, live_settings, valid_kb_article):
+        """If an existing_sys_id is given, it starts a PATCH call, not a POST."""
+        client = ServiceNowClient(live_settings)
+        valid_kb_article.source_story = "STRY0010005"
+        mock_resp = MagicMock(spec=requests.Response)
+        mock_resp.json.return_value = {"result": {"sys_id": "existing_kb_123"}}
+        mock_resp.ok = True
+        with patch.object(client, "_request", return_value=mock_resp) as mock_req:
+            sys_id = client.create_kb_article(valid_kb_article, existing_sys_id="existing_kb_123")
+            assert sys_id == "existing_kb_123"
+            # We check that it was a PATCH
+            assert mock_req.call_args.args[0] == "PATCH"
+            assert "existing_kb_123" in mock_req.call_args.args[1]
+            # The payload contains the new content, but NOT the source_story (it is already set)
+            payload = mock_req.call_args.kwargs["json"]
+            assert "u_source_story" not in payload
+
+    def test_create_kb_article_post_includes_source_story(self, live_settings, valid_kb_article):
+        """If a new article is created (POST), the payload contains the source_story."""
+        client = ServiceNowClient(live_settings)
+        valid_kb_article.source_story = "STRY0010005"
+        mock_resp = MagicMock(spec=requests.Response)
+        mock_resp.json.return_value = {"result": {"sys_id": "new_kb_456"}}
+        mock_resp.ok = True
+        with patch.object(client, "_request", return_value=mock_resp) as mock_req:
+            sys_id = client.create_kb_article(valid_kb_article)
+            assert sys_id == "new_kb_456"
+            assert mock_req.call_args.args[0] == "POST"
+            payload = mock_req.call_args.kwargs["json"]
+            assert payload["u_source_story"] == "STRY0010005"
+
+
+# ---------------------------------------------------------------------------
 # The error handling (_request)
 # ---------------------------------------------------------------------------
 

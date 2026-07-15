@@ -23,7 +23,7 @@ from fastapi import FastAPI, Header, HTTPException
 from pydantic import BaseModel, Field
 
 from snow_kb.config import ConfigError, Settings, load_settings
-from snow_kb.pipeline import generate_kb_article
+from snow_kb.pipeline import DuplicateKBError, generate_kb_article
 from snow_kb.servicenow_client import ServiceNowClient, ServiceNowError
 
 logger = logging.getLogger(__name__)
@@ -40,6 +40,10 @@ class GenerateKBRequest(BaseModel):
     push: bool = Field(
         default=True,
         description="If True (default), the article is written to the KB.",
+    )
+    force_update: bool = Field(
+        default=False,
+        description="If True, overwrites the existing article (if the story was already processed).",
     )
 
 
@@ -124,7 +128,21 @@ def generate_kb(
             client=client,
             settings=settings,
             push=request.push,
+            force_update=request.force_update,
         )
+    except DuplicateKBError as exc:
+        # US2: on duplication we return 409 Conflict with the existing article data
+        logger.warning("Duplication detected: %s", exc)
+        settings = _get_settings()
+        existing_url = f"https://{settings.snow_instance}/kb_view.do?sys_kb_id={exc.existing_sys_id}"
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "message": str(exc),
+                "kb_sys_id": exc.existing_sys_id,
+                "kb_url": existing_url,
+            },
+        ) from exc
     except ServiceNowError as exc:
         logger.error("ServiceNow error: %s", exc)
         raise HTTPException(status_code=502, detail=str(exc)) from exc

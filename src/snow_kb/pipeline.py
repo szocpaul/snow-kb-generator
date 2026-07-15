@@ -23,6 +23,14 @@ import dspy
 from snow_kb.config import Settings, load_settings
 
 logger = logging.getLogger(__name__)
+
+
+class DuplicateKBError(Exception):
+    """Raised when a KB article already exists for the Story and force_update=False."""
+
+    def __init__(self, message: str, existing_sys_id: str = ""):
+        super().__init__(message)
+        self.existing_sys_id = existing_sys_id
 from snow_kb.program import StoryToKBArticle
 from snow_kb.schemas import KBArticle, StoryData
 
@@ -186,6 +194,7 @@ def generate_kb_article(
     *,
     program: StoryToKBArticle | None = None,
     push: bool = True,
+    force_update: bool = False,
 ) -> KBArticle:
     """Lefuttatja a teljes pipeline-t: Story → KB Article.
 
@@ -197,6 +206,8 @@ def generate_kb_article(
             you can also pass a pre-configured/mock program.
         push: if True, writes the article back to the ServiceNow KB with the client.
             in dry_run mode this will automatically be False.
+        force_update: if True, and a KB article already exists for the Story, the pipeline
+            overwrites (updates) the existing one instead of raising an error.
 
     Returns:
         The generated KBArticle (filled with its sys_id in case of push).
@@ -243,12 +254,27 @@ def generate_kb_article(
             knowledge_base_id=settings.snow.knowledge_base_id,
         )
         article: KBArticle = pred.article
+        article.source_story = story_identifier  # prevents duplication
 
     # 6. Push to the ServiceNow KB (if requested and not dry_run)
     if push and not settings.dry_run:
-        sys_id = client.create_kb_article(article, story_sys_id=story.sys_id)
-        # We write the sys_id back to the article (extending it with a new field)
-        # the KBArticle does not contain a sys_id field; the caller receives it separately
+        # Duplication check
+        existing_sys_id = client.find_existing_kb_article(story_identifier)
+        
+        if existing_sys_id and not force_update:
+            # US2: if an article already exists and no update was requested, we raise an error
+            # (server.py turns this into the 409 status code)
+            raise DuplicateKBError(
+                f"A KB article already exists for this Story (sys_id: {existing_sys_id}).",
+                existing_sys_id=existing_sys_id,
+            )
+        
+        sys_id = client.create_kb_article(
+            article, 
+            story_sys_id=story.sys_id, 
+            existing_sys_id=existing_sys_id or "",
+        )
+        # We write the sys_id back into the article (extending it with a new field)
         return _KBArticleWithSysId(article, sys_id)
 
     return article
