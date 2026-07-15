@@ -205,3 +205,21 @@ It prevents a KB article from being created more than once for a Story.
 **Required ServiceNow configuration (Manual Action - T018 - DONE)**:
 A new String field was added to the `kb_knowledge` table: `u_source_story`.
 The ServiceNow UI Action script supports the pop-up (confirm) confirmation and calls the server using `gsftSubmit`.
+
+## 12. Starting tomorrow: GEPA Optimization (DSPy steps 3-6)
+
+**Date**: 2026-07-16
+**Goal**: Fine-tuning the prompts (Signature docstrings) of the GLM-5.2 model based on your real corporate KB format.
+
+### Your task tomorrow morning (User):
+- Find and hand over **1 KB Article template** (in HTML format).
+- Find and hand over **at least 5 existing, well-written KB Articles** (in HTML format).
+- These must be saved into the `data/examples/` folder (e.g. `template.html`, `article_1.html`, etc.), or pasted into the chat.
+
+### The agent's task (once the data is there):
+1. Process the HTML template and extract its structure (Title, Issue, Solution, etc.).
+2. Write `eval/metric.py`: a `rich_metric` function that returns `dspy.Prediction(score, feedback)`. It will compare the generated article with your template.
+3. Run `eval/dataset.py` on the 5 given articles (trainset/valset).
+4. Run a baseline measurement with the current program.
+5. Start the `dspy.GEPA(auto="medium")` optimization.
+6. Save the optimized program into the `artifacts/` folder.
