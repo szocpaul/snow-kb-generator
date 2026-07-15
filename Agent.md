@@ -184,3 +184,21 @@ Megakadályozza, hogy egy Story-hoz többször létrejöjjön KB cikk.
 **Szükséges ServiceNow konfiguráció (Manual Action - T018 - TÖRTÉNT)**:
 A `kb_knowledge` táblához hozzá lett adva egy új String mező: `u_source_story`.
 A ServiceNow UI Action script támogatja a felugró ablakos (confirm) megerősítést, és a `gsftSubmit` használatával hívja meg a szervert.
+
+## 12. Holnap kezdjük: GEPA Optimalizáció (DSPy 3-6. lépés)
+
+**Dátum**: 2026-07-16
+**Cél**: A GLM-5.2 modell promptjainak (Signature docstring-ek) finomhangolása a te valós vállalati KB formátumod alapján.
+
+### A teendőm holnap reggel (User):
+- Megkeresni és átadni **1 db KB Article template**-et (HTML formátumban).
+- Megkeresni és átadni **legalább 5 db meglévő, jól megírt KB Article**-t (HTML formátumban).
+- Ezeket el kell menteni a `data/examples/` mappába (pl. `template.html`, `article_1.html`, stb.), vagy be kell másolni a chatbe.
+
+### Az ágens teendője (Miután megvannak az adatok):
+1. Feldolgozni a HTML sablont és kinyerni belőle a struktúrát (Title, Issue, Solution, stb.).
+2. Megírni az `eval/metric.py`-t: Egy `rich_metric` függvény, ami `dspy.Prediction(score, feedback)`-ot ad vissza. Összehasonlítja majd a generált cikket a te sablonoddal.
+3. Lefuttatni az `eval/dataset.py`-t a megadott 5 cikkből (trainset/valset).
+4. Futtatni egy Baseline mérést a jelenlegi programmal.
+5. Elindítani a `dspy.GEPA(auto="medium")` optimalizációt.
+6. Elmenteni az optimalizált programot az `artifacts/` mappába.
