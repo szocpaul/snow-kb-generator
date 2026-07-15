@@ -1,8 +1,6 @@
 // ============================================================================
 // UI Action Script: Create KB Article (SERVER-SIDE)
 // ============================================================================
-// Duplicate handling with the hidden u_kb_force_update field.
-// ============================================================================
 
 // 1. The 'current' variable automatically contains the opened Story
 var storyId = current.number;
@@ -12,14 +10,17 @@ var storySysId = current.sys_id;
 var apiUrl = 'http://192.0.2.10:8000/generate-kb';
 var apiKey = 'REPLACE_WITH_RANDOM_KEY';
 
-// 2. Read the force_update value from the current.u_kb_force_update field.
-// If the field is true, the user has already confirmed the overwrite.
-var forceUpdate = (current.u_kb_force_update == 'true' || current.u_kb_force_update === true);
+// 2. Reading the force update. To be safe: string conversion and trim.
+var forceUpdateRaw = current.getValue('u_kb_force_update');
+var forceUpdate = false;
+if (forceUpdateRaw !== null && (forceUpdateRaw.toString().trim() === 'true' || forceUpdateRaw === true || forceUpdateRaw === '1')) {
+    forceUpdate = true;
+}
 
 var payload = {};
 payload.story_id = storyId + '';
 payload.push = true;
-payload.force_update = forceUpdate; // The decision comes from the field
+payload.force_update = forceUpdate;
 
 // 3. Starting the REST call
 var restMessage = new sn_ws.RESTMessageV2();
@@ -37,7 +38,7 @@ var responseBody = response.getBody();
 // 4. Processing the response
 if (httpStatus === 409) {
     // Duplicate! We set the flag to true so that the next click overwrites it.
-    current.u_kb_force_update = true;
+    current.setValue('u_kb_force_update', 'true');
     current.work_notes = "A KB article already exists for this Story. Pressing the button again OVERWRITES the old one.";
     gs.addInfoMessage("A KB article already exists. Click the button AGAIN to overwrite it!");
     
@@ -45,12 +46,12 @@ if (httpStatus === 409) {
     var result = JSON.parse(responseBody);
     if (result.success && result.kb_url) {
         // Successful creation or update. We reset the flag!
-        current.u_kb_force_update = false;
+        current.setValue('u_kb_force_update', 'false');
         current.work_notes = "KB article created/updated: " + result.kb_url + " (" + result.title + ")";
     }
 } else {
     // We reset it also in the error case
-    current.u_kb_force_update = false;
+    current.setValue('u_kb_force_update', 'false');
     current.work_notes = "KB article generation FAILED: HTTP " + httpStatus + " - " + responseBody.substring(0, 200);
     gs.addErrorMessage("Error during generation (HTTP " + httpStatus + ")");
 }
