@@ -23,7 +23,7 @@ from fastapi import FastAPI, Header, HTTPException
 from pydantic import BaseModel, Field
 
 from snow_kb.config import ConfigError, Settings, load_settings
-from snow_kb.pipeline import generate_kb_article
+from snow_kb.pipeline import DuplicateKBError, generate_kb_article
 from snow_kb.servicenow_client import ServiceNowClient, ServiceNowError
 
 logger = logging.getLogger(__name__)
@@ -40,6 +40,10 @@ class GenerateKBRequest(BaseModel):
     push: bool = Field(
         default=True,
         description="Ha True (alapértelmezett), a cikk bekerül a KB-be.",
+    )
+    force_update: bool = Field(
+        default=False,
+        description="Ha True, felülírja a meglévő cikket (ha a story már fel volt dolgozva).",
     )
 
 
@@ -124,7 +128,21 @@ def generate_kb(
             client=client,
             settings=settings,
             push=request.push,
+            force_update=request.force_update,
         )
+    except DuplicateKBError as exc:
+        # US2: Duplikáció esetén 409 Conflict-ot returnszünk a meglévő cikk adataival
+        logger.warning("Duplikáció észlelve: %s", exc)
+        settings = _get_settings()
+        existing_url = f"https://{settings.snow_instance}/kb_view.do?sys_kb_id={exc.existing_sys_id}"
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "message": str(exc),
+                "kb_sys_id": exc.existing_sys_id,
+                "kb_url": existing_url,
+            },
+        ) from exc
     except ServiceNowError as exc:
         logger.error("ServiceNow hiba: %s", exc)
         raise HTTPException(status_code=502, detail=str(exc)) from exc

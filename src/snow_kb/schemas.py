@@ -89,6 +89,7 @@ class KBArticle(BaseModel):
     html: str = Field(..., description="ServiceNow-kompatibilis HTML törzs")
     category: str = Field(default="General", description="KB kategória neve vagy sys_id")
     knowledge_base_id: str = Field(default="", description="Cél KB sys_id")
+    source_story: str = Field(default="", description="A forrás Story száma (u_source_story)")
 
     @field_validator("title")
     @classmethod

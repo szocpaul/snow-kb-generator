@@ -278,6 +278,67 @@ class TestCreateKbArticleLive:
 
 
 # ---------------------------------------------------------------------------
+# T003/T005: Foundation tests (find_existing_kb_article, PATCH update)
+# ---------------------------------------------------------------------------
+
+class TestKbDuplicatePrevention:
+    """A duplikáció megakadályozásához szükséges client metódusok tesztjei."""
+
+    def test_find_existing_kb_article_returns_sys_id(self, live_settings):
+        """Ha van már cikk a source_story mezővel, visszaadja a sys_id-t."""
+        client = ServiceNowClient(live_settings)
+        mock_resp = MagicMock(spec=requests.Response)
+        mock_resp.json.return_value = {"result": [{"sys_id": "existing_kb_123"}]}
+        mock_resp.ok = True
+        with patch.object(client, "_request", return_value=mock_resp) as mock_req:
+            sys_id = client.find_existing_kb_article("STRY0010005")
+            assert sys_id == "existing_kb_123"
+            # Ellenőrizzük, hogy a query a source_story-ra megy
+            args, kwargs = mock_req.call_args
+            assert "u_source_story=STRY0010005" in kwargs["params"]["sysparm_query"]
+
+    def test_find_existing_kb_article_returns_none_if_not_found(self, live_settings):
+        """Ha nincs cikk, None-t ad vissza."""
+        client = ServiceNowClient(live_settings)
+        mock_resp = MagicMock(spec=requests.Response)
+        mock_resp.json.return_value = {"result": []}
+        mock_resp.ok = True
+        with patch.object(client, "_request", return_value=mock_resp):
+            assert client.find_existing_kb_article("STRY9999") is None
+
+    def test_create_kb_article_patches_when_existing_sys_id_given(self, live_settings, valid_kb_article):
+        """Ha existing_sys_id van megadva, PATCH hívást indít, nem POST-ot."""
+        client = ServiceNowClient(live_settings)
+        valid_kb_article.source_story = "STRY0010005"
+        mock_resp = MagicMock(spec=requests.Response)
+        mock_resp.json.return_value = {"result": {"sys_id": "existing_kb_123"}}
+        mock_resp.ok = True
+        with patch.object(client, "_request", return_value=mock_resp) as mock_req:
+            sys_id = client.create_kb_article(valid_kb_article, existing_sys_id="existing_kb_123")
+            assert sys_id == "existing_kb_123"
+            # Ellenőrizzük, hogy PATCH volt
+            assert mock_req.call_args.args[0] == "PATCH"
+            assert "existing_kb_123" in mock_req.call_args.args[1]
+            # A payload tartalmazza az új tartalmat, de NEM a source_story-t (már be van állítva)
+            payload = mock_req.call_args.kwargs["json"]
+            assert "u_source_story" not in payload
+
+    def test_create_kb_article_post_includes_source_story(self, live_settings, valid_kb_article):
+        """Ha új cikk jön létre (POST), a payload tartalmazza a source_story-t."""
+        client = ServiceNowClient(live_settings)
+        valid_kb_article.source_story = "STRY0010005"
+        mock_resp = MagicMock(spec=requests.Response)
+        mock_resp.json.return_value = {"result": {"sys_id": "new_kb_456"}}
+        mock_resp.ok = True
+        with patch.object(client, "_request", return_value=mock_resp) as mock_req:
+            sys_id = client.create_kb_article(valid_kb_article)
+            assert sys_id == "new_kb_456"
+            assert mock_req.call_args.args[0] == "POST"
+            payload = mock_req.call_args.kwargs["json"]
+            assert payload["u_source_story"] == "STRY0010005"
+
+
+# ---------------------------------------------------------------------------
 # Hibakezelés (_request)
 # ---------------------------------------------------------------------------
 

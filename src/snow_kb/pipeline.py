@@ -23,6 +23,14 @@ import dspy
 from snow_kb.config import Settings, load_settings
 
 logger = logging.getLogger(__name__)
+
+
+class DuplicateKBError(Exception):
+    """Akkor dobódik, ha a Story-hoz már létezik KB cikk és a force_update=False."""
+
+    def __init__(self, message: str, existing_sys_id: str = ""):
+        super().__init__(message)
+        self.existing_sys_id = existing_sys_id
 from snow_kb.program import StoryToKBArticle
 from snow_kb.schemas import KBArticle, StoryData
 
@@ -186,6 +194,7 @@ def generate_kb_article(
     *,
     program: StoryToKBArticle | None = None,
     push: bool = True,
+    force_update: bool = False,
 ) -> KBArticle:
     """Lefuttatja a teljes pipeline-t: Story → KB Article.
 
@@ -197,6 +206,8 @@ def generate_kb_article(
             előre konfigurált/mock programot is át lehet adni.
         push: ha True, a cikket visszaírja a ServiceNow KB-be a client-tel.
             dry_run módban ez automatikusan False lesz.
+        force_update: ha True, és már létezik KB cikk a Story-hoz, a pipeline
+            felülírja (frissíti) a meglévőt ahelyett, hogy hibát dobna.
 
     Returns:
         A generált KBArticle (push esetén a sys_id-jával kitöltve).
@@ -243,12 +254,27 @@ def generate_kb_article(
             knowledge_base_id=settings.snow.knowledge_base_id,
         )
         article: KBArticle = pred.article
+        article.source_story = story_identifier  # Duplikáció megakadályozása
 
     # 6. Push a ServiceNow KB-be (ha kértük és nem dry_run)
     if push and not settings.dry_run:
-        sys_id = client.create_kb_article(article, story_sys_id=story.sys_id)
+        # Duplikáció ellenőrzése
+        existing_sys_id = client.find_existing_kb_article(story_identifier)
+        
+        if existing_sys_id and not force_update:
+            # US2: Ha már létezik cikk és nem kérték a frissítést, hibát dobunk
+            # (A server.py a 409-es hibakódot fogja returnszni ebből)
+            raise DuplicateKBError(
+                f"Már létezik KB cikk ehhez a Story-hoz (sys_id: {existing_sys_id}).",
+                existing_sys_id=existing_sys_id,
+            )
+        
+        sys_id = client.create_kb_article(
+            article, 
+            story_sys_id=story.sys_id, 
+            existing_sys_id=existing_sys_id or "",
+        )
         # Visszaírjuk a sys_id-t az article-re (új mezővel bővítjük)
-        # a KBArticle nem tartalmaz sys_id mezőt; a hívó kapja meg külön
         return _KBArticleWithSysId(article, sys_id)
 
     return article

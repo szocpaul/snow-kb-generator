@@ -164,3 +164,22 @@ A User megoldása: **Valós HTML KB Article template és legalább 5 meglévő c
 5. **Baseline mérés:** `dspy.Evaluate` a jelenlegi programon.
 6. **GEPA futtatás:** `dspy.GEPA(auto="medium")` a reflection modellel.
 7. **Mentés:** Optimalizált program elmentése az `artifacts/` mappába.
+
+## 11. Feature: KB Duplicate Prevention & Update (SDD - spec-kit)
+
+**Status**: ✅ Implementálva (várja az éles ServiceNow konfigurációt)
+
+A spec-kit (Spec-Driven Development) módszertan szerint került implementálásra.
+- **Spec**: `specs/001-kb-duplicate-prevention/spec.md`
+- **Plan**: `specs/001-kb-duplicate-prevention/plan.md`
+- **Tasks**: `specs/001-kb-duplicate-prevention/tasks.md`
+
+**Mit csinál?**
+Megakadályozza, hogy egy Story-hoz többször létrejöjjön KB cikk.
+1. Létrehoz egy `u_source_story` custom mezőt a KB cikken.
+2. Generálás előtt a pipeline lekérdezi, van-e már cikk a Story-hoz.
+3. Ha VAN és a felhasználó nem erősíti meg a frissítést: HTTP 409 (Abort).
+4. Ha a felhasználó megerősíti (`force_update=true`): a meglévő cikk tartalmát FRISSÍTI (PATCH) ahelyett, hogy újat hozna létre.
+
+**Szükséges ServiceNow konfiguráció (Manual Action - T018)**:
+A `kb_knowledge` táblához hozzá kell adni egy új String mezőt: `u_source_story`.

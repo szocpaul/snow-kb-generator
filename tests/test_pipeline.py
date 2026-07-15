@@ -207,6 +207,7 @@ class TestGenerateKbArticle:
         client.get_story.return_value = story
         client.create_kb_article.return_value = "new_kb_sys_id_123"
         client.get_update_set_changes.return_value = ("", "")  # alapból üres
+        client.find_existing_kb_article.return_value = None  # alapból nincs duplikáció
         return client
 
     def _make_mock_program(self) -> MagicMock:
@@ -365,3 +366,64 @@ class TestGenerateKbArticle:
             # Nem dob kivételt
             result = generate_kb_article("STRY0012345", client, settings, program=program)
         assert isinstance(result, KBArticle)
+
+
+# ---------------------------------------------------------------------------
+# US1/US3: Duplicate Prevention tesztek
+# ---------------------------------------------------------------------------
+
+class TestDuplicatePrevention:
+    """A duplikáció megakadályozásának tesztjei a pipeline-ban."""
+
+    def _make_settings():
+        return Settings(
+            dry_run=False,
+            snow=ServiceNowConfig(knowledge_base_id="kb1", default_category="IT"),
+        )
+
+    def test_us1_first_time_generation_sets_source_story(self, sample_story):
+        """US1: Ha nincs még cikk, a pipeline source_story-t állít be."""
+        from snow_kb.schemas import KBArticle
+        client = MagicMock()
+        client.get_story.return_value = sample_story
+        client.get_update_set_changes.return_value = ("", "")
+        client.find_existing_kb_article.return_value = None  # Nincs még cikk
+        client.create_kb_article.return_value = "new_sys_id"
+        
+        program = MagicMock()
+        program.return_value = MagicMock(article=KBArticle(
+            title="Test Title Here", html="<p>ok</p>", category="IT"
+        ))
+
+        settings = Settings(dry_run=False, snow=ServiceNowConfig(knowledge_base_id="kb1"))
+        with patch("snow_kb.pipeline.configure_lm"):
+            generate_kb_article("STRY0012345", client, settings, program=program)
+
+        # Ellenőrizzük, hogy a create_kb_article meg lett hívva, és az article.source_story be volt állítva
+        client.create_kb_article.assert_called_once()
+        call_args = client.create_kb_article.call_args
+        article_arg = call_args.args[0]
+        assert article_arg.source_story == "STRY0012345"
+        assert call_args.kwargs.get("existing_sys_id") in (None, "")
+
+    def test_us3_force_update_passes_existing_sys_id(self, sample_story):
+        """US3: Ha force_update=True és van cikk, a pipeline frissíti (existing_sys_id)."""
+        from snow_kb.schemas import KBArticle
+        client = MagicMock()
+        client.get_story.return_value = sample_story
+        client.get_update_set_changes.return_value = ("", "")
+        client.find_existing_kb_article.return_value = "existing_sys_99"  # Már van cikk
+        client.create_kb_article.return_value = "existing_sys_99"
+        
+        program = MagicMock()
+        program.return_value = MagicMock(article=KBArticle(
+            title="Updated Title Here", html="<p>updated</p>", category="IT"
+        ))
+
+        settings = Settings(dry_run=False, snow=ServiceNowConfig(knowledge_base_id="kb1"))
+        with patch("snow_kb.pipeline.configure_lm"):
+            generate_kb_article("STRY0012345", client, settings, program=program, force_update=True)
+
+        client.create_kb_article.assert_called_once()
+        call_kwargs = client.create_kb_article.call_args.kwargs
+        assert call_kwargs.get("existing_sys_id") == "existing_sys_99"

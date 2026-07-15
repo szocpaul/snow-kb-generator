@@ -179,6 +179,37 @@ class ServiceNowClient:
         return StoryData(**record)
 
     # ------------------------------------------------------------------
+    # find_existing_kb_article — Duplikáció ellenőrzése
+    # ------------------------------------------------------------------
+
+    def find_existing_kb_article(self, story_number: str) -> str | None:
+        """Lekérdezi, hogy egy Story-hoz már készült-e KB cikk (u_source_story).
+
+        Args:
+            story_number: A Story száma (pl. STRY0010005).
+
+        Returns:
+            A meglévő KB cikk sys_id-ja, vagy None ha nem található.
+        """
+        if self.dry_run:
+            return None  # Dry-run módban nincs duplikáció
+
+        url = f"{self.base_url}/kb_knowledge"
+        params = {
+            "sysparm_query": f"u_source_story={story_number}",
+            "sysparm_limit": "1",
+            "sysparm_fields": "sys_id",
+        }
+        resp = self._request("GET", url, params=params)
+        body = resp.json()
+
+        results = body.get("result", [])
+        if not results:
+            return None
+
+        return results[0].get("sys_id")
+
+    # ------------------------------------------------------------------
     # get_update_set_changes — Update Set módosítások lekérése
     # ------------------------------------------------------------------
 
@@ -251,15 +282,17 @@ class ServiceNowClient:
     # create_kb_article — KB cikk létrehozása
     # ------------------------------------------------------------------
 
-    def create_kb_article(self, article: KBArticle, story_sys_id: str = "") -> str:
-        """Létrehoz egy KB cikket a ServiceNow-ban (vagy dry-run-ban szimulál).
+    def create_kb_article(self, article: KBArticle, story_sys_id: str = "", existing_sys_id: str = "") -> str:
+        """Létrehoz vagy frissít egy KB cikket a ServiceNow-ban.
 
         Args:
             article: a publikálandó KB cikk.
             story_sys_id: a forrás Story sys_id-ja (a work_notes frissítéséhez).
+            existing_sys_id: ha meg van adva, a meglévő cikket frissíti (PATCH)
+                ahelyett, hogy újat hozna létre (duplikáció megakadályozása).
 
         Returns:
-            Az új KB cikk sys_id-ja (dry-run-ban dummy).
+            A KB cikk sys_id-ja (dry-run-ban dummy).
 
         Raises:
             AuthError: ha a hitelesítés sikertelen.
@@ -267,7 +300,7 @@ class ServiceNowClient:
         """
         if self.dry_run:
             return self._create_kb_article_mock(article)
-        return self._create_kb_article_live(article, story_sys_id)
+        return self._create_kb_article_live(article, story_sys_id, existing_sys_id)
 
     def _create_kb_article_mock(self, article: KBArticle) -> str:
         """Dry-run: csak logol, dummy sys_id-t ad vissza."""
@@ -280,26 +313,44 @@ class ServiceNowClient:
         logger.info("  -> sys_id: %s", dummy_sys_id)
         return dummy_sys_id
 
-    def _create_kb_article_live(self, article: KBArticle, story_sys_id: str = "") -> str:
-        """Éles: ServiceNow Table API POST hívás + work_notes frissítés."""
-        url = f"{self.base_url}/kb_knowledge"
-        payload = {
-            "knowledge_base": article.knowledge_base_id
-            or self.settings.snow.knowledge_base_id,
-            "short_description": article.title,
-            "text": article.html,
-            "category": article.category,
-            "article_type": "text",
-        }
-
-        resp = self._request("POST", url, json=payload)
-        body = resp.json()
-
-        if "result" not in body or "sys_id" not in body["result"]:
-            raise ServiceNowError(f"Váratlan válasz KB létrehozásnál: {body}")
-
-        sys_id = body["result"]["sys_id"]
-        logger.info("KB cikk létrehozva: sys_id=%s", sys_id)
+    def _create_kb_article_live(self, article: KBArticle, story_sys_id: str = "", existing_sys_id: str = "") -> str:
+        """Éles: ServiceNow Table API POST/PATCH hívás + work_notes frissítés."""
+        
+        # Ha van existing_sys_id, akkor PATCH-tel frissítjük
+        if existing_sys_id:
+            url = f"{self.base_url}/kb_knowledge/{existing_sys_id}"
+            payload = {
+                "short_description": article.title,
+                "text": article.html,
+                "category": article.category,
+            }
+            resp = self._request("PATCH", url, json=payload)
+            body = resp.json()
+            if "result" not in body or "sys_id" not in body["result"]:
+                raise ServiceNowError(f"Váratlan válasz KB frissítésnél: {body}")
+            sys_id = body["result"]["sys_id"]
+            logger.info("KB cikk frissítve: sys_id=%s", sys_id)
+        else:
+            # Új cikk létrehozása POST-tal
+            url = f"{self.base_url}/kb_knowledge"
+            payload = {
+                "knowledge_base": article.knowledge_base_id
+                or self.settings.snow.knowledge_base_id,
+                "short_description": article.title,
+                "text": article.html,
+                "category": article.category,
+                "article_type": "text",
+            }
+            # Duplikáció megakadályozása: source_story mező beállítása
+            if article.source_story:
+                payload["u_source_story"] = article.source_story
+            
+            resp = self._request("POST", url, json=payload)
+            body = resp.json()
+            if "result" not in body or "sys_id" not in body["result"]:
+                raise ServiceNowError(f"Váratlan válasz KB létrehozásnál: {body}")
+            sys_id = body["result"]["sys_id"]
+            logger.info("KB cikk létrehozva: sys_id=%s", sys_id)
 
         # Work notes frissítése a Story-n, ha meg van adva sys_id
         if story_sys_id:
