@@ -20,7 +20,15 @@ var apiKey = 'REPLACE_WITH_RANDOM_KEY';
 var payload = {};
 payload.story_id = storyId + ''; // coerce to string
 payload.push = true;
-payload.force_update = false; // By default we do not overwrite
+
+// US2/US3: Duplicate handling. If the duplicate warning is already in the work_notes
+// (that is, this is the SECOND click), then we send force_update = true so that the server overwrites the old one!
+payload.force_update = false;
+
+var wn = current.work_notes + '';
+if (wn.indexOf('Warning: a KB article already exists for this Story') !== -1) {
+    payload.force_update = true;
+}
 
 // Duplicate handling: first we check whether an article already exists
 var restMessage = new sn_ws.RESTMessageV2();
