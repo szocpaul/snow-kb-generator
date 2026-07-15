@@ -13,6 +13,7 @@ When the developers finish a ServiceNow Story (`STRY...`), a Knowledge Base (KB)
 **Input:** closed ServiceNow Story — `short_description`, `description`, `acceptance_criteria`, `u_technical_specification`, `work_notes`, `comments`, `state`.
 **Additional input:** The **Update Set** module request with the same name as the Story and the modified source code it contains (Script Include, Business Rule, UI Action XML payloads).
 **Output:** KB Article (HTML) — `title`, `summary`, `problem`, `solution` (reproducible steps), `category`, `audience`.
+**Features:** Duplicate prevention (with the `u_source_story` field) and Overwrite (Update) after user confirmation (confirm dialog).
 
 ## Tech stack
 
@@ -128,6 +129,9 @@ snow_kb_generator/
 5. **Baseline** — ⏳
 6. **GEPA optimization** — ⏳
 7. **Export & deploy** — ✅ Done (FastAPI + Docker + ServiceNow UI Action)
+
+**SDD (Spec-Driven Development):** The project actively uses the `spec-kit` methodology.
+- 1. Done Feature: `001-kb-duplicate-prevention` (duplicate prevention and overwrite).
 
 ## Licenc
 

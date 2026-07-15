@@ -188,7 +188,7 @@ The User's solution: the Gold Set will be based on a **real HTML KB Article temp
 
 ## 11. Feature: KB Duplicate Prevention & Update (SDD - spec-kit)
 
-**Status**: ✅ Implemented (waiting for the production ServiceNow configuration)
+**Status**: ✅ Implemented and tested in production (SDD)
 
 It was implemented following the spec-kit (Spec-Driven Development) methodology.
 - **Spec**: `specs/001-kb-duplicate-prevention/spec.md`
@@ -202,5 +202,6 @@ It prevents a KB article from being created more than once for a Story.
 3. If there IS one and the user does not confirm the update: HTTP 409 (Abort).
 4. If the user confirms (`force_update=true`): it UPDATES (PATCH) the content of the existing article instead of creating a new one.
 
-**Required ServiceNow configuration (Manual Action - T018)**:
-A new String field has to be added to the `kb_knowledge` table: `u_source_story`.
+**Required ServiceNow configuration (Manual Action - T018 - DONE)**:
+A new String field was added to the `kb_knowledge` table: `u_source_story`.
+The ServiceNow UI Action script supports the pop-up (confirm) confirmation and calls the server using `gsftSubmit`.
