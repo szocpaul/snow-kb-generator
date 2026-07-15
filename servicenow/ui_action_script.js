@@ -40,7 +40,7 @@ if (typeof current !== 'undefined' && current !== null) {
     restMessage.setHttpMethod('POST');
     restMessage.setRequestHeader('Content-Type', 'application/json');
     restMessage.setRequestHeader('X-API-Key', apiKey);
-    restMessage.setRequestBody(new JSON().encode(payload));
+    restMessage.setRequestBody(JSON.stringify(payload));
     restMessage.setRequestTimeout(120000);
     
     var response = restMessage.execute();
