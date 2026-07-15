@@ -1,10 +1,7 @@
 // ============================================================================
 // UI Action Script: Create KB Article (SERVER-SIDE)
 // ============================================================================
-// Ezt a scriptet az UI Action "Script" mezőjébe kell másolni.
-// FONTOS: Az UI Action recordon a "Client" mező legyen KIPIPÁLATLAN (false)!
-// Ez egy szerver oldali script, így elkerüli a GlideAjax aszinkron korlátozásait
-// és pont úgy működik, mint egy háttérscript (sys.scripts.do).
+// Duplikáció kezelés u_kb_force_update rejtett mezővel.
 // ============================================================================
 
 // 1. A 'current' változó automatikusan a megnyitott Story-t tartalmazza
@@ -15,61 +12,48 @@ var storySysId = current.sys_id;
 var apiUrl = 'http://91.99.175.157:8000/generate-kb';
 var apiKey = 'snow-kb-test-key-2024';
 
-// 2. REST hívás indítása a VPS szerverünknek
-// A ServiceNow beépített JSON encoder-ét használjuk a stabilitás miatt
+// 2. A force_update értékét a current.u_kb_force_update mezőből olvassuk ki.
+// Ha a mező true, akkor a felhasználó már megerősítette a felülírást.
+var forceUpdate = (current.u_kb_force_update == 'true' || current.u_kb_force_update === true);
+
 var payload = {};
-payload.story_id = storyId + ''; // string-ként kényszerítés
+payload.story_id = storyId + '';
 payload.push = true;
+payload.force_update = forceUpdate; // A döntés a mezőből jön
 
-// US2/US3: Duplikáció kezelése. Ha a work_notes-ban már szerepel a duplikációs figyelmeztetés
-// (azaz ez a MÁSODIK kattintás), akkor force_update = true-t küldünk, hogy a szerver felülírja a régit!
-payload.force_update = false;
-
-var wn = current.work_notes + '';
-if (wn.indexOf('Figyelem: Ehhez a Story-hoz már létezik KB cikk') !== -1) {
-    payload.force_update = true;
-}
-
-// Duplikáció kezelése: először megnézzük, van-e már cikk
+// 3. REST hívás indítása
 var restMessage = new sn_ws.RESTMessageV2();
 restMessage.setEndpoint(apiUrl);
 restMessage.setHttpMethod('POST');
 restMessage.setRequestHeader('Content-Type', 'application/json');
 restMessage.setRequestHeader('X-API-Key', apiKey);
 restMessage.setRequestBody(new JSON().encode(payload));
-restMessage.setRequestTimeout(120000); // 120 másodperc timeout a GLM generálás miatt
+restMessage.setRequestTimeout(120000);
 
 var response = restMessage.execute();
 var httpStatus = response.getStatusCode();
 var responseBody = response.getBody();
 
+// 4. Válasz feldolgozása
 if (httpStatus === 409) {
-    // US2/US3: Duplikáció észlelve. Megkérdezzük a felhasználót.
-    var dupData = JSON.parse(responseBody).detail;
-    var kbUrl = dupData.kb_url;
-    
-    // Felhasználó megerősítése (UI Action specifikus)
-    // Mivel szerver oldalon futunk, a confirm() nem működik közvetlenül.
-    // Ehelyett a work_notes-ba írjuk az információt, és egy újabb gombnyomásra 
-    // (force_update=true) kerül sor.
-    current.work_notes = "Figyelem: Ehhez a Story-hoz már létezik KB cikk: " + kbUrl + 
-                         ". Ha újra generálni szeretnéd, kattints a gombra mégegyszer (a rendszer felül fogja írni).";
-    current.update();
-    gs.addInfoMessage("Már létezik KB cikk. Lásd a work_notes mezőt. Újrageneráláshoz kattints a gombra mégegyszer.");
+    // Duplikáció! Beállítjuk a flag-et true-ra, hogy a következő kattintás felülírjon.
+    current.u_kb_force_update = true;
+    current.work_notes = "Ehhez a Story-hoz már létezik KB cikk. A gomb ismételt megnyomásával a rendszer FELÜLÍRJA a régit.";
+    gs.addInfoMessage("Már létezik KB cikk. A felülíráshoz kattints a gombra MÉGEGYSZER!");
     
 } else if (httpStatus === 200) {
     var result = JSON.parse(responseBody);
     if (result.success && result.kb_url) {
-        // 3. Sikeres generálás esetén a link berakása a Story work_notes mezőjébe
-        // NEM hívjuk a current.update()-et! 
-        current.work_notes = "KB article created: " + result.kb_url + " (" + result.title + ")";
+        // Sikeres létrehozás vagy frissítés. Reseteljük a flag-et!
+        current.u_kb_force_update = false;
+        current.work_notes = "KB article created/updated: " + result.kb_url + " (" + result.title + ")";
     }
 } else {
-    // Ha a szerver 500-as vagy más hibakódot adott vissza
+    // Hiba esetén is reseteljük
+    current.u_kb_force_update = false;
     current.work_notes = "KB article generation FAILED: HTTP " + httpStatus + " - " + responseBody.substring(0, 200);
     gs.addErrorMessage("Hiba a generálás során (HTTP " + httpStatus + ")");
 }
 
-// 4. Irányítás beállítása: maradjon nyitva a Story-n a frissítés után
 action.setRedirectURL(current);
 action.setReturnURL(current);
