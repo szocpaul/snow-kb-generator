@@ -20,7 +20,15 @@ var apiKey = 'snow-kb-test-key-2024';
 var payload = {};
 payload.story_id = storyId + ''; // string-ként kényszerítés
 payload.push = true;
-payload.force_update = false; // Alapból nem írunk felül
+
+// US2/US3: Duplikáció kezelése. Ha a work_notes-ban már szerepel a duplikációs figyelmeztetés
+// (azaz ez a MÁSODIK kattintás), akkor force_update = true-t küldünk, hogy a szerver felülírja a régit!
+payload.force_update = false;
+
+var wn = current.work_notes + '';
+if (wn.indexOf('Figyelem: Ehhez a Story-hoz már létezik KB cikk') !== -1) {
+    payload.force_update = true;
+}
 
 // Duplikáció kezelése: először megnézzük, van-e már cikk
 var restMessage = new sn_ws.RESTMessageV2();
