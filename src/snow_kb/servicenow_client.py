@@ -151,13 +151,13 @@ class ServiceNowClient:
         # If it looks like a sys_id (32 hex chars), use it directly; otherwise a number query
         if len(story_identifier) == 32:
             url = f"{self.base_url}/{table}/{story_identifier}"
-            params = {"sysparm_display_value": "true", "sysparm_fields": fields}
+            params = {"sysparm_display_value": "false", "sysparm_fields": fields}
         else:
             url = f"{self.base_url}/{table}"
             params = {
                 "sysparm_query": f"number={story_identifier}",
                 "sysparm_limit": "1",
-                "sysparm_display_value": "true",
+                "sysparm_display_value": "false",  # the exact value of the references (sys_id)
                 "sysparm_fields": fields,
             }
 
