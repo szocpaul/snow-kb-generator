@@ -1,68 +1,63 @@
 // ============================================================================
-// UI Action Script: Create KB Article (CLIENT-SIDE CONFIRM + SERVER-SIDE REST)
+// UI Action Script: Create KB Article (SERVER-SIDE)
 // ============================================================================
-// ServiceNow beállítás:
-// 1. Client: TRUE (pipa)
-// 2. Onclick: confirmCreateKb()
-// 3. Script: Másold be ezt a kódot.
+// Ez a script a ServiceNow szerverén fut, és közvetlenül onnan hívja meg a 
+// VPS-en lévő FastAPI szerverünket. Kezeli a 200, 409 (Duplicate), 
+// 422 (Missing Group) és egyéb hibakódokat.
 // ============================================================================
 
-// --- 1. RÉSZ: KLIENS OLDALI SCRIPT (Böngésző) ---
-function confirmCreateKb() {
-    // Felugró ablak a felhasználónak
-    var answer = confirm("Biztosan generálni szeretnél egy KB cikket ehhez a Story-hoz?\n(Ha már létezik cikk, a rendszer FELÜLÍRJA a régit!)");
-    if (!answer) {
-        return; // Mégsem
-    }
-    
-    // Átadjuk a szerveroldali scriptnek (az UI Action neve szükséges hozzá)
-    // A gomb Action neve (sys_id vagy név) kell ide. Használjuk a 'create_kb_server_action' nevét.
-    gsftSubmit(null, g_form.getFormElement(), 'create_kb_server_action');
-}
+// 1. A 'current' változó automatikusan a megnyitott Story-t tartalmazza
+var storyId = current.number;
 
-// --- 2. RÉSZ: SZERVER OLDALI SCRIPT (ServiceNow szerver) ---
-if (typeof current !== 'undefined' && current !== null) {
-    var storyId = current.number;
-    
-    // --- BEÁLLÍTÁSOK ---
-    var apiUrl = 'http://91.99.175.157:8000/generate-kb';
-    var apiKey = 'snow-kb-test-key-2024';
-    
-    // Mivel a felhasználó már rányomott az OK gombra a confirm ablakban,
-    // a szerver mindig force_update=true-t küld (így nincs felesleges 409-es kör).
-    var payload = {};
-    payload.story_id = storyId + '';
-    payload.push = true;
-    payload.force_update = true; 
-    
-    var restMessage = new sn_ws.RESTMessageV2();
-    restMessage.setEndpoint(apiUrl);
-    restMessage.setHttpMethod('POST');
-    restMessage.setRequestHeader('Content-Type', 'application/json');
-    restMessage.setRequestHeader('X-API-Key', apiKey);
-    restMessage.setRequestBody(JSON.stringify(payload));
-    restMessage.setRequestTimeout(120000);
-    
-    var response = restMessage.execute();
-    var httpStatus = response.getStatusCode();
-    var responseBody = response.getBody();
-    
-    if (httpStatus === 200) {
-        var result = JSON.parse(responseBody);
-        if (result.success && result.kb_url) {
-            current.work_notes = "KB article created/updated: " + result.kb_url + " (" + result.title + ")";
-        } else {
-             current.work_notes = "KB generation response error.";
-        }
-    } else if (httpStatus === 422) {
-        // US2 (Team Feature): Hiányzó Assignment Group
-        var errData = JSON.parse(responseBody).detail;
-        current.work_notes = "Generálás megszakítva: " + (errData.message || 'Hiányzó csapat adat.');
-        gs.addErrorMessage("Hiba: A Story-n kötelező az Assignment Group mező!");
+// --- BEÁLLÍTÁSOK ---
+var apiUrl = 'http://91.99.175.157:8000/generate-kb';
+var apiKey = 'snow-kb-test-key-2024';
+
+// 2. Payload összeállítása
+var payload = {};
+payload.story_id = storyId + ''; // string-ként kényszerítés
+payload.push = true;
+// A UI Action gombra kattintva a felhasználó már jóváhagyta a generálást,
+// ezért a force_update=true-t küldjük, hogy felülírja a régit, ha van.
+payload.force_update = true; 
+
+// 3. REST hívás indítása a VPS szerverünknek
+var restMessage = new sn_ws.RESTMessageV2();
+restMessage.setEndpoint(apiUrl);
+restMessage.setHttpMethod('POST');
+restMessage.setRequestHeader('Content-Type', 'application/json');
+restMessage.setRequestHeader('X-API-Key', apiKey);
+restMessage.setRequestBody(JSON.stringify(payload));
+restMessage.setRequestTimeout(120000); // 120 másodperc timeout a GLM generálás miatt
+
+var response = restMessage.execute();
+var httpStatus = response.getStatusCode();
+var responseBody = response.getBody();
+
+// 4. Válasz feldolgozása a HTTP státuszkód alapján
+if (httpStatus === 200) {
+    // Sikeres generálás vagy frissítés
+    var result = JSON.parse(responseBody);
+    if (result.success && result.kb_url) {
+        current.work_notes = "KB article created/updated: " + result.kb_url + " (" + result.title + ")";
     } else {
-        current.work_notes = "KB article generation FAILED: HTTP " + httpStatus + " - " + responseBody.substring(0, 200);
-        gs.addErrorMessage("Hiba a generálás során (HTTP " + httpStatus + ")");
+        current.work_notes = "KB generation finished, but response was invalid.";
     }
-    
-    action.setRedirectURL(current);
+} else if (httpStatus === 422) {
+    // Unprocessable Entity (pl. hiányzik az Assignment Group)
+    var errData = JSON.parse(responseBody).detail;
+    current.work_notes = "Generálás megszakítva: " + (errData.message || 'Hiányzó kötelező adat (pl. Assignment Group).');
+    gs.addErrorMessage("Hiba: A Story-n kötelező az Assignment Group mező!");
+} else if (httpStatus === 409) {
+    // Conflict (Már létezik KB cikk a Story-hoz)
+    current.work_notes = "Figyelem: Már létezik KB cikk ehhez a Story-hoz. A gomb ismételt megnyomásával a rendszer felül fogja írni a régit.";
+    gs.addInfoMessage("Már létezik KB cikk. Kattints a gombra mégegyszer a felülíráshoz!");
+} else {
+    // Egyéb hibák (pl. 500 Internal Server Error, vagy 0 Connection Refused)
+    current.work_notes = "Hiba történt (HTTP " + httpStatus + "): " + responseBody.substring(0, 150);
+    gs.addErrorMessage("Hiba a generálás során (HTTP " + httpStatus + ")");
 }
+
+// 5. Irányítás beállítása: maradjon nyitva a Story-n a frissítés után
+action.setRedirectURL(current);
+action.setReturnURL(current);
