@@ -415,9 +415,9 @@ class TestTeamTemplates:
         with patch.object(client, "_request", return_value=mock_resp) as mock_req:
             template = client.get_team_template("group_sys_id_123")
             assert template == "<h1>Network Template</h1>"
-            # Check that the query goes to u_assignment_group
+            # Check that the query goes to ownership_group
             args, kwargs = mock_req.call_args
-            assert "u_assignment_group=group_sys_id_123" in kwargs["params"]["sysparm_query"]
+            assert "ownership_group=group_sys_id_123" in kwargs["params"]["sysparm_query"]
 
     def test_get_team_template_returns_none_if_not_found(self, live_settings):
         """If there is no KB for the team, it returns None."""

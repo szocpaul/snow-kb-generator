@@ -6,7 +6,7 @@ This contract describes how the `assignment_group` links to a template, and the 
 
 ### `get_team_template(assignment_group: str) -> str | None`
 - **Purpose**: Fetches the team-specific HTML template.
-- **Query**: `GET /api/now/table/kb_knowledge_base?sysparm_query=u_assignment_group={assignment_group_sys_id}&sysparm_limit=1&sysparm_fields=text`
+- **Query**: `GET /api/now/table/kb_knowledge_base?sysparm_query=ownership_group={assignment_group_sys_id}&sysparm_limit=1&sysparm_fields=text`
 - **Returns**: The `text` field (HTML template) of the matched KB, or `None` if no match is found.
 - *(Note: If the instance uses a different mapping logic, e.g., a reference field on `sys_user_group`, the query is adjusted to follow that reference.)*
 

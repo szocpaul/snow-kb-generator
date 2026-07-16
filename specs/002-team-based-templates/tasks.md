@@ -25,12 +25,12 @@
 
 ## Phase 2: Foundational (Blocking Prerequisites)
 
-**Purpose**: ServiceNow client method to fetch the team-specific template via the `u_assignment_group` reference field.
+**Purpose**: ServiceNow client method to fetch the team-specific template via the `ownership_group` reference field.
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete.
 
-- [X] T003 Write failing tests for `get_team_template()` in `tests/test_servicenow_client.py` (queries `u_assignment_group`, returns `text` or None)
-- [X] T004 Implement `get_team_template(assignment_group)` in `src/snow_kb/servicenow_client.py` (queries `kb_knowledge_base` where `u_assignment_group={sys_id}`)
+- [X] T003 Write failing tests for `get_team_template()` in `tests/test_servicenow_client.py` (queries `ownership_group`, returns `text` or None)
+- [X] T004 Implement `get_team_template(assignment_group)` in `src/snow_kb/servicenow_client.py` (queries `kb_knowledge_base` where `ownership_group={sys_id}`)
 
 **Checkpoint**: Foundation ready - user story implementation can now begin
 
@@ -77,7 +77,7 @@
 **Purpose**: Final validation and documentation.
 
 - [X] T014 Run full pytest suite (`pytest tests/ -q`) to ensure 185+ tests are green and no regressions
-- [X] T015 Update `Agent.md` and `README.md` to document the team-based template feature and the `u_assignment_group` field requirement
+- [X] T015 Update `Agent.md` and `README.md` to document the team-based template feature and the `ownership_group` field requirement
 
 ---
 
