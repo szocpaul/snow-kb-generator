@@ -190,34 +190,65 @@ class ServiceNowClient:
     # ------------------------------------------------------------------
 
     def get_team_template(self, assignment_group: str) -> str | None:
-        """Lekéri a csapathoz tartozó KB sablont (text mező).
+        """Lekéri a csapathoz tartozó KB sablon HTML-t.
 
-        A mapping a `kb_knowledge_base` tábla `u_assignment_group` mezője
-        alapján történik (közvetlen hivatkozás a sys_user_group rekordra).
+        A mapping két lépésből áll:
+        1. Megkeresi a KB Knowledge Base-t, ahol az `u_assignment_group` megegyezik
+           a Story assignment_group-jával.
+        2. Abban a KB-ben megkeresi a sablon cikket (kb_knowledge), aminek a
+           címe tartalmazza a 'Structure' vagy 'Template' szót, és visszaadja
+           annak a `text` mezőjét (HTML sablon).
 
         Args:
             assignment_group: A csapat sys_id-ja (a Story assignment_group mezőjéből).
 
         Returns:
-            A KB `text` mező tartalma (HTML sablon), vagy None ha nem található.
+            A sablon cikk `text` mező tartalma (HTML), vagy None ha nem található.
         """
         if self.dry_run:
             return None
 
+        # 1. lépés: KB Knowledge Base keresése az u_assignment_group alapján
         url = f"{self.base_url}/kb_knowledge_base"
         params = {
             "sysparm_query": f"u_assignment_group={assignment_group}",
             "sysparm_limit": "1",
-            "sysparm_fields": "text",
+            "sysparm_fields": "sys_id,title",
         }
         resp = self._request("GET", url, params=params)
         body = resp.json()
 
-        results = body.get("result", [])
-        if not results:
+        kb_results = body.get("result", [])
+        if not kb_results:
+            logger.warning("Nincs KB a csapathoz (assignment_group=%s)", assignment_group)
             return None
 
-        return results[0].get("text")
+        kb_sys_id = kb_results[0]["sys_id"]
+        logger.info("KB Knowledge Base található: %s", kb_results[0].get("title", ""))
+
+        # 2. lépés: Sablon cikk keresése ebben a KB-ben
+        # A cikk címe tartalmazza a 'Structure' vagy 'Template' szót
+        url = f"{self.base_url}/kb_knowledge"
+        params = {
+            "sysparm_query": f"knowledge_base={kb_sys_id}^short_descriptionCONTAINS%20Structure^ORshort_descriptionCONTAINS%20Template",
+            "sysparm_limit": "1",
+            "sysparm_fields": "text,short_description",
+        }
+        resp = self._request("GET", url, params=params)
+        body = resp.json()
+
+        article_results = body.get("result", [])
+        if not article_results:
+            logger.warning("Nincs sablon cikk a KB-ben (keresés: Structure/Template)")
+            return None
+
+        template_text = article_results[0].get("text", "")
+        logger.info(
+            "Sablon cikk található: %s (%d karakter)",
+            article_results[0].get("short_description", "")[:50],
+            len(template_text or ""),
+        )
+        return template_text or None
 
     # ------------------------------------------------------------------
     # find_existing_kb_article — Duplikáció ellenőrzése
