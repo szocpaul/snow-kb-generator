@@ -49,7 +49,7 @@ class StoryToKBArticle(dspy.Module):
         self.draft = dspy.ChainOfThought(DraftSections)
         self.format = dspy.Predict(FormatKB)
         # Új prediktor: HTML sablon egy-az-egyben történő kitöltése
-        self.generate_from_template = dspy.ChainOfThought(GenerateKbFromTemplate)
+        self.generate_from_template = dspy.Predict(GenerateKbFromTemplate)
 
     def forward(
         self,
