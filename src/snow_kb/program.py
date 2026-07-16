@@ -24,6 +24,7 @@ from snow_kb.signatures import (
     DraftSections,
     ExtractChange,
     FormatKB,
+    GenerateKbFromTemplate,
 )
 
 # Karakterkorlát: ha az Update Set payloadjai együtt meghaladják ezt az értéket,
@@ -47,6 +48,8 @@ class StoryToKBArticle(dspy.Module):
         self.extract = dspy.ChainOfThought(ExtractChange)
         self.draft = dspy.ChainOfThought(DraftSections)
         self.format = dspy.Predict(FormatKB)
+        # Új prediktor: HTML sablon egy-az-egyben történő kitöltése
+        self.generate_from_template = dspy.ChainOfThought(GenerateKbFromTemplate)
 
     def forward(
         self,
@@ -96,7 +99,45 @@ class StoryToKBArticle(dspy.Module):
         # 1. Kinyerés: mi történt, lépések, célközönség
         extracted = self.extract(story_text=full_context)
 
-        # 2. Piszkozat: részek szerkesztése a célközönségnek
+        # 2. Ha van HTML sablon, használd az egy-az-egyben kitöltő Signature-t
+        if template_context:
+            # A sablon-alapú generálás sokkal rugalmasabb: bármennyi szekciót képes
+            # kezelni, mert közvetlenül a HTML struktúrát tölti ki.
+            story_context_for_template = (
+                f"Change Summary: {extracted.change_summary}\n\n"
+                f"Key Steps: {', '.join(extracted.key_steps)}\n\n"
+                f"Full Story Context: {full_context}"
+            )
+            template_result = self.generate_from_template(
+                story_context=story_context_for_template,
+                html_template=template_context,
+            )
+            final_html = template_result.html
+            # Cím kinyerése az extract lépésből (vagy az első <h1> a HTML-ből)
+            final_title = extracted.change_summary.split('.')[0][:120] or "KB Article"
+            
+            article = KBArticle(
+                title=final_title,
+                html=final_html,
+                category=category,
+                knowledge_base_id=knowledge_base_id,
+            )
+            
+            return dspy.Prediction(
+                sections=ArticleSections(
+                    title=final_title,
+                    problem="(Generated from template)",
+                    solution_steps=["See generated HTML"],
+                    summary=extracted.change_summary,
+                    audience=extracted.audience,
+                ),
+                article=article,
+                change_summary=extracted.change_summary,
+                key_steps=extracted.key_steps,
+                audience=extracted.audience,
+            )
+
+        # 2b. Ha NINCS sablon: a hagyományos 3-lépéses pipeline
         drafted = self.draft(
             change_summary=extracted.change_summary,
             key_steps=extracted.key_steps,

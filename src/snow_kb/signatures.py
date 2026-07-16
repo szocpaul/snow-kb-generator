@@ -135,3 +135,36 @@ class FormatKB(dspy.Signature):
         desc="ServiceNow KB article body as HTML. Must contain at least one "
              "<p>, <ol>, or <ul> block. No <html>/<head>/<body> wrappers."
     )
+
+
+# ---------------------------------------------------------------------------
+# 4. GenerateKbFromTemplate — HTML sablon egy-az-egyben kitöltése
+# ---------------------------------------------------------------------------
+
+class GenerateKbFromTemplate(dspy.Signature):
+    """Generate a complete ServiceNow KB article by filling in an HTML template.
+
+    You are given:
+    1. A `story_context`: The extracted summary and technical details of a completed Story.
+    2. An `html_template`: An HTML skeleton containing the team's required headings 
+       and structure (e.g., <h2>Overview</h2>, <h2>Inbound Technical Implementation</h2>).
+
+    YOUR TASK (CRITICAL):
+    You MUST return a single, complete HTML document that follows the `html_template` 
+    structure EXACTLY. 
+    - Copy the HTML tags (<h1>, <h2>, <ul>, <li>, <p>) from the template.
+    - Fill in every section of the template with relevant information from the `story_context`.
+    - Do NOT invent new headings. Do NOT remove headings from the template.
+    - If a section does not apply to the story, keep the heading but write "N/A" or 
+      a brief explanation under it.
+    """
+    story_context: str = dspy.InputField(
+        desc="The extracted summary, change details, and technical implementation info."
+    )
+    html_template: str = dspy.InputField(
+        desc="The exact HTML structure/headings the output MUST follow."
+    )
+
+    html: str = dspy.OutputField(
+        desc="A complete ServiceNow KB article in HTML, strictly following the provided html_template."
+    )
