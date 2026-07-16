@@ -116,12 +116,10 @@ class DraftSections(dspy.Signature):
 # ---------------------------------------------------------------------------
 
 class FormatKB(dspy.Signature):
-    """Format drafted article sections into ServiceNow-compatible HTML.
+    """Format drafted sections into ServiceNow-compatible HTML STRICTLY matching the team's template.
 
-    Produce clean, semantic HTML suitable for a ServiceNow Knowledge Base
-    article body. Use <h2> for section headings, <p> for paragraphs, and
-    <ol> with <li> for the solution steps. Do NOT include <html>, <head>,
-    or <body> tags — only the body fragment.
+        If a template_context is provided, you MUST use the exact HTML tags,
+        headings (e.g., KBA1, KBA2), and structure found in the template_context.
     """
     title: str = dspy.InputField(desc="Article title.")
     problem: str = dspy.InputField(desc="Problem statement.")
