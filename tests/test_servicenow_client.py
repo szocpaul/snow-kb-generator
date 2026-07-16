@@ -397,3 +397,33 @@ class TestRequestErrorHandling:
     def test_base_url_uses_instance(self, live_settings):
         client = ServiceNowClient(live_settings)
         assert client.base_url == "https://demo.service-now.com/api/now/table"
+
+
+# ---------------------------------------------------------------------------
+# T003: Team-Based KB Templates tests
+# ---------------------------------------------------------------------------
+
+class TestTeamTemplates:
+    """A csapatspecifikus sablonok lekérésének tesztjei."""
+
+    def test_get_team_template_returns_text(self, live_settings):
+        """Ha van a csapathoz KB, visszaadja a text mezőt."""
+        client = ServiceNowClient(live_settings)
+        mock_resp = MagicMock(spec=requests.Response)
+        mock_resp.json.return_value = {"result": [{"text": "<h1>Network Template</h1>"}]}
+        mock_resp.ok = True
+        with patch.object(client, "_request", return_value=mock_resp) as mock_req:
+            template = client.get_team_template("group_sys_id_123")
+            assert template == "<h1>Network Template</h1>"
+            # Ellenőrizzük, a query a u_assignment_group-ra megy
+            args, kwargs = mock_req.call_args
+            assert "u_assignment_group=group_sys_id_123" in kwargs["params"]["sysparm_query"]
+
+    def test_get_team_template_returns_none_if_not_found(self, live_settings):
+        """Ha nincs a csapathoz KB, None-t ad vissza."""
+        client = ServiceNowClient(live_settings)
+        mock_resp = MagicMock(spec=requests.Response)
+        mock_resp.json.return_value = {"result": []}
+        mock_resp.ok = True
+        with patch.object(client, "_request", return_value=mock_resp):
+            assert client.get_team_template("unknown_group") is None

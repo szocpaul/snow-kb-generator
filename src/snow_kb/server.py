@@ -23,6 +23,7 @@ from fastapi import FastAPI, Header, HTTPException
 from pydantic import BaseModel, Field
 
 from snow_kb.config import ConfigError, Settings, load_settings
+from snow_kb.errors import MissingAssignmentGroupError
 from snow_kb.pipeline import DuplicateKBError, generate_kb_article
 from snow_kb.servicenow_client import ServiceNowClient, ServiceNowError
 
@@ -142,6 +143,13 @@ def generate_kb(
                 "kb_sys_id": exc.existing_sys_id,
                 "kb_url": existing_url,
             },
+        ) from exc
+    except MissingAssignmentGroupError as exc:
+        # US2 (Team Feature): Ha hiányzik a csapat, 422 Unprocessable Entity-t returnszünk
+        logger.warning("Hiányzó Assignment Group: %s", exc)
+        raise HTTPException(
+            status_code=422,
+            detail={"message": str(exc)},
         ) from exc
     except ServiceNowError as exc:
         logger.error("ServiceNow hiba: %s", exc)

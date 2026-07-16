@@ -179,6 +179,40 @@ class ServiceNowClient:
         return StoryData(**record)
 
     # ------------------------------------------------------------------
+    # get_team_template — Csapat specifikus sablon lekérése
+    # ------------------------------------------------------------------
+
+    def get_team_template(self, assignment_group: str) -> str | None:
+        """Lekéri a csapathoz tartozó KB sablont (text mező).
+
+        A mapping a `kb_knowledge_base` tábla `u_assignment_group` mezője
+        alapján történik (közvetlen hivatkozás a sys_user_group rekordra).
+
+        Args:
+            assignment_group: A csapat sys_id-ja (a Story assignment_group mezőjéből).
+
+        Returns:
+            A KB `text` mező tartalma (HTML sablon), vagy None ha nem található.
+        """
+        if self.dry_run:
+            return None
+
+        url = f"{self.base_url}/kb_knowledge_base"
+        params = {
+            "sysparm_query": f"u_assignment_group={assignment_group}",
+            "sysparm_limit": "1",
+            "sysparm_fields": "text",
+        }
+        resp = self._request("GET", url, params=params)
+        body = resp.json()
+
+        results = body.get("result", [])
+        if not results:
+            return None
+
+        return results[0].get("text")
+
+    # ------------------------------------------------------------------
     # find_existing_kb_article — Duplikáció ellenőrzése
     # ------------------------------------------------------------------
 

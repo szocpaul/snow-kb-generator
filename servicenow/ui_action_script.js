@@ -54,6 +54,11 @@ if (typeof current !== 'undefined' && current !== null) {
         } else {
              current.work_notes = "KB generation response error.";
         }
+    } else if (httpStatus === 422) {
+        // US2 (Team Feature): Hiányzó Assignment Group
+        var errData = JSON.parse(responseBody).detail;
+        current.work_notes = "Generálás megszakítva: " + (errData.message || 'Hiányzó csapat adat.');
+        gs.addErrorMessage("Hiba: A Story-n kötelező az Assignment Group mező!");
     } else {
         current.work_notes = "KB article generation FAILED: HTTP " + httpStatus + " - " + responseBody.substring(0, 200);
         gs.addErrorMessage("Hiba a generálás során (HTTP " + httpStatus + ")");

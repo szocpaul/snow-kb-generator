@@ -43,6 +43,7 @@ def sample_story() -> StoryData:
         comments="Confirmed resolved in staging.",
         state="Closed Complete",
         assigned_to="Jane Dev",
+        assignment_group="network_team",
     )
 
 
@@ -53,6 +54,7 @@ def partial_story() -> StoryData:
         number="STRY0001",
         short_description="Minor UI fix",
         state="Closed Complete",
+        assignment_group="network_team",
     )
 
 
@@ -208,6 +210,7 @@ class TestGenerateKbArticle:
         client.create_kb_article.return_value = "new_kb_sys_id_123"
         client.get_update_set_changes.return_value = ("", "")  # alapból üres
         client.find_existing_kb_article.return_value = None  # alapból nincs duplikáció
+        client.get_team_template.return_value = "<p>Mock Template</p>"  # alapból van template
         return client
 
     def _make_mock_program(self) -> MagicMock:
@@ -384,6 +387,7 @@ class TestDuplicatePrevention:
     def test_us1_first_time_generation_sets_source_story(self, sample_story):
         """US1: Ha nincs még cikk, a pipeline source_story-t állít be."""
         from snow_kb.schemas import KBArticle
+        sample_story.assignment_group = "team_id"  # Kötelező mező
         client = MagicMock()
         client.get_story.return_value = sample_story
         client.get_update_set_changes.return_value = ("", "")
@@ -409,6 +413,7 @@ class TestDuplicatePrevention:
     def test_us3_force_update_passes_existing_sys_id(self, sample_story):
         """US3: Ha force_update=True és van cikk, a pipeline frissíti (existing_sys_id)."""
         from snow_kb.schemas import KBArticle
+        sample_story.assignment_group = "team_id"  # Kötelező mező
         client = MagicMock()
         client.get_story.return_value = sample_story
         client.get_update_set_changes.return_value = ("", "")
@@ -427,3 +432,55 @@ class TestDuplicatePrevention:
         client.create_kb_article.assert_called_once()
         call_kwargs = client.create_kb_article.call_args.kwargs
         assert call_kwargs.get("existing_sys_id") == "existing_sys_99"
+
+
+# ---------------------------------------------------------------------------
+# US1: Team-Based Templates tesztek
+# ---------------------------------------------------------------------------
+
+class TestTeamTemplatesPipeline:
+    """A csapatspecifikus template pipeline-be integrálásának tesztjei."""
+
+    def test_us1_template_passed_to_program(self, sample_story):
+        """US1: A pipeline lekéri és átadjaa template_context-et a programnak."""
+        from snow_kb.schemas import KBArticle
+        sample_story.assignment_group = "network_team_sys_id"
+        
+        client = MagicMock()
+        client.get_story.return_value = sample_story
+        client.get_update_set_changes.return_value = ("", "")
+        client.find_existing_kb_article.return_value = None
+        client.get_team_template.return_value = "<h1>Network Custom Template</h1>"
+        client.create_kb_article.return_value = "new_sys_id"
+        
+        program = MagicMock()
+        program.return_value = MagicMock(article=KBArticle(
+            title="Test Title Here", html="<p>ok</p>", category="IT"
+        ))
+
+        settings = Settings(dry_run=False, snow=ServiceNowConfig(knowledge_base_id="kb1"))
+        with patch("snow_kb.pipeline.configure_lm"):
+            generate_kb_article("STRY0012345", client, settings, program=program)
+
+        # Ellenőrizzük, hogy a get_team_template meg volt hívva
+        client.get_team_template.assert_called_once_with("network_team_sys_id")
+        
+        # Ellenőrizzük, hogy a program megkapta a template_context-et
+        call_kwargs = program.call_args.kwargs
+        assert call_kwargs.get("template_context") == "<h1>Network Custom Template</h1>"
+
+    def test_us2_missing_assignment_group_raises_error(self, sample_story):
+        """US2: Ha nincs assignment_group, MissingAssignmentGroupError-t dob."""
+        from snow_kb.errors import MissingAssignmentGroupError
+        sample_story.assignment_group = ""  # Üres!
+        
+        client = MagicMock()
+        client.get_story.return_value = sample_story
+        client.get_update_set_changes.return_value = ("", "")
+        client.get_team_template.return_value = None
+        
+        settings = Settings(dry_run=False, snow=ServiceNowConfig(knowledge_base_id="kb1"))
+        
+        with pytest.raises(MissingAssignmentGroupError):
+            with patch("snow_kb.pipeline.configure_lm"):
+                generate_kb_article("STRY0012345", client, settings)

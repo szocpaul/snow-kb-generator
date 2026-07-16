@@ -90,6 +90,10 @@ class DraftSections(dspy.Signature):
     change_summary: str = dspy.InputField(desc="What changed (from ExtractChange).")
     key_steps: list[str] = dspy.InputField(desc="Reproducible steps (from ExtractChange).")
     audience: str = dspy.InputField(desc="Target audience: helpdesk | end-user | developer.")
+    template_context: str = dspy.InputField(
+        desc="HTML/text example of the team's required structure. Mimic this format.",
+        default="",
+    )
 
     title: str = dspy.OutputField(
         desc="Article title, 8-120 characters, descriptive and specific."
@@ -123,6 +127,10 @@ class FormatKB(dspy.Signature):
     problem: str = dspy.InputField(desc="Problem statement.")
     solution_steps: list[str] = dspy.InputField(desc="Ordered solution steps.")
     summary: str = dspy.InputField(desc="Article summary.")
+    template_context: str = dspy.InputField(
+        desc="HTML structure/example to mimic exactly.",
+        default="",
+    )
 
     html: str = dspy.OutputField(
         desc="ServiceNow KB article body as HTML. Must contain at least one "

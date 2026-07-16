@@ -21,6 +21,7 @@ from typing import Protocol
 import dspy
 
 from snow_kb.config import Settings, load_settings
+from snow_kb.errors import MissingAssignmentGroupError
 
 logger = logging.getLogger(__name__)
 
@@ -223,6 +224,20 @@ def generate_kb_article(
     # 2. Story lekérése
     story = client.get_story(story_identifier)
 
+    # 2b. Team-Based Template: ellenőrizzük az assignment_group-ot
+    if not story.assignment_group:
+        raise MissingAssignmentGroupError(
+            "A Story-nak nincs kitöltve az assignment_group mezője."
+        )
+    
+    template_context = ""
+    try:
+        template_context = client.get_team_template(story.assignment_group) or ""
+        if template_context:
+            logger.info("Csapat specifikus sablon betöltve: %s", story.assignment_group)
+    except Exception as exc:
+        logger.warning("Sablon lekérés sikertelen: %s", exc)
+
     # 3. Story szöveggé egyítése
     story_text = assemble_story_text(story, settings)
 
@@ -250,6 +265,7 @@ def generate_kb_article(
         pred = program(
             story_text=story_text,
             update_set_payloads=update_set_payloads,
+            template_context=template_context,
             category=settings.snow.default_category,
             knowledge_base_id=settings.snow.knowledge_base_id,
         )

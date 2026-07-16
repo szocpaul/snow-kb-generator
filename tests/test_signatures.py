@@ -53,9 +53,9 @@ class TestSignatureStructure:
 
     @pytest.mark.parametrize("sig,expected_inputs,expected_outputs", [
         (ExtractChange, ["story_text"], ["change_summary", "key_steps", "audience"]),
-        (DraftSections, ["change_summary", "key_steps", "audience"],
+        (DraftSections, ["change_summary", "key_steps", "audience", "template_context"],
                          ["title", "problem", "solution_steps", "summary"]),
-        (FormatKB, ["title", "problem", "solution_steps", "summary"], ["html"]),
+        (FormatKB, ["title", "problem", "solution_steps", "summary", "template_context"], ["html"]),
     ])
     def test_field_directions(self, sig, expected_inputs, expected_outputs):
         assert _inputs(sig) == expected_inputs
@@ -122,21 +122,19 @@ class TestSchemaConsistency:
     """
 
     def test_extract_outputs_match_storydata_context(self):
-        """ExtractChange kimenetei (change_summary, key_steps, audience)
-        bemenetként bekerülnek DraftSections-be — láncolhatóság."""
+        """ExtractChange kimenetei bemenetként bekerülnek DraftSections-be."""
         extract_outs = set(_outputs(ExtractChange))
         draft_ins = set(_inputs(DraftSections))
-        assert extract_outs == draft_ins, (
-            "ExtractChange kimenetei és DraftSections bemenetei nem egyeznek — "
-            "a pipeline láncolása el fog törni."
+        assert extract_outs.issubset(draft_ins), (
+            "ExtractChange kimenetei nem részhalmaza DraftSections bemeneteinek."
         )
 
     def test_draft_outputs_match_format_inputs(self):
         """DraftSections kimenetei bemenetként bekerülnek FormatKB-be."""
         draft_outs = set(_outputs(DraftSections))
         format_ins = set(_inputs(FormatKB))
-        assert draft_outs == format_ins, (
-            "DraftSections kimenetei és FormatKB bemenetei nem egyeznek."
+        assert draft_outs.issubset(format_ins), (
+            "DraftSections kimenetei nem részhalmaza FormatKB bemeneteinek."
         )
 
     def test_draft_outputs_subset_of_article_sections(self):

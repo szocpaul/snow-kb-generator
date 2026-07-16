@@ -46,6 +46,7 @@ class StoryData(BaseModel):
     comments: str = Field(default="", description="Kommentek (journal, egyesítve)")
     state: str = Field(default="", description="Story állapota, pl. 'Closed Complete'")
     assigned_to: str = Field(default="", description="Fejlesztő (display value)")
+    assignment_group: str = Field(default="", description="Felelős csapat (sys_id vagy név)")
 
 
 class ArticleSections(BaseModel):

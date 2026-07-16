@@ -53,6 +53,7 @@ class StoryToKBArticle(dspy.Module):
         story_text: str,
         *,
         update_set_payloads: str = "",
+        template_context: str = "",
         category: str = "General",
         knowledge_base_id: str = "",
     ) -> dspy.Prediction:
@@ -61,6 +62,7 @@ class StoryToKBArticle(dspy.Module):
         Args:
             story_text: a teljes Story szöveg (assemble_story_text kimenete).
             update_set_payloads: a módosítások nyers XML payloadjai (ha vannak).
+            template_context: a csapat specifikus KB sablon (Few-Shot példa).
             category: KB kategória (config-ból, alapból "General").
             knowledge_base_id: cél KB sys_id (config-ból).
 
@@ -99,6 +101,7 @@ class StoryToKBArticle(dspy.Module):
             change_summary=extracted.change_summary,
             key_steps=extracted.key_steps,
             audience=extracted.audience,
+            template_context=template_context,
         )
 
         # 3. Formázás: HTML törzs
@@ -107,6 +110,7 @@ class StoryToKBArticle(dspy.Module):
             problem=drafted.problem,
             solution_steps=drafted.solution_steps,
             summary=drafted.summary,
+            template_context=template_context,
         )
 
         # Típusos köztes és végső objektumok (schemas.py)
