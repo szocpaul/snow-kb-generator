@@ -190,34 +190,65 @@ class ServiceNowClient:
     # ------------------------------------------------------------------
 
     def get_team_template(self, assignment_group: str) -> str | None:
-        """Fetches the KB template belonging to the team (text field).
+        """Fetches the HTML of the KB template belonging to the team.
 
-        The mapping is the `u_assignment_group` field of the `kb_knowledge_base` table
-        is done based on it (direct reference to the sys_user_group record).
+        The lookup consists of two steps:
+        1. It looks up the KB Knowledge Base where the `u_assignment_group` matches
+           with the assignment_group of the Story.
+        2. In that KB it looks up the template article (kb_knowledge), whose
+           the title contains the word 'Structure' or 'Template', and it returns
+           the `text` field of that article (the HTML template).
 
         Args:
-            assignment_group: The sys_id of the team (from the Story assignment_group field).
+            assignment_group: the sys_id of the team (from the Story's assignment_group field).
 
         Returns:
-            The content of the KB `text` field (HTML template), or None if not found.
+            The content of the `text` field of the template article (HTML), or None if not found.
         """
         if self.dry_run:
             return None
 
+        # Step 1: searching the KB Knowledge Base by u_assignment_group
         url = f"{self.base_url}/kb_knowledge_base"
         params = {
             "sysparm_query": f"u_assignment_group={assignment_group}",
             "sysparm_limit": "1",
-            "sysparm_fields": "text",
+            "sysparm_fields": "sys_id,title",
         }
         resp = self._request("GET", url, params=params)
         body = resp.json()
 
-        results = body.get("result", [])
-        if not results:
+        kb_results = body.get("result", [])
+        if not kb_results:
+            logger.warning("There is no KB for the team (assignment_group=%s)", assignment_group)
             return None
 
-        return results[0].get("text")
+        kb_sys_id = kb_results[0]["sys_id"]
+        logger.info("KB Knowledge Base found: %s", kb_results[0].get("title", ""))
+
+        # Step 2: searching for the template article in this KB
+        # The article title contains the word 'Structure' or 'Template'
+        url = f"{self.base_url}/kb_knowledge"
+        params = {
+            "sysparm_query": f"knowledge_base={kb_sys_id}^short_descriptionCONTAINS%20Structure^ORshort_descriptionCONTAINS%20Template",
+            "sysparm_limit": "1",
+            "sysparm_fields": "text,short_description",
+        }
+        resp = self._request("GET", url, params=params)
+        body = resp.json()
+
+        article_results = body.get("result", [])
+        if not article_results:
+            logger.warning("No template article in the KB (search: Structure/Template)")
+            return None
+
+        template_text = article_results[0].get("text", "")
+        logger.info(
+            "Template article found: %s (%d characters)",
+            article_results[0].get("short_description", "")[:50],
+            len(template_text or ""),
+        )
+        return template_text or None
 
     # ------------------------------------------------------------------
     # find_existing_kb_article — the duplication check

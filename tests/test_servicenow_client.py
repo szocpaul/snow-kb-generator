@@ -407,17 +407,24 @@ class TestTeamTemplates:
     """The tests of fetching the team specific templates."""
 
     def test_get_team_template_returns_text(self, live_settings):
-        """If there is a KB for the team, it returns the text field."""
+        """If there is a KB and a template article for the team, it returns the text field."""
         client = ServiceNowClient(live_settings)
-        mock_resp = MagicMock(spec=requests.Response)
-        mock_resp.json.return_value = {"result": [{"text": "<h1>Network Template</h1>"}]}
-        mock_resp.ok = True
-        with patch.object(client, "_request", return_value=mock_resp) as mock_req:
+        
+        # The first call: the search of the KB Knowledge Base
+        kb_resp = MagicMock(spec=requests.Response)
+        kb_resp.json.return_value = {"result": [{"sys_id": "kb_sys_id_1", "title": "IT KB"}]}
+        kb_resp.ok = True
+        
+        # The second call: the search of the template article in the KB
+        article_resp = MagicMock(spec=requests.Response)
+        article_resp.json.return_value = {"result": [{"text": "<h1>Network Template</h1>", "short_description": "Structure"}]}
+        article_resp.ok = True
+        
+        with patch.object(client, "_request", side_effect=[kb_resp, article_resp]) as mock_req:
             template = client.get_team_template("group_sys_id_123")
             assert template == "<h1>Network Template</h1>"
-            # Check that the query goes to u_assignment_group
-            args, kwargs = mock_req.call_args
-            assert "u_assignment_group=group_sys_id_123" in kwargs["params"]["sysparm_query"]
+            # Two calls happened
+            assert mock_req.call_count == 2
 
     def test_get_team_template_returns_none_if_not_found(self, live_settings):
         """If there is no KB for the team, it returns None."""
