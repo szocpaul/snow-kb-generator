@@ -176,6 +176,13 @@ class ServiceNowClient:
         else:
             record = results  # sys_id alapú GET egyetlen objektumot ad
 
+        # ServiceNow API trükk: a referenciamezőket (pl. assignment_group)
+        # gyakran {'link': '...', 'value': '...'} objektumként adja vissza.
+        # A Pydantic modell sima stringet vár, így kinyerjük a 'value' értéket.
+        for field_name, field_value in list(record.items()):
+            if isinstance(field_value, dict) and "value" in field_value:
+                record[field_name] = field_value["value"]
+
         return StoryData(**record)
 
     # ------------------------------------------------------------------
