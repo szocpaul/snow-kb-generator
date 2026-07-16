@@ -21,6 +21,7 @@ from typing import Protocol
 import dspy
 
 from snow_kb.config import Settings, load_settings
+from snow_kb.errors import MissingAssignmentGroupError
 
 logger = logging.getLogger(__name__)
 
@@ -223,6 +224,20 @@ def generate_kb_article(
     # 2. Fetch the Story
     story = client.get_story(story_identifier)
 
+    # 2b. Team-Based Template: check the assignment_group
+    if not story.assignment_group:
+        raise MissingAssignmentGroupError(
+            "The assignment_group field is not filled in on the Story."
+        )
+    
+    template_context = ""
+    try:
+        template_context = client.get_team_template(story.assignment_group) or ""
+        if template_context:
+            logger.info("Team specific template loaded: %s", story.assignment_group)
+    except Exception as exc:
+        logger.warning("Template fetch failed: %s", exc)
+
     # 3. Merging the Story into a single text
     story_text = assemble_story_text(story, settings)
 
@@ -250,6 +265,7 @@ def generate_kb_article(
         pred = program(
             story_text=story_text,
             update_set_payloads=update_set_payloads,
+            template_context=template_context,
             category=settings.snow.default_category,
             knowledge_base_id=settings.snow.knowledge_base_id,
         )

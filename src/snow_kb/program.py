@@ -53,23 +53,25 @@ class StoryToKBArticle(dspy.Module):
         story_text: str,
         *,
         update_set_payloads: str = "",
+        template_context: str = "",
         category: str = "General",
         knowledge_base_id: str = "",
     ) -> dspy.Prediction:
         """Lefuttatja a pipeline-t.
 
         Args:
-            story_text: the full Story text (output of assemble_story_text).
+            story_text: the full Story text (the output of assemble_story_text).
             update_set_payloads: the raw XML payloads of the modifications (if any).
-            category: KB category (from the config, by default "General").
+            template_context: the team specific KB template (few-shot example).
+            category: KB category (from the config, "General" by default).
             knowledge_base_id: target KB sys_id (from the config).
 
         Returns:
-            dspy.Prediction with the following fields:
+            a dspy.Prediction with the following fields:
               - sections: ArticleSections (the output of the Draft step)
-              - article: KBArticle (final article)
+              - article: KBArticle (the final article)
               - change_summary, key_steps, audience: from the Extract step
-                (can be useful for the metric)
+                (possibly useful for the metric)
         """
         full_context = story_text
 
@@ -99,6 +101,7 @@ class StoryToKBArticle(dspy.Module):
             change_summary=extracted.change_summary,
             key_steps=extracted.key_steps,
             audience=extracted.audience,
+            template_context=template_context,
         )
 
         # 3. Formatting: HTML body
@@ -107,6 +110,7 @@ class StoryToKBArticle(dspy.Module):
             problem=drafted.problem,
             solution_steps=drafted.solution_steps,
             summary=drafted.summary,
+            template_context=template_context,
         )
 
         # Typed intermediate and final objects (schemas.py)

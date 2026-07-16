@@ -54,6 +54,11 @@ if (typeof current !== 'undefined' && current !== null) {
         } else {
              current.work_notes = "KB generation response error.";
         }
+    } else if (httpStatus === 422) {
+        // US2 (Team Feature): Missing Assignment Group
+        var errData = JSON.parse(responseBody).detail;
+        current.work_notes = "Generation aborted: " + (errData.message || 'Missing team data.');
+        gs.addErrorMessage("Error: the Assignment Group field is mandatory for the Story!");
     } else {
         current.work_notes = "KB article generation FAILED: HTTP " + httpStatus + " - " + responseBody.substring(0, 200);
         gs.addErrorMessage("Error during generation (HTTP " + httpStatus + ")");

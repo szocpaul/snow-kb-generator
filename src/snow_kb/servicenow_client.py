@@ -179,6 +179,40 @@ class ServiceNowClient:
         return StoryData(**record)
 
     # ------------------------------------------------------------------
+    # get_team_template — fetching the team specific template
+    # ------------------------------------------------------------------
+
+    def get_team_template(self, assignment_group: str) -> str | None:
+        """Fetches the KB template belonging to the team (text field).
+
+        The mapping is the `u_assignment_group` field of the `kb_knowledge_base` table
+        is done based on it (direct reference to the sys_user_group record).
+
+        Args:
+            assignment_group: The sys_id of the team (from the Story assignment_group field).
+
+        Returns:
+            The content of the KB `text` field (HTML template), or None if not found.
+        """
+        if self.dry_run:
+            return None
+
+        url = f"{self.base_url}/kb_knowledge_base"
+        params = {
+            "sysparm_query": f"u_assignment_group={assignment_group}",
+            "sysparm_limit": "1",
+            "sysparm_fields": "text",
+        }
+        resp = self._request("GET", url, params=params)
+        body = resp.json()
+
+        results = body.get("result", [])
+        if not results:
+            return None
+
+        return results[0].get("text")
+
+    # ------------------------------------------------------------------
     # find_existing_kb_article — the duplication check
     # ------------------------------------------------------------------
 

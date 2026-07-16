@@ -46,6 +46,7 @@ class StoryData(BaseModel):
     comments: str = Field(default="", description="Comments (journal, merged)")
     state: str = Field(default="", description="Story state, e.g. 'Closed Complete'")
     assigned_to: str = Field(default="", description="Developer (display value)")
+    assignment_group: str = Field(default="", description="Responsible team (sys_id or name)")
 
 
 class ArticleSections(BaseModel):
