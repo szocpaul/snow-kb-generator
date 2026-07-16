@@ -220,7 +220,7 @@ class TestGetStoryLive:
         with patch.object(client, "_request", return_value=mock_resp) as mock_req:
             client.get_story("STRY0012345")
             kwargs = mock_req.call_args.kwargs
-            assert kwargs["params"]["sysparm_display_value"] == "true"
+            assert kwargs["params"]["sysparm_display_value"] == "false"
 
 
 # ---------------------------------------------------------------------------
