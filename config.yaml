@@ -15,7 +15,7 @@ pipeline:
   #   draft:   ChainOfThought
   #   format:  Predict (transzformáció, nem kell érvelés)
   default_temperature: 0.0
-  max_tokens: 2000
+  max_tokens: 8000
   # Ha True, a Pi Agent auth.json-ből olvassa az API kulcsot (GLM előfizetés).
   # Ha False, a szabványos dspy.LM-et használ (OPENAI_API_KEY szükséges).
   use_pi_auth: true
