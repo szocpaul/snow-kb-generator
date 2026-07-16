@@ -4,7 +4,7 @@
 
 **Rationale**: The `assignment_group` field on the Story (e.g., "Network Team") needs to be mapped to a specific `kb_knowledge_base` record that holds their template. Since team names and KB IDs are instance-specific, we cannot hardcode this mapping in Python, and string matching (title = group name) is brittle.
 
-**Solution**: The ServiceNow `kb_knowledge_base` table will have a custom reference field (e.g., `ownership_group`) that points to the `sys_user_group` record. The `servicenow_client.py` will implement `get_team_template(assignment_group)` that queries the KB where `ownership_group = {assignment_group_sys_id}` and returns its `text` field. This provides a direct, robust 1:1 link.
+**Solution**: The ServiceNow `kb_knowledge_base` table will have a custom reference field (e.g., `u_assignment_group`) that points to the `sys_user_group` record. The `servicenow_client.py` will implement `get_team_template(assignment_group)` that queries the KB where `u_assignment_group = {assignment_group_sys_id}` and returns its `text` field. This provides a direct, robust 1:1 link.
 
 ## Decision: Pass template as a dynamic `InputField` (Few-Shot)
 
