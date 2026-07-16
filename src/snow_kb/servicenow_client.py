@@ -227,10 +227,10 @@ class ServiceNowClient:
         logger.info("KB Knowledge Base található: %s", kb_results[0].get("title", ""))
 
         # 2. lépés: Sablon cikk keresése ebben a KB-ben
-        # A cikk címe tartalmazza a 'Structure' vagy 'Template' szót
+        # A cikk címe tartalmazza a 'Structure' szót
         url = f"{self.base_url}/kb_knowledge"
         params = {
-            "sysparm_query": f"knowledge_base={kb_sys_id}^short_descriptionCONTAINS%20Structure^ORshort_descriptionCONTAINS%20Template",
+            "sysparm_query": f"knowledge_base={kb_sys_id}^short_descriptionCONTAINS Structure",
             "sysparm_limit": "1",
             "sysparm_fields": "text,short_description",
         }
