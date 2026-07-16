@@ -151,13 +151,13 @@ class ServiceNowClient:
         # Ha sys_id-nak tűnik (32 hexa), közvetlenül; egyébként number query
         if len(story_identifier) == 32:
             url = f"{self.base_url}/{table}/{story_identifier}"
-            params = {"sysparm_display_value": "true", "sysparm_fields": fields}
+            params = {"sysparm_display_value": "false", "sysparm_fields": fields}
         else:
             url = f"{self.base_url}/{table}"
             params = {
                 "sysparm_query": f"number={story_identifier}",
                 "sysparm_limit": "1",
-                "sysparm_display_value": "true",
+                "sysparm_display_value": "false",  # Hivatkozások (sys_id) pontos értéke
                 "sysparm_fields": fields,
             }
 
