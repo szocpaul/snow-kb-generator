@@ -79,13 +79,12 @@ class ExtractChange(dspy.Signature):
 # ---------------------------------------------------------------------------
 
 class DraftSections(dspy.Signature):
-    """Draft Knowledge Base article sections from the extracted change info,
-    tailored to the audience.
-
-    Write a clear, actionable title; a concise problem statement explaining
-    why the change was needed; a numbered-style solution with reproducible
-    steps; and a one-or-two sentence summary for the top of the article.
-    Match the depth and terminology to the audience.
+    """Draft Knowledge Base article sections from the extracted change info.
+    
+    CRITICAL INSTRUCTION: You MUST strictly follow the exact sections, headings, 
+    and structure provided in the `template_context`. Do not invent your own 
+    headings or sections. Map the extracted change info into the specific 
+    sections required by the team's template.
     """
     change_summary: str = dspy.InputField(desc="What changed (from ExtractChange).")
     key_steps: list[str] = dspy.InputField(desc="Reproducible steps (from ExtractChange).")
@@ -116,10 +115,12 @@ class DraftSections(dspy.Signature):
 # ---------------------------------------------------------------------------
 
 class FormatKB(dspy.Signature):
-    """Format drafted sections into ServiceNow-compatible HTML STRICTLY matching the team's template.
-
-        If a template_context is provided, you MUST use the exact HTML tags,
-        headings (e.g., KBA1, KBA2), and structure found in the template_context.
+    """Format drafted sections into ServiceNow-compatible HTML.
+    
+    CRITICAL INSTRUCTION: You MUST strictly follow the exact HTML tags, headings, 
+    and overall structure provided in the `template_context`. If the template 
+    uses specific <h2> headings (e.g., 'Overview / Summary', 'Inbound Technical Implementation'), 
+    you MUST use those exact headings in your output HTML.
     """
     title: str = dspy.InputField(desc="Article title.")
     problem: str = dspy.InputField(desc="Problem statement.")
