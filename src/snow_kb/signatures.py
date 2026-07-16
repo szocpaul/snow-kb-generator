@@ -81,10 +81,10 @@ class ExtractChange(dspy.Signature):
 class DraftSections(dspy.Signature):
     """Draft Knowledge Base article sections from the extracted change info.
     
-    CRITICAL INSTRUCTION: You MUST strictly follow the exact sections, headings, 
-    and structure provided in the `template_context`. Do not invent your own 
-    headings or sections. Map the extracted change info into the specific 
-    sections required by the team's template.
+    CRITICAL OUTPUT FORMAT INSTRUCTION: 
+    You MUST strictly follow the structural outline provided in the `template_context`.
+    Do NOT use generic headings like 'Problem' or 'Solution'.
+    Instead, map the extracted change info into the EXACT sections and headings demanded by the team's template_context.
     """
     change_summary: str = dspy.InputField(desc="What changed (from ExtractChange).")
     key_steps: list[str] = dspy.InputField(desc="Reproducible steps (from ExtractChange).")
