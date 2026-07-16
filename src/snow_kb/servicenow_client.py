@@ -199,7 +199,7 @@ class ServiceNowClient:
 
         url = f"{self.base_url}/kb_knowledge_base"
         params = {
-            "sysparm_query": f"u_assignment_group={assignment_group}",
+            "sysparm_query": f"ownership_group={assignment_group}",
             "sysparm_limit": "1",
             "sysparm_fields": "text",
         }

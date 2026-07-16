@@ -415,9 +415,9 @@ class TestTeamTemplates:
         with patch.object(client, "_request", return_value=mock_resp) as mock_req:
             template = client.get_team_template("group_sys_id_123")
             assert template == "<h1>Network Template</h1>"
-            # Ellenőrizzük, a query a u_assignment_group-ra megy
+            # Ellenőrizzük, a query az ownership_group-ra megy
             args, kwargs = mock_req.call_args
-            assert "u_assignment_group=group_sys_id_123" in kwargs["params"]["sysparm_query"]
+            assert "ownership_group=group_sys_id_123" in kwargs["params"]["sysparm_query"]
 
     def test_get_team_template_returns_none_if_not_found(self, live_settings):
         """Ha nincs a csapathoz KB, None-t ad vissza."""
