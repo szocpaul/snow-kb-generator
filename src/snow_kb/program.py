@@ -49,7 +49,7 @@ class StoryToKBArticle(dspy.Module):
         self.draft = dspy.ChainOfThought(DraftSections)
         self.format = dspy.Predict(FormatKB)
         # New predictor: one-to-one filling of the HTML template
-        self.generate_from_template = dspy.ChainOfThought(GenerateKbFromTemplate)
+        self.generate_from_template = dspy.Predict(GenerateKbFromTemplate)
 
     def forward(
         self,
