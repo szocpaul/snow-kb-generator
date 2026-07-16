@@ -47,3 +47,4 @@ story_fields:
   - comments
   - state
   - assigned_to
+  - assignment_group

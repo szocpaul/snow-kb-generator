@@ -109,7 +109,7 @@ class Settings(BaseModel):
             "work_notes",
             "comments",
             "state",
-            "assigned_to",
+            "assigned_to", "assignment_group"
         ]
     )
 
