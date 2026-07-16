@@ -1,68 +1,63 @@
 // ============================================================================
-// UI Action Script: Create KB Article (CLIENT-SIDE CONFIRM + SERVER-SIDE REST)
+// UI Action Script: Create KB Article (SERVER-SIDE)
 // ============================================================================
-// ServiceNow setting:
-// 1. Client: TRUE (pipa)
-// 2. Onclick: confirmCreateKb()
-// 3. Script: Copy this code.
+// This script runs on the ServiceNow server and calls our
+// FastAPI server on the VPS. It handles the 200, 409 (Duplicate),
+// 422 (Missing Group) and other error codes.
 // ============================================================================
 
-// --- 1. PART: CLIENT-SIDE SCRIPT (Browser) ---
-function confirmCreateKb() {
-    // Popup window for the user
-    var answer = confirm("Are you sure you want to generate a KB article for this Story?\n(If an article already exists, the system OVERWRITES the old one!)");
-    if (!answer) {
-        return; // Never mind
-    }
-    
-    // We pass it to the server-side script (the name of the UI Action is needed for it)
-    // The name of the button Action (sys_id or name) is needed here. We use the name 'create_kb_server_action'.
-    gsftSubmit(null, g_form.getFormElement(), 'create_kb_server_action');
-}
+// 1. The 'current' variable automatically contains the opened Story
+var storyId = current.number;
 
-// --- 2. PART: SERVER-SIDE SCRIPT (ServiceNow server) ---
-if (typeof current !== 'undefined' && current !== null) {
-    var storyId = current.number;
-    
-    // --- SETTINGS ---
-    var apiUrl = 'http://192.0.2.10:8000/generate-kb';
-    var apiKey = 'REPLACE_WITH_RANDOM_KEY';
-    
-    // Since the user has already clicked the OK button in the confirm dialog,
-    // the server always sends force_update=true (so there is no unnecessary 409 round trip).
-    var payload = {};
-    payload.story_id = storyId + '';
-    payload.push = true;
-    payload.force_update = true; 
-    
-    var restMessage = new sn_ws.RESTMessageV2();
-    restMessage.setEndpoint(apiUrl);
-    restMessage.setHttpMethod('POST');
-    restMessage.setRequestHeader('Content-Type', 'application/json');
-    restMessage.setRequestHeader('X-API-Key', apiKey);
-    restMessage.setRequestBody(JSON.stringify(payload));
-    restMessage.setRequestTimeout(120000);
-    
-    var response = restMessage.execute();
-    var httpStatus = response.getStatusCode();
-    var responseBody = response.getBody();
-    
-    if (httpStatus === 200) {
-        var result = JSON.parse(responseBody);
-        if (result.success && result.kb_url) {
-            current.work_notes = "KB article created/updated: " + result.kb_url + " (" + result.title + ")";
-        } else {
-             current.work_notes = "KB generation response error.";
-        }
-    } else if (httpStatus === 422) {
-        // US2 (Team Feature): Missing Assignment Group
-        var errData = JSON.parse(responseBody).detail;
-        current.work_notes = "Generation aborted: " + (errData.message || 'Missing team data.');
-        gs.addErrorMessage("Error: the Assignment Group field is mandatory for the Story!");
+// --- SETTINGS ---
+var apiUrl = 'http://192.0.2.10:8000/generate-kb';
+var apiKey = 'REPLACE_WITH_RANDOM_KEY';
+
+// 2. Build the payload
+var payload = {};
+payload.story_id = storyId + ''; // coerce to string
+payload.push = true;
+// By clicking the UI Action button the user has already approved the generation,
+// so we send force_update=true to overwrite an existing article if there is one.
+payload.force_update = true; 
+
+// 3. Start the REST call to our VPS server
+var restMessage = new sn_ws.RESTMessageV2();
+restMessage.setEndpoint(apiUrl);
+restMessage.setHttpMethod('POST');
+restMessage.setRequestHeader('Content-Type', 'application/json');
+restMessage.setRequestHeader('X-API-Key', apiKey);
+restMessage.setRequestBody(JSON.stringify(payload));
+restMessage.setRequestTimeout(120000); // 120 second timeout because the GLM generation takes time
+
+var response = restMessage.execute();
+var httpStatus = response.getStatusCode();
+var responseBody = response.getBody();
+
+// 4. Process the response based on the HTTP status code
+if (httpStatus === 200) {
+    // Successful generation or update
+    var result = JSON.parse(responseBody);
+    if (result.success && result.kb_url) {
+        current.work_notes = "KB article created/updated: " + result.kb_url + " (" + result.title + ")";
     } else {
-        current.work_notes = "KB article generation FAILED: HTTP " + httpStatus + " - " + responseBody.substring(0, 200);
-        gs.addErrorMessage("Error during generation (HTTP " + httpStatus + ")");
+        current.work_notes = "KB generation finished, but response was invalid.";
     }
-    
-    action.setRedirectURL(current);
+} else if (httpStatus === 422) {
+    // Unprocessable Entity (e.g. the Assignment Group is missing)
+    var errData = JSON.parse(responseBody).detail;
+    current.work_notes = "Generation aborted: " + (errData.message || 'Missing mandatory data (e.g. Assignment Group).');
+    gs.addErrorMessage("Error: the Assignment Group field is mandatory for the Story!");
+} else if (httpStatus === 409) {
+    // Conflict (a KB article already exists for the Story)
+    current.work_notes = "Warning: a KB article already exists for this Story. Clicking the button again overwrites the existing one.";
+    gs.addInfoMessage("A KB article already exists. Click the button again to overwrite it!");
+} else {
+    // Other errors (e.g. 500 Internal Server Error, or 0 Connection Refused)
+    current.work_notes = "An error occurred (HTTP " + httpStatus + "): " + responseBody.substring(0, 150);
+    gs.addErrorMessage("Error during generation (HTTP " + httpStatus + ")");
 }
+
+// 5. Navigation setting: keep the Story open after the update
+action.setRedirectURL(current);
+action.setReturnURL(current);
