@@ -24,6 +24,7 @@ from snow_kb.signatures import (
     DraftSections,
     ExtractChange,
     FormatKB,
+    GenerateKbFromTemplate,
 )
 
 # Character limit: if the Update Set payloads together exceed this value,
@@ -47,6 +48,8 @@ class StoryToKBArticle(dspy.Module):
         self.extract = dspy.ChainOfThought(ExtractChange)
         self.draft = dspy.ChainOfThought(DraftSections)
         self.format = dspy.Predict(FormatKB)
+        # New predictor: one-to-one filling of the HTML template
+        self.generate_from_template = dspy.ChainOfThought(GenerateKbFromTemplate)
 
     def forward(
         self,
@@ -96,7 +99,45 @@ class StoryToKBArticle(dspy.Module):
         # 1. Extraction: what happened, the steps, the audience
         extracted = self.extract(story_text=full_context)
 
-        # 2. Touch-up: editing sections for the audience
+        # 2. If there is an HTML template, use the one-to-one filling Signature
+        if template_context:
+            # Template-based generation is much more flexible: it is able to handle any number of sections
+            # to handle, because it fills in the HTML structure directly.
+            story_context_for_template = (
+                f"Change Summary: {extracted.change_summary}\n\n"
+                f"Key Steps: {', '.join(extracted.key_steps)}\n\n"
+                f"Full Story Context: {full_context}"
+            )
+            template_result = self.generate_from_template(
+                story_context=story_context_for_template,
+                html_template=template_context,
+            )
+            final_html = template_result.html
+            # Title extraction from the extract step (or the first <h1> from the HTML)
+            final_title = extracted.change_summary.split('.')[0][:120] or "KB Article"
+            
+            article = KBArticle(
+                title=final_title,
+                html=final_html,
+                category=category,
+                knowledge_base_id=knowledge_base_id,
+            )
+            
+            return dspy.Prediction(
+                sections=ArticleSections(
+                    title=final_title,
+                    problem="(Generated from template)",
+                    solution_steps=["See generated HTML"],
+                    summary=extracted.change_summary,
+                    audience=extracted.audience,
+                ),
+                article=article,
+                change_summary=extracted.change_summary,
+                key_steps=extracted.key_steps,
+                audience=extracted.audience,
+            )
+
+        # 2b. If there is NO template: the traditional 3-step pipeline
         drafted = self.draft(
             change_summary=extracted.change_summary,
             key_steps=extracted.key_steps,

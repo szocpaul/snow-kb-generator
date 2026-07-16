@@ -35,10 +35,10 @@ class TestProgramConstruction:
         program = StoryToKBArticle()
         assert isinstance(program, dspy.Module)
 
-    def test_has_four_predictors(self):
+    def test_has_five_predictors(self):
         program = StoryToKBArticle()
-        # analyze_changes + extract + draft + format
-        assert len(program.predictors()) == 4
+        # analyze_changes + extract + draft + format + generate_from_template
+        assert len(program.predictors()) == 5
 
     def test_predictors_are_named(self):
         """Every predictor got a name — GEPA targets these."""
@@ -63,7 +63,7 @@ class TestProgramConstruction:
 
         # At least one Predict coming from a ChainOfThought and one plain Predict
         # (ChainOfThought internally contains a Predict)
-        assert len(types_by_name) == 4
+        assert len(types_by_name) == 5
 
     def test_signatures_attached(self):
         """The predictors use the correct Signatures.
