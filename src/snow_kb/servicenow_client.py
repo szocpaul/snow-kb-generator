@@ -176,6 +176,13 @@ class ServiceNowClient:
         else:
             record = results  # a sys_id based GET returns a single object
 
+        # ServiceNow API trick: it often returns the reference fields (e.g. assignment_group)
+        # as a {'link': '...', 'value': '...'} object.
+        # The Pydantic model expects a plain string, so we extract the 'value'.
+        for field_name, field_value in list(record.items()):
+            if isinstance(field_value, dict) and "value" in field_value:
+                record[field_name] = field_value["value"]
+
         return StoryData(**record)
 
     # ------------------------------------------------------------------
