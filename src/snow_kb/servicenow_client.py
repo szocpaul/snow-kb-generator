@@ -226,11 +226,11 @@ class ServiceNowClient:
         kb_sys_id = kb_results[0]["sys_id"]
         logger.info("KB Knowledge Base found: %s", kb_results[0].get("title", ""))
 
-        # Step 2: searching for the template article in this KB
-        # The article title contains the word 'Structure' or 'Template'
+        # Step 2: searching the template article in this KB
+        # The title of the article contains the word 'Structure'
         url = f"{self.base_url}/kb_knowledge"
         params = {
-            "sysparm_query": f"knowledge_base={kb_sys_id}^short_descriptionCONTAINS%20Structure^ORshort_descriptionCONTAINS%20Template",
+            "sysparm_query": f"knowledge_base={kb_sys_id}^short_descriptionCONTAINS Structure",
             "sysparm_limit": "1",
             "sysparm_fields": "text,short_description",
         }
