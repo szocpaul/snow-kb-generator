@@ -25,8 +25,9 @@ pipeline:
 models:
   # The generating model (dspy.configure globally to this).
   main: "openai/Qwen3.6-35B-A3B-NSC-ACE-SABER-Q4_K_M.gguf"
-  # GEPA reflection model — usually stronger / more expensive.
-  reflection: "openai/Qwen3.6-35B-A3B-NSC-ACE-SABER-Q4_K_M.gguf"
+  # GEPA reflection model — a stronger model is recommended (GLM-5.2 from the Pi Agent subscription).
+  # We use it only during GEPA optimization, for daily generation the above (local) model runs.
+  reflection: "openai/glm-5.2"
   reflection_temperature: 1.0
   reflection_max_tokens: 32000
 
