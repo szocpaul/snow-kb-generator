@@ -13,13 +13,16 @@ When the developers finish a ServiceNow Story (`STRY...`), a Knowledge Base (KB)
 **Input:** closed ServiceNow Story — `short_description`, `description`, `acceptance_criteria`, `u_technical_specification`, `work_notes`, `comments`, `state`.
 **Additional input:** The **Update Set** module request with the same name as the Story and the modified source code it contains (Script Include, Business Rule, UI Action XML payloads).
 **Output:** KB Article (HTML) — `title`, `summary`, `problem`, `solution` (reproducible steps), `category`, `audience`.
-**Features:** Duplicate prevention (with the `u_source_story` field) and Overwrite (Update) after user confirmation (confirm dialog).
+**Features:**
+- Duplicate prevention (with the `u_source_story` field) and Overwrite (Update) after user confirmation (confirm dialog).
+- Team-specific KB Templates (recognition based on Assignment Group and Few-Shot generation).
+- Update Set XML/code analysis (RLM / ChainOfThought).
 
 ## Tech stack
 
 - **Python 3.12**
 - **DSPy 3.2.x** — Signatures + Modules, GEPA optimization
-- **LM:** GLM-5.2 (Pi Agent subscription, via the Z.ai API)
+- **LM:** GLM-5.2 (Pi Agent subscription, for GEPA reflection) + Local Qwen3.6-35B (llama.cpp, for daily generation over Tailscale)
 - **ServiceNow Table API** (`requests`) — Story fetch + KB creation (CRUD)
 - **FastAPI + Uvicorn** — webhook server for the ServiceNow UI Action
 - **Pydantic v2** — data model and validation
@@ -132,6 +135,7 @@ snow_kb_generator/
 
 **SDD (Spec-Driven Development):** The project actively uses the `spec-kit` methodology.
 - 1. Done Feature: `001-kb-duplicate-prevention` (duplicate prevention and overwrite).
+- 2. Done Feature: `002-team-based-templates` (generation of team-specific KB templates).
 
 ## Licenc
 

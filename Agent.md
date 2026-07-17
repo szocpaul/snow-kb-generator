@@ -223,3 +223,23 @@ The ServiceNow UI Action script supports the pop-up (confirm) confirmation and c
 4. Run a baseline measurement with the current program.
 5. Start the `dspy.GEPA(auto="medium")` optimization.
 6. Save the optimized program into the `artifacts/` folder.
+
+## 13. Where we are (last update: 2026-07-16 - Evening Wrap-up)
+
+### Completed Feature: Team-Based KB Templates (SDD 002)
+- **Status:** ✅ Tested in production and working! The system reliably detects the `assignment_group` field and generates the article based on the team's KB template.
+- **Models:** Because of the GLM-5.2 usage limit the system switched to the **local Qwen3.6-35B** model (llama.cpp). GLM-5.2 stays configured for GEPA reflection (we will use it).
+- **GeneratKbFromTemplate Signature:** A new predictor was introduced that can fill the HTML template one-to-one, avoiding the limits of the old 4-field architecture.
+
+### Technical Gotchas (root problems we solved):
+1. The `kb_knowledge_base` table has no `text` field, only the articles in `kb_knowledge` do. We moved the template lookup there.
+2. `max_tokens=2000` was too little for the 7-section HTML, we switched to 8000.
+3. The thinking phase of the models (`reasoning_content`) wasted tokens; `--reasoning off` (llama.cpp) and the use of `Predict` solved it.
+4. The Tailscale network was solved by `tailscale serve` for publishing the Qwen endpoint.
+
+### Where We Are Tomorrow: GEPA Optimization
+**Goal:** Fine-tuning the prompts of the Qwen model (DraftSections, FormatKB) based on your real corporate KB format.
+1. User hands over 1 KB template + 5 existing articles.
+2. Implement the metric (`eval/metric.py`).
+3. Baseline measurement.
+4. GEPA run (reflection: GLM-5.2).
