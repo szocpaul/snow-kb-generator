@@ -25,8 +25,9 @@ pipeline:
 models:
   # A generáló modell (dspy.configure globálisan erre).
   main: "openai/Qwen3.6-35B-A3B-NSC-ACE-SABER-Q4_K_M.gguf"
-  # GEPA reflection modell — általában erősebb / drágább.
-  reflection: "openai/Qwen3.6-35B-A3B-NSC-ACE-SABER-Q4_K_M.gguf"
+  # GEPA reflection modell — erősebb modell javasolt (GLM-5.2 a Pi Agent előfizetésből).
+  # Csak a GEPA optimalizációkor használjuk, a napi generáláshoz a fenti (lokális) modell fut.
+  reflection: "openai/glm-5.2"
   reflection_temperature: 1.0
   reflection_max_tokens: 32000
 
