@@ -175,11 +175,16 @@ def configure_lm(settings: Settings) -> None:
             max_tokens=settings.pipeline.max_tokens,
         )
     else:
-        lm = dspy.LM(
-            settings.models.main,
-            temperature=settings.pipeline.default_temperature,
-            max_tokens=settings.pipeline.max_tokens,
-        )
+        # Lokális vagy egyéni endpoint (pl. llama.cpp, Ollama)
+        lm_kwargs = {
+            "temperature": settings.pipeline.default_temperature,
+            "max_tokens": settings.pipeline.max_tokens,
+        }
+        # Ha van api_base megadva, használjuk (pl. lokális llama.cpp)
+        if settings.pipeline.api_base:
+            lm_kwargs["api_base"] = settings.pipeline.api_base
+            lm_kwargs["api_key"] = "not-needed"  # Lokális endpointokhoz
+        lm = dspy.LM(settings.models.main, **lm_kwargs)
 
     dspy.configure(lm=lm, track_usage=True)
 

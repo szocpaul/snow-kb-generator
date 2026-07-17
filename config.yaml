@@ -17,18 +17,16 @@ pipeline:
   default_temperature: 0.0
   max_tokens: 8000
   # Ha True, a Pi Agent auth.json-ből olvassa az API kulcsot (GLM előfizetés).
-  # Ha False, a szabványos dspy.LM-et használ (OPENAI_API_KEY szükséges).
-  use_pi_auth: true
-  # Z.ai GLM API végpont
-  api_base: "https://api.z.ai/api/coding/paas/v4"
+  # Ha False, a szabványos dspy.LM-et használ (lokális endpoint vagy OPENAI_API_KEY).
+  use_pi_auth: false
+  # Lokális llama.cpp endpoint (Qwen3.6-35B-A3B)
+  api_base: "http://100.74.99.67:8033/v1"
 
 models:
   # A generáló modell (dspy.configure globálisan erre).
-  # Ha use_pi_auth=true, akkor a dspy_lm_auth.LM ezt a modellt kéri
-  # a Pi Agent GLM csatornáján. (gpt-5.4 a dspy_lm_auth alapértelmezése)
-  main: "openai/glm-5.2"
+  main: "openai/Qwen3.6-35B-A3B-NSC-ACE-SABER-Q4_K_M.gguf"
   # GEPA reflection modell — általában erősebb / drágább.
-  reflection: "openai/glm-5.2"
+  reflection: "openai/Qwen3.6-35B-A3B-NSC-ACE-SABER-Q4_K_M.gguf"
   reflection_temperature: 1.0
   reflection_max_tokens: 32000
 
