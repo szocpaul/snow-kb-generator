@@ -202,3 +202,23 @@ A ServiceNow UI Action script támogatja a felugró ablakos (confirm) megerősí
 4. Futtatni egy Baseline mérést a jelenlegi programmal.
 5. Elindítani a `dspy.GEPA(auto="medium")` optimalizációt.
 6. Elmenteni az optimalizált programot az `artifacts/` mappába.
+
+## 13. Hol tartunk (utolsó frissítés: 2026-07-16 - Esti Zárás)
+
+### Befejezett Feature: Team-Based KB Templates (SDD 002)
+- **Státusz:** ✅ Élesben tesztelve és működik! A rendszer sikeresen felismeri az `assignment_group` mezőt, és a csapathoz tartozó KB sablon alapján generálja a cikket.
+- **Modelek:** A GLM-5.2 usage limit miatt a rendszer áttért a **lokális Qwen3.6-35B** modellre (llama.cpp). A GEPA reflectionhöz a GLM-5.2 maradt konfigurálva (használjuk majd).
+- **GeneratKbFromTemplate Signature:** Bevezetésre került egy új prediktor, ami képes a HTML sablont egy-az-egyben kitölteni, kikerülve a régi 4-mezős architektúra korlátait.
+
+### Technikai Gospekák (Gyökérproblémák amiket megoldottunk):
+1. `kb_knowledge_base` táblán nincs `text` mező, csak a `kb_knowledge` cikkeken. A sablon keresését ide állítottuk át.
+2. `max_tokens=2000` túl kevés volt a 7-szekciós HTML-hez, átálltunk 8000-re.
+3. A modellek gondolkodási fázisa (`reasoning_content`) tokeneket pazarolt, a `--reasoning off` (llama.cpp) és a `Predict` használata megoldotta.
+4. A Tailscale hálózatot a `tailscale serve` oldotta meg a Qwen endpoint publikálására.
+
+### Holnap Hol Tartunk: GEPA Optimalizáció
+**Cél:** A Qwen modell promptjainak (DraftSections, FormatKB) finomhangolása a te valós vállalati KB formátumod alapján.
+1. User átad 1 KB template-et + 5 meglévő cikket.
+2. Metrika (`eval/metric.py`) implementálása.
+3. Baseline mérés.
+4. GEPA futtatás (reflection: GLM-5.2).

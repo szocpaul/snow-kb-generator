@@ -13,13 +13,16 @@ Amikor a fejlesztők befejeznek egy ServiceNow Story-t (`STRY...`), kézzel kell
 **Bemenet:** lezárt ServiceNow Story — `short_description`, `description`, `acceptance_criteria`, `u_technical_specification`, `work_notes`, `comments`, `state`.
 **Kiegészítő bemenet:** A Story nevével megegyező nevű **Update Set** modulekérés és a benne lévő módosított forráskódok (Script Include, Business Rule, UI Action XML payloadok).
 **Kimenet:** KB Article (HTML) — `title`, `summary`, `problem`, `solution` (reprodukálható lépések), `category`, `audience`.
-**Funkciók:** Duplikáció megakadályozása (`u_source_story` mezővel) és Felülírás (Update) felhasználói megerősítés (confirm dialog) után.
+**Funkciók:**
+- Duplikáció megakadályozása (`u_source_story` mezővel) és Felülírás (Update) felhasználói megerősítés (confirm dialog) után.
+- Csapat-specifikus KB Template-ek (Assignment Group alapján történő felismerés és Few-Shot generálás).
+- Update Set XML/kód elemzés (RLM / ChainOfThought).
 
 ## Technológiai verem
 
 - **Python 3.12**
 - **DSPy 3.2.x** — Signatures + Modules, GEPA optimalizáció
-- **LM:** GLM-5.2 (Pi Agent előfizetés, Z.ai API-n keresztül)
+- **LM:** GLM-5.2 (Pi Agent előfizetés, GEPA reflectionhöz) + Lokális Qwen3.6-35B (llama.cpp, napi generáláshoz Tailscale-en keresztül)
 - **ServiceNow Table API** (`requests`) — Story lekérés + KB létrehozás (CRUD)
 - **FastAPI + Uvicorn** — Webhook szerver a ServiceNow UI Action-nek
 - **Pydantic v2** — adatmodell és validáció
@@ -132,6 +135,7 @@ snow_kb_generator/
 
 **SDD (Spec-Driven Development):** A project aktívan használja a `spec-kit` módszertant.
 - 1. Kész Feature: `001-kb-duplicate-prevention` (Duplikáció megakadályozása és felülírás).
+- 2. Kész Feature: `002-team-based-templates` (Csapat-specifikus KB sablonok generálása).
 
 ## Licenc
 
