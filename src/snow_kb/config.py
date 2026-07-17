@@ -232,13 +232,14 @@ def _validate_at_load(settings: Settings) -> None:
             "Set the target KB sys_id."
         )
 
-    # LM key is mandatory if not dry_run AND not Pi Auth (because Pi Auth does not
-    # uses OPENAI_API_KEY)
+    # The LM key is mandatory if it is not dry_run AND not Pi Auth AND there is
+    # no local api_base (local llama.cpp/Ollama endpoints need no API key)
     if (
         not settings.dry_run
         and not settings.pipeline.use_pi_auth
+        and not settings.pipeline.api_base
         and not settings.openai_api_key.get_secret_value()
     ):
         raise ConfigError(
-            "openai_api_key is missing from the .env (or --dry-run, or pipeline.use_pi_auth=true)."
+            "openai_api_key is missing from the .env (or --dry-run, or pipeline.use_pi_auth=true, or pipeline.api_base is given as a local endpoint)."
         )
