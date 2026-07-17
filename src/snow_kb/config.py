@@ -232,13 +232,14 @@ def _validate_at_load(settings: Settings) -> None:
             "Állítsd be a cél KB sys_id-ját."
         )
 
-    # LM kulcs kötelező, ha nem dry_run ÉS nem Pi Auth (mert a Pi Auth nem
-    # használ OPENAI_API_KEY-t)
+    # LM kulcs kötelező, ha nem dry_run ÉS nem Pi Auth ÉS nincs lokális api_base
+    # (lokális llama.cpp/Ollama endpointoknál nem kell API kulcs)
     if (
         not settings.dry_run
         and not settings.pipeline.use_pi_auth
+        and not settings.pipeline.api_base
         and not settings.openai_api_key.get_secret_value()
     ):
         raise ConfigError(
-            "openai_api_key hiányzik a .env-ből (vagy --dry-run, vagy pipeline.use_pi_auth=true)."
+            "openai_api_key hiányzik a .env-ből (vagy --dry-run, vagy pipeline.use_pi_auth=true, vagy pipeline.api_base megadva lokális endpointként)."
         )
