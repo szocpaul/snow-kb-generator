@@ -222,3 +222,11 @@ A ServiceNow UI Action script támogatja a felugró ablakos (confirm) megerősí
 2. Metrika (`eval/metric.py`) implementálása.
 3. Baseline mérés.
 4. GEPA futtatás (reflection: GLM-5.2).
+
+## 14. Szerkesztési Szabály (Anti-Loop)
+
+**Ha egy edit kétszer egymás után elbukik vagy no-op, ÁLLJ LE.**
+- Olvasd el újra a fájlt és a teljes teszt-hibaüzenetet.
+- Fogalmazd újra a hipotézist (mi a valódi probléma?).
+- Csak utána editelj.
+- **Soha ne próbáld ugyanazt az editet harmadszor.**
