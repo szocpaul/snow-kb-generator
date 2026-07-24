@@ -243,3 +243,11 @@ The ServiceNow UI Action script supports the pop-up (confirm) confirmation and c
 2. Implement the metric (`eval/metric.py`).
 3. Baseline measurement.
 4. GEPA run (reflection: GLM-5.2).
+
+## 14. Editing Rule (Anti-Loop)
+
+**If an edit fails twice in a row or is a no-op, STOP.**
+- Read the file and the full test error message again.
+- Restate the hypothesis (what is the real problem?).
+- Only then edit.
+- **Never try the same edit a third time.**
