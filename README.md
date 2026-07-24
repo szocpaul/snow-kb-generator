@@ -127,15 +127,16 @@ snow_kb_generator/
 
 1. **Spec** — ✅ Done
 2. **Program** — ✅ Done (Signatures + Module + Update Set Code Analyzer)
-3. **Data** — ⏳ Collecting gold example pairs
-4. **Rich metric** — ⏳ Next step
-5. **Baseline** — ⏳
-6. **GEPA optimization** — ⏳
-7. **Export & deploy** — ✅ Done (FastAPI + Docker + ServiceNow UI Action)
+3. **Data** — ✅ Done (Gold Dataset: 5 gold example pairs in gold_dataset.md)
+4. **Rich metric** — ✅ Done (rich_metric: structure_match + content_accuracy + template_adherence)
+5. **Baseline** — ✅ Done (baseline.json: performance of the current program on the valset)
+6. **GEPA optimization** — ⏳ In progress (GEPA optimizer implemented, compile in progress)
+7. **Export & deploy** — ⏳ Next step (saving the optimized program and using it with the FastAPI server)
 
 **SDD (Spec-Driven Development):** The project actively uses the `spec-kit` methodology.
 - 1. Done Feature: `001-kb-duplicate-prevention` (duplicate prevention and overwrite).
 - 2. Done Feature: `002-team-based-templates` (generation of team-specific KB templates).
+- 3. Feature in progress: `003-gepa-kb-quality` (GEPA optimization to improve the quality of the KB article).
 
 ## Licenc
 

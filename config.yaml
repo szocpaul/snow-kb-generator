@@ -14,7 +14,7 @@ pipeline:
   #   extract: ChainOfThought (the extraction needs reasoning)
   #   draft:   ChainOfThought
   #   format:  Predict (a transformation, no reasoning needed)
-  default_temperature: 0.0
+  default_temperature: 0.6
   max_tokens: 8000
   # If True, it reads the API key from the Pi Agent auth.json (GLM subscription).
   # If False, it uses the standard dspy.LM (local endpoint or OPENAI_API_KEY).
@@ -25,9 +25,9 @@ pipeline:
 models:
   # The generating model (dspy.configure globally to this).
   main: "openai/Qwen3.6-35B-A3B-NSC-ACE-SABER-Q4_K_M.gguf"
-  # GEPA reflection model — a stronger model is recommended (GLM-5.2 from the Pi Agent subscription).
-  # We use it only during GEPA optimization, for daily generation the above (local) model runs.
-  reflection: "openai/glm-5.2"
+  # The GEPA reflection model — the Pi Agent Kimi subscription (Kimi K3).
+  # We only use it for the GEPA optimization, the daily generation runs with the model above (the local Qwen).
+  reflection: "openai/kimi-k3"
   reflection_temperature: 1.0
   reflection_max_tokens: 32000
 

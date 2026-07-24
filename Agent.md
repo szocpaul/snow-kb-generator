@@ -251,3 +251,22 @@ The ServiceNow UI Action script supports the pop-up (confirm) confirmation and c
 - Restate the hypothesis (what is the real problem?).
 - Only then edit.
 - **Never try the same edit a third time.**
+
+## 15. Where We Stand on GEPA Optimization (last update: 2026-07-24)
+
+### Completed Work (T001-T010)
+- **SDD Specification, Plan, Task List (T001-T003):** The GEPA optimization specification (`specs/003-gepa-kb-quality/spec.md`), its plan (`plan.md`), and its task list (`tasks.md`) are ready. The gold dataset (`data/examples/gold_dataset.md`) contains 5 gold examples (Story → KB article) built according to your Integration Team Template (KBA1-KBA11).
+- **Gold Dataset Loader (T003):** `eval/dataset.py` is implemented (it loads gold_dataset.md, separate trainset 3 / valset 2 split, dspy.Example objects). All dataset tests pass (11/11).
+- **Rich Metric (T005):** `eval/metric.py` is implemented (multi-axis score: structure_match, content_accuracy, template_adherence; natural-language feedback). All metric tests pass (5/5).
+- **Baseline (T009):** `eval/baseline.py` is implemented (dspy.Evaluate(devset=valset, metric=rich_metric, num_threads=1)). All baseline tests pass (5/5).
+
+### Where We Stand (T011-T019)
+- **GEPA Optimizer (T011):** `eval/gepa_optimize.py` is implemented (dspy.GEPA(metric, auto="light", reflection_lm=Kimi K3, candidate_selection_strategy="pareto", track_stats=True, log_dir="./gepa_logs")). The GEPA tests fail because the `run_gepa_optimization()` function calls `optimizer.compile()`, which returns the `optimized_program`, not the `optimizer`. Therefore the tests cannot check the `optimizer` attributes (metric, reflection_lm, candidate_selection_strategy, log_dir).
+
+### Next Step (T012-T019)
+- **T012-T013:** Run the GEPA compile and extract the applied reflection proposals.
+- **T014-T016:** Save the optimized program, update the FastAPI server, and update the pipeline to use the optimized program.
+- **T017-T019:** Run the full test suite, update the documentation, and run the production end-to-end validation.
+
+### Technical Problem (T011)
+The `run_gepa_optimization()` function calls `optimizer.compile()`, which returns the `optimized_program`, not the `optimizer`. Therefore the tests cannot check the `optimizer` attributes. The solution: change the `run_gepa_optimization()` function so that it also returns the `optimizer`, not only the `optimized_program`.
