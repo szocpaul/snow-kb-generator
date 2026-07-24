@@ -230,3 +230,22 @@ A ServiceNow UI Action script támogatja a felugró ablakos (confirm) megerősí
 - Fogalmazd újra a hipotézist (mi a valódi probléma?).
 - Csak utána editelj.
 - **Soha ne próbáld ugyanazt az editet harmadszor.**
+
+## 15. Hol tartunk a GEPA optimalizációban (utolsó frissítés: 2026-07-24)
+
+### Befejezett munka (T001-T010)
+- **SDD Specifikáció, Terv, Feladatlista (T001-T003):** A GEPA optimalizáció specifikációja (`specs/003-gepa-kb-quality/spec.md`), terve (`plan.md`), és feladatlistája (`tasks.md`) kész van. A gold dataset (`data/examples/gold_dataset.md`) 5 arany példapárt tartalmaz (Story → KB cikk), amelyek a te Integration Team Template sablonod (KBA1-KBA11) szerint épülnek fel.
+- **Gold Dataset Loader (T003):** A `eval/dataset.py` implementálva (betölti a gold_dataset.md-t, szeparált trainset 3 / valset 2 felosztás, dspy.Example objektumok). A dataset tesztek mind zöldek (11/11).
+- **Rich Metric (T005):** A `eval/metric.py` implementálva (multi-axis score: structure_match, content_accuracy, template_adherence; natural-language feedback). A metric tesztek mind zöldek (5/5).
+- **Baseline (T009):** A `eval/baseline.py` implementálva (dspy.Evaluate(devset=valset, metric=rich_metric, num_threads=1)). A baseline tesztek mind zöldek (5/5).
+
+### Hol tartunk (T011-T019)
+- **GEPA Optimizer (T011):** A `eval/gepa_optimize.py` implementálva (dspy.GEPA(metric, auto="light", reflection_lm=Kimi K3, candidate_selection_strategy="pareto", track_stats=True, log_dir="./gepa_logs")). A GEPA tesztek elbuknak, mert a `run_gepa_optimization()` függvény a `optimizer.compile()` hívást végzi, ami a `optimized_program`-ot adja vissza, nem az `optimizer`-t. Ezért a tesztek nem tudják ellenőrizni az `optimizer` attribútumait (metric, reflection_lm, candidate_selection_strategy, log_dir).
+
+### Következő lépés (T012-T019)
+- **T012-T013:** A GEPA compile lefuttatása és az alkalmazott reflection javaslatok kinyerése.
+- **T014-T016:** Az optimalizált program mentése, a FastAPI szerver frissítése, és a pipeline frissítése az optimalizált program használatához.
+- **T017-T019:** A teljes tesztcsomag futtatása, a dokumentáció frissítése, és az éles end-to-end validáció.
+
+### Technikai Probléma (T011)
+A `run_gepa_optimization()` függvény a `optimizer.compile()` hívást végzi, ami a `optimized_program`-ot adja vissza, nem az `optimizer`-t. Ezért a tesztek nem tudják ellenőrizni az `optimizer` attribútumait. A megoldás: a `run_gepa_optimization()` függvényt úgy kell módosítani, hogy az `optimizer`-t is visszaadja, nem csak az `optimized_program`-ot.

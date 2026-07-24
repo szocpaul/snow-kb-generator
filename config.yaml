@@ -14,7 +14,7 @@ pipeline:
   #   extract: ChainOfThought (indoklás kell a kinyeréshez)
   #   draft:   ChainOfThought
   #   format:  Predict (transzformáció, nem kell érvelés)
-  default_temperature: 0.0
+  default_temperature: 0.6
   max_tokens: 8000
   # Ha True, a Pi Agent auth.json-ből olvassa az API kulcsot (GLM előfizetés).
   # Ha False, a szabványos dspy.LM-et használ (lokális endpoint vagy OPENAI_API_KEY).
@@ -25,9 +25,9 @@ pipeline:
 models:
   # A generáló modell (dspy.configure globálisan erre).
   main: "openai/Qwen3.6-35B-A3B-NSC-ACE-SABER-Q4_K_M.gguf"
-  # GEPA reflection modell — erősebb modell javasolt (GLM-5.2 a Pi Agent előfizetésből).
-  # Csak a GEPA optimalizációkor használjuk, a napi generáláshoz a fenti (lokális) modell fut.
-  reflection: "openai/glm-5.2"
+  # GEPA reflection modell — a Pi Agent Kimi előfizetés (Kimi K3).
+  # Csak a GEPA optimalizációkor használjuk, a napi generáláshoz a fenti (lokális Qwen) modell fut.
+  reflection: "openai/kimi-k3"
   reflection_temperature: 1.0
   reflection_max_tokens: 32000
 

@@ -1,37 +1,82 @@
-# dataset.py — train/val/test halmazok (TERV, nincs implementálva)
-# ===========================================================================
-#
-# Felelősség: gold (Story -> KB) példapárokból DSPy Example halmazokat
-# építeni a baseline-hoz és a GEPA optimalizációhoz.
-#
-# Forrás (tervezett):
-#   data/examples/*.json — minden fájl egy példapár:
-#     {
-#       "story": { ...StoryData mezők... },
-#       "gold_article": { "title", "html", "category", ... }
-#     }
-#   Ezeket kézzel vagy már meglévő KB cikkekből gyűjtjük.
-#
-# Tervezett függvények:
-#
-#   load_examples(path="data/examples") -> list[dspy.Example]:
-#       Beolvassa a JSON-eket, példánként:
-#         ex = dspy.Example(
-#                story_text=assemble_story_text(story),
-#                article=KBArticle(**gold_article)
-#              ).with_inputs("story_text")
-#       Csak a program bemenet-mezőjét ("story_text") jelöljük inputnak.
-#
-#   split_examples(examples, train=0.6, val=0.2, test=0.2, seed=0)
-#       -> (trainset, valset, testset)
-#       Stratified split az audience / category alapján, ha lehet.
-#
-# GEPA-specifikus elvek (dspy-evaluation-harness):
-#   - trainset minél nagyobb (GEPA sok példát igényel)
-#   - valset csak a downstream viselkedés reprezentálására elég nagy
-#   - testset ELREJTVE — csak a végén, jelentéshez használjuk
-#
-# Megjegyzések:
-#   - Ha kevés gold adat van, fake/bootstrap példákat is generálhatunk,
-#     de ezeket külön jelöljük (tag: "synthetic"), hogy a valset tisztta maradjon.
-#   - Az assemble_story_text formázása EGYSÉGES legyen a pipeline.py-val.
+"""dataset.py — Gold dataset loader a GEPA optimalizációhoz.
+
+Betölti a gold_dataset.md fájlt, és dspy.Example objektumokat hoz létre
+trainset (3) / valset (2) szeparált felosztásban.
+"""
+
+from __future__ import annotations
+
+import re
+from pathlib import Path
+
+import dspy
+
+
+def load_gold_dataset(path: str | Path) -> tuple[list[dspy.Example], list[dspy.Example]]:
+    """Betölti a gold_dataset.md fájlt és szeparált trainset/valset felosztást ad vissza.
+
+    Args:
+        path: A gold_dataset.md fájl útvonala.
+
+    Returns:
+        (trainset, valset) tuple — 3 trainset és 2 valset dspy.Example objektum.
+        Minden example tartalmazza a story_text (input) és html (expected output) mezőket.
+
+    Raises:
+        FileNotFoundError: ha a fájl nem létezik.
+        ValueError: ha a fájl formátuma érvénytelen (kevesebb mint 5 példa, vagy hiányzó mezők).
+    """
+    path = Path(path)
+    if not path.exists():
+        raise FileNotFoundError(f"Gold dataset nem található: {path}")
+
+    content = path.read_text(encoding="utf-8")
+
+    # A fájl szerkezete: "## Példa N: ..." szekciókra bontva
+    # A speciális Unicode karakterek (á, é, stb.) miatt a split nem működik,
+    # ezért egyszerűen a "## " (kettős hash + szóköz) kezdetű sorokra bontjuk,
+    # de csak azokra, amik után "Példa" szerepel (a fejléceket nem bontjuk).
+    examples_raw = re.split(r"^## P", content, flags=re.MULTILINE)
+    examples_raw = [e.strip() for e in examples_raw if e.strip() and e.startswith("élda ")]
+
+    examples = []
+
+    for idx, raw in enumerate(examples_raw):
+        # Story kinyerése (json blokk)
+        # A "### Story" után új sor, majd ```json, majd a tartalom, majd ```
+        story_match = re.search(r"### Story\s*```json\s*(.+?)```", raw, re.DOTALL)
+        if not story_match:
+            raise ValueError(f"A {idx+1}. példában hiányzik a '### Story' blokk.")
+
+        story_text = story_match.group(1).strip()
+
+        # KB cikk kinyerése (html blokk)
+        # A "(Gold Article)" suffix opcionális — a gold_dataset.md tartalmazza,
+        # de a teszt-fixture-ök és a korábbi formátum csak "### Várt KB Cikk"-et használ
+        html_match = re.search(r"### Várt KB Cikk(?: \(Gold Article\))?\s*```html\s*(.+?)```", raw, re.DOTALL)
+        if not html_match:
+            raise ValueError(f"A {idx+1}. példában hiányzik a '### Várt KB Cikk (Gold Article)' blokk.")
+
+        html = html_match.group(1).strip()
+
+        # Validáció: a story_text és html nem lehet üres
+        if len(story_text) < 50:
+            raise ValueError(f"A {idx+1}. példa story_text mezője túl rövid ({len(story_text)} karakter).")
+        if "<h2>" not in html:
+            raise ValueError(f"A {idx+1}. példa html mezője nem tartalmaz <h2> fejléceket.")
+
+        # dspy.Example létrehozása: story_text (input) + html (expected output)
+        ex = dspy.Example(story_text=story_text, html=html).with_inputs("story_text")
+        examples.append(ex)
+
+    # Szeparált felosztás: első 3 trainset, utolsó 2 valset
+    if len(examples) < 5:
+        raise ValueError(
+            f"A gold dataset kevesebb mint 5 példát tartalmaz ({len(examples)}). "
+            "Legalább 5 példa kell a GEPA optimalizációhoz."
+        )
+
+    trainset = examples[:3]
+    valset = examples[3:5]
+
+    return trainset, valset

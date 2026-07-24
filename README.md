@@ -127,15 +127,16 @@ snow_kb_generator/
 
 1. **Spec** — ✅ Kész
 2. **Program** — ✅ Kész (Signatures + Module + Update Set Code Analyzer)
-3. **Data** — ⏳ Gold példapárok gyűjtése alatt
-4. **Rich metric** — ⏳ Következő lépés
-5. **Baseline** — ⏳
-6. **GEPA optimalizáció** — ⏳
-7. **Export & deploy** — ✅ Kész (FastAPI + Docker + ServiceNow UI Action)
+3. **Data** — ✅ Kész (Gold Dataset: 5 arany példapár a gold_dataset.md-ben)
+4. **Rich metric** — ✅ Kész (rich_metric: structure_match + content_accuracy + template_adherence)
+5. **Baseline** — ✅ Kész (baseline.json: jelenlegi program teljesítménye a valset-en)
+6. **GEPA optimalizáció** — ⏳ Folyamatban (GEPA optimizer implementálva, compile folyamatban)
+7. **Export & deploy** — ⏳ Következő lépés (optimalizált program mentése és a FastAPI szerverrel való használata)
 
 **SDD (Spec-Driven Development):** A project aktívan használja a `spec-kit` módszertant.
 - 1. Kész Feature: `001-kb-duplicate-prevention` (Duplikáció megakadályozása és felülírás).
 - 2. Kész Feature: `002-team-based-templates` (Csapat-specifikus KB sablonok generálása).
+- 3. Folyamatban lévő Feature: `003-gepa-kb-quality` (GEPA optimalizáció a KB cikk minőségének javítására).
 
 ## Licenc
 
