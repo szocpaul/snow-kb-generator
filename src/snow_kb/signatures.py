@@ -157,6 +157,9 @@ class GenerateKbFromTemplate(dspy.Signature):
     - Do NOT invent new headings. Do NOT remove headings from the template.
     - If a section does not apply to the story, keep the heading but write "N/A" or 
       a brief explanation under it.
+    - Do NOT add a "Theme" line or a "Target Audience" section. If the story_context
+      mentions a target audience, use it ONLY to adapt the writing style/tone of each
+      section (e.g., technical depth for developers, business language for process owners).
     """
     story_context: str = dspy.InputField(
         desc="The extracted summary, change details, and technical implementation info."

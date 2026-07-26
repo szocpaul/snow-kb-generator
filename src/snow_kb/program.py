@@ -107,6 +107,7 @@ class StoryToKBArticle(dspy.Module):
             story_context_for_template = (
                 f"Change Summary: {extracted.change_summary}\n\n"
                 f"Key Steps: {', '.join(extracted.key_steps)}\n\n"
+                f"Target Audience (style only, do NOT create a section for it): {extracted.audience}\n\n"
                 f"Full Story Context: {full_context}"
             )
             template_result = self.generate_from_template(
