@@ -275,3 +275,21 @@ A `run_gepa_optimization()` függvény a `optimizer.compile()` hívást végzi, 
 - STRY0010010 generálás `push=false`: ✅ sikeres (az optimalizált programmal).
 - Éles push `force_update=true`: ✅ a KB cikk létrejött/frissült: https://dev433980.service-now.com/kb_view.do?sys_kb_id=bbe5d9b62fce0b10698771ba6fa4e3b8
 - **A specs/003-gepa-kb-quality összes taszkja (T001-T019) kész.** A GEPA-optimalizált program élesben szolgálja ki a ServiceNow UI Action webhookot.
+
+## 18. Spec 004: Hallucination-Free KB Generation BEFEJEZVE (2026-07-26)
+
+### Probléma
+A gold dataset fiktív KB cikkszámai (KB0012345-KB0012349) hallucinált hivatkozásokként jelentek meg a generált cikkekben.
+
+### Megoldás (spec-kit: specs/004-no-hallucinated-references)
+- **T001-T002:** Gold dataset sanitizálva (5 fiktív KB szám → `KBXXXXXXX` placeholder) + dataset teszt.
+- **T003-T005:** `rich_metric` hallucination axis (új súlyok: 0.3/0.3/0.2/0.2) + 3 új teszt.
+- **T006-T008:** `strip_hallucinated_references()` guardrail a pipeline-ban (push előtt stripeli a story_text-ben nem szereplő KB számokat) + 4 új teszt.
+- **T009:** Új baseline az új metric-kel: **0.386**.
+- **T010:** GEPA újrafuttatva tiszta adaton: **optimized 0.962** (vs baseline 0.386; korábbi futam: 0.600).
+- **T011:** Valset validáció: **0/2 hallucináció**.
+- **T012:** Teljes tesztcsomag: **216/216 zöld**.
+- **T013:** Szerver restart + éles STRY0010010 validáció: a KB cikk hallucináció-mentes (ServiceNow API-val verifikálva).
+
+### Tanulság
+A hallucináció ellen 3 védelmi vonal épült: (1) tiszta tanítóadat, (2) metric-büntetés (GEPA feedback), (3) produkciós guardrail. A helyes KB endpoint: `openai/k3` @ `https://api.kimi.com/coding/v1` (OAuth).
