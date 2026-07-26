@@ -118,8 +118,10 @@ snow_kb_generator/
 │   ├── program.py              # StoryToKBArticle(dspy.Module)
 │   └── ...                     # config, schemas, cli
 ├── servicenow/                 # UI Action script to copy into ServiceNow
-├── tests/                      # 173 pytest tests
-├── eval/                       # GEPA metric and dataset (in development)
+├── tests/                      # 216 pytest tests
+├── eval/                       # GEPA eval harness (dataset, rich_metric, baseline, gepa_optimize)
+├── artifacts/                  # GEPA-optimized program (program.json)
+├── gepa_logs/                  # GEPA checkpointek
 └── data/                       # Sample Stories and Gold example pairs
 ```
 
@@ -128,15 +130,18 @@ snow_kb_generator/
 1. **Spec** — ✅ Done
 2. **Program** — ✅ Done (Signatures + Module + Update Set Code Analyzer)
 3. **Data** — ✅ Done (Gold Dataset: 5 gold example pairs in gold_dataset.md)
-4. **Rich metric** — ✅ Done (rich_metric: structure_match + content_accuracy + template_adherence)
-5. **Baseline** — ✅ Done (baseline.json: performance of the current program on the valset)
-6. **GEPA optimization** — ⏳ In progress (GEPA optimizer implemented, compile in progress)
-7. **Export & deploy** — ⏳ Next step (saving the optimized program and using it with the FastAPI server)
+4. **Rich metric** — ✅ Done (rich_metric: structure_match + content_accuracy + template_adherence + hallucination)
+5. **Baseline** — ✅ Done (runs/baseline.json: 0.386)
+6. **GEPA optimization** — ✅ Done (Kimi K3 reflection, 0.386 → 0.962 on the valset)
+7. **Export & deploy** — ✅ Done (artifacts/program.json; the FastAPI server loads it at startup, fallback to the base program)
+
+**Hallucination protection (spec 004):** 3 defense lines — (1) sanitized gold dataset (`KBXXXXXXX` placeholder), (2) hallucination axis in the metric (GEPA feedback), (3) `strip_hallucinated_references()` guardrail in the pipeline before push. Production validation: the generated articles contain 0 hallucinated references.
 
 **SDD (Spec-Driven Development):** The project actively uses the `spec-kit` methodology.
 - 1. Done Feature: `001-kb-duplicate-prevention` (duplicate prevention and overwrite).
 - 2. Done Feature: `002-team-based-templates` (generation of team-specific KB templates).
-- 3. Feature in progress: `003-gepa-kb-quality` (GEPA optimization to improve the quality of the KB article).
+- 3. Done Feature: `003-gepa-kb-quality` (GEPA optimization to improve the quality of the KB article).
+- 4. Done Feature: `004-no-hallucinated-references` (hallucination-free KB generation: dataset sanitization + hallucination metric axis + pipeline guardrail).
 
 ## Licenc
 
