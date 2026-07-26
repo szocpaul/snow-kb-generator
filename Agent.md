@@ -331,3 +331,16 @@ The "Table of related KB articles" section (a mandatory element of the team temp
 - Test article created: **KB0010010** (Jira REST Integration Guide, kept at the user's request).
 - The search was improved: keyword extraction (abbreviations/proper names first), OR query, published∪all union, client-side overlap ranking.
 - Production STRY0010010 re-generation: the "Related articles" table contains **3 real articles** (KB0010009, KB0010010, KB0010001) — we verified all three with the ServiceNow API. Spec 005 e2e proven.
+
+## 20. Spec 006: Template Simplification COMPLETED (2026-07-26)
+
+### Change
+Removed from the template: the "Knowledge Base Structure for Interface Documentation" H1, the "Theme:" rows, and every "Target Audience" section (+ the 3rd column of the related articles table). The target audience remains as a style: ExtractChange.audience goes into the template generation instruction ("style only, do NOT create a section").
+
+### Steps
+- Local template (md+html) trimmed: KBA1-KBA11 headings + Content only.
+- Gold dataset: 35 Theme rows, 35 Target Audience sections, 5 target audience columns deleted.
+- Live ServiceNow template article (KB0010008) updated with the Table API.
+- GEPA re-run: baseline 0.300 → **optimized 0.850**.
+- Production validation (STRY0010010): no Theme/Target Audience/Structure main heading; the related table has 2 columns, 3 real articles (KB0010009, KB0010010, KB0010001).
+- 221/221 tests green.
