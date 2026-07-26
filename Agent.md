@@ -293,3 +293,15 @@ A gold dataset fiktív KB cikkszámai (KB0012345-KB0012349) hallucinált hivatko
 
 ### Tanulság
 A hallucináció ellen 3 védelmi vonal épült: (1) tiszta tanítóadat, (2) metric-büntetés (GEPA feedback), (3) produkciós guardrail. A helyes KB endpoint: `openai/k3` @ `https://api.kimi.com/coding/v1` (OAuth).
+
+## 19. Spec 005: Real Related KB Articles BEFEJEZVE (2026-07-26)
+
+### Probléma
+A "Table of related KB articles" szekció (a csapat-sablon kötelező eleme) hallucinált short descriptionöket tartalmazott placeholder számokkal — valódi adatforrás híján.
+
+### Megoldás (specs/005-real-related-kb-articles)
+- **T001:** `ServiceNowClient.search_kb_articles(query, limit)` — szöveges keresés a published kb_knowledge cikkekben.
+- **T002-T003:** A pipeline generálás előtt KB-t keres a Story short_description-jére; a találatok `related_articles_context`-ként a program új inputjára kerülnek (üres → "N/A" instrukció a signature-ben).
+- **T004-T005:** Guardrail + metric kiterjesztve: a keresési találatok "ismert" hivatkozások (0 false positive).
+- **T006:** GEPA újrafuttatva az új signature-szel: baseline 0.300 → **optimized 0.962**.
+- **T007:** 221/221 teszt zöld; éles STRY0010010 validáció: a dev instance-on nincs tematikus cikk → a szekció helyesen **"N/A"** (a "Spam" keresés bizonyítja, hogy találat esetén valódi számok kerülnének be).
