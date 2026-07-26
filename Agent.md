@@ -296,3 +296,21 @@ The `run_gepa_optimization()` function calls `optimizer.compile()`, which return
 - STRY0010010 generation with `push=false`: ✅ successful (with the optimized program).
 - Live push `force_update=true`: ✅ the KB article was created/updated: https://dev.service-now.com/kb_view.do?sys_kb_id=00000000000000000000000000000012
 - **All tasks of specs/003-gepa-kb-quality (T001-T019) are done.** The GEPA-optimized program serves the ServiceNow UI Action webhook in production.
+
+## 18. Spec 004: Hallucination-Free KB Generation COMPLETED (2026-07-26)
+
+### Problem
+The fictional KB article numbers of the gold dataset (KB0012345-KB0012349) showed up in the generated articles as hallucinated references.
+
+### Solution (spec-kit: specs/004-no-hallucinated-references)
+- **T001-T002:** Gold dataset sanitized (5 fictional KB numbers → `KBXXXXXXX` placeholder) + dataset test.
+- **T003-T005:** `rich_metric` hallucination axis (new weights: 0.3/0.3/0.2/0.2) + 3 new tests.
+- **T006-T008:** `strip_hallucinated_references()` guardrail in the pipeline (before push it strips the KB numbers that do not appear in story_text) + 4 new tests.
+- **T009:** New baseline with the new metric: **0.386**.
+- **T010:** GEPA re-run on clean data: **optimized 0.962** (vs baseline 0.386; previous run: 0.600).
+- **T011:** Valset validation: **0/2 hallucinations**.
+- **T012:** Full test suite: **216/216 green**.
+- **T013:** Server restart + production STRY0010010 validation: the KB article is hallucination-free (verified with the ServiceNow API).
+
+### Lesson
+Three lines of defence were built against hallucination: (1) clean training data, (2) metric penalty (GEPA feedback), (3) production guardrail. The correct KB endpoint: `openai/k3` @ `https://api.kimi.com/coding/v1` (OAuth).
