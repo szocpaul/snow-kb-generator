@@ -193,6 +193,38 @@ def configure_lm(settings: Settings) -> None:
 # Fő orchestrátor
 # ---------------------------------------------------------------------------
 
+def strip_hallucinated_references(html: str, story_text: str) -> str:
+    """Eltávolítja a hallucinált KB hivatkozásokat a generált HTML-ből (spec 004).
+
+    Egy KB hivatkozás (KB + >=6 számjegy) hallucinált, ha nem szerepel a
+    story_text-ben. Az ilyen hivatkozást tartalmazó <li> elemeket eltávolítja;
+    egyéb előfordulásokat KBXXXXXXX placeholder-re cserél. A story_text-ben
+    szereplő (valódi) azonosítókat sosem bántja.
+    """
+    import re
+
+    pattern = re.compile(r"\bKB\d{6,}\b")
+    known_refs = set(pattern.findall(story_text))
+    hallucinated = set(pattern.findall(html)) - known_refs
+    if not hallucinated:
+        return html
+
+    logger.warning("Hallucinált KB hivatkozások eltávolítása: %s", sorted(hallucinated))
+
+    cleaned = html
+    # 1. A hallucinált hivatkozást tartalmazó <li> elemek teljes eltávolítása
+    for ref in hallucinated:
+        cleaned = re.sub(
+            r"[ \t]*<li[^>]*>[^<]*" + re.escape(ref) + r"[^<]*</li>\s*",
+            "",
+            cleaned,
+        )
+    # 2. Esetleges megmaradt előfordulások placeholder-re cserélése
+    for ref in hallucinated:
+        cleaned = cleaned.replace(ref, "KBXXXXXXX")
+    return cleaned
+
+
 def _load_program(program_path: str | None = None) -> StoryToKBArticle:
     """Betölti a (GEPA-val optimalizált) programot, ha létezik a JSON fájl.
 
@@ -305,6 +337,8 @@ def generate_kb_article(
         )
         article: KBArticle = pred.article
         article.source_story = story_identifier  # Duplikáció megakadályozása
+        # Spec 004 guardrail: hallucinált KB hivatkozások eltávolítása push ELŐTT
+        article.html = strip_hallucinated_references(article.html, story_text)
 
     # 6. Push a ServiceNow KB-be (ha kértük és nem dry_run)
     if push and not settings.dry_run:

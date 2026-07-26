@@ -45,7 +45,11 @@ class TestRichMetric:
         assert "Correct" in result.feedback or "perfect" in result.feedback.lower()
 
     def test_mismatch_returns_low_score(self):
-        """Ha a generált HTML eltér a gold-tól (fejléc és tartalom is), a score alacsony (0.3 alatt)."""
+        """Ha a generált HTML eltér a gold-tól (fejléc és tartalom is), a score alacsony.
+
+        Megjegyzés (spec 004): az új súlyok (0.3/0.3/0.2/0.2) mellett a nem-hallucinált
+        output 0.2 hallucination pontot kap, így a küszöb 0.45.
+        """
         gold = dspy.Example(
             story_text="Test story",
             html="<h2>Problem</h2><p>Expected problem.</p><h2>Solution</h2><ol><li>Step 1.</li></ol>",
@@ -56,7 +60,7 @@ class TestRichMetric:
 
         result = rich_metric(gold, pred)
 
-        assert result.score < 0.3, f"Mismatch should score < 0.3, got {result.score}"
+        assert result.score < 0.45, f"Mismatch should score < 0.45, got {result.score}"
         assert "mismatch" in result.feedback.lower() or "wrong" in result.feedback.lower()
 
     def test_feedback_is_natural_language(self):
@@ -84,3 +88,38 @@ class TestRichMetric:
         result = rich_metric(gold, pred)
 
         assert not isinstance(result, dict), "Metric must return dspy.Prediction, not dict (GEPA contract)"
+
+
+class TestHallucinationAxis:
+    """US2 (spec 004): a rich_metric bünteti a hallucinált KB hivatkozásokat."""
+
+    def _gold(self):
+        return dspy.Example(
+            story_text="Story about Jira integration. Related article: KB7654321 was updated.",
+            html="<h2>Problem</h2><p>Expected problem.</p>",
+        ).with_inputs("story_text")
+
+    def test_fictional_kb_number_is_penalized(self):
+        """A story_text-ben NEM szereplő KB szám hallucináció: score csökken + feedback."""
+        pred = dspy.Prediction(
+            html="<h2>Problem</h2><p>Expected problem.</p><p>See also KB0012345.</p>"
+        )
+        result = rich_metric(self._gold(), pred)
+        assert "KB0012345" in result.feedback
+        assert "Hallucinated" in result.feedback
+
+    def test_real_kb_number_is_not_penalized(self):
+        """A story_text-ben szereplő KB szám (KB7654321) nem számít hallucinációnak."""
+        pred = dspy.Prediction(
+            html="<h2>Problem</h2><p>Expected problem.</p><p>See also KB7654321.</p>"
+        )
+        result = rich_metric(self._gold(), pred)
+        assert "Hallucinated" not in result.feedback
+
+    def test_placeholder_is_not_penalized(self):
+        """A KBXXXXXXX placeholder és az N/A nem számít hallucinációnak."""
+        pred = dspy.Prediction(
+            html="<h2>Problem</h2><p>Expected problem.</p><p>Related: KBXXXXXXX or N/A.</p>"
+        )
+        result = rich_metric(self._gold(), pred)
+        assert "Hallucinated" not in result.feedback

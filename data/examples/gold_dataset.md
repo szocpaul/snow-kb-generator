@@ -38,7 +38,7 @@
     <li>Table of related KB articles, including:
         <ul>
             <li>Short description: Jira Cloud Outbound Integration</li>
-            <li>Article number: KB0012345</li>
+            <li>Article number: KBXXXXXXX</li>
             <li>Target audience: Developers</li>
         </ul>
     </li>
@@ -187,7 +187,7 @@
     <li>Table of related KB articles, including:
         <ul>
             <li>Short description: Jira Webhook Inbound Integration</li>
-            <li>Article number: KB0012346</li>
+            <li>Article number: KBXXXXXXX</li>
             <li>Target audience: Developers</li>
         </ul>
     </li>
@@ -336,7 +336,7 @@
     <li>Table of related KB articles, including:
         <ul>
             <li>Short description: SSO Configuration Guide</li>
-            <li>Article number: KB0012347</li>
+            <li>Article number: KBXXXXXXX</li>
             <li>Target audience: Administrators</li>
         </ul>
     </li>
@@ -485,7 +485,7 @@
     <li>Table of related KB articles, including:
         <ul>
             <li>Short description: SAP Vendor Invoice Processing Guide</li>
-            <li>Article number: KB0012348</li>
+            <li>Article number: KBXXXXXXX</li>
             <li>Target audience: Finance Teams</li>
         </ul>
     </li>
@@ -634,7 +634,7 @@
     <li>Table of related KB articles, including:
         <ul>
             <li>Short description: ServiceNow Change Management Guide</li>
-            <li>Article number: KB0012349</li>
+            <li>Article number: KBXXXXXXX</li>
             <li>Target audience: Change Managers</li>
         </ul>
     </li>

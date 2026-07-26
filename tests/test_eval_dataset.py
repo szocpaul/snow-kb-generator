@@ -111,3 +111,22 @@ class TestGoldDatasetErrorHandling:
         bad_file.write_text("## Példa 1\n### Story\n```json\n{\"number\": \"A\", \"description\": \"This is a long enough description to pass the 50 char check.\"}\n```\n### Várt KB Cikk\n```html\n<p>No headings here</p>\n```")
         with pytest.raises(ValueError, match="nem tartalmaz <h2> fejléceket"):
             load_gold_dataset(bad_file)
+
+
+class TestGoldDatasetNoFictionalReferences:
+    """US1 (spec 004): a gold dataset nem tartalmazhat fiktív KB cikkszámokat."""
+
+    def test_no_fictional_kb_numbers_in_gold_articles(self):
+        """Egyetlen példacikk sem tartalmazhat valódiságnak álcázott KB számot.
+
+        Megengedett: a KBXXXXXXX placeholder. Tiltott: KB + számjegyek minta.
+        """
+        import re
+
+        from eval.dataset import load_gold_dataset
+
+        trainset, valset = load_gold_dataset("data/examples/gold_dataset.md")
+        pattern = re.compile(r"\bKB\d{6,}\b")
+        for example in trainset + valset:
+            found = pattern.findall(example.html)
+            assert not found, f"Fiktív KB szám a gold cikkben: {found}"
