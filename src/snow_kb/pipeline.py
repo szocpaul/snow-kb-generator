@@ -193,19 +193,20 @@ def configure_lm(settings: Settings) -> None:
 # Fő orchestrátor
 # ---------------------------------------------------------------------------
 
-def strip_hallucinated_references(html: str, story_text: str) -> str:
-    """Eltávolítja a hallucinált KB hivatkozásokat a generált HTML-ből (spec 004).
+def strip_hallucinated_references(html: str, story_text: str, known_refs: str = "") -> str:
+    """Eltávolítja a hallucinált KB hivatkozásokat a generált HTML-ből (spec 004/005).
 
     Egy KB hivatkozás (KB + >=6 számjegy) hallucinált, ha nem szerepel a
-    story_text-ben. Az ilyen hivatkozást tartalmazó <li> elemeket eltávolítja;
-    egyéb előfordulásokat KBXXXXXXX placeholder-re cserél. A story_text-ben
-    szereplő (valódi) azonosítókat sosem bántja.
+    story_text-ben VAGY a known_refs-ben (pl. a ServiceNow KB keresés valódi
+    találatai — spec 005). Az ilyen hivatkozást tartalmazó <li> elemeket
+    eltávolítja; egyéb előfordulásokat KBXXXXXXX placeholder-re cserél.
+    A valódi azonosítókat sosem bántja.
     """
     import re
 
     pattern = re.compile(r"\bKB\d{6,}\b")
-    known_refs = set(pattern.findall(story_text))
-    hallucinated = set(pattern.findall(html)) - known_refs
+    known_refs_set = set(pattern.findall(story_text)) | set(pattern.findall(known_refs))
+    hallucinated = set(pattern.findall(html)) - known_refs_set
     if not hallucinated:
         return html
 
@@ -319,6 +320,22 @@ def generate_kb_article(
         # Ne döjjön le a pipeline, ha az Update Set lekérés sikertelen
         logger.warning("Update Set lekérés sikertelen: %s", exc)
 
+    # 3c. Kapcsolódó KB cikkek keresése (spec 005) — valódi hivatkozások a
+    # "Table of related KB articles" szekcióhoz (hallucináció helyett)
+    related_articles_context = ""
+    try:
+        search = getattr(client, "search_kb_articles", None)
+        if search and story.short_description:
+            hits = search(story.short_description, limit=5)
+            if hits:
+                related_articles_context = "\n".join(
+                    f"{h['number']} | {h['short_description']}" for h in hits
+                )
+                logger.info("Kapcsolódó KB cikkek: %d találat", len(hits))
+    except Exception as exc:
+        # Ne döjjön le a pipeline, ha a KB keresés sikertelen
+        logger.warning("Kapcsolódó KB keresés sikertelen: %s", exc)
+
     # 4. Dry-run: a program hívás kihagyása (nincs LM), mock cikk a Story-ból
     if settings.dry_run:
         article = _mock_article_from_story(story, settings)
@@ -332,13 +349,17 @@ def generate_kb_article(
             story_text=story_text,
             update_set_payloads=update_set_payloads,
             template_context=template_context,
+            related_articles_context=related_articles_context,
             category=settings.snow.default_category,
             knowledge_base_id=settings.snow.knowledge_base_id,
         )
         article: KBArticle = pred.article
         article.source_story = story_identifier  # Duplikáció megakadályozása
-        # Spec 004 guardrail: hallucinált KB hivatkozások eltávolítása push ELŐTT
-        article.html = strip_hallucinated_references(article.html, story_text)
+        # Spec 004/005 guardrail: hallucinált KB hivatkozások eltávolítása push ELŐTT
+        # (a valódi keresési találatok known_refs-ként védettek)
+        article.html = strip_hallucinated_references(
+            article.html, story_text, known_refs=related_articles_context
+        )
 
     # 6. Push a ServiceNow KB-be (ha kértük és nem dry_run)
     if push and not settings.dry_run:

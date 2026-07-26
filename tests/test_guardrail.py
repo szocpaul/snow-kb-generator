@@ -34,3 +34,15 @@ class TestStripHallucinatedReferences:
         result = strip_hallucinated_references(html, self.STORY)
         assert "KB9999999" not in result
         assert "KBXXXXXXX" in result
+
+
+class TestGuardrailKnownRefs:
+    """US3 (spec 005): a valódi KB keresési találatok nem hallucinációk (0 false positive)."""
+
+    def test_known_refs_from_search_are_kept(self):
+        """A related_articles_context-ben szereplő valódi KB szám érintetlen marad."""
+        html = "<ul><li>See KB7654321 for details.</li><li>Fake KB0012345</li></ul>"
+        known = "KB7654321 | Jira API Authentication Setup"
+        result = strip_hallucinated_references(html, "Story without any refs.", known_refs=known)
+        assert "KB7654321" in result
+        assert "KB0012345" not in result

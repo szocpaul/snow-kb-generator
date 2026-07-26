@@ -123,3 +123,19 @@ class TestHallucinationAxis:
         )
         result = rich_metric(self._gold(), pred)
         assert "Hallucinated" not in result.feedback
+
+
+class TestHallucinationKnownRefs:
+    """US3 (spec 005): a metric a related_articles_context-et is ismeri."""
+
+    def test_related_context_kb_number_is_not_penalized(self):
+        gold = dspy.Example(
+            story_text="Story about Jira.",
+            related_articles_context="KB7654321 | Jira API Authentication Setup",
+            html="<h2>Problem</h2><p>Expected problem.</p>",
+        ).with_inputs("story_text")
+        pred = dspy.Prediction(
+            html="<h2>Problem</h2><p>Expected problem.</p><p>See KB7654321.</p>"
+        )
+        result = rich_metric(gold, pred)
+        assert "Hallucinated" not in result.feedback

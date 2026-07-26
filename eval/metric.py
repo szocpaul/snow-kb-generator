@@ -59,7 +59,9 @@ def rich_metric(gold, pred, trace=None, pred_name=None, pred_trace=None):
     # 3b. Hallucination detection (spec 004): a generált HTML-ben szereplő KB
     # cikkszámoknak a story_text-ben kell lenniük (vagy placeholder-nek).
     story_text = getattr(gold, "story_text", "") or ""
-    hallucinated = _find_hallucinated_kb_references(actual_html, story_text)
+    # Spec 005: a valódi KB keresési találatok (related_articles_context) ismert hivatkozások
+    known_refs = story_text + "\n" + (getattr(gold, "related_articles_context", "") or "")
+    hallucinated = _find_hallucinated_kb_references(actual_html, known_refs)
     hallucination_score = 0.0 if hallucinated else 1.0
 
     # Súlyozott összesítés (0.3 structure + 0.3 content + 0.2 template + 0.2 hallucination)

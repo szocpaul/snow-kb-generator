@@ -434,3 +434,40 @@ class TestTeamTemplates:
         mock_resp.ok = True
         with patch.object(client, "_request", return_value=mock_resp):
             assert client.get_team_template("unknown_group") is None
+
+
+class TestSearchKbArticles:
+    """US1 (spec 005): ServiceNowClient.search_kb_articles()."""
+
+    def test_search_returns_real_articles(self, live_settings):
+        """A keresés a valódi number + short_description + sys_id mezőket adja vissza."""
+        client = ServiceNowClient(live_settings)
+        mock_resp = MagicMock()
+        mock_resp.json.return_value = {
+            "result": [
+                {"number": "KB7654321", "short_description": "Jira API Auth", "sys_id": "abc123"},
+                {"number": "KB7654322", "short_description": "Jira Endpoints", "sys_id": "def456"},
+            ]
+        }
+        with patch.object(client, "_request", return_value=mock_resp) as req:
+            hits = client.search_kb_articles("jira", limit=5)
+
+        assert len(hits) == 2
+        assert hits[0]["number"] == "KB7654321"
+        # A query szöveges keresést és published szűrőt tartalmaz
+        sent_query = req.call_args.kwargs["params"]["sysparm_query"]
+        assert "short_descriptionLIKEjira" in sent_query
+        assert "workflow_state=published" in sent_query
+
+    def test_search_empty_result_returns_empty_list(self, live_settings):
+        """Nincs találat → üres lista (nem hiba)."""
+        client = ServiceNowClient(live_settings)
+        mock_resp = MagicMock()
+        mock_resp.json.return_value = {"result": []}
+        with patch.object(client, "_request", return_value=mock_resp):
+            assert client.search_kb_articles("nonexistent") == []
+
+    def test_search_dry_run_returns_empty(self, dry_run_settings):
+        """Dry-run módban a keresés kihagyott, üres lista."""
+        client = ServiceNowClient(dry_run_settings)
+        assert client.search_kb_articles("jira") == []

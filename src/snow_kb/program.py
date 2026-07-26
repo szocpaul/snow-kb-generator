@@ -57,6 +57,7 @@ class StoryToKBArticle(dspy.Module):
         *,
         update_set_payloads: str = "",
         template_context: str = "",
+        related_articles_context: str = "",
         category: str = "General",
         knowledge_base_id: str = "",
     ) -> dspy.Prediction:
@@ -111,6 +112,7 @@ class StoryToKBArticle(dspy.Module):
             template_result = self.generate_from_template(
                 story_context=story_context_for_template,
                 html_template=template_context,
+                related_articles_context=related_articles_context,
             )
             final_html = template_result.html
             # Cím kinyerése az extract lépésből (vagy az első <h1> a HTML-ből)
