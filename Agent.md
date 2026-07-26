@@ -344,3 +344,26 @@ Removed from the template: the "Knowledge Base Structure for Interface Documenta
 - GEPA re-run: baseline 0.300 → **optimized 0.850**.
 - Production validation (STRY0010010): no Theme/Target Audience/Structure main heading; the related table has 2 columns, 3 real articles (KB0010009, KB0010010, KB0010001).
 - 221/221 tests green.
+
+## 21. Evening Wrap-Up (2026-07-26) — Tomorrow: spec 007 implementation
+
+### Done Today (spec 004 + 005 + 006)
+- **Spec 004 (hallucination protection):** dataset sanitization, hallucination metric axis, `strip_hallucinated_references()` guardrail. 3 lines of defence.
+- **Spec 005 (real related articles):** `search_kb_articles()` keyword OR query + overlap ranking; `related_articles_context` input; guardrail/metric known_refs extension. Production evidence: 3 real articles in the related table (KB0010009, KB0010010, KB0010001). Test article KB0010010 kept.
+- **Spec 006 (template simplification):** H1/Theme/Target Audience sections removed (local + live KB0010008 template); the audience "style only" instruction; gold dataset cleaned; GEPA re-run: 0.300 → 0.850.
+- **Tests:** 221/221 green. Production demo article: KB0010009 (based on STRY0010010).
+
+### Known Open Problem (tomorrow's topic)
+For an Outbound Story (STRY0010010) the **Inbound section is filled with content** instead of "N/A". Diagnosis: the metric is direction-blind (it does not penalise) → the Kimi K3 reflection gets no signal → the Qwen 35B follows the "fill every section" instruction. This is not a knowledge error, but a break in the feedback chain.
+
+### WE CONTINUE HERE TOMORROW: spec 007 implementation
+- **Spec:** `specs/007-direction-aware-quality/` (spec.md + plan.md + tasks.md, commit 38ca370) — READY, under user review, the implementation has NOT started yet.
+- **Tasks:** T001-T011 — detect_direction() in the metric, categorical direction rule in the signature, SkilledProposer integration (pip install skilled-proposer, extra_guidance), GEPA re-run, production validation.
+- **Environment:** the Qwen LM runs on the desktop machine (Tailscale :8033) — tomorrow we must check whether it is alive before GEPA runs.
+- **Left out (out of scope):** pipeline guardrail that forces N/A — only if the metric+GEPA path is not enough.
+
+### Important Technical Reminders
+- Correct venv: `../.venv` (parent directory), NOT the system Python.
+- Kimi K3 reflection: `openai/k3` @ `https://api.kimi.com/coding/v1` (OAuth access token; the token can expire after ~1 hour during the run — the run still finishes, but an "invalid API key" warning at the end is normal).
+- ALWAYS delete `gepa_logs/` before a GEPA run (the checkpoint keeps the old, possibly broken state).
+- Server restart: after `pkill -f "uvicorn snow_kb"` run `nohup ../.venv/bin/uvicorn snow_kb.server:app --host 0.0.0.0 --port 8000 >> server.log 2>&1 & disown` (setsid sometimes loses the process).

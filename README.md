@@ -118,7 +118,7 @@ snow_kb_generator/
 │   ├── program.py              # StoryToKBArticle(dspy.Module)
 │   └── ...                     # config, schemas, cli
 ├── servicenow/                 # UI Action script to copy into ServiceNow
-├── tests/                      # 216 pytest tests
+├── tests/                      # 221 pytest tests
 ├── eval/                       # GEPA eval harness (dataset, rich_metric, baseline, gepa_optimize)
 ├── artifacts/                  # GEPA-optimized program (program.json)
 ├── gepa_logs/                  # GEPA checkpointek
@@ -132,7 +132,7 @@ snow_kb_generator/
 3. **Data** — ✅ Done (Gold Dataset: 5 gold example pairs in gold_dataset.md)
 4. **Rich metric** — ✅ Done (rich_metric: structure_match + content_accuracy + template_adherence + hallucination)
 5. **Baseline** — ✅ Done (runs/baseline.json: 0.386)
-6. **GEPA optimization** — ✅ Done (Kimi K3 reflection, 0.386 → 0.962 on the valset)
+6. **GEPA optimization** — ✅ Done (Kimi K3 reflection; current run on the spec 006 template: 0.300 → 0.850)
 7. **Export & deploy** — ✅ Done (artifacts/program.json; the FastAPI server loads it at startup, fallback to the base program)
 
 **Hallucination protection (spec 004):** 3 defense lines — (1) sanitized gold dataset (`KBXXXXXXX` placeholder), (2) hallucination axis in the metric (GEPA feedback), (3) `strip_hallucinated_references()` guardrail in the pipeline before push. Production validation: the generated articles contain 0 hallucinated references.
@@ -142,6 +142,9 @@ snow_kb_generator/
 - 2. Done Feature: `002-team-based-templates` (generation of team-specific KB templates).
 - 3. Done Feature: `003-gepa-kb-quality` (GEPA optimization to improve the quality of the KB article).
 - 4. Done Feature: `004-no-hallucinated-references` (hallucination-free KB generation: dataset sanitization + hallucination metric axis + pipeline guardrail).
+- 5. Done Feature: `005-real-related-kb-articles` (real related KB articles via ServiceNow search; no result → N/A).
+- 6. Done Feature: `006-template-simplification` (simplified template: no H1/Theme/Target Audience section; audience = style instruction).
+- 7. Under review: `007-direction-aware-quality` (direction-sensitive metric + explicit inbound/outbound N/A rule + SkilledProposer; implementation tomorrow).
 
 ## Licenc
 
