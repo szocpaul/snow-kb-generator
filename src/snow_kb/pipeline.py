@@ -193,6 +193,38 @@ def configure_lm(settings: Settings) -> None:
 # Main orchestrator
 # ---------------------------------------------------------------------------
 
+def strip_hallucinated_references(html: str, story_text: str) -> str:
+    """Removes the hallucinated KB references from the generated HTML (spec 004).
+
+    A KB reference (KB + >=6 digits) is hallucinated if it does not appear in the
+    in the story_text. It removes the <li> elements containing such a reference;
+    other occurrences with the KBXXXXXXX placeholder. In the story_text
+    the real identifiers appearing are never touched.
+    """
+    import re
+
+    pattern = re.compile(r"\bKB\d{6,}\b")
+    known_refs = set(pattern.findall(story_text))
+    hallucinated = set(pattern.findall(html)) - known_refs
+    if not hallucinated:
+        return html
+
+    logger.warning("Removing hallucinated KB references: %s", sorted(hallucinated))
+
+    cleaned = html
+    # 1. Complete removal of the <li> elements containing a hallucinated reference
+    for ref in hallucinated:
+        cleaned = re.sub(
+            r"[ \t]*<li[^>]*>[^<]*" + re.escape(ref) + r"[^<]*</li>\s*",
+            "",
+            cleaned,
+        )
+    # 2. Replacing the remaining occurrences with the placeholder
+    for ref in hallucinated:
+        cleaned = cleaned.replace(ref, "KBXXXXXXX")
+    return cleaned
+
+
 def _load_program(program_path: str | None = None) -> StoryToKBArticle:
     """Loads the (GEPA-optimized) program, if the JSON file exists.
 
@@ -305,6 +337,8 @@ def generate_kb_article(
         )
         article: KBArticle = pred.article
         article.source_story = story_identifier  # prevents duplication
+        # Spec 004 guardrail: removing the hallucinated KB references BEFORE the push
+        article.html = strip_hallucinated_references(article.html, story_text)
 
     # 6. Push to the ServiceNow KB (if requested and not dry_run)
     if push and not settings.dry_run:

@@ -111,3 +111,22 @@ class TestGoldDatasetErrorHandling:
         bad_file.write_text("## Example 1\n### Story\n```json\n{\"number\": \"A\", \"description\": \"This is a long enough description to pass the 50 char check.\"}\n```\n### Expected KB Article\n```html\n<p>No headings here</p>\n```")
         with pytest.raises(ValueError, match="no <h2> headings"):
             load_gold_dataset(bad_file)
+
+
+class TestGoldDatasetNoFictionalReferences:
+    """US1 (spec 004): the gold dataset must not contain fictional KB article numbers."""
+
+    def test_no_fictional_kb_numbers_in_gold_articles(self):
+        """No example article may contain a KB number disguised as real.
+
+        Allowed: the KBXXXXXXX placeholder. Forbidden: a KB + digits pattern.
+        """
+        import re
+
+        from eval.dataset import load_gold_dataset
+
+        trainset, valset = load_gold_dataset("data/examples/gold_dataset.md")
+        pattern = re.compile(r"\bKB\d{6,}\b")
+        for example in trainset + valset:
+            found = pattern.findall(example.html)
+            assert not found, f"Fictional KB number in the gold article: {found}"

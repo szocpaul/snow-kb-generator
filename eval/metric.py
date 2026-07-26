@@ -56,8 +56,19 @@ def rich_metric(gold, pred, trace=None, pred_name=None, pred_trace=None):
     # If the template expects N/A, but the generated one is full of content (or vice versa), that is an error
     template_adherence = _check_template_adherence(expected_html, actual_html)
 
-    # Weighted sum (0.4 structure + 0.4 content + 0.2 template)
-    score = 0.4 * structure_match + 0.4 * content_accuracy + 0.2 * template_adherence
+    # 3b. Hallucination detection (spec 004): the KB appearing in the generated HTML
+    # the article numbers must be in the story_text (or a placeholder).
+    story_text = getattr(gold, "story_text", "") or ""
+    hallucinated = _find_hallucinated_kb_references(actual_html, story_text)
+    hallucination_score = 0.0 if hallucinated else 1.0
+
+    # Weighted sum (0.3 structure + 0.3 content + 0.2 template + 0.2 hallucination)
+    score = (
+        0.3 * structure_match
+        + 0.3 * content_accuracy
+        + 0.2 * template_adherence
+        + 0.2 * hallucination_score
+    )
 
     # 4. The feedback (the critique in natural language)
     parts = []
@@ -76,6 +87,13 @@ def rich_metric(gold, pred, trace=None, pred_name=None, pred_trace=None):
 
     if template_adherence < 1.0:
         parts.append(f"Template violation. Expected 'N/A' for irrelevant section, got actual content instead.")
+
+    if hallucinated:
+        parts.append(
+            "Hallucinated reference(s): "
+            + ", ".join(hallucinated)
+            + ". These KB article numbers do not appear in the source Story — remove them or use the KBXXXXXXX placeholder / 'N/A'."
+        )
 
     if not parts:
         parts.append("Correct structure, accurate content, and proper template adherence.")
@@ -120,6 +138,20 @@ def _extract_facts(html: str) -> list[str]:
             facts.append(p_clean[:50])  # First 50 characters
 
     return facts
+
+
+def _find_hallucinated_kb_references(actual_html: str, story_text: str) -> list[str]:
+    """Finds the hallucinated KB article numbers in the generated HTML.
+
+    A KB reference (KB + >=6 digits) is hallucinated if it does not appear in the
+    story_text. The KBXXXXXXX placeholder and the 'N/A' do not count as a hallucination.
+    """
+    import re
+
+    pattern = re.compile(r"\bKB\d{6,}\b")
+    actual_refs = set(pattern.findall(actual_html))
+    known_refs = set(pattern.findall(story_text))
+    return sorted(actual_refs - known_refs)
 
 
 def _check_template_adherence(expected_html: str, actual_html: str) -> float:
