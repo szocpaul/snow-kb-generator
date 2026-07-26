@@ -326,3 +326,8 @@ The "Table of related KB articles" section (a mandatory element of the team temp
 - **T004-T005:** Guardrail + metric extended: the search results are "known" references (0 false positives).
 - **T006:** GEPA re-run with the new signature: baseline 0.300 → **optimized 0.962**.
 - **T007:** 221/221 tests green; production STRY0010010 validation: the dev instance has no thematic article → the section is correctly **"N/A"** (the "Spam" search proves that real numbers would be inserted if there were a match).
+
+### Spec 005 Addendum — real e2e evidence (2026-07-26 evening)
+- Test article created: **KB0010010** (Jira REST Integration Guide, kept at the user's request).
+- The search was improved: keyword extraction (abbreviations/proper names first), OR query, published∪all union, client-side overlap ranking.
+- Production STRY0010010 re-generation: the "Related articles" table contains **3 real articles** (KB0010009, KB0010010, KB0010001) — we verified all three with the ServiceNow API. Spec 005 e2e proven.

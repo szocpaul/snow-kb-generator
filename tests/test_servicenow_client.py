@@ -454,10 +454,11 @@ class TestSearchKbArticles:
 
         assert len(hits) == 2
         assert hits[0]["number"] == "KB7654321"
-        # The query contains a text search and a published filter
-        sent_query = req.call_args.kwargs["params"]["sysparm_query"]
-        assert "short_descriptionLIKEjira" in sent_query
-        assert "workflow_state=published" in sent_query
+        # Two calls happen: with the published filter, then the fallback without the filter
+        queries = [c.kwargs["params"]["sysparm_query"] for c in req.call_args_list]
+        assert all("short_descriptionLIKEjira" in q for q in queries)
+        assert "workflow_state=published" in queries[0]
+        assert "workflow_state=published" not in queries[-1]
 
     def test_search_empty_result_returns_empty_list(self, live_settings):
         """No hit → an empty list (not an error)."""
