@@ -26,7 +26,6 @@
 ```html
 <h1>Inbound Jira Webhook Integration</h1>
 <h2>Overview / Summary</h2>
-<p><strong>Theme:</strong> Overview</p>
 <h3>Purpose / Background / Overview</h3>
 <p>This document outlines the inbound integration between Jira and ServiceNow. When a new issue is created in Jira, a webhook automatically sends the issue details to a Scripted REST API in ServiceNow, which parses the data and creates a corresponding Incident record.</p>
 <h3>Content</h3>
@@ -39,20 +38,11 @@
         <ul>
             <li>Short description: Jira Cloud Outbound Integration</li>
             <li>Article number: KBXXXXXXX</li>
-            <li>Target audience: Developers</li>
         </ul>
     </li>
 </ul>
-<h3>Target Audience</h3>
-<ul>
-    <li>Knowledge users</li>
-    <li>Process Owners</li>
-    <li>Support teams</li>
-    <li>New team members</li>
-</ul>
 <hr />
 <h2>Inbound Technical Implementation</h2>
-<p><strong>Theme:</strong> Technical Implementation</p>
 <h3>Content</h3>
 <ul>
     <li>Script Includes and their functions: JiraInboundUtils (parses JSON, validates credentials, maps fields to Incident).</li>
@@ -62,15 +52,8 @@
     <li>Flow and its steps: 1. Jira webhook sends POST → 2. Scripted REST API receives payload → 3. Script Include parses JSON → 4. Incident created → 5. u_jira_key populated.</li>
     <li>Validation steps: 1. Send test POST from Postman → 2. Verify Incident created in ServiceNow → 3. Check u_jira_key matches Jira key.</li>
 </ul>
-<h3>Target Audience</h3>
-<ul>
-    <li>Developers</li>
-    <li>Support teams</li>
-    <li>L2/L3 Support</li>
-</ul>
 <hr />
 <h2>Outbound Technical Implementation</h2>
-<p><strong>Theme:</strong> Technical Implementation</p>
 <h3>Content</h3>
 <ul>
     <li>Technical components used: N/A (This is an inbound integration; no outbound ServiceNow message is sent in this flow).</li>
@@ -78,29 +61,16 @@
     <li>Authentication method: N/A</li>
     <li>Validation steps: N/A</li>
 </ul>
-<h3>Target Audience</h3>
-<ul>
-    <li>Developers</li>
-    <li>Support teams</li>
-    <li>L2/L3 Support</li>
-</ul>
 <hr />
 <h2>How to Use the Interface</h2>
-<p><strong>Theme:</strong> Usage and Testing</p>
 <h3>Content</h3>
 <ul>
     <li>Typical usage scenarios: A Jira issue is created and needs to be tracked as a ServiceNow Incident.</li>
     <li>Step-by-step instructions: 1. Ensure Jira webhook is configured to point to the ServiceNow endpoint. 2. Create a Jira issue. 3. Verify a new Incident appears in ServiceNow with the Jira key populated.</li>
     <li>Expected results: A new Incident is created in ServiceNow with u_jira_key set to the Jira issue key.</li>
 </ul>
-<h3>Target Audience</h3>
-<ul>
-    <li>End users</li>
-    <li>Support teams</li>
-</ul>
 <hr />
 <h2>Testing Guide</h2>
-<p><strong>Theme:</strong> Usage and Testing</p>
 <h3>Content</h3>
 <ul>
     <li>Test scenarios: Validate end-to-end flow of Jira issue creation to ServiceNow Incident creation.</li>
@@ -109,15 +79,8 @@
     <li>Expected results: Incident created successfully with correct Jira key mapping.</li>
     <li>Where to check logs: ServiceNow System Logs (syslog) for inbound API errors.</li>
 </ul>
-<h3>Target Audience</h3>
-<ul>
-    <li>Developers</li>
-    <li>Testers</li>
-    <li>Support teams</li>
-</ul>
 <hr />
 <h2>Known Issues</h2>
-<p><strong>Theme:</strong> Support and Troubleshooting</p>
 <h3>Content</h3>
 <ul>
     <li>Symptoms: Incident not created or u_jira_key is empty.</li>
@@ -126,13 +89,8 @@
     <li>Resolution / Workaround: Re-authenticate Jira webhook or fix Script Include parsing logic.</li>
     <li>Prevention: Regularly test the webhook endpoint and monitor credential expiry.</li>
 </ul>
-<h3>Target Audience</h3>
-<ul>
-    <li>Support teams</li>
-</ul>
 <hr />
 <h2>Investigation Steps</h2>
-<p><strong>Theme:</strong> Support and Troubleshooting</p>
 <h3>Content</h3>
 <ul>
     <li>Quick, structured troubleshooting guide
@@ -144,10 +102,6 @@
             <li>Escalation guide: Escalate to integration developers if credentials are valid but API returns 500 errors.</li>
         </ul>
     </li>
-</ul>
-<h3>Target Audience</h3>
-<ul>
-    <li>L1/L2 Support</li>
 </ul>
 ```
 
@@ -175,7 +129,6 @@
 ```html
 <h1>Outbound Jira REST API Integration</h1>
 <h2>Overview / Summary</h2>
-<p><strong>Theme:</strong> Overview</p>
 <h3>Purpose / Background / Overview</h3>
 <p>This document outlines the outbound integration between ServiceNow and Jira Cloud. When a ServiceNow Incident is escalated, the integration automatically pushes the incident details to Jira to create a linked Bug, ensuring seamless tracking across platforms.</p>
 <h3>Content</h3>
@@ -188,20 +141,11 @@
         <ul>
             <li>Short description: Jira Webhook Inbound Integration</li>
             <li>Article number: KBXXXXXXX</li>
-            <li>Target audience: Developers</li>
         </ul>
     </li>
 </ul>
-<h3>Target Audience</h3>
-<ul>
-    <li>Knowledge users</li>
-    <li>Process Owners</li>
-    <li>Support teams</li>
-    <li>New team members</li>
-</ul>
 <hr />
 <h2>Inbound Technical Implementation</h2>
-<p><strong>Theme:</strong> Technical Implementation</p>
 <h3>Content</h3>
 <ul>
     <li>Script Includes and their functions: N/A (This is an outbound integration; no inbound scripted REST API is defined for this specific flow).</li>
@@ -211,15 +155,8 @@
     <li>Flow and its steps: N/A</li>
     <li>Validation steps: N/A</li>
 </ul>
-<h3>Target Audience</h3>
-<ul>
-    <li>Developers</li>
-    <li>Support teams</li>
-    <li>L2/L3 Support</li>
-</ul>
 <hr />
 <h2>Outbound Technical Implementation</h2>
-<p><strong>Theme:</strong> Technical Implementation</p>
 <h3>Content</h3>
 <ul>
     <li>Technical components used: JiraIntegrationUtils Script Include (builds JSON payload, sends REST request, parses response).</li>
@@ -227,29 +164,16 @@
     <li>Authentication method: Basic Auth using base64-encoded email:token.</li>
     <li>Validation steps: 1. Escalate test incident → 2. Verify payload sent to https://yourcompany.atlassian.net/rest/api/2/issue → 3. Verify Bug created in Jira → 4. Verify u_jira_key populated on Incident.</li>
 </ul>
-<h3>Target Audience</h3>
-<ul>
-    <li>Developers</li>
-    <li>Support teams</li>
-    <li>L2/L3 Support</li>
-</ul>
 <hr />
 <h2>How to Use the Interface</h2>
-<p><strong>Theme:</strong> Usage and Testing</p>
 <h3>Content</h3>
 <ul>
     <li>Typical usage scenarios: Escalating an Incident to a Jira Bug.</li>
     <li>Step-by-step instructions: 1. Open the Incident record. 2. Change the state to 'Escalated' (state=6). 3. Save the record. The integration automatically sends the payload to Jira.</li>
     <li>Expected results: A Bug is created in Jira, and the Jira Issue Key is written to the Incident's u_jira_key field.</li>
 </ul>
-<h3>Target Audience</h3>
-<ul>
-    <li>End users</li>
-    <li>Support teams</li>
-</ul>
 <hr />
 <h2>Testing Guide</h2>
-<p><strong>Theme:</strong> Usage and Testing</p>
 <h3>Content</h3>
 <ul>
     <li>Test scenarios: Validate end-to-end flow of incident escalation to Jira Bug creation.</li>
@@ -258,15 +182,8 @@
     <li>Expected results: Jira Bug created successfully, and Jira key written back to the Incident.</li>
     <li>Where to check logs: ServiceNow System Logs (syslog) for RESTMessageV2 errors, Jira instance for Bug creation.</li>
 </ul>
-<h3>Target Audience</h3>
-<ul>
-    <li>Developers</li>
-    <li>Testers</li>
-    <li>Support teams</li>
-</ul>
 <hr />
 <h2>Known Issues</h2>
-<p><strong>Theme:</strong> Support and Troubleshooting</p>
 <h3>Content</h3>
 <ul>
     <li>Symptoms: Jira Key not updated on Incident, or Bug not created in Jira.</li>
@@ -275,13 +192,8 @@
     <li>Resolution / Workaround: Re-authenticate Jira API token or fix Script Include payload structure.</li>
     <li>Prevention: Regularly test the REST endpoint and monitor Jira API token expiry.</li>
 </ul>
-<h3>Target Audience</h3>
-<ul>
-    <li>Support teams</li>
-</ul>
 <hr />
 <h2>Investigation Steps</h2>
-<p><strong>Theme:</strong> Support and Troubleshooting</p>
 <h3>Content</h3>
 <ul>
     <li>Quick, structured troubleshooting guide
@@ -293,10 +205,6 @@
             <li>Escalation guide: Escalate to integration developers if credentials are valid but REST call fails.</li>
         </ul>
     </li>
-</ul>
-<h3>Target Audience</h3>
-<ul>
-    <li>L1/L2 Support</li>
 </ul>
 ```
 
@@ -324,7 +232,6 @@
 ```html
 <h1>LDAP Authentication Retry Fix for Service Portal</h1>
 <h2>Overview / Summary</h2>
-<p><strong>Theme:</strong> Overview</p>
 <h3>Purpose / Background / Overview</h3>
 <p>This document describes the fix for intermittent LDAP authentication failures on the Service Portal. Users experienced 'User Not Found' errors during SSO login due to LDAP query timeouts under heavy load. A retry mechanism was added to the LDAP connection logic to improve reliability.</p>
 <h3>Content</h3>
@@ -337,20 +244,11 @@
         <ul>
             <li>Short description: SSO Configuration Guide</li>
             <li>Article number: KBXXXXXXX</li>
-            <li>Target audience: Administrators</li>
         </ul>
     </li>
 </ul>
-<h3>Target Audience</h3>
-<ul>
-    <li>Knowledge users</li>
-    <li>Process Owners</li>
-    <li>Support teams</li>
-    <li>New team members</li>
-</ul>
 <hr />
 <h2>Inbound Technical Implementation</h2>
-<p><strong>Theme:</strong> Technical Implementation</p>
 <h3>Content</h3>
 <ul>
     <li>Script Includes and their functions: LDAP_Retry_Authenticator (handles LDAP connection retries, error handling, and logging).</li>
@@ -360,15 +258,8 @@
     <li>Flow and its steps: 1. User attempts SSO login → 2. LDAP query initiated → 3. If timeout, retry up to 3 times with 500ms delay → 4. If still fails, show friendly error message → 5. If succeeds, user logged in.</li>
     <li>Validation steps: 1. Test SSO login with valid credentials → 2. Verify no 'User Not Found' errors occur. 3. Check System Logs for retry attempts.</li>
 </ul>
-<h3>Target Audience</h3>
-<ul>
-    <li>Developers</li>
-    <li>Support teams</li>
-    <li>L2/L3 Support</li>
-</ul>
 <hr />
 <h2>Outbound Technical Implementation</h2>
-<p><strong>Theme:</strong> Technical Implementation</p>
 <h3>Content</h3>
 <ul>
     <li>Technical components used: N/A (This is an inbound authentication module; no outbound ServiceNow message is sent in this flow).</li>
@@ -376,29 +267,16 @@
     <li>Authentication method: N/A</li>
     <li>Validation steps: N/A</li>
 </ul>
-<h3>Target Audience</h3>
-<ul>
-    <li>Developers</li>
-    <li>Support teams</li>
-    <li>L2/L3 Support</li>
-</ul>
 <hr />
 <h2>How to Use the Interface</h2>
-<p><strong>Theme:</strong> Usage and Testing</p>
 <h3>Content</h3>
 <ul>
     <li>Typical usage scenarios: Users logging into the Service Portal via SSO.</li>
     <li>Step-by-step instructions: 1. Open the Service Portal login page. 2. Enter SSO credentials. 3. If LDAP server is slow, the system automatically retries. 4. If retries succeed, user is logged in. If not, a friendly error message is shown.</li>
     <li>Expected results: Successful login without 'User Not Found' errors, even under heavy load.</li>
 </ul>
-<h3>Target Audience</h3>
-<ul>
-    <li>End users</li>
-    <li>Support teams</li>
-</ul>
 <hr />
 <h2>Testing Guide</h2>
-<p><strong>Theme:</strong> Usage and Testing</p>
 <h3>Content</h3>
 <ul>
     <li>Test scenarios: Validate LDAP retry logic under simulated heavy load.</li>
@@ -407,15 +285,8 @@
     <li>Expected results: No 'User Not Found' errors occur, and users are logged in successfully after retries.</li>
     <li>Where to check logs: ServiceNow System Logs (syslog) for LDAP_Retry_Authenticator messages.</li>
 </ul>
-<h3>Target Audience</h3>
-<ul>
-    <li>Developers</li>
-    <li>Testers</li>
-    <li>Support teams</li>
-</ul>
 <hr />
 <h2>Known Issues</h2>
-<p><strong>Theme:</strong> Support and Troubleshooting</p>
 <h3>Content</h3>
 <ul>
     <li>Symptoms: Users still see 'User Not Found' errors despite the retry logic.</li>
@@ -424,13 +295,8 @@
     <li>Resolution / Workaround: Restart LDAP server or fix bind credentials. If network firewall blocks LDAP, add an exception.</li>
     <li>Prevention: Regularly monitor LDAP server health and credential expiry.</li>
 </ul>
-<h3>Target Audience</h3>
-<ul>
-    <li>Support teams</li>
-</ul>
 <hr />
 <h2>Investigation Steps</h2>
-<p><strong>Theme:</strong> Support and Troubleshooting</p>
 <h3>Content</h3>
 <ul>
     <li>Quick, structured troubleshooting guide
@@ -442,10 +308,6 @@
             <li>Escalation guide: Escalate to infrastructure team if LDAP server is down or network issues persist.</li>
         </ul>
     </li>
-</ul>
-<h3>Target Audience</h3>
-<ul>
-    <li>L1/L2 Support</li>
 </ul>
 ```
 
@@ -473,7 +335,6 @@
 ```html
 <h1>SAP IDOC Status 51 Error Handling for Vendor Invoices</h1>
 <h2>Overview / Summary</h2>
-<p><strong>Theme:</strong> Overview</p>
 <h3>Purpose / Background / Overview</h3>
 <p>This document describes the fix for SAP IDOC status 51 failures during Vendor Invoice (MIR4) creation. The middleware (PI/PO) now sends a callback to ServiceNow with the exact IDOC error message, allowing the finance team to identify and resolve tax code mismatches or missing purchase order references automatically.</p>
 <h3>Content</h3>
@@ -486,20 +347,11 @@
         <ul>
             <li>Short description: SAP Vendor Invoice Processing Guide</li>
             <li>Article number: KBXXXXXXX</li>
-            <li>Target audience: Finance Teams</li>
         </ul>
     </li>
 </ul>
-<h3>Target Audience</h3>
-<ul>
-    <li>Knowledge users</li>
-    <li>Process Owners</li>
-    <li>Support teams</li>
-    <li>New team members</li>
-</ul>
 <hr />
 <h2>Inbound Technical Implementation</h2>
-<p><strong>Theme:</strong> Technical Implementation</p>
 <h3>Content</h3>
 <ul>
     <li>Script Includes and their functions: N/A (This is an outbound integration; no inbound scripted REST API is defined for this specific flow).</li>
@@ -509,15 +361,8 @@
     <li>Flow and its steps: N/A</li>
     <li>Validation steps: N/A</li>
 </ul>
-<h3>Target Audience</h3>
-<ul>
-    <li>Developers</li>
-    <li>Support teams</li>
-    <li>L2/L3 Support</li>
-</ul>
 <hr />
 <h2>Outbound Technical Implementation</h2>
-<p><strong>Theme:</strong> Technical Implementation</p>
 <h3>Content</h3>
 <ul>
     <li>Technical components used: SAP PI/PO (sends REST Outbound message), ServiceNow Scripted REST API (/api/x_sap/invoice/idoc_status), ServiceNow Business Rule on 'u_invoice_tracker' table, Notification engine (sysevent).</li>
@@ -525,29 +370,16 @@
     <li>Authentication method: N/A (Internal system-to-system communication via REST API).</li>
     <li>Validation steps: 1. Simulate an IDOC status 51 error in SAP → 2. Verify callback is sent to ServiceNow → 3. Verify Incident/Invoice Status is updated with error reason → 4. Verify notification is sent to SAP_Finance_Team.</li>
 </ul>
-<h3>Target Audience</h3>
-<ul>
-    <li>Developers</li>
-    <li>Support teams</li>
-    <li>L2/L3 Support</li>
-</ul>
 <hr />
 <h2>How to Use the Interface</h2>
-<p><strong>Theme:</strong> Usage and Testing</p>
 <h3>Content</h3>
 <ul>
     <li>Typical usage scenarios: A vendor invoice fails to post in SAP due to a tax code mismatch, and the finance team needs to be notified to fix it.</li>
     <li>Step-by-step instructions: 1. When an IDOC status 51 error occurs, the middleware sends a callback to ServiceNow. 2. The Incident/Invoice Status record is automatically updated with the error reason. 3. A notification is sent to SAP_Finance_Team. 4. The finance team reviews the error and fixes the issue in SAP. 5. The 'Retry' UI action is used to re-trigger the IDOC.</li>
     <li>Expected results: Finance team is notified of the error, and the issue is resolved without manual checking of middleware logs.</li>
 </ul>
-<h3>Target Audience</h3>
-<ul>
-    <li>End users (Finance Teams)</li>
-    <li>Support teams</li>
-</ul>
 <hr />
 <h2>Testing Guide</h2>
-<p><strong>Theme:</strong> Usage and Testing</p>
 <h3>Content</h3>
 <ul>
     <li>Test scenarios: Validate end-to-end flow of IDOC status 51 error handling and notification.</li>
@@ -556,15 +388,8 @@
     <li>Expected results: Incident/Invoice Status updated with error reason, notification sent to SAP_Finance_Team, and 'Retry' UI action available.</li>
     <li>Where to check logs: ServiceNow System Logs (syslog) for Scripted REST API errors, SAP PI/PO logs for callback errors.</li>
 </ul>
-<h3>Target Audience</h3>
-<ul>
-    <li>Developers</li>
-    <li>Testers</li>
-    <li>Support teams</li>
-</ul>
 <hr />
 <h2>Known Issues</h2>
-<p><strong>Theme:</strong> Support and Troubleshooting</p>
 <h3>Content</h3>
 <ul>
     <li>Symptoms: Incident/Invoice Status not updated with error reason, or notification not sent to SAP_Finance_Team.</li>
@@ -573,13 +398,8 @@
     <li>Resolution / Workaround: Fix Scripted REST API parsing logic, reactivate Business Rule, or reconfigure notification engine.</li>
     <li>Prevention: Regularly test the callback endpoint and monitor notification delivery.</li>
 </ul>
-<h3>Target Audience</h3>
-<ul>
-    <li>Support teams</li>
-</ul>
 <hr />
 <h2>Investigation Steps</h2>
-<p><strong>Theme:</strong> Support and Troubleshooting</p>
 <h3>Content</h3>
 <ul>
     <li>Quick, structured troubleshooting guide
@@ -591,10 +411,6 @@
             <li>Escalation guide: Escalate to integration developers if callback is not reaching ServiceNow or Scripted REST API returns errors.</li>
         </ul>
     </li>
-</ul>
-<h3>Target Audience</h3>
-<ul>
-    <li>L1/L2 Support</li>
 </ul>
 ```
 
@@ -622,7 +438,6 @@
 ```html
 <h1>SolMan Change Task State Synchronization Fix</h1>
 <h2>Overview / Summary</h2>
-<p><strong>Theme:</strong> Overview</p>
 <h3>Purpose / Background / Overview</h3>
 <p>This document describes the fix for data inconsistencies between ServiceNow Change Tasks (CTASKs) and SolMan Change Documents (CDs). CTASKs were not automatically closing when their corresponding SolMan CDs reached terminal states ('Confirmed' or 'Withdrawn'). A Business Rule and a Fix Script were implemented to synchronize the states and close orphaned CTASKs.</p>
 <h3>Content</h3>
@@ -635,20 +450,11 @@
         <ul>
             <li>Short description: ServiceNow Change Management Guide</li>
             <li>Article number: KBXXXXXXX</li>
-            <li>Target audience: Change Managers</li>
         </ul>
     </li>
 </ul>
-<h3>Target Audience</h3>
-<ul>
-    <li>Knowledge users</li>
-    <li>Process Owners</li>
-    <li>Support teams</li>
-    <li>New team members</li>
-</ul>
 <hr />
 <h2>Inbound Technical Implementation</h2>
-<p><strong>Theme:</strong> Technical Implementation</p>
 <h3>Content</h3>
 <ul>
     <li>Script Includes and their functions: N/A (This is an outbound integration; no inbound scripted REST API is defined for this specific flow).</li>
@@ -658,15 +464,8 @@
     <li>Flow and its steps: N/A</li>
     <li>Validation steps: N/A</li>
 </ul>
-<h3>Target Audience</h3>
-<ul>
-    <li>Developers</li>
-    <li>Support teams</li>
-    <li>L2/L3 Support</li>
-</ul>
 <hr />
 <h2>Outbound Technical Implementation</h2>
-<p><strong>Theme:</strong> Technical Implementation</p>
 <h3>Content</h3>
 <ul>
     <li>Technical components used: Business Rule 'SolMan: Sync CD State to CTASK Closure Readiness' on the change_task table, Fix Script 'SolMan: Fix CD State Inconsistencies' as a one-time Scheduled Script Execution.</li>
@@ -674,29 +473,16 @@
     <li>Authentication method: N/A (Internal system-to-system communication via database).</li>
     <li>Validation steps: 1. In a non-production environment, execute the Fix Script. 2. Confirm the Fix Script queries all CTASKs where u_cd_state IN ('Confirmed', 'Withdrawn') AND state != 3. 3. Verify the parent CHG has no active CTASKs with non-terminal CD states. 4. Review the log output to validate the count and correctness of updated records.</li>
 </ul>
-<h3>Target Audience</h3>
-<ul>
-    <li>Developers</li>
-    <li>Support teams</li>
-    <li>L2/L3 Support</li>
-</ul>
 <hr />
 <h2>How to Use the Interface</h2>
-<p><strong>Theme:</strong> Usage and Testing</p>
 <h3>Content</h3>
 <ul>
     <li>Typical usage scenarios: A Change Document (CD) in SolMan reaches a terminal state ('Confirmed' or 'Withdrawn'), and the corresponding Change Task (CTASK) in ServiceNow needs to be closed automatically.</li>
     <li>Step-by-step instructions: 1. When a SolMan CD state changes to 'Confirmed' or 'Withdrawn', the Business Rule triggers automatically. 2. The script queries all sibling CTASKs linked to the same parent CHG. 3. If all sibling CTASKs have terminal CD states, they are auto-closed (state=3). 4. If orphaned CTASKs exist from before the fix, the Fix Script reconciles them.</li>
     <li>Expected results: CTASKs are automatically closed when their corresponding SolMan CDs reach terminal states, and orphaned CTASKs are reconciled by the Fix Script.</li>
 </ul>
-<h3>Target Audience</h3>
-<ul>
-    <li>End users (Change Managers, Change Coordinators)</li>
-    <li>Support teams</li>
-</ul>
 <hr />
 <h2>Testing Guide</h2>
-<p><strong>Theme:</strong> Usage and Testing</p>
 <h3>Content</h3>
 <ul>
     <li>Test scenarios: Validate end-to-end flow of SolMan CD state change to CTASK closure, and Fix Script reconciliation of historical orphaned CTASKs.</li>
@@ -705,15 +491,8 @@
     <li>Expected results: CTASKs are automatically closed when their corresponding SolMan CDs reach terminal states, and orphaned CTASKs are reconciled by the Fix Script.</li>
     <li>Where to check logs: ServiceNow System Logs (syslog) for Business Rule and Fix Script execution logs.</li>
 </ul>
-<h3>Target Audience</h3>
-<ul>
-    <li>Developers</li>
-    <li>Testers</li>
-    <li>Support teams</li>
-</ul>
 <hr />
 <h2>Known Issues</h2>
-<p><strong>Theme:</strong> Support and Troubleshooting</p>
 <h3>Content</h3>
 <ul>
     <li>Symptoms: CTASKs are not closing when their corresponding SolMan CDs reach terminal states, or orphaned CTASKs are not being reconciled by the Fix Script.</li>
@@ -722,13 +501,8 @@
     <li>Resolution / Workaround: Reactivate Business Rule, fix Business Rule logic, or fix Fix Script logic. If parent CHG has active CTASKs with non-terminal CD states, close those CTASKs first.</li>
     <li>Prevention: Regularly monitor Business Rule and Fix Script execution logs, and ensure SolMan CD states are correctly synchronized with CTASK states.</li>
 </ul>
-<h3>Target Audience</h3>
-<ul>
-    <li>Support teams</li>
-</ul>
 <hr />
 <h2>Investigation Steps</h2>
-<p><strong>Theme:</strong> Support and Troubleshooting</p>
 <h3>Content</h3>
 <ul>
     <li>Quick, structured troubleshooting guide
@@ -740,10 +514,6 @@
             <li>Escalation guide: Escalate to integration developers if Business Rule or Fix Script logic is incorrect, or if parent CHG has active CTASKs with non-terminal CD states that need to be closed manually.</li>
         </ul>
     </li>
-</ul>
-<h3>Target Audience</h3>
-<ul>
-    <li>L1/L2 Support</li>
 </ul>
 ```
 
