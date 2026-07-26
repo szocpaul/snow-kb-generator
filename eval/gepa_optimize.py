@@ -2,6 +2,9 @@
 
 Lefuttatja a GEPA optimalizációt a Kimi K3 reflection modell segítségével, és
 elmenti az optimalizált programot az artifacts/program.json fájlba.
+
+CLI használat (quickstart Scenario 3-4):
+    python -m eval.gepa_optimize --auto light
 """
 
 from __future__ import annotations
@@ -15,7 +18,10 @@ from eval.metric import rich_metric
 
 
 def run_gepa_optimization(program, trainset, valset):
-    """Lefuttatja a GEPA optimalizációt a Kimi K3 reflection modell segítségével.
+    """Létrehozza a GEPA optimizert a Kimi K3 reflection modell segítségével.
+
+    A compile-t NEM futtatja — azt külön kell meghívni (ld. compile_with_gepa),
+    mert az valódi dspy.Module-t és LM hívásokat igényel.
 
     Args:
         program: A jelenlegi (nem optimalizált) dspy.Module (StoryToKBArticle).
@@ -23,13 +29,13 @@ def run_gepa_optimization(program, trainset, valset):
         valset: A valset (2 dspy.Example objektum).
 
     Returns:
-        (optimizer, optimized_program) tuple — a GEPA optimizer és az optimalizált program.
+        A konfigurált dspy.GEPA optimizer példány.
     """
     # LM konfigurálása (globálisan, ahogy a skill szerint)
     configure_lm()
 
     # GEPA optimizer létrehozása a Kimi K3 reflection modell segítségével
-    optimizer = dspy.GEPA(
+    return dspy.GEPA(
         metric=rich_metric,
         auto="light",
         reflection_lm=_create_reflection_lm(),
@@ -39,14 +45,24 @@ def run_gepa_optimization(program, trainset, valset):
         seed=0,
     )
 
-    # GEPA compile lefuttatása a trainset és valset példákon
-    optimized_program = optimizer.compile(
+
+def compile_with_gepa(optimizer, program, trainset, valset):
+    """Lefuttatja a GEPA compile-t és visszaadja az optimalizált programot.
+
+    Args:
+        optimizer: A run_gepa_optimization() által visszaadott dspy.GEPA példány.
+        program: A nem optimalizált dspy.Module (StoryToKBArticle).
+        trainset: A trainset (dspy.Example objektumok).
+        valset: A valset (dspy.Example objektumok).
+
+    Returns:
+        Az optimalizált dspy.Module (a GEPA compile eredménye).
+    """
+    return optimizer.compile(
         student=program,
         trainset=trainset,
         valset=valset,
     )
-
-    return optimizer, optimized_program
 
 
 def save_optimized_program(optimized_program, output_path: str | Path = "artifacts/program.json"):
@@ -133,3 +149,66 @@ def configure_lm():
         max_tokens=8000,
     )
     dspy.configure(lm=lm, track_usage=True)
+
+
+# ---------------------------------------------------------------------------
+# CLI belépési pont (python -m eval.gepa_optimize --auto light)
+# ---------------------------------------------------------------------------
+
+
+def main(argv: list[str] | None = None) -> None:
+    """T012-T014: GEPA compile + javaslatok kinyerése + optimalizált program mentése."""
+    import argparse
+
+    parser = argparse.ArgumentParser(description="GEPA optimalizáció a StoryToKBArticle programhoz.")
+    parser.add_argument("--auto", default="light", choices=["light", "medium", "heavy"],
+                        help="GEPA budget preset (alapértelmezett: light).")
+    parser.add_argument("--dataset", default="data/examples/gold_dataset.md",
+                        help="A gold dataset markdown fájl útvonala.")
+    parser.add_argument("--output", default="artifacts/program.json",
+                        help="Az optimalizált program kimeneti JSON fájlja.")
+    args = parser.parse_args(argv)
+
+    from eval.baseline import run_baseline
+    from eval.dataset import load_gold_dataset
+    from snow_kb.program import StoryToKBArticle
+
+    # 1. Dataset betöltése
+    trainset, valset = load_gold_dataset(args.dataset)
+    print(f"Dataset: {len(trainset)} train / {len(valset)} val példa")
+
+    # 2. Baseline mérés (ha még nincs runs/baseline.json)
+    baseline_path = Path("runs/baseline.json")
+    if baseline_path.exists():
+        baseline_score = json.loads(baseline_path.read_text(encoding="utf-8"))["average_score"]
+        print(f"Baseline (meglévő runs/baseline.json): {baseline_score:.3f}")
+    else:
+        configure_lm()
+        program = StoryToKBArticle()
+        baseline = run_baseline(program, valset)
+        baseline_score = baseline.score
+        print(f"Baseline (frissen mérve): {baseline_score:.3f}")
+
+    # 3. GEPA optimizer létrehozása + compile (T012)
+    program = StoryToKBArticle()
+    optimizer = run_gepa_optimization(program, trainset, valset)
+    print("GEPA compile fut... (auto=%s)" % args.auto)
+    optimized_program = compile_with_gepa(optimizer, program, trainset, valset)
+
+    # 4. Alkalmazott reflection javaslatok kinyerése (T013)
+    suggestions = extract_applied_suggestions(optimized_program)
+    print("\nAlkalmazott javaslatok:")
+    for s in suggestions:
+        print(f"  - {s}")
+
+    # 5. Optimalizált program kiértékelése a valset-en
+    optimized_eval = run_baseline(optimized_program, valset, output_path="runs/optimized.json")
+    print(f"\nOptimized score: {optimized_eval.score:.3f} (baseline: {baseline_score:.3f})")
+
+    # 6. Mentés (T014)
+    save_optimized_program(optimized_program, args.output)
+    print(f"Optimalizált program elmentve: {args.output}")
+
+
+if __name__ == "__main__":
+    main()

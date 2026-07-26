@@ -24,7 +24,7 @@ from pydantic import BaseModel, Field
 
 from snow_kb.config import ConfigError, Settings, load_settings
 from snow_kb.errors import MissingAssignmentGroupError
-from snow_kb.pipeline import DuplicateKBError, generate_kb_article
+from snow_kb.pipeline import DuplicateKBError, _load_program, generate_kb_article
 from snow_kb.servicenow_client import ServiceNowClient, ServiceNowError
 
 logger = logging.getLogger(__name__)
@@ -73,6 +73,24 @@ app = FastAPI(
     description="DSPy pipeline: ServiceNow Story → Knowledge Base Article",
     version="0.1.0",
 )
+
+# A GEPA-val optimalizált program útvonala (ha létezik, startup-kor betöltjük)
+OPTIMIZED_PROGRAM_PATH = "artifacts/program.json"
+
+# Startup-kor betöltött (optimalizált) program — None esetén a pipeline
+# az alap StoryToKBArticle()-t használja (fallback).
+_program = None
+
+
+@app.on_event("startup")
+def load_optimized_program() -> None:
+    """Betölti a GEPA-val optimalizált programot, ha létezik az artifacts/program.json."""
+    global _program
+    try:
+        _program = _load_program(OPTIMIZED_PROGRAM_PATH)
+    except Exception as exc:
+        logger.warning("Optimalizált program betöltése sikertelen: %s", exc)
+        _program = None
 
 
 def _get_settings() -> Settings:
@@ -128,6 +146,7 @@ def generate_kb(
             story_identifier=request.story_id,
             client=client,
             settings=settings,
+            program=_program,
             push=request.push,
             force_update=request.force_update,
         )

@@ -193,12 +193,38 @@ def configure_lm(settings: Settings) -> None:
 # Fő orchestrátor
 # ---------------------------------------------------------------------------
 
+def _load_program(program_path: str | None = None) -> StoryToKBArticle:
+    """Betölti a (GEPA-val optimalizált) programot, ha létezik a JSON fájl.
+
+    Fallback: ha nincs program_path, vagy a fájl hiányzik/hibás, az alap
+    StoryToKBArticle()-t adja vissza.
+    """
+    program = StoryToKBArticle()
+    if program_path:
+        from pathlib import Path
+
+        path = Path(program_path)
+        if path.exists():
+            try:
+                program.load(str(path))
+                logger.info("Optimalizált program betöltve: %s", path)
+            except Exception as exc:
+                logger.warning(
+                    "Optimalizált program betöltése sikertelen (%s), alap programot használunk.",
+                    exc,
+                )
+        else:
+            logger.info("Nincs optimalizált program (%s), alap programot használunk.", path)
+    return program
+
+
 def generate_kb_article(
     story_identifier: str,
     client: ServiceNowClientProtocol,
     settings: Settings | None = None,
     *,
     program: StoryToKBArticle | None = None,
+    program_path: str | None = None,
     push: bool = True,
     force_update: bool = False,
 ) -> KBArticle:
@@ -210,6 +236,9 @@ def generate_kb_article(
         settings: ha None, akkor load_settings() segítségével tölti be.
         program: ha None, egy új StoryToKBArticle()-t hoz létre. Tesztelésnél
             előre konfigurált/mock programot is át lehet adni.
+        program_path: ha megadjuk (és a program None), az optimalizált programot
+            tölti be ebből a JSON fájlból (GEPA export, ld. artifacts/program.json).
+            Ha a fájl nem létezik vagy hibás, az alap StoryToKBArticle()-re esik vissza.
         push: ha True, a cikket visszaírja a ServiceNow KB-be a client-tel.
             dry_run módban ez automatikusan False lesz.
         force_update: ha True, és már létezik KB cikk a Story-hoz, a pipeline
@@ -265,7 +294,7 @@ def generate_kb_article(
         # 5. LM konfigurálása + program futtatása
         configure_lm(settings)
         if program is None:
-            program = StoryToKBArticle()
+            program = _load_program(program_path)
 
         pred = program(
             story_text=story_text,
