@@ -314,3 +314,15 @@ The fictional KB article numbers of the gold dataset (KB0012345-KB0012349) showe
 
 ### Lesson
 Three lines of defence were built against hallucination: (1) clean training data, (2) metric penalty (GEPA feedback), (3) production guardrail. The correct KB endpoint: `openai/k3` @ `https://api.kimi.com/coding/v1` (OAuth).
+
+## 19. Spec 005: Real Related KB Articles COMPLETED (2026-07-26)
+
+### Problem
+The "Table of related KB articles" section (a mandatory element of the team template) contained hallucinated short descriptions with placeholder numbers — with no real data source.
+
+### Solution (specs/005-real-related-kb-articles)
+- **T001:** `ServiceNowClient.search_kb_articles(query, limit)` — text search in the published kb_knowledge articles.
+- **T002-T003:** Before generation the pipeline searches KB articles for the Story short_description; the results are passed to the new program input as `related_articles_context` (empty → "N/A" instruction in the signature).
+- **T004-T005:** Guardrail + metric extended: the search results are "known" references (0 false positives).
+- **T006:** GEPA re-run with the new signature: baseline 0.300 → **optimized 0.962**.
+- **T007:** 221/221 tests green; production STRY0010010 validation: the dev instance has no thematic article → the section is correctly **"N/A"** (the "Spam" search proves that real numbers would be inserted if there were a match).
