@@ -24,7 +24,11 @@ def rich_metric(gold, pred, trace=None, pred_name=None, pred_trace=None):
         dspy.Prediction(score=0.0..1.0, feedback=str) — a GEPA contract.
     """
     expected_html = gold.html or ""
-    actual_html = pred.html or ""
+    # A program Prediction(article=KBArticle)-t ad vissza; a tesztek pred.html-t.
+    # Mindkettőt támogatjuk (az article.html az elsődleges).
+    actual_html = getattr(pred, "html", None) or ""
+    if not actual_html and getattr(pred, "article", None) is not None:
+        actual_html = getattr(pred.article, "html", "") or ""
 
     # 1. Structure match (HTML fejlécek egyezése)
     expected_headings = _extract_headings(expected_html)

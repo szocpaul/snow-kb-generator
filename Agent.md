@@ -249,3 +249,22 @@ A ServiceNow UI Action script támogatja a felugró ablakos (confirm) megerősí
 
 ### Technikai Probléma (T011)
 A `run_gepa_optimization()` függvény a `optimizer.compile()` hívást végzi, ami a `optimized_program`-ot adja vissza, nem az `optimizer`-t. Ezért a tesztek nem tudják ellenőrizni az `optimizer` attribútumait. A megoldás: a `run_gepa_optimization()` függvényt úgy kell módosítani, hogy az `optimizer`-t is visszaadja, nem csak az `optimized_program`-ot.
+
+## 16. GEPA optimalizáció BEFEJEZVE (utolsó frissítés: 2026-07-26)
+
+### Eredmények (T011-T018)
+- **T011:** GEPA optimizer javítva — `run_gepa_optimization()` csak az optimizert adja vissza; a compile a `compile_with_gepa()`-be került. Tesztek a DSPy 3.2.x API-hoz igazítva (`metric_fn`, `lm.kwargs["temperature"]`).
+- **T012-T013:** GEPA compile lefutva (`python -m eval.gepa_optimize --auto light`, ~42 perc, 589 iteráció). **Baseline: 0.100 → Optimized: 0.600** (6x javulás a valset-en).
+- **T014:** Optimalizált program mentve: `artifacts/program.json` (betöltés verifikálva).
+- **T015:** `server.py` startup-kor betölti az optimalizált programot (fallback: alap StoryToKBArticle).
+- **T016:** `pipeline.py` `program_path` paraméter + `_load_program()` helper.
+- **T017:** Teljes tesztcsomag zöld (208/208).
+
+### Elhárított buktatók
+- A metric `pred.html`-t várt, de a program `Prediction(article=KBArticle)`-ot ad vissza → a metric mostantól mindkettőt támogatja.
+- A Kimi K3 reflection LM rosszul volt konfigurálva: a helyes beállítás `openai/k3` + `https://api.kimi.com/coding/v1` + OAuth `access` token (NEM `kimi-k3` OpenRouteren).
+- A `gepa_logs/` checkpoint a hibás (0-s score-os) futást őrizte → tiszta újrafuttatás kellett.
+- A Kimi OAuth token a futás vége felé lejárt (~589. iteráció), de a run így is érvényes eredménnyel zárult.
+
+### Hátralévő (T019)
+- Éles end-to-end validáció: szerver újraindítás az optimalizált programmal + valós Story generálás a ServiceNow-ból.

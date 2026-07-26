@@ -115,12 +115,13 @@ def _create_reflection_lm():
     pi_auth_path = Path.home() / ".pi" / "agent" / "auth.json"
     auth_data = json.loads(pi_auth_path.read_text(encoding="utf-8"))
 
-    # A Kimi K3 endpoint (Pi Agent Kimi előfizetés)
-    api_key = auth_data.get("kimi-coding", {}).get("apiKey") or auth_data.get("zai-glm", {}).get("key") or auth_data.get("openai-codex", {}).get("access")
+    # A Kimi K3 endpoint (Pi Agent Kimi előfizetés, OAuth token, OpenAI-kompatibilis)
+    api_key = auth_data.get("kimi-coding", {}).get("access") or auth_data.get("kimi-coding", {}).get("apiKey")
 
     return dspy.LM(
-        "openai/kimi-k3",
+        "openai/k3",
         api_key=api_key,
+        api_base="https://api.kimi.com/coding/v1",
         temperature=1.0,
         max_tokens=32000,
     )
