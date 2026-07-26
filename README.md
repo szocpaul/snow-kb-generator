@@ -118,8 +118,10 @@ snow_kb_generator/
 │   ├── program.py              # StoryToKBArticle(dspy.Module)
 │   └── ...                     # config, schemas, cli
 ├── servicenow/                 # ServiceNow-ba másolandó UI Action script
-├── tests/                      # 173 pytest teszt
-├── eval/                       # GEPA metrika és dataset (fejlesztés alatt)
+├── tests/                      # 216 pytest teszt
+├── eval/                       # GEPA eval harness (dataset, rich_metric, baseline, gepa_optimize)
+├── artifacts/                  # GEPA-optimalizált program (program.json)
+├── gepa_logs/                  # GEPA checkpointek
 └── data/                       # Minta Story-k és Gold példapárok
 ```
 
@@ -128,15 +130,18 @@ snow_kb_generator/
 1. **Spec** — ✅ Kész
 2. **Program** — ✅ Kész (Signatures + Module + Update Set Code Analyzer)
 3. **Data** — ✅ Kész (Gold Dataset: 5 arany példapár a gold_dataset.md-ben)
-4. **Rich metric** — ✅ Kész (rich_metric: structure_match + content_accuracy + template_adherence)
-5. **Baseline** — ✅ Kész (baseline.json: jelenlegi program teljesítménye a valset-en)
-6. **GEPA optimalizáció** — ⏳ Folyamatban (GEPA optimizer implementálva, compile folyamatban)
-7. **Export & deploy** — ⏳ Következő lépés (optimalizált program mentése és a FastAPI szerverrel való használata)
+4. **Rich metric** — ✅ Kész (rich_metric: structure_match + content_accuracy + template_adherence + hallucination)
+5. **Baseline** — ✅ Kész (runs/baseline.json: 0.386)
+6. **GEPA optimalizáció** — ✅ Kész (Kimi K3 reflection, 0.386 → 0.962 a valset-en)
+7. **Export & deploy** — ✅ Kész (artifacts/program.json; a FastAPI szerver startup-kor betölti, fallback az alap program)
+
+**Hallucináció-védelem (spec 004):** 3 védelmi vonal — (1) megtisztított gold dataset (`KBXXXXXXX` placeholder), (2) hallucination axis a metrikában (GEPA feedback), (3) `strip_hallucinated_references()` guardrail a pipeline-ban push előtt. Éles validáció: a generált cikkek 0 hallucinált hivatkozást tartalmaznak.
 
 **SDD (Spec-Driven Development):** A project aktívan használja a `spec-kit` módszertant.
 - 1. Kész Feature: `001-kb-duplicate-prevention` (Duplikáció megakadályozása és felülírás).
 - 2. Kész Feature: `002-team-based-templates` (Csapat-specifikus KB sablonok generálása).
-- 3. Folyamatban lévő Feature: `003-gepa-kb-quality` (GEPA optimalizáció a KB cikk minőségének javítására).
+- 3. Kész Feature: `003-gepa-kb-quality` (GEPA optimalizáció a KB cikk minőségének javítására).
+- 4. Kész Feature: `004-no-hallucinated-references` (Hallucináció-mentes KB generálás: dataset sanitization + hallucination metric axis + pipeline guardrail).
 
 ## Licenc
 
