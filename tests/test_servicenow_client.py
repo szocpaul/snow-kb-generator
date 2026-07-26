@@ -454,10 +454,11 @@ class TestSearchKbArticles:
 
         assert len(hits) == 2
         assert hits[0]["number"] == "KB7654321"
-        # A query szöveges keresést és published szűrőt tartalmaz
-        sent_query = req.call_args.kwargs["params"]["sysparm_query"]
-        assert "short_descriptionLIKEjira" in sent_query
-        assert "workflow_state=published" in sent_query
+        # Két hívás történik: published szűrővel, majd fallback szűrő nélkül
+        queries = [c.kwargs["params"]["sysparm_query"] for c in req.call_args_list]
+        assert all("short_descriptionLIKEjira" in q for q in queries)
+        assert "workflow_state=published" in queries[0]
+        assert "workflow_state=published" not in queries[-1]
 
     def test_search_empty_result_returns_empty_list(self, live_settings):
         """Nincs találat → üres lista (nem hiba)."""

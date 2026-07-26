@@ -299,23 +299,61 @@ class ServiceNowClient:
         if self.dry_run or not query.strip():
             return []
 
-        url = f"{self.base_url}/kb_knowledge"
-        params = {
-            "sysparm_query": f"short_descriptionLIKE{query}^workflow_state=published",
-            "sysparm_limit": str(limit),
-            "sysparm_fields": "number,short_description,sys_id",
-        }
-        resp = self._request("GET", url, params=params)
-        body = resp.json()
+        # Kulcsszavak kinyerése: domén-szavak elől (rövidítések, mint REST;
+        # nagybetűs tulajdonnevek, mint Jira), utána hosszú tartalmi szavak.
+        # OR kapcsolattal (a teljes cím LIKE-ja szinte sosem talál).
+        import re
 
-        return [
-            {
-                "number": r.get("number", ""),
-                "short_description": r.get("short_description", ""),
-                "sys_id": r.get("sys_id", ""),
-            }
-            for r in body.get("result", [])
-        ]
+        stopwords = {"with", "from", "that", "this", "when", "then", "have", "been", "were", "into"}
+        tokens = [w for w in re.findall(r"[A-Za-z][A-Za-z0-9]{3,}", query) if w.lower() not in stopwords]
+
+        acronyms = [w for w in tokens if w.isupper()]
+        proper = [w for w in tokens[1:] if not w.isupper() and w[0].isupper() and any(c.islower() for c in w)]
+        long_words = [w for w in tokens if w not in acronyms and w not in proper and len(w) >= 6]
+        rest = [w for w in tokens if w not in acronyms and w not in proper and w not in long_words]
+        words = list(dict.fromkeys(acronyms + proper + long_words + rest))[:6]
+        if not words:
+            return []
+        keyword_query = "^OR".join(f"short_descriptionLIKE{w}" for w in words)
+
+        url = f"{self.base_url}/kb_knowledge"
+        fields = "number,short_description,sys_id"
+
+        def _run(query_str: str) -> list[dict]:
+            resp = self._request(
+                "GET",
+                url,
+                params={
+                    "sysparm_query": query_str,
+                    "sysparm_limit": str(limit),
+                    "sysparm_fields": fields,
+                },
+            )
+            return [
+                {
+                    "number": r.get("number", ""),
+                    "short_description": r.get("short_description", ""),
+                    "sys_id": r.get("sys_id", ""),
+                }
+                for r in resp.json().get("result", [])
+            ]
+
+        # Elsőként csak published cikkek; ha nincs találat (pl. dev instance,
+        # ahol a workflow_state a Table API-n nem állítható), szűrő nélkül újra.
+        # Published találatok előnyben, de a nem-published is bekerülhet
+        # (dev instance: a workflow_state a Table API-n nem állítható).
+        published = _run(f"{keyword_query}^workflow_state=published")
+        others = _run(keyword_query)
+        seen = {h["sys_id"] for h in published}
+        hits = published + [h for h in others if h["sys_id"] not in seen]
+
+        # Kliens-oldali újrarangsorolás: kulcsszó-overlap száma a címben
+        def _overlap(hit: dict) -> int:
+            title = hit["short_description"].lower()
+            return sum(1 for w in words if w.lower() in title)
+
+        hits.sort(key=_overlap, reverse=True)
+        return hits[:limit]
 
     # ------------------------------------------------------------------
     # get_update_set_changes — Update Set módosítások lekérése

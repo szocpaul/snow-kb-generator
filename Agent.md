@@ -305,3 +305,8 @@ A "Table of related KB articles" szekció (a csapat-sablon kötelező eleme) hal
 - **T004-T005:** Guardrail + metric kiterjesztve: a keresési találatok "ismert" hivatkozások (0 false positive).
 - **T006:** GEPA újrafuttatva az új signature-szel: baseline 0.300 → **optimized 0.962**.
 - **T007:** 221/221 teszt zöld; éles STRY0010010 validáció: a dev instance-on nincs tematikus cikk → a szekció helyesen **"N/A"** (a "Spam" keresés bizonyítja, hogy találat esetén valódi számok kerülnének be).
+
+### Spec 005 kiegészítés — valódi e2e bizonyíték (2026-07-26 este)
+- Teszt cikk létrehozva: **KB0010010** (Jira REST Integration Guide, a felhasználó kérésére megtartva).
+- A keresés javítva: kulcsszó-kinyerés (rövidítések/tulajdonnevek elől), OR query, published∪összes unió, kliens-oldali overlap-rangsorolás.
+- Éles STRY0010010 újragenerálás: a "Related articles" tábla **3 valódi cikket** tartalmaz (KB0010009, KB0010010, KB0010001) — mind a hármat ServiceNow API-val verifikáltuk. A spec 005 e2e bizonyítva.
