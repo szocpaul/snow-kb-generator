@@ -193,12 +193,38 @@ def configure_lm(settings: Settings) -> None:
 # Main orchestrator
 # ---------------------------------------------------------------------------
 
+def _load_program(program_path: str | None = None) -> StoryToKBArticle:
+    """Loads the (GEPA-optimized) program, if the JSON file exists.
+
+    Fallback: if there is no program_path, or the file is missing/broken, the basic
+    returns a StoryToKBArticle().
+    """
+    program = StoryToKBArticle()
+    if program_path:
+        from pathlib import Path
+
+        path = Path(program_path)
+        if path.exists():
+            try:
+                program.load(str(path))
+                logger.info("Optimized program loaded: %s", path)
+            except Exception as exc:
+                logger.warning(
+                    "Failed to load the optimized program (%s), using the basic program.",
+                    exc,
+                )
+        else:
+            logger.info("No optimized program (%s), using the basic program.", path)
+    return program
+
+
 def generate_kb_article(
     story_identifier: str,
     client: ServiceNowClientProtocol,
     settings: Settings | None = None,
     *,
     program: StoryToKBArticle | None = None,
+    program_path: str | None = None,
     push: bool = True,
     force_update: bool = False,
 ) -> KBArticle:
@@ -210,6 +236,9 @@ def generate_kb_article(
         settings: if None, loads them using load_settings().
         program: if None, creates a new StoryToKBArticle(). When testing
             you can also pass a pre-configured/mock program.
+        program_path: if given (and program is None), the optimized program
+            loads it from this JSON file (GEPA export, see artifacts/program.json).
+            If the file does not exist or is broken, it falls back to the basic StoryToKBArticle().
         push: if True, writes the article back to the ServiceNow KB with the client.
             in dry_run mode this will automatically be False.
         force_update: if True, and a KB article already exists for the Story, the pipeline
@@ -265,7 +294,7 @@ def generate_kb_article(
         # 5. LM configuration + running the program
         configure_lm(settings)
         if program is None:
-            program = StoryToKBArticle()
+            program = _load_program(program_path)
 
         pred = program(
             story_text=story_text,

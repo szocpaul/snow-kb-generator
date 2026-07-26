@@ -2,6 +2,9 @@
 
 It runs the GEPA optimization with the help of the Kimi K3 reflection model, and
 saves the optimized program to the artifacts/program.json file.
+
+CLI usage (quickstart Scenario 3-4):
+    python -m eval.gepa_optimize --auto light
 """
 
 from __future__ import annotations
@@ -15,7 +18,10 @@ from eval.metric import rich_metric
 
 
 def run_gepa_optimization(program, trainset, valset):
-    """Runs the GEPA optimization with the Kimi K3 reflection model.
+    """Creates the GEPA optimizer with the help of the Kimi K3 reflection model.
+
+    It does NOT run the compile — that must be called separately (see compile_with_gepa),
+    because it needs a real dspy.Module and LM calls.
 
     Args:
         program: the current (not optimized) dspy.Module (StoryToKBArticle).
@@ -23,13 +29,13 @@ def run_gepa_optimization(program, trainset, valset):
         valset: A valset (2 dspy.Example objektum).
 
     Returns:
-        (optimizer, optimized_program) tuple — the GEPA optimizer and the optimized program.
+        The configured dspy.GEPA optimizer instance.
     """
     # LM configuration (globally, as the skill says)
     configure_lm()
 
     # Creating the GEPA optimizer with the help of the Kimi K3 reflection model
-    optimizer = dspy.GEPA(
+    return dspy.GEPA(
         metric=rich_metric,
         auto="light",
         reflection_lm=_create_reflection_lm(),
@@ -39,14 +45,24 @@ def run_gepa_optimization(program, trainset, valset):
         seed=0,
     )
 
-    # Running the GEPA compile on the trainset and valset examples
-    optimized_program = optimizer.compile(
+
+def compile_with_gepa(optimizer, program, trainset, valset):
+    """Runs the GEPA compile and returns the optimized program.
+
+    Args:
+        optimizer: the dspy.GEPA instance returned by run_gepa_optimization().
+        program: the non-optimized dspy.Module (StoryToKBArticle).
+        trainset: A trainset (dspy.Example objektumok).
+        valset: A valset (dspy.Example objektumok).
+
+    Returns:
+        The optimized dspy.Module (the result of the GEPA compile).
+    """
+    return optimizer.compile(
         student=program,
         trainset=trainset,
         valset=valset,
     )
-
-    return optimizer, optimized_program
 
 
 def save_optimized_program(optimized_program, output_path: str | Path = "artifacts/program.json"):
@@ -133,3 +149,66 @@ def configure_lm():
         max_tokens=8000,
     )
     dspy.configure(lm=lm, track_usage=True)
+
+
+# ---------------------------------------------------------------------------
+# CLI entry point (python -m eval.gepa_optimize --auto light)
+# ---------------------------------------------------------------------------
+
+
+def main(argv: list[str] | None = None) -> None:
+    """T012-T014: the GEPA compile + extracting the suggestions + saving the optimized program."""
+    import argparse
+
+    parser = argparse.ArgumentParser(description="GEPA optimization for the StoryToKBArticle program.")
+    parser.add_argument("--auto", default="light", choices=["light", "medium", "heavy"],
+                        help="GEPA budget preset (default: light).")
+    parser.add_argument("--dataset", default="data/examples/gold_dataset.md",
+                        help="The path of the gold dataset markdown file.")
+    parser.add_argument("--output", default="artifacts/program.json",
+                        help="The output JSON file of the optimized program.")
+    args = parser.parse_args(argv)
+
+    from eval.baseline import run_baseline
+    from eval.dataset import load_gold_dataset
+    from snow_kb.program import StoryToKBArticle
+
+    # 1. Loading the dataset
+    trainset, valset = load_gold_dataset(args.dataset)
+    print(f"Dataset: {len(trainset)} train / {len(valset)} val examples")
+
+    # 2. The baseline measurement (if there is no runs/baseline.json yet)
+    baseline_path = Path("runs/baseline.json")
+    if baseline_path.exists():
+        baseline_score = json.loads(baseline_path.read_text(encoding="utf-8"))["average_score"]
+        print(f"Baseline (existing runs/baseline.json): {baseline_score:.3f}")
+    else:
+        configure_lm()
+        program = StoryToKBArticle()
+        baseline = run_baseline(program, valset)
+        baseline_score = baseline.score
+        print(f"Baseline (freshly measured): {baseline_score:.3f}")
+
+    # 3. Creating the GEPA optimizer + compile (T012)
+    program = StoryToKBArticle()
+    optimizer = run_gepa_optimization(program, trainset, valset)
+    print("GEPA compile fut... (auto=%s)" % args.auto)
+    optimized_program = compile_with_gepa(optimizer, program, trainset, valset)
+
+    # 4. Extracting the applied reflection suggestions (T013)
+    suggestions = extract_applied_suggestions(optimized_program)
+    print("\nAlkalmazott javaslatok:")
+    for s in suggestions:
+        print(f"  - {s}")
+
+    # 5. Evaluating the optimized program on the valset
+    optimized_eval = run_baseline(optimized_program, valset, output_path="runs/optimized.json")
+    print(f"\nOptimized score: {optimized_eval.score:.3f} (baseline: {baseline_score:.3f})")
+
+    # 6. Saving (T014)
+    save_optimized_program(optimized_program, args.output)
+    print(f"Optimized program saved: {args.output}")
+
+
+if __name__ == "__main__":
+    main()

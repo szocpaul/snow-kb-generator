@@ -27,8 +27,9 @@ class TestGEPAOptimizer:
             optimizer = run_gepa_optimization(program, trainset, valset)
 
         assert optimizer is not None
-        assert hasattr(optimizer, "metric")
-        assert optimizer.metric == rich_metric
+        # DSPy 3.2.x: the GEPA stores the metric in the metric_fn attribute
+        assert hasattr(optimizer, "metric_fn")
+        assert optimizer.metric_fn == rich_metric
 
     def test_gepa_optimizer_uses_kimi_k3_reflection(self):
         """The GEPA optimizer uses a Kimi K3 reflection model (temperature=1.0)."""
@@ -44,7 +45,8 @@ class TestGEPAOptimizer:
 
         assert optimizer.reflection_lm is not None
         assert "kimi" in str(optimizer.reflection_lm.model).lower()
-        assert optimizer.reflection_lm.temperature == 1.0
+        # DSPy 3.2.x: the LM stores the temperature in the kwargs dict
+        assert optimizer.reflection_lm.kwargs["temperature"] == 1.0
 
     def test_gepa_optimizer_uses_pareto_selection(self):
         """The GEPA optimizer uses the Pareto selection (candidate_selection_strategy="pareto")."""
