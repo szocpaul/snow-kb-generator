@@ -323,3 +323,26 @@ A sablonból kikerült: a "Knowledge Base Structure for Interface Documentation"
 - GEPA újrafuttatva: baseline 0.300 → **optimized 0.850**.
 - Éles validáció (STRY0010010): nincs Theme/Target Audience/Structure főcím; a related tábla 2 oszlopos, 3 valódi cikk (KB0010009, KB0010010, KB0010001).
 - 221/221 teszt zöld.
+
+## 21. Esti zárás (2026-07-26) — Holnap: spec 007 implementáció
+
+### Ma készült el (spec 004 + 005 + 006)
+- **Spec 004 (hallucináció-védelem):** dataset sanitization, hallucination metric axis, `strip_hallucinated_references()` guardrail. 3 védelmi vonal.
+- **Spec 005 (valódi related cikkek):** `search_kb_articles()` kulcsszavas OR query + overlap-rangsorolással; `related_articles_context` input; guardrail/metric known_refs kiterjesztés. Éles bizonyíték: 3 valódi cikk a related táblában (KB0010009, KB0010010, KB0010001). Teszt cikk KB0010010 megtartva.
+- **Spec 006 (sablon-egyszerűsítés):** H1/Theme/Target Audience szekciók kivéve (lokális + élő KB0010008 sablon); az audience "style only" instrukció; gold dataset megtisztítva; GEPA újrafutva: 0.300 → 0.850.
+- **Tesztek:** 221/221 zöld. Éles demo cikk: KB0010009 (STRY0010010 alapján).
+
+### Ismert nyitott probléma (holnapi téma)
+Outbound Story (STRY0010010) esetén az **Inbound szekció tartalommal töltődik** "N/A" helyett. Diagnózis: a metric irány-vak (nem bünteti) → a Kimi K3 reflection nem kap jelet → a Qwen 35B a "fill every section" utasítást követi. Nem tudásbeli hiba, hanem visszajelzési lánc szakadás.
+
+### HOLNAP ITT FOLYTATJUK: spec 007 implementáció
+- **Spec:** `specs/007-direction-aware-quality/` (spec.md + plan.md + tasks.md, commit 38ca370) — ELKÉSZÜLT, user review alatt, implementáció MÉG NEM kezdődött.
+- **Taszkok:** T001-T011 — detect_direction() a metric-ben, kategorikus irányszabály a signature-ben, SkilledProposer integráció (pip install skilled-proposer, extra_guidance), GEPA újrafutás, éles validáció.
+- **Környezet:** a Qwen LM a desktop gépen fut (Tailscale :8033) — holnap ellenőrizni kell, hogy él-e, mielőtt a GEPA futna.
+- **Kimarad (out of scope):** pipeline-guardrail N/A-kényszer — csak ha a metric+GEPA útvonal nem elég.
+
+### Fontos technikai emlékeztetők
+- Helyes venv: `../.venv` (szülőkönyvtár), NEM rendszer-Python.
+- Kimi K3 reflection: `openai/k3` @ `https://api.kimi.com/coding/v1` (OAuth access token; a token ~1 óra után lejárhat futás közben — a run így is befejeződik, de a végén "invalid API key" warning normális).
+- GEPA futtatás előtt MINDIG töröld a `gepa_logs/`-ot (a checkpoint a régi, esetleg hibás állapotot őrzi).
+- Szerver restart: `pkill -f "uvicorn snow_kb"` után `nohup ../.venv/bin/uvicorn snow_kb.server:app --host 0.0.0.0 --port 8000 >> server.log 2>&1 & disown` (setsid néha elveszti a processt).

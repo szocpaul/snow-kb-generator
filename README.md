@@ -118,7 +118,7 @@ snow_kb_generator/
 │   ├── program.py              # StoryToKBArticle(dspy.Module)
 │   └── ...                     # config, schemas, cli
 ├── servicenow/                 # ServiceNow-ba másolandó UI Action script
-├── tests/                      # 216 pytest teszt
+├── tests/                      # 221 pytest teszt
 ├── eval/                       # GEPA eval harness (dataset, rich_metric, baseline, gepa_optimize)
 ├── artifacts/                  # GEPA-optimalizált program (program.json)
 ├── gepa_logs/                  # GEPA checkpointek
@@ -132,7 +132,7 @@ snow_kb_generator/
 3. **Data** — ✅ Kész (Gold Dataset: 5 arany példapár a gold_dataset.md-ben)
 4. **Rich metric** — ✅ Kész (rich_metric: structure_match + content_accuracy + template_adherence + hallucination)
 5. **Baseline** — ✅ Kész (runs/baseline.json: 0.386)
-6. **GEPA optimalizáció** — ✅ Kész (Kimi K3 reflection, 0.386 → 0.962 a valset-en)
+6. **GEPA optimalizáció** — ✅ Kész (Kimi K3 reflection; aktuális futam a spec 006-os sablonon: 0.300 → 0.850)
 7. **Export & deploy** — ✅ Kész (artifacts/program.json; a FastAPI szerver startup-kor betölti, fallback az alap program)
 
 **Hallucináció-védelem (spec 004):** 3 védelmi vonal — (1) megtisztított gold dataset (`KBXXXXXXX` placeholder), (2) hallucination axis a metrikában (GEPA feedback), (3) `strip_hallucinated_references()` guardrail a pipeline-ban push előtt. Éles validáció: a generált cikkek 0 hallucinált hivatkozást tartalmaznak.
@@ -142,6 +142,9 @@ snow_kb_generator/
 - 2. Kész Feature: `002-team-based-templates` (Csapat-specifikus KB sablonok generálása).
 - 3. Kész Feature: `003-gepa-kb-quality` (GEPA optimalizáció a KB cikk minőségének javítására).
 - 4. Kész Feature: `004-no-hallucinated-references` (Hallucináció-mentes KB generálás: dataset sanitization + hallucination metric axis + pipeline guardrail).
+- 5. Kész Feature: `005-real-related-kb-articles` (Valódi kapcsolódó KB cikkek ServiceNow kereséssel; nincs találat → N/A).
+- 6. Kész Feature: `006-template-simplification` (Egyszerűsített sablon: nincs H1/Theme/Target Audience szekció; audience = stílusinstrukció).
+- 7. Review alatt: `007-direction-aware-quality` (Irány-érzékeny metric + explicit inbound/outbound N/A szabály + SkilledProposer; implementáció holnap).
 
 ## Licenc
 
