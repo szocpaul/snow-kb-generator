@@ -268,3 +268,10 @@ A `run_gepa_optimization()` függvény a `optimizer.compile()` hívást végzi, 
 
 ### Hátralévő (T019)
 - Éles end-to-end validáció: szerver újraindítás az optimalizált programmal + valós Story generálás a ServiceNow-ból.
+
+## 17. T019 Éles end-to-end validáció BEFEJEZVE (2026-07-26)
+
+- FastAPI szerver újraindítva; az optimalizált program (`artifacts/program.json`) startup-kor betöltődött.
+- STRY0010010 generálás `push=false`: ✅ sikeres (az optimalizált programmal).
+- Éles push `force_update=true`: ✅ a KB cikk létrejött/frissült: https://dev433980.service-now.com/kb_view.do?sys_kb_id=bbe5d9b62fce0b10698771ba6fa4e3b8
+- **A specs/003-gepa-kb-quality összes taszkja (T001-T019) kész.** A GEPA-optimalizált program élesben szolgálja ki a ServiceNow UI Action webhookot.
