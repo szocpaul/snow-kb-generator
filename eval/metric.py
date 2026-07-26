@@ -59,7 +59,9 @@ def rich_metric(gold, pred, trace=None, pred_name=None, pred_trace=None):
     # 3b. Hallucination detection (spec 004): the KB appearing in the generated HTML
     # the article numbers must be in the story_text (or a placeholder).
     story_text = getattr(gold, "story_text", "") or ""
-    hallucinated = _find_hallucinated_kb_references(actual_html, story_text)
+    # Spec 005: the actual KB search results (related_articles_context) known references
+    known_refs = story_text + "\n" + (getattr(gold, "related_articles_context", "") or "")
+    hallucinated = _find_hallucinated_kb_references(actual_html, known_refs)
     hallucination_score = 0.0 if hallucinated else 1.0
 
     # Weighted sum (0.3 structure + 0.3 content + 0.2 template + 0.2 hallucination)

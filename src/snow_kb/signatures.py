@@ -164,6 +164,11 @@ class GenerateKbFromTemplate(dspy.Signature):
     html_template: str = dspy.InputField(
         desc="The exact HTML structure/headings the output MUST follow."
     )
+    related_articles_context: str = dspy.InputField(
+        desc="REAL related KB articles from ServiceNow, one per line as 'KB<number> | <short_description>'. "
+        "Use ONLY these in the 'Table of related KB articles' section — never invent article numbers or titles. "
+        "If empty, write 'N/A' in that section."
+    )
 
     html: str = dspy.OutputField(
         desc="A complete ServiceNow KB article in HTML, strictly following the provided html_template."

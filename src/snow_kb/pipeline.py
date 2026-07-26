@@ -193,19 +193,20 @@ def configure_lm(settings: Settings) -> None:
 # Main orchestrator
 # ---------------------------------------------------------------------------
 
-def strip_hallucinated_references(html: str, story_text: str) -> str:
-    """Removes the hallucinated KB references from the generated HTML (spec 004).
+def strip_hallucinated_references(html: str, story_text: str, known_refs: str = "") -> str:
+    """Removes the hallucinated KB references from the generated HTML (spec 004/005).
 
     A KB reference (KB + >=6 digits) is hallucinated if it does not appear in the
-    in the story_text. It removes the <li> elements containing such a reference;
-    other occurrences with the KBXXXXXXX placeholder. In the story_text
-    the real identifiers appearing are never touched.
+    story_text OR in the known_refs (e.g. the real hits of the ServiceNow KB search
+    — spec 005). It removes the <li> elements containing such a reference and
+    replaces the other occurrences with the KBXXXXXXX placeholder.
+    It never touches the real identifiers.
     """
     import re
 
     pattern = re.compile(r"\bKB\d{6,}\b")
-    known_refs = set(pattern.findall(story_text))
-    hallucinated = set(pattern.findall(html)) - known_refs
+    known_refs_set = set(pattern.findall(story_text)) | set(pattern.findall(known_refs))
+    hallucinated = set(pattern.findall(html)) - known_refs_set
     if not hallucinated:
         return html
 
@@ -319,6 +320,22 @@ def generate_kb_article(
         # The pipeline must not crash if the Update Set fetch fails
         logger.warning("Update Set fetch failed: %s", exc)
 
+    # 3c. Searching the related KB articles (spec 005) — real references for the
+    # "Table of related KB articles" section (instead of a hallucination)
+    related_articles_context = ""
+    try:
+        search = getattr(client, "search_kb_articles", None)
+        if search and story.short_description:
+            hits = search(story.short_description, limit=5)
+            if hits:
+                related_articles_context = "\n".join(
+                    f"{h['number']} | {h['short_description']}" for h in hits
+                )
+                logger.info("Related KB articles: %d hits", len(hits))
+    except Exception as exc:
+        # The pipeline must not crash if the KB search fails
+        logger.warning("Related KB search failed: %s", exc)
+
     # 4. Dry-run: skipping the program call (no LM), mock article from the Story
     if settings.dry_run:
         article = _mock_article_from_story(story, settings)
@@ -332,13 +349,17 @@ def generate_kb_article(
             story_text=story_text,
             update_set_payloads=update_set_payloads,
             template_context=template_context,
+            related_articles_context=related_articles_context,
             category=settings.snow.default_category,
             knowledge_base_id=settings.snow.knowledge_base_id,
         )
         article: KBArticle = pred.article
         article.source_story = story_identifier  # prevents duplication
-        # Spec 004 guardrail: removing the hallucinated KB references BEFORE the push
-        article.html = strip_hallucinated_references(article.html, story_text)
+        # Spec 004/005 guardrail: removing the hallucinated KB references BEFORE the push
+        # (the real search hits are protected as known_refs)
+        article.html = strip_hallucinated_references(
+            article.html, story_text, known_refs=related_articles_context
+        )
 
     # 6. Push to the ServiceNow KB (if requested and not dry_run)
     if push and not settings.dry_run:

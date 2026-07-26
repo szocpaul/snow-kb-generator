@@ -282,6 +282,42 @@ class ServiceNowClient:
         return results[0].get("sys_id")
 
     # ------------------------------------------------------------------
+    # search_kb_articles — searching the related KB articles (spec 005)
+    # ------------------------------------------------------------------
+
+    def search_kb_articles(self, query: str, limit: int = 5) -> list[dict]:
+        """Searches the real related KB articles in the kb_knowledge table.
+
+        Args:
+            query: the search expression (a short_description text search).
+            limit: the maximum number of hits (default 5).
+
+        Returns:
+            [{'number': ..., 'short_description': ..., 'sys_id': ...}] list.
+            An empty list if there is no hit. In dry-run mode it is always empty.
+        """
+        if self.dry_run or not query.strip():
+            return []
+
+        url = f"{self.base_url}/kb_knowledge"
+        params = {
+            "sysparm_query": f"short_descriptionLIKE{query}^workflow_state=published",
+            "sysparm_limit": str(limit),
+            "sysparm_fields": "number,short_description,sys_id",
+        }
+        resp = self._request("GET", url, params=params)
+        body = resp.json()
+
+        return [
+            {
+                "number": r.get("number", ""),
+                "short_description": r.get("short_description", ""),
+                "sys_id": r.get("sys_id", ""),
+            }
+            for r in body.get("result", [])
+        ]
+
+    # ------------------------------------------------------------------
     # get_update_set_changes — fetching the Update Set modifications
     # ------------------------------------------------------------------
 
