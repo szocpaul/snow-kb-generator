@@ -270,3 +270,22 @@ The ServiceNow UI Action script supports the pop-up (confirm) confirmation and c
 
 ### Technical Problem (T011)
 The `run_gepa_optimization()` function calls `optimizer.compile()`, which returns the `optimized_program`, not the `optimizer`. Therefore the tests cannot check the `optimizer` attributes. The solution: change the `run_gepa_optimization()` function so that it also returns the `optimizer`, not only the `optimized_program`.
+
+## 16. GEPA OPTIMIZATION COMPLETED (last update: 2026-07-26)
+
+### Results (T011-T018)
+- **T011:** GEPA optimizer fixed — `run_gepa_optimization()` now returns only the optimizer; the compile moved into `compile_with_gepa()`. Tests aligned with the DSPy 3.2.x API (`metric_fn`, `lm.kwargs["temperature"]`).
+- **T012-T013:** GEPA compile completed (`python -m eval.gepa_optimize --auto light`, ~42 minutes, 589 iterations). **Baseline: 0.100 → Optimized: 0.600** (6x improvement on the valset).
+- **T014:** Optimized program saved: `artifacts/program.json` (load verified).
+- **T015:** `server.py` loads the optimized program at startup (fallback: the base StoryToKBArticle).
+- **T016:** `pipeline.py` `program_path` parameter + `_load_program()` helper.
+- **T017:** Full test suite green (208/208).
+
+### Cleared Pitfalls
+- The metric expected `pred.html`, but the program returns `Prediction(article=KBArticle)` → the metric now supports both.
+- The Kimi K3 reflection LM was configured incorrectly: the correct setup is `openai/k3` + `https://api.kimi.com/coding/v1` + OAuth `access` token (NOT `kimi-k3` on OpenRouter).
+- The `gepa_logs/` checkpoint kept the failed (0-score) run → a clean re-run was needed.
+- The Kimi OAuth token expired near the end of the run (~589th iteration), but the run still closed with a valid result.
+
+### Remaining (T019)
+- Production end-to-end validation: server restart with the optimized program + real Story generation from ServiceNow.

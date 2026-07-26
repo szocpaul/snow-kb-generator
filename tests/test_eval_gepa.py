@@ -44,7 +44,7 @@ class TestGEPAOptimizer:
             optimizer = run_gepa_optimization(program, trainset, valset)
 
         assert optimizer.reflection_lm is not None
-        assert "kimi" in str(optimizer.reflection_lm.model).lower()
+        assert "k3" in str(optimizer.reflection_lm.model).lower()  # openai/k3 (Kimi K3 wire id)
         # DSPy 3.2.x: the LM stores the temperature in the kwargs dict
         assert optimizer.reflection_lm.kwargs["temperature"] == 1.0
 
