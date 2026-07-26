@@ -310,3 +310,16 @@ A "Table of related KB articles" szekció (a csapat-sablon kötelező eleme) hal
 - Teszt cikk létrehozva: **KB0010010** (Jira REST Integration Guide, a felhasználó kérésére megtartva).
 - A keresés javítva: kulcsszó-kinyerés (rövidítések/tulajdonnevek elől), OR query, published∪összes unió, kliens-oldali overlap-rangsorolás.
 - Éles STRY0010010 újragenerálás: a "Related articles" tábla **3 valódi cikket** tartalmaz (KB0010009, KB0010010, KB0010001) — mind a hármat ServiceNow API-val verifikáltuk. A spec 005 e2e bizonyítva.
+
+## 20. Spec 006: Template Simplification BEFEJEZVE (2026-07-26)
+
+### Változás
+A sablonból kikerült: a "Knowledge Base Structure for Interface Documentation" H1, a "Theme:" sorok, és minden "Target Audience" szekció (+ a related articles tábla 3. oszlopa). A célközönség stílusként megmaradt: az ExtractChange.audience a template-generálás instrukciójába kerül ("style only, do NOT create a section").
+
+### Lépések
+- Lokális sablon (md+html) lecsupaszítva: KBA1-KBA11 címsor + Content only.
+- Gold dataset: 35 Theme sor, 35 Target Audience szekció, 5 target audience oszlop törölve.
+- Élő ServiceNow sabloncikk (KB0010008) Table API-val frissítve.
+- GEPA újrafuttatva: baseline 0.300 → **optimized 0.850**.
+- Éles validáció (STRY0010010): nincs Theme/Target Audience/Structure főcím; a related tábla 2 oszlopos, 3 valódi cikk (KB0010009, KB0010010, KB0010001).
+- 221/221 teszt zöld.
