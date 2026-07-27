@@ -72,3 +72,20 @@ class TestDirectionGuardrail:
         from snow_kb.pipeline import strip_direction_violating_sections
         html = "<h2>Overview / Summary</h2><p>Only overview.</p>"
         assert strip_direction_violating_sections(html, "outbound integration") == html
+
+
+class TestNormalizeCodeTags:
+    """<code> → <strong> normalizálás (szürke háttér tiltása a KB nézetben)."""
+
+    def test_replaces_code_with_strong(self):
+        from snow_kb.pipeline import normalize_code_tags
+        html = '<p>Field: <code>u_jira_key</code> and endpoint <code class="x">/rest/api/2/issue</code>.</p>'
+        result = normalize_code_tags(html)
+        assert "<code" not in result
+        assert "<strong>u_jira_key</strong>" in result
+        assert "<strong>/rest/api/2/issue</strong>" in result
+
+    def test_idempotent_without_code(self):
+        from snow_kb.pipeline import normalize_code_tags
+        html = "<p>No tags here, <strong>already strong</strong>.</p>"
+        assert normalize_code_tags(html) == html

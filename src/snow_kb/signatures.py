@@ -121,6 +121,10 @@ class FormatKB(dspy.Signature):
     and overall structure provided in the `template_context`. If the template 
     uses specific <h2> headings (e.g., 'Overview / Summary', 'Inbound Technical Implementation'), 
     you MUST use those exact headings in your output HTML.
+
+    FORMATTING RULE: NEVER use <code> tags (they render with an ugly gray background
+    in the ServiceNow KB view). Use <strong> for identifiers, script names, field names,
+    endpoints and API paths instead.
     """
     title: str = dspy.InputField(desc="Article title.")
     problem: str = dspy.InputField(desc="Problem statement.")
@@ -161,6 +165,8 @@ class GenerateKbFromTemplate(dspy.Signature):
     - Do NOT invent new headings. Use the template's heading names verbatim.
     - Copy the HTML tags (<h2>, <ul>, <li>, <p>) style from the template for the
       sections you include.
+    - NEVER use <code> tags (gray background in the KB view) — use <strong> for
+      identifiers, script names, field names, endpoints and API paths instead.
     - Do NOT add a "Theme" line or a "Target Audience" section. If the story_context
       mentions a target audience, use it ONLY to adapt the writing style/tone of each
       section (e.g., technical depth for developers, business language for process owners).

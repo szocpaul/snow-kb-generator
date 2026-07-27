@@ -193,6 +193,21 @@ def configure_lm(settings: Settings) -> None:
 # Fő orchestrátor
 # ---------------------------------------------------------------------------
 
+def normalize_code_tags(html: str) -> str:
+    """<code> tagek cseréje <strong>-ra (szürke háttér a KB nézetben — tartós tiltás).
+
+    Determinisztikus post-process: a 35B-s modell az instrukció ellenére is
+    generálhat <code>-t, ez a guardrail minden cikket normalizál.
+    """
+    import re
+
+    if "<code" not in html:
+        return html
+    n = len(re.findall(r"<code", html))
+    logger.info("normalize_code_tags: %d db <code> → <strong> csere", n)
+    return re.sub(r"<code[^>]*>(.*?)</code>", r"<strong>\1</strong>", html, flags=re.DOTALL)
+
+
 def strip_direction_violating_sections(html: str, story_text: str) -> str:
     """Eltávolítja az irány-sértő szekciókat (spec 007 guardrail).
 
@@ -385,6 +400,8 @@ def generate_kb_article(
         )
         article: KBArticle = pred.article
         article.source_story = story_identifier  # Duplikáció megakadályozása
+        # Formázási normalizálás: <code> → <strong> (szürke háttér tiltva)
+        article.html = normalize_code_tags(article.html)
         # Spec 007 guardrail: irány-sértő szekciók eltávolítása
         article.html = strip_direction_violating_sections(article.html, story_text)
         # Spec 004/005 guardrail: hallucinált KB hivatkozások eltávolítása push ELŐTT
