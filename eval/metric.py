@@ -56,6 +56,15 @@ def rich_metric(gold, pred, trace=None, pred_name=None, pred_trace=None):
     # If the template expects N/A, but the generated one is full of content (or vice versa), that is an error
     template_adherence = _check_template_adherence(expected_html, actual_html)
 
+    # 3a. The evidence-first checks (spec 007):
+    # - Direction violation: an outbound story + a filled Inbound section (and vice versa)
+    # - Unsupported section: a section that is N/A/missing in the gold is filled in the pred
+    story_text_for_direction = getattr(gold, "story_text", "") or ""
+    direction_violations = _find_direction_violations(story_text_for_direction, actual_html)
+    unsupported_sections = _find_unsupported_sections(expected_html, actual_html)
+    if direction_violations or unsupported_sections:
+        template_adherence = 0.0
+
     # 3b. Hallucination detection (spec 004): the KB appearing in the generated HTML
     # the article numbers must be in the story_text (or a placeholder).
     story_text = getattr(gold, "story_text", "") or ""
@@ -89,6 +98,16 @@ def rich_metric(gold, pred, trace=None, pred_name=None, pred_trace=None):
 
     if template_adherence < 1.0:
         parts.append(f"Template violation. Expected 'N/A' for irrelevant section, got actual content instead.")
+
+    if direction_violations:
+        parts.extend(direction_violations)
+
+    if unsupported_sections:
+        parts.append(
+            "Unsupported section(s): "
+            + ", ".join(f"'{h}'" for h in unsupported_sections)
+            + ". These sections have content but the story provides no evidence for them — omit them entirely (no evidence, no section)."
+        )
 
     if hallucinated:
         parts.append(
@@ -140,6 +159,90 @@ def _extract_facts(html: str) -> list[str]:
             facts.append(p_clean[:50])  # First 50 characters
 
     return facts
+
+
+def detect_direction(story_text: str) -> str:
+    """Detects the direction of the integration from the keywords of the story_text (spec 007).
+
+    Returns: 'inbound' | 'outbound' | 'both' | 'unknown'
+    """
+    import re
+
+    n_in = len(re.findall(r"\binbound\b", story_text, re.IGNORECASE))
+    n_out = len(re.findall(r"\boutbound\b", story_text, re.IGNORECASE))
+    if n_in and n_out:
+        return "both"
+    if n_in:
+        return "inbound"
+    if n_out:
+        return "outbound"
+    return "unknown"
+
+
+_DIRECTION_SECTIONS = {
+    "inbound": "Outbound Technical Implementation",
+    "outbound": "Inbound Technical Implementation",
+}
+
+
+def _section_text(html: str, heading: str) -> str:
+    """The raw text of a <h2> section (without the HTML tags) up to the next <h2>."""
+    import re
+
+    m = re.search(
+        r"<h2[^>]*>\s*" + re.escape(heading) + r"\s*</h2>(.*?)(?=<h2|$)",
+        html,
+        re.DOTALL | re.IGNORECASE,
+    )
+    if not m:
+        return ""
+    return re.sub(r"<[^>]+>", " ", m.group(1)).strip()
+
+
+def _section_has_content(html: str, heading: str) -> bool:
+    """True, if the section exists and has meaningful content (not only 'N/A')."""
+    import re
+
+    text = _section_text(html, heading)
+    if not text:
+        return False
+    # Only 'Content' + the N/A variants → there is no real content
+    cleaned = re.sub(r"(?i)\bcontent\b", "", text)
+    cleaned = re.sub(r"(?i)N/?A[.;]?", "", cleaned).strip(" -—:;")
+    return len(cleaned) > 30
+
+
+def _find_direction_violations(story_text: str, actual_html: str) -> list[str]:
+    """The list of the direction violations (the special case of spec 007).
+
+    For an outbound story the 'Inbound Technical Implementation' section must be missing
+    (or N/A); if it is filled in that is a violation. With the 'both'/'unknown' direction there is no check.
+    """
+    direction = detect_direction(story_text)
+    if direction not in _DIRECTION_SECTIONS:
+        return []
+    forbidden = _DIRECTION_SECTIONS[direction]
+    if _section_has_content(actual_html, forbidden):
+        return [
+            f"Direction violation: {direction} story but '{forbidden}' section is filled with content. "
+            f"Omit this section entirely; shared components belong to the {direction} section."
+        ]
+    return []
+
+
+def _find_unsupported_sections(expected_html: str, actual_html: str) -> list[str]:
+    """The headings of the sections that are not supported according to the gold (N/A/missing),
+    but appear with content in the generated article (the general case of spec 007).
+    """
+    unsupported = []
+    # The direction sections are handled by the direction check — do not duplicate the feedback
+    direction_headings = {"Inbound Technical Implementation", "Outbound Technical Implementation"}
+    for heading in _extract_headings(actual_html):
+        if heading.lower() == "content" or heading in direction_headings:
+            continue
+        if not _section_has_content(expected_html, heading) and _section_has_content(actual_html, heading):
+            unsupported.append(heading)
+    return unsupported
 
 
 def _find_hallucinated_kb_references(actual_html: str, story_text: str) -> list[str]:

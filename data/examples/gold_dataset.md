@@ -34,11 +34,7 @@
     <li>Who uses it: Support teams and Jira administrators who need to track Jira issues as ServiceNow Incidents.</li>
     <li>What type of data is exchanged: Jira issue details (key, summary, description, priority) mapped to Incident fields.</li>
     <li>High-level process flow: Jira issue created → Jira webhook sends POST → ServiceNow Scripted REST API parses payload → Incident created with Jira key mapped.</li>
-    <li>Table of related KB articles, including:
-        <ul>
-            <li>Short description: Jira Cloud Outbound Integration</li>
-            <li>Article number: KBXXXXXXX</li>
-        </ul>
+    <li>Table of related KB articles: N/A
     </li>
 </ul>
 <hr />
@@ -51,15 +47,6 @@
     <li>Payload sample: {"jira_key": "PROJ-123", "summary": "Fix login bug", "description": "Users cannot log in", "priority": "High"}.</li>
     <li>Flow and its steps: 1. Jira webhook sends POST → 2. Scripted REST API receives payload → 3. Script Include parses JSON → 4. Incident created → 5. u_jira_key populated.</li>
     <li>Validation steps: 1. Send test POST from Postman → 2. Verify Incident created in ServiceNow → 3. Check u_jira_key matches Jira key.</li>
-</ul>
-<hr />
-<h2>Outbound Technical Implementation</h2>
-<h3>Content</h3>
-<ul>
-    <li>Technical components used: N/A (This is an inbound integration; no outbound ServiceNow message is sent in this flow).</li>
-    <li>Dependencies between records or functions: N/A</li>
-    <li>Authentication method: N/A</li>
-    <li>Validation steps: N/A</li>
 </ul>
 <hr />
 <h2>How to Use the Interface</h2>
@@ -137,23 +124,8 @@
     <li>Who uses it: Support engineers and system administrators who escalate Incidents to Jira.</li>
     <li>What type of data is exchanged: Incident details including number, short_description, description, and assignment_group.</li>
     <li>High-level process flow: Incident state changes to 'Escalated' → Business Rule triggers → Script Include builds payload and sends to Jira → Jira returns issue key → Key saved to Incident.</li>
-    <li>Table of related KB articles, including:
-        <ul>
-            <li>Short description: Jira Webhook Inbound Integration</li>
-            <li>Article number: KBXXXXXXX</li>
-        </ul>
+    <li>Table of related KB articles: N/A
     </li>
-</ul>
-<hr />
-<h2>Inbound Technical Implementation</h2>
-<h3>Content</h3>
-<ul>
-    <li>Script Includes and their functions: N/A (This is an outbound integration; no inbound scripted REST API is defined for this specific flow).</li>
-    <li>Scripted REST APIs and endpoints: N/A</li>
-    <li>Required parameters: N/A</li>
-    <li>Payload sample: N/A</li>
-    <li>Flow and its steps: N/A</li>
-    <li>Validation steps: N/A</li>
 </ul>
 <hr />
 <h2>Outbound Technical Implementation</h2>
@@ -240,11 +212,7 @@
     <li>Who uses it: End users logging in via SSO, and IT support teams managing authentication issues.</li>
     <li>What type of data is exchanged: LDAP query results (user DN, groups, attributes) and authentication status codes.</li>
     <li>High-level process flow: User attempts SSO login → LDAP query initiated → If timeout occurs, retry up to 3 times with 500ms delay → If still fails, show friendly error message → If succeeds, user logged in.</li>
-    <li>Table of related KB articles, including:
-        <ul>
-            <li>Short description: SSO Configuration Guide</li>
-            <li>Article number: KBXXXXXXX</li>
-        </ul>
+    <li>Table of related KB articles: N/A
     </li>
 </ul>
 <hr />
@@ -257,15 +225,6 @@
     <li>Payload sample: N/A (Internal authentication flow, not a REST payload).</li>
     <li>Flow and its steps: 1. User attempts SSO login → 2. LDAP query initiated → 3. If timeout, retry up to 3 times with 500ms delay → 4. If still fails, show friendly error message → 5. If succeeds, user logged in.</li>
     <li>Validation steps: 1. Test SSO login with valid credentials → 2. Verify no 'User Not Found' errors occur. 3. Check System Logs for retry attempts.</li>
-</ul>
-<hr />
-<h2>Outbound Technical Implementation</h2>
-<h3>Content</h3>
-<ul>
-    <li>Technical components used: N/A (This is an inbound authentication module; no outbound ServiceNow message is sent in this flow).</li>
-    <li>Dependencies between records or functions: N/A</li>
-    <li>Authentication method: N/A</li>
-    <li>Validation steps: N/A</li>
 </ul>
 <hr />
 <h2>How to Use the Interface</h2>
@@ -343,23 +302,8 @@
     <li>Who uses it: Finance teams (SAP_Finance_Team) and SAP administrators who process vendor invoices.</li>
     <li>What type of data is exchanged: IDOC number, MIR4 transaction ID, exact status 51 error text (e.g., 'Tax code I2 does not exist'), and notification events.</li>
     <li>High-level process flow: SAP PI/PO sends IDOC status 51 callback → ServiceNow Scripted REST API parses payload → Incident/Invoice Status updated with error reason → Notification sent to SAP_Finance_Team → Finance team reviews and fixes the issue → 'Retry' UI action re-triggers the IDOC.</li>
-    <li>Table of related KB articles, including:
-        <ul>
-            <li>Short description: SAP Vendor Invoice Processing Guide</li>
-            <li>Article number: KBXXXXXXX</li>
-        </ul>
+    <li>Table of related KB articles: N/A
     </li>
-</ul>
-<hr />
-<h2>Inbound Technical Implementation</h2>
-<h3>Content</h3>
-<ul>
-    <li>Script Includes and their functions: N/A (This is an outbound integration; no inbound scripted REST API is defined for this specific flow).</li>
-    <li>Scripted REST APIs and endpoints: N/A</li>
-    <li>Required parameters: N/A</li>
-    <li>Payload sample: N/A</li>
-    <li>Flow and its steps: N/A</li>
-    <li>Validation steps: N/A</li>
 </ul>
 <hr />
 <h2>Outbound Technical Implementation</h2>
@@ -446,23 +390,8 @@
     <li>Who uses it: Change Managers, Change Coordinators, and IT support teams managing Change Tasks in ServiceNow.</li>
     <li>What type of data is exchanged: SolMan CD states ('Confirmed', 'Withdrawn'), CTASK states (1=New, 2=Open, 3=Closed), and synchronization logs.</li>
     <li>High-level process flow: SolMan CD state changes to 'Confirmed' or 'Withdrawn' → Business Rule triggers → Script queries all sibling CTASKs → If all sibling CTASKs have terminal CD states, they are auto-closed (state=3) → Fix Script reconciles historical orphaned CTASKs → Log output generated to validate updates.</li>
-    <li>Table of related KB articles, including:
-        <ul>
-            <li>Short description: ServiceNow Change Management Guide</li>
-            <li>Article number: KBXXXXXXX</li>
-        </ul>
+    <li>Table of related KB articles: N/A
     </li>
-</ul>
-<hr />
-<h2>Inbound Technical Implementation</h2>
-<h3>Content</h3>
-<ul>
-    <li>Script Includes and their functions: N/A (This is an outbound integration; no inbound scripted REST API is defined for this specific flow).</li>
-    <li>Scripted REST APIs and endpoints: N/A</li>
-    <li>Required parameters: N/A</li>
-    <li>Payload sample: N/A</li>
-    <li>Flow and its steps: N/A</li>
-    <li>Validation steps: N/A</li>
 </ul>
 <hr />
 <h2>Outbound Technical Implementation</h2>

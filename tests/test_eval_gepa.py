@@ -75,3 +75,42 @@ class TestGEPAOptimizer:
             optimizer = run_gepa_optimization(program, trainset, valset)
 
         assert optimizer.log_dir == "./gepa_logs"
+
+
+class TestInstructionProposer:
+    """US4 (spec 007): the GEPA uses the SkilledProposer with an evidence-first guidance."""
+
+    def test_proposer_is_skilled_proposer_with_guidance(self):
+        """The _create_instruction_proposer() gives a SkilledProposer with the evidence-first rule."""
+        from eval.gepa_optimize import _create_instruction_proposer
+
+        proposer = _create_instruction_proposer()
+        assert type(proposer).__name__ == "SkilledProposer"
+
+    def test_gepa_optimizer_uses_proposer(self):
+        """The GEPA optimizer receives the instruction_proposer."""
+        from unittest.mock import MagicMock, patch
+
+        from eval.dataset import load_gold_dataset
+
+        trainset, valset = load_gold_dataset("data/examples/gold_dataset.md")
+        with patch("eval.gepa_optimize.configure_lm"):
+            from eval.gepa_optimize import run_gepa_optimization
+            optimizer = run_gepa_optimization(MagicMock(), trainset, valset)
+
+        assert optimizer.custom_instruction_proposer is not None
+        assert type(optimizer.custom_instruction_proposer).__name__ == "SkilledProposer"
+
+    def test_fallback_when_skilled_proposer_missing(self):
+        """On an import error the stock proposer (None) + a warning."""
+        import sys
+        import warnings
+
+        from eval import gepa_optimize
+
+        with patch.dict(sys.modules, {"skilled_proposer": None}):
+            with warnings.catch_warnings(record=True) as w:
+                warnings.simplefilter("always")
+                proposer = gepa_optimize._create_instruction_proposer()
+        assert proposer is None
+        assert any("skilled-proposer" in str(x.message) for x in w)
