@@ -396,3 +396,27 @@ With a weak task model (35B) the prompt rule alone is no guarantee — the metri
 - **Result: baseline 0.300 → optimized 0.600** (on the real template path); valset 0/0 violations.
 - Direction guardrail extended: it also removes the N/A direction section (evidence-first: omit, not N/A).
 - Production validation (STRY0010010): clean headings, real title, 233/233 tests green.
+
+## 24. Evening Wrap-Up (2026-07-27) — Tomorrow: Handling N/A-only Sections
+
+### Open Problem (tomorrow's topic)
+The model writes "N/A" instead of "omit" into the unsupported sections (in the production article: "Known Issues / Content / N/A"). There is already a guardrail for the direction sections (Inbound/Outbound), but the general case is not covered.
+
+### WE CONTINUE HERE TOMORROW (4 steps, ~40 minutes in total)
+1. **Metric extension:** penalise the N/A-only section if the gold omits it ("N/A-only section '<h2>' present but absent in gold — omit it"). Currently the metric is BLIND to it: `_section_has_content()` rates the N/A as "no content" → no penalty → GEPA cannot learn it.
+2. **Guardrail:** `strip_na_only_sections()` in the pipeline — delete every <h2> section whose content is only "N/A" (deterministic guarantee, in addition to metric+GEPA).
+3. **GEPA re-run** with the new metric (~25-30 minutes with the -np 4 slots + num_threads=4).
+4. **Production validation** STRY0010010 → the Known Issues N/A must disappear.
+
+### Why Do We Need Both? (yesterday's lesson repeated)
+The metric penalty reduces FREQUENCY (GEPA learns it), the guardrail zeroes the RISK (with the weak instruction-following of the 35B, the prompt rule is not a 100% guarantee).
+
+### Environment Tomorrow
+- llama.cpp on the desktop: `.\llama-server.exe -m "Qwen3.6-35B-A3B-NSC-ACE-SABER-Q4_K_M.gguf" --fit on --fit-ctx 131072 --fit-target 256 -np 4 -fa on --no-mmap -b 2048 -ub 2048 -ctk q8_0 -ctv q8_0 --temp 0.6 --top-p 0.95 --top-k 20 --min-p 0.0 --presence-penalty 0.0 --repeat-penalty 1.0 --reasoning off --jinja --host 0.0.0.0 --port 8033`
+- LM health check before GEPA: the `chat/completions` endpoint must return 200 (if 502 → llama-server is not running).
+- GEPA run: `rm -rf gepa_logs && nohup ../.venv/bin/python -m eval.gepa_optimize --auto light > runs/gepa_run.log 2>&1 & disown`
+- Server restart: `pkill -f "uvicorn snow_kb"; sleep 2; setsid nohup ../.venv/bin/uvicorn snow_kb.server:app --host 0.0.0.0 --port 8000 >> server.log 2>&1 < /dev/null & disown`
+
+### Current Status (everything committed and pushed)
+- Spec 009 is done: 3 predictors, template mandatory, the first GEPA measured on the REAL template path (0.300→0.600), 233/233 tests.
+- Production demo article: KB0010009 (STRY0010010).
