@@ -375,3 +375,27 @@ Gyenge task modellnél (35B) a prompt-szabály önmagában nem garancia — a me
 - **Eredmény: baseline 0.300 → optimized 0.600** (valós template úton); valset 0/0 violation.
 - Direction guardrail kiterjesztve: az N/A-s irány-szekciót is törli (evidence-first: omit, ne N/A).
 - Éles validáció (STRY0010010): tiszta fejlécek, valódi cím, 233/233 teszt zöld.
+
+## 24. Esti zárás (2026-07-27) — Holnap: N/A-only szekciók kezelése
+
+### Nyitott probléma (holnapi téma)
+A modell az "omit" helyett "N/A"-t ír a támogatatlan szekciókba (az éles cikkben: "Known Issues / Content / N/A"). Az irány-szekciókra (Inbound/Outbound) már van guardrail, de az általános eset nincs lefedve.
+
+### HOLNAP ITT FOLYTATJUK (4 lépés, ~40 perc összesen)
+1. **Metric-bővítés:** az N/A-only szekció büntetése, ha a goldban hiányzik ("N/A-only section '<h2>' present but absent in gold — omit it"). Jelenleg a metric VAK rá: a `_section_has_content()` az N/A-t "nincs tartalom"-ként értékeli → nincs büntetés → a GEPA nem tanulja.
+2. **Guardrail:** `strip_na_only_sections()` a pipeline-ban — minden olyan <h2> szekció törlése, aminek tartalma csak "N/A" (determinisztikus biztosíték, a metric+GEPA mellett).
+3. **GEPA újrafutás** az új metric-kel (~25-30 perc az -np 4 slotokkal + num_threads=4).
+4. **Éles validáció** STRY0010010 → a Known Issues N/A-nak el kell tűnnie.
+
+### Miért kell mindkettő? (a tegnapi tanulság ismételve)
+A metric-büntetés a GYAKORISÁGOT csökkenti (GEPA megtanulja), a guardrail a KOCKÁZATOT nullázza (35B gyenge instruction-following miatt a prompt-szabály nem 100%-os garancia).
+
+### Környezet holnap
+- llama.cpp a desktopon: `.\llama-server.exe -m "Qwen3.6-35B-A3B-NSC-ACE-SABER-Q4_K_M.gguf" --fit on --fit-ctx 131072 --fit-target 256 -np 4 -fa on --no-mmap -b 2048 -ub 2048 -ctk q8_0 -ctv q8_0 --temp 0.6 --top-p 0.95 --top-k 20 --min-p 0.0 --presence-penalty 0.0 --repeat-penalty 1.0 --reasoning off --jinja --host 0.0.0.0 --port 8033`
+- LM-élteszt GEPA előtt: a `chat/completions` endpoint 200-at adjon (ha 502 → llama-server nem fut).
+- GEPA futtatás: `rm -rf gepa_logs && nohup ../.venv/bin/python -m eval.gepa_optimize --auto light > runs/gepa_run.log 2>&1 & disown`
+- Szerver restart: `pkill -f "uvicorn snow_kb"; sleep 2; setsid nohup ../.venv/bin/uvicorn snow_kb.server:app --host 0.0.0.0 --port 8000 >> server.log 2>&1 < /dev/null & disown`
+
+### Mai állapot (mind commitolva és pusholva)
+- Spec 009 kész: 3 prediktor, template kötelező, első VALÓS template-úton mért GEPA (0.300→0.600), 233/233 teszt.
+- Éles demo cikk: KB0010009 (STRY0010010).
