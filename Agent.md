@@ -361,3 +361,17 @@ Outbound Story (STRY0010010) esetén az **Inbound szekció tartalommal töltődi
 
 ### Tanulság
 Gyenge task modellnél (35B) a prompt-szabály önmagában nem garancia — a metric+GEPA jelentősen javít, de a kritikus tiltásokhoz kell a determinisztikus guardrail is.
+
+## 23. Spec 009 + Code Review BEFEJEZVE (2026-07-27)
+
+### Code review javítások (dspy-fundamentals best practice)
+- `related_articles_context` desc N/A-ellentmondás javítva; `audience: Literal[...]`; `title` OutputField (cím-hack megszűnt); `ANALYZE_CHANGES_QUERY` konstans; comment rot takarítás.
+
+### Spec 009: Legacy draft/format ág kivezetve
+- Prediktorok 5 → 3 (`analyze_changes`, `extract`, `generate_from_template`); `template_context` kötelező.
+- **Kritikus felfedezés:** az összes korábbi GEPA futás a legacy ágat optimalizálta (a gold datasetben nem volt template_context) — a mostani az ELSŐ valós, produkciós útvonalon mért optimalizáció.
+- Dataset: `template_context` input hozzáadva (integration_team_template.html).
+- llama.cpp `-np 4` + GEPA `num_threads=4`: 25s → 8s/rollout; a futás ~25 perc.
+- **Eredmény: baseline 0.300 → optimized 0.600** (valós template úton); valset 0/0 violation.
+- Direction guardrail kiterjesztve: az N/A-s irány-szekciót is törli (evidence-first: omit, ne N/A).
+- Éles validáció (STRY0010010): tiszta fejlécek, valódi cím, 233/233 teszt zöld.

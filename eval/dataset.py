@@ -12,6 +12,24 @@ from pathlib import Path
 import dspy
 
 
+_TEMPLATE_CACHE: str | None = None
+
+
+def _load_template_context() -> str:
+    """Az Integration Team HTML sablon betöltése (cache-elve).
+
+    Ha a fájl hiányzik, üres string — ilyenkor a program ValueError-t dob
+    (spec 009), ami a helyes viselkedés: sablon nélkül nincs generálás.
+    """
+    global _TEMPLATE_CACHE
+    if _TEMPLATE_CACHE is None:
+        template_path = Path("data/examples/integration_team_template.html")
+        _TEMPLATE_CACHE = (
+            template_path.read_text(encoding="utf-8") if template_path.exists() else ""
+        )
+    return _TEMPLATE_CACHE
+
+
 def load_gold_dataset(path: str | Path) -> tuple[list[dspy.Example], list[dspy.Example]]:
     """Betölti a gold_dataset.md fájlt és szeparált trainset/valset felosztást ad vissza.
 
@@ -65,8 +83,15 @@ def load_gold_dataset(path: str | Path) -> tuple[list[dspy.Example], list[dspy.E
         if "<h2>" not in html:
             raise ValueError(f"A {idx+1}. példa html mezője nem tartalmaz <h2> fejléceket.")
 
-        # dspy.Example létrehozása: story_text (input) + html (expected output)
-        ex = dspy.Example(story_text=story_text, html=html).with_inputs("story_text")
+        # dspy.Example létrehozása: story_text + template_context (inputok),
+        # html (expected output). Spec 009: a template_context kötelező input —
+        # a gold példákhoz az Integration Team sablont használjuk (ugyanaz,
+        # mint amit a pipeline a ServiceNow-ból tölt le).
+        ex = dspy.Example(
+            story_text=story_text,
+            template_context=_load_template_context(),
+            html=html,
+        ).with_inputs("story_text", "template_context")
         examples.append(ex)
 
     # Szeparált felosztás: első 3 trainset, utolsó 2 valset

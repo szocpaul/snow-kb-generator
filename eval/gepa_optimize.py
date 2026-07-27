@@ -41,6 +41,7 @@ def run_gepa_optimization(program, trainset, valset):
         reflection_lm=_create_reflection_lm(),
         candidate_selection_strategy="pareto",
         instruction_proposer=_create_instruction_proposer(),
+        num_threads=4,  # a llama.cpp -np 4 slotjaihoz igazítva
         track_stats=True,
         log_dir="./gepa_logs",
         seed=0,

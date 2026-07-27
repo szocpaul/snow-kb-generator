@@ -89,3 +89,16 @@ class TestNormalizeCodeTags:
         from snow_kb.pipeline import normalize_code_tags
         html = "<p>No tags here, <strong>already strong</strong>.</p>"
         assert normalize_code_tags(html) == html
+
+
+class TestDirectionGuardrailNA:
+    """A guardrail az N/A-s irány-szekciót is eltávolítja (evidence-first: omit, ne N/A)."""
+
+    def test_removes_na_only_inbound_section_for_outbound_story(self):
+        from snow_kb.pipeline import strip_direction_violating_sections
+        html = ("<h2>Overview / Summary</h2><p>Outbound flow.</p>"
+                "<h2>Inbound Technical Implementation</h2><h3>Content</h3><ul><li>N/A</li></ul>"
+                "<h2>Outbound Technical Implementation</h2><h3>Content</h3><ul><li>REST POST to Jira with payload.</li></ul>")
+        result = strip_direction_violating_sections(html, "Implement outbound REST API, outbound payload to Jira.")
+        assert "Inbound Technical Implementation" not in result
+        assert "Outbound Technical Implementation" in result

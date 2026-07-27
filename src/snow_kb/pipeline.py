@@ -218,7 +218,7 @@ def strip_direction_violating_sections(html: str, story_text: str) -> str:
     """
     import re
 
-    from eval.metric import _section_has_content, detect_direction
+    from eval.metric import detect_direction
 
     forbidden = {"inbound": "Outbound Technical Implementation", "outbound": "Inbound Technical Implementation"}
     direction = detect_direction(story_text)
@@ -226,10 +226,10 @@ def strip_direction_violating_sections(html: str, story_text: str) -> str:
         return html
 
     heading = forbidden[direction]
-    if not _section_has_content(html, heading):
+    if not re.search(r"<h2[^>]*>\s*" + re.escape(heading) + r"\s*</h2>", html, re.IGNORECASE):
         return html
 
-    logger.warning("Direction violation guardrail: '%s' szekció eltávolítva (%s story)", heading, direction)
+    logger.warning("Direction guardrail: '%s' szekció eltávolítva (%s story — tartalom vagy N/A)", heading, direction)
     return re.sub(
         r"\s*<h2[^>]*>\s*" + re.escape(heading) + r"\s*</h2>.*?(?=<h2|$)",
         "\n",
