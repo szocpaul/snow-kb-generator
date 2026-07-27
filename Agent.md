@@ -382,3 +382,17 @@ For an Outbound Story (STRY0010010) the **Inbound section is filled with content
 
 ### Lesson
 With a weak task model (35B) the prompt rule alone is no guarantee — the metric+GEPA improves things significantly, but the critical bans also need the deterministic guardrail.
+
+## 23. Spec 009 + Code Review COMPLETED (2026-07-27)
+
+### Code review fixes (dspy-fundamentals best practice)
+- `related_articles_context` desc N/A contradiction fixed; `audience: Literal[...]`; `title` OutputField (the title hack is gone); `ANALYZE_CHANGES_QUERY` constant; comment rot cleanup.
+
+### Spec 009: Legacy draft/format branch removed
+- Predictors 5 → 3 (`analyze_changes`, `extract`, `generate_from_template`); `template_context` mandatory.
+- **Critical discovery:** all previous GEPA runs optimized the legacy branch (the gold dataset had no template_context) — the current one is the FIRST optimization measured on the real, production path.
+- Dataset: `template_context` input added (integration_team_template.html).
+- llama.cpp `-np 4` + GEPA `num_threads=4`: 25s → 8s/rollout; the run takes ~25 minutes.
+- **Result: baseline 0.300 → optimized 0.600** (on the real template path); valset 0/0 violations.
+- Direction guardrail extended: it also removes the N/A direction section (evidence-first: omit, not N/A).
+- Production validation (STRY0010010): clean headings, real title, 233/233 tests green.

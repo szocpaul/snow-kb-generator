@@ -12,6 +12,24 @@ from pathlib import Path
 import dspy
 
 
+_TEMPLATE_CACHE: str | None = None
+
+
+def _load_template_context() -> str:
+    """Loads the Integration Team HTML template (cached).
+
+    If the file is missing, an empty string — the program then raises a ValueError
+    (spec 009), which is the correct behaviour: no generation without a template.
+    """
+    global _TEMPLATE_CACHE
+    if _TEMPLATE_CACHE is None:
+        template_path = Path("data/examples/integration_team_template.html")
+        _TEMPLATE_CACHE = (
+            template_path.read_text(encoding="utf-8") if template_path.exists() else ""
+        )
+    return _TEMPLATE_CACHE
+
+
 def load_gold_dataset(path: str | Path) -> tuple[list[dspy.Example], list[dspy.Example]]:
     """Loads the gold_dataset.md file and returns a separate trainset/valset split.
 
@@ -65,8 +83,15 @@ def load_gold_dataset(path: str | Path) -> tuple[list[dspy.Example], list[dspy.E
         if "<h2>" not in html:
             raise ValueError(f"Example {idx+1} has no <h2> headings in its html field.")
 
-        # creating the dspy.Example: story_text (input) + html (expected output)
-        ex = dspy.Example(story_text=story_text, html=html).with_inputs("story_text")
+        # creating the dspy.Example: story_text + template_context (inputs),
+        # html (expected output). Spec 009: the template_context is a mandatory input —
+        # for the gold examples we use the Integration Team template (the same,
+        # like what the pipeline downloads from ServiceNow).
+        ex = dspy.Example(
+            story_text=story_text,
+            template_context=_load_template_context(),
+            html=html,
+        ).with_inputs("story_text", "template_context")
         examples.append(ex)
 
     # Separated split: the first 3 are trainset, the last 2 are valset
