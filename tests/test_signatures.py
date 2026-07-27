@@ -76,7 +76,9 @@ class TestFieldTypes:
         assert self._field_type(ExtractChange, "story_text") is str
         assert self._field_type(ExtractChange, "change_summary") is str
         assert self._field_type(ExtractChange, "key_steps") == list[str]
-        assert self._field_type(ExtractChange, "audience") is str
+        # Literal típus: a parser kényszeríti az érvényes értékeket (DSPy best practice)
+        from typing import Literal
+        assert self._field_type(ExtractChange, "audience") == Literal["helpdesk", "end-user", "developer"]
 
     def test_draft_sections_types(self):
         assert self._field_type(DraftSections, "key_steps") == list[str]
