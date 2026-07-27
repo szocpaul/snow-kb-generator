@@ -12,7 +12,7 @@
 ## Phase 2: Signature + Dataset (US2, US3)
 
 - [ ] T005 [US2] `GenerateKbFromTemplate` docstring: evidence-first (menu, not mandate; unsupported section OMITTED; direction corollary; rule for shared components)
-- [ ] T006 [US3] Gold dataset: delete N/A-only section blocks (script + manual review)
+- [ ] T006 [US3] Gold dataset: (a) deleting the N/A-only section blocks (5 direction-contradicting blocks); (b) deleting the fictional 'related articles' rows (5 KBXXXXXXX placeholder rows — unsupported content; the real references come from the live search) (script + manual review)
 - [ ] T007 [US3] Aligning the dataset tests with the evidence-first structure (`tests/test_eval_dataset.py`)
 
 ## Phase 3: SkilledProposer (US4)
