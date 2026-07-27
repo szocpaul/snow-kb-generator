@@ -193,6 +193,36 @@ def configure_lm(settings: Settings) -> None:
 # Fő orchestrátor
 # ---------------------------------------------------------------------------
 
+def strip_direction_violating_sections(html: str, story_text: str) -> str:
+    """Eltávolítja az irány-sértő szekciókat (spec 007 guardrail).
+
+    Outbound story esetén az 'Inbound Technical Implementation' szekciót (és fordítva)
+    teljesen eltávolítja a HTML-ből. A 35B-s task modell az explicit instrukció
+    ellenére is kitöltheti — ez a determinisztikus utolsó védelmi vonal.
+    'both'/'unknown' iránynál változatlanul hagyja a HTML-t.
+    """
+    import re
+
+    from eval.metric import _section_has_content, detect_direction
+
+    forbidden = {"inbound": "Outbound Technical Implementation", "outbound": "Inbound Technical Implementation"}
+    direction = detect_direction(story_text)
+    if direction not in forbidden:
+        return html
+
+    heading = forbidden[direction]
+    if not _section_has_content(html, heading):
+        return html
+
+    logger.warning("Direction violation guardrail: '%s' szekció eltávolítva (%s story)", heading, direction)
+    return re.sub(
+        r"\s*<h2[^>]*>\s*" + re.escape(heading) + r"\s*</h2>.*?(?=<h2|$)",
+        "\n",
+        html,
+        flags=re.DOTALL | re.IGNORECASE,
+    )
+
+
 def strip_hallucinated_references(html: str, story_text: str, known_refs: str = "") -> str:
     """Eltávolítja a hallucinált KB hivatkozásokat a generált HTML-ből (spec 004/005).
 
@@ -355,6 +385,8 @@ def generate_kb_article(
         )
         article: KBArticle = pred.article
         article.source_story = story_identifier  # Duplikáció megakadályozása
+        # Spec 007 guardrail: irány-sértő szekciók eltávolítása
+        article.html = strip_direction_violating_sections(article.html, story_text)
         # Spec 004/005 guardrail: hallucinált KB hivatkozások eltávolítása push ELŐTT
         # (a valódi keresési találatok known_refs-ként védettek)
         article.html = strip_hallucinated_references(

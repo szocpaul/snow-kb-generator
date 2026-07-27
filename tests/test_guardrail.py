@@ -46,3 +46,29 @@ class TestGuardrailKnownRefs:
         result = strip_hallucinated_references(html, "Story without any refs.", known_refs=known)
         assert "KB7654321" in result
         assert "KB0012345" not in result
+
+
+class TestDirectionGuardrail:
+    """Spec 007: irány-sértő szekciók determinisztikus eltávolítása."""
+
+    def test_removes_inbound_section_for_outbound_story(self):
+        from snow_kb.pipeline import strip_direction_violating_sections
+        html = ("<h2>Overview / Summary</h2><p>Outbound flow.</p>"
+                "<h2>Inbound Technical Implementation</h2><h3>Content</h3>"
+                "<ul><li>JiraIntegrationUtils builds the payload for Jira issue creation.</li></ul>"
+                "<h2>Outbound Technical Implementation</h2><h3>Content</h3><ul><li>REST POST.</li></ul>")
+        result = strip_direction_violating_sections(html, "Implement outbound REST API for Jira, outbound payload.")
+        assert "Inbound Technical Implementation" not in result
+        assert "Outbound Technical Implementation" in result
+        assert "Overview / Summary" in result
+
+    def test_keeps_section_when_both_directions(self):
+        from snow_kb.pipeline import strip_direction_violating_sections
+        html = ("<h2>Inbound Technical Implementation</h2><h3>Content</h3>"
+                "<ul><li>The inbound webhook receives Jira events and maps fields.</li></ul>")
+        assert strip_direction_violating_sections(html, "inbound webhook and outbound REST sync") == html
+
+    def test_idempotent_when_section_absent(self):
+        from snow_kb.pipeline import strip_direction_violating_sections
+        html = "<h2>Overview / Summary</h2><p>Only overview.</p>"
+        assert strip_direction_violating_sections(html, "outbound integration") == html

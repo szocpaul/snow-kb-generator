@@ -346,3 +346,18 @@ Outbound Story (STRY0010010) esetén az **Inbound szekció tartalommal töltődi
 - Kimi K3 reflection: `openai/k3` @ `https://api.kimi.com/coding/v1` (OAuth access token; a token ~1 óra után lejárhat futás közben — a run így is befejeződik, de a végén "invalid API key" warning normális).
 - GEPA futtatás előtt MINDIG töröld a `gepa_logs/`-ot (a checkpoint a régi, esetleg hibás állapotot őrzi).
 - Szerver restart: `pkill -f "uvicorn snow_kb"` után `nohup ../.venv/bin/uvicorn snow_kb.server:app --host 0.0.0.0 --port 8000 >> server.log 2>&1 & disown` (setsid néha elveszti a processt).
+
+## 22. Spec 007+008: Evidence-First KB Generation BEFEJEZVE (2026-07-27)
+
+### Megvalósult (T001-T014)
+- **Metric:** `detect_direction()` + Direction violation + Unsupported section tengelyek, explicit feedback a reflection modellnek.
+- **Signature:** evidence-first ("The template is a MENU, not a mandate; no evidence, no section").
+- **Gold dataset:** 5 N/A-only blokk + 5 fiktív related sor törölve; dataset teszt irány-érzékeny.
+- **SkilledProposer:** anti-overfitting proposer + `additional_instructions` (evidence-first + KB-hallucináció tiltás). FONTOS: `prompt_model=Kimi K3` kell — nélküle a lokális Qwennel generálna (lassú/gyenge).
+- **Kimi token fix:** `_RefreshingKimiLM` — a ~20 perces OAuth token miatt minden hívás előtt auth.json újraolvasás + proaktív pi-CLI refresh (<120 mp). A `dspy-lm-auth` NEM kezeli a kimi-coding OAuth refresh-t (openai-codex fókusz).
+- **GEPA:** 0.300 → 0.600 (szigorúbb metric mellett; az irányszabály bekerült az instrukciókba).
+- **Guardrail (out-of-scope-ból behozva, mert kellett):** `strip_direction_violating_sections()` — a 35B az explicit szabály ellenére 1/2 valset példánál mégis kitöltötte az Inbound szekciót → determinisztikus post-process törli.
+- **Validáció:** valset 0/2 violation (guardraillal); éles STRY0010010: csak támogatott szekciók (Overview, Outbound, Usage, Testing), nincs Inbound, 3 valódi KB ref. 232/232 teszt zöld.
+
+### Tanulság
+Gyenge task modellnél (35B) a prompt-szabály önmagában nem garancia — a metric+GEPA jelentősen javít, de a kritikus tiltásokhoz kell a determinisztikus guardrail is.

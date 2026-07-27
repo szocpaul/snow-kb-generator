@@ -63,7 +63,12 @@ def _create_instruction_proposer():
     try:
         from skilled_proposer import SkilledProposer
 
-        return SkilledProposer(additional_instructions=_EVIDENCE_FIRST_GUIDANCE)
+        return SkilledProposer(
+            additional_instructions=_EVIDENCE_FIRST_GUIDANCE,
+            # FONTOS: prompt_model nélkül a dspy.settings.lm-et (lokális Qwen) használná
+            # a javaslatokhoz — lassú és gyenge. A Kimi K3 a proposer modell is.
+            prompt_model=_create_reflection_lm(),
+        )
     except ImportError:
         import warnings
 
@@ -144,10 +149,29 @@ class _RefreshingKimiLM(dspy.LM):
 
     def _refresh_api_key(self) -> None:
         import json
+        import subprocess
+        import time
         from pathlib import Path
 
-        auth_data = json.loads((Path.home() / ".pi" / "agent" / "auth.json").read_text(encoding="utf-8"))
-        fresh = auth_data.get("kimi-coding", {}).get("access")
+        auth_path = Path.home() / ".pi" / "agent" / "auth.json"
+        auth_data = json.loads(auth_path.read_text(encoding="utf-8"))
+        kimi = auth_data.get("kimi-coding", {})
+
+        # Ha a token <120 mp múlva lejár, proaktívan frissítjük egy minimális
+        # pi hívással (a pi végzi az OAuth refresh-t és írja az auth.json-t).
+        expires_s = kimi.get("expires", 0) / 1000
+        if time.time() > expires_s - 120:
+            try:
+                subprocess.run(
+                    ["pi", "--provider", "kimi-coding", "--model", "k3", "-p", "OK"],
+                    capture_output=True, timeout=90,
+                )
+                auth_data = json.loads(auth_path.read_text(encoding="utf-8"))
+                kimi = auth_data.get("kimi-coding", {})
+            except Exception:
+                pass  # marad a meglévő token; a retry/retry-logika kezeli
+
+        fresh = kimi.get("access")
         if fresh:
             self.kwargs["api_key"] = fresh
 
