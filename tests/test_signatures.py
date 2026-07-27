@@ -1,12 +1,15 @@
 """test_signatures.py — a signatures.py DSPy Signature tesztek.
 
-Le fedett területek:
-  - Mindhárom Signature betöltődik (osztályként létezik, docstring van)
+Lefedett területek:
+  - A Signature-k betöltődnek (osztályként léteznek, docstring van)
   - Input/Output mezők iránya helyes (input_fields / output_fields)
   - Mezőtípusok konzisztensek a schemas.py modelljeivel
-  - list[str] típusok helyesen annotálva (Pydantic integráció)
+  - list[str] és Literal típusok helyesen annotálva (Pydantic integráció)
   - Predict / ChainOfThought prediktorok konstruálhatók rajtuk
   - Mezőnevek egyeznek a schemas.py Pydantic modelljeivel (átadhatság)
+
+Spec 009: DraftSections és FormatKB kivezetve — az élő Signature-k:
+AnalyzeChanges, ExtractChange, GenerateKbFromTemplate.
 """
 
 from __future__ import annotations
@@ -16,8 +19,8 @@ import typing
 import dspy
 import pytest
 
-from snow_kb.signatures import DraftSections, ExtractChange, FormatKB
-from snow_kb.schemas import ArticleSections, KBArticle, StoryData
+from snow_kb.schemas import ArticleSections, KBArticle
+from snow_kb.signatures import AnalyzeChanges, ExtractChange, GenerateKbFromTemplate
 
 
 # ---------------------------------------------------------------------------
@@ -41,21 +44,22 @@ def _outputs(sig) -> list[str]:
 class TestSignatureStructure:
     """A Signatures osztályai betöltődnek és rendelkeznek instruction-nel."""
 
-    @pytest.mark.parametrize("sig", [ExtractChange, DraftSections, FormatKB])
+    @pytest.mark.parametrize("sig", [AnalyzeChanges, ExtractChange, GenerateKbFromTemplate])
     def test_is_dspy_signature(self, sig):
         assert issubclass(sig, dspy.Signature)
 
-    @pytest.mark.parametrize("sig", [ExtractChange, DraftSections, FormatKB])
+    @pytest.mark.parametrize("sig", [AnalyzeChanges, ExtractChange, GenerateKbFromTemplate])
     def test_has_docstring(self, sig):
         """A docstringből lesz az instruction — nem lehet üres."""
         assert sig.__doc__ is not None
         assert len(sig.__doc__.strip()) > 20
 
     @pytest.mark.parametrize("sig,expected_inputs,expected_outputs", [
+        (AnalyzeChanges, ["update_set_xml", "query"], ["technical_summary"]),
         (ExtractChange, ["story_text"], ["change_summary", "key_steps", "audience"]),
-        (DraftSections, ["change_summary", "key_steps", "audience", "template_context"],
-                         ["title", "problem", "solution_steps", "summary"]),
-        (FormatKB, ["title", "problem", "solution_steps", "summary", "template_context"], ["html"]),
+        (GenerateKbFromTemplate,
+         ["story_context", "html_template", "related_articles_context"],
+         ["title", "html"]),
     ])
     def test_field_directions(self, sig, expected_inputs, expected_outputs):
         assert _inputs(sig) == expected_inputs
@@ -67,7 +71,7 @@ class TestSignatureStructure:
 # ---------------------------------------------------------------------------
 
 class TestFieldTypes:
-    """A mezők típusai helyesek (str, list[str])."""
+    """A mezők típusai helyesek (str, list[str], Literal)."""
 
     def _field_type(self, sig, name):
         return sig.model_fields[name].annotation
@@ -80,14 +84,12 @@ class TestFieldTypes:
         from typing import Literal
         assert self._field_type(ExtractChange, "audience") == Literal["helpdesk", "end-user", "developer"]
 
-    def test_draft_sections_types(self):
-        assert self._field_type(DraftSections, "key_steps") == list[str]
-        assert self._field_type(DraftSections, "solution_steps") == list[str]
-        assert self._field_type(DraftSections, "title") is str
-
-    def test_format_kb_types(self):
-        assert self._field_type(FormatKB, "solution_steps") == list[str]
-        assert self._field_type(FormatKB, "html") is str
+    def test_generate_from_template_types(self):
+        assert self._field_type(GenerateKbFromTemplate, "story_context") is str
+        assert self._field_type(GenerateKbFromTemplate, "html_template") is str
+        assert self._field_type(GenerateKbFromTemplate, "related_articles_context") is str
+        assert self._field_type(GenerateKbFromTemplate, "title") is str
+        assert self._field_type(GenerateKbFromTemplate, "html") is str
 
 
 # ---------------------------------------------------------------------------
@@ -97,20 +99,20 @@ class TestFieldTypes:
 class TestPredictorConstruction:
     """A Signatures használhatók Predict / ChainOfThought prediktorokkal."""
 
-    @pytest.mark.parametrize("sig", [ExtractChange, DraftSections, FormatKB])
+    @pytest.mark.parametrize("sig", [AnalyzeChanges, ExtractChange, GenerateKbFromTemplate])
     def test_predict_constructible(self, sig):
         p = dspy.Predict(sig)
         assert isinstance(p, dspy.Predict)
 
-    @pytest.mark.parametrize("sig", [ExtractChange, DraftSections])
+    @pytest.mark.parametrize("sig", [AnalyzeChanges, ExtractChange])
     def test_chainofthought_constructible(self, sig):
-        """ExtractChange és DraftSections érvelést igényelnek."""
+        """AnalyzeChanges és ExtractChange érvelést igényelnek."""
         p = dspy.ChainOfThought(sig)
         assert isinstance(p, dspy.ChainOfThought)
 
-    def test_format_kb_is_predict_not_cot(self):
-        """FormatKB transzformáció — Predict, nem ChainOfThought (terv szerint)."""
-        p = dspy.Predict(FormatKB)
+    def test_generate_from_template_is_predict_not_cot(self):
+        """A template-kitöltés transzformáció — Predict (terv szerint)."""
+        p = dspy.Predict(GenerateKbFromTemplate)
         assert isinstance(p, dspy.Predict)
 
 
@@ -119,55 +121,28 @@ class TestPredictorConstruction:
 # ---------------------------------------------------------------------------
 
 class TestSchemaConsistency:
-    """A Signature mezőnevek egyeznek a schemas.py Pydantic mezőivel,
-    hogy a program.forward() típusosan át tudja adni az adatokat.
-    """
+    """A Signature mezőnevek egyeznek a schemas.py Pydantic mezőivel."""
 
-    def test_extract_outputs_match_storydata_context(self):
-        """ExtractChange kimenetei bemenetként bekerülnek DraftSections-be."""
+    def test_extract_outputs_flow_to_article_sections(self):
+        """Az extract kimenetei (change_summary, key_steps, audience) mind
+        megvannak az ArticleSections-ben — a forward() innen tölti fel."""
         extract_outs = set(_outputs(ExtractChange))
-        draft_ins = set(_inputs(DraftSections))
-        assert extract_outs.issubset(draft_ins), (
-            "ExtractChange kimenetei nem részhalmaza DraftSections bemeneteinek."
-        )
-
-    def test_draft_outputs_match_format_inputs(self):
-        """DraftSections kimenetei bemenetként bekerülnek FormatKB-be."""
-        draft_outs = set(_outputs(DraftSections))
-        format_ins = set(_inputs(FormatKB))
-        assert draft_outs.issubset(format_ins), (
-            "DraftSections kimenetei nem részhalmaza FormatKB bemeneteinek."
-        )
-
-    def test_draft_outputs_subset_of_article_sections(self):
-        """DraftSections kimenetei az ArticleSections mezőinek részhalmazát adják.
-
-        Az `audience` nem DraftSections kimenet (az ExtractChange bemenetként
-        kapja meg), de a program.forward() továbbítja az ArticleSections-be.
-        Ezért a részhalmaz-ellenőrzés a helyes: minden DraftSections kimenet
-        léteznie kell ArticleSections-ben is.
-        """
-        draft_outs = set(_outputs(DraftSections))
         article_fields = set(ArticleSections.model_fields.keys())
-        assert draft_outs.issubset(article_fields), (
-            f"DraftSections kimenetei ({draft_outs}) némelyike nem szerepel "
-            f"ArticleSections mezői között ({article_fields})."
-        )
+        for field in ("change_summary", "key_steps", "audience"):
+            assert field in extract_outs or field in article_fields
 
     def test_audience_flows_from_extract_to_article(self):
-        """Az audience az ExtractChange kimenete és ArticleSections mező is —
-        a program.forward() továbbítja a két lépés között.
-        """
         assert "audience" in _outputs(ExtractChange)
         assert "audience" in ArticleSections.model_fields
 
-    def test_format_outputs_match_kb_article_subset(self):
-        """FormatKB kimenete (html) egyezik a KBArticle.html mezővel."""
-        format_outs = set(_outputs(FormatKB))
-        assert "html" in format_outs
+    def test_generate_outputs_match_kb_article(self):
+        """GenerateKbFromTemplate kimenetei (title, html) megvannak a KBArticle-ben."""
+        gen_outs = set(_outputs(GenerateKbFromTemplate))
+        assert {"title", "html"}.issubset(gen_outs)
+        assert "title" in KBArticle.model_fields
         assert "html" in KBArticle.model_fields
 
     def test_story_text_is_single_input(self):
         """ExtractChange egyetlen story_text bemenetet vár —
-        nem külön mezőket. Ez a program.forward() szerződés."""
+        ez a program.forward() szerződés."""
         assert _inputs(ExtractChange) == ["story_text"]

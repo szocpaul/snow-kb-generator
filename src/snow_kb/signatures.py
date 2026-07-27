@@ -1,11 +1,9 @@
 """signatures.py — DSPy Signatures a Story → KB pipeline lépéseihez.
 
-Öt Signature, mindegyik tiszta Input/Output szerződés:
+Három élő Signature (spec 009: DraftSections/FormatKB kivezetve):
   - AnalyzeChanges        : Update Set XML → technikai összefoglaló
   - ExtractChange         : Story szöveg → strukturált változási információ
-  - DraftSections         : kinyert info → KB cikk részei (title, problem, solution, summary)
-  - FormatKB              : részek → ServiceNow-kompatibilis HTML
-  - GenerateKbFromTemplate: story context + HTML sablon → kész cikk (elsődleges út)
+  - GenerateKbFromTemplate: story context + HTML sablon → kész cikk (egyetlen generálási út)
 
 Az instruction minden Signature docstring-jéből jön — NINCS hardcode-olt prompt.
 A prediktorok (Predict / ChainOfThought) a program.py-ban kerülnek rájuk.
@@ -74,73 +72,6 @@ class ExtractChange(dspy.Signature):
     )
     audience: Literal["helpdesk", "end-user", "developer"] = dspy.OutputField(
         desc="Primary audience for a KB article."
-    )
-
-
-# ---------------------------------------------------------------------------
-# 2. DraftSections — a kinyert infóból KB cikk részeket szerkeszt
-# ---------------------------------------------------------------------------
-
-class DraftSections(dspy.Signature):
-    """Draft Knowledge Base article sections from the extracted change info.
-    
-    CRITICAL OUTPUT FORMAT INSTRUCTION: 
-    You MUST strictly follow the structural outline provided in the `template_context`.
-    Do NOT use generic headings like 'Problem' or 'Solution'.
-    Instead, map the extracted change info into the EXACT sections and headings demanded by the team's template_context.
-    """
-    change_summary: str = dspy.InputField(desc="What changed (from ExtractChange).")
-    key_steps: list[str] = dspy.InputField(desc="Reproducible steps (from ExtractChange).")
-    audience: str = dspy.InputField(desc="Target audience: helpdesk | end-user | developer.")
-    template_context: str = dspy.InputField(
-        desc="HTML/text example of the team's required structure. Mimic this format.",
-        default="",
-    )
-
-    title: str = dspy.OutputField(
-        desc="Article title, 8-120 characters, descriptive and specific."
-    )
-    problem: str = dspy.OutputField(
-        desc="What was the problem or need that prompted this change? "
-             "1-3 sentences."
-    )
-    solution_steps: list[str] = dspy.OutputField(
-        desc="Reproducible solution steps, refined and ordered. Each step "
-             "is a single string without numbering prefix."
-    )
-    summary: str = dspy.OutputField(
-        desc="One-or-two sentence abstract for the top of the article."
-    )
-
-
-# ---------------------------------------------------------------------------
-# 3. FormatKB — a részeket ServiceNow-kompatibilis HTML-lé alakítja
-# ---------------------------------------------------------------------------
-
-class FormatKB(dspy.Signature):
-    """Format drafted sections into ServiceNow-compatible HTML.
-    
-    CRITICAL INSTRUCTION: You MUST strictly follow the exact HTML tags, headings, 
-    and overall structure provided in the `template_context`. If the template 
-    uses specific <h2> headings (e.g., 'Overview / Summary', 'Inbound Technical Implementation'), 
-    you MUST use those exact headings in your output HTML.
-
-    FORMATTING RULE: NEVER use <code> tags (they render with an ugly gray background
-    in the ServiceNow KB view). Use <strong> for identifiers, script names, field names,
-    endpoints and API paths instead.
-    """
-    title: str = dspy.InputField(desc="Article title.")
-    problem: str = dspy.InputField(desc="Problem statement.")
-    solution_steps: list[str] = dspy.InputField(desc="Ordered solution steps.")
-    summary: str = dspy.InputField(desc="Article summary.")
-    template_context: str = dspy.InputField(
-        desc="HTML structure/example to mimic exactly.",
-        default="",
-    )
-
-    html: str = dspy.OutputField(
-        desc="ServiceNow KB article body as HTML. Must contain at least one "
-             "<p>, <ol>, or <ul> block. No <html>/<head>/<body> wrappers."
     )
 
 

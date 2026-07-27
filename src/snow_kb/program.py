@@ -3,11 +3,10 @@
 A DSPy Signature-ket egyetlen összetett Module-láncba fűzi. Ez a "program",
 amit baseline-olunk és GEPA-val optimalizálunk.
 
-Lépések:
-  0. AnalyzeChanges (RLM) — Ha nagy az Update Set, rekurzívan elemzi (opcionális)
+Lépések (spec 009: a legacy draft/format ág kivezetve, a template út az egyetlen):
+  0. AnalyzeChanges — Update Set XML payloadok technikai elemzése (ChainOfThought)
   1. ExtractChange — Story szövegből kinyeri a változás lényegét (ChainOfThought)
-  2. DraftSections — kinyert infóból KB cikk részeket szerkeszt (ChainOfThought)
-  3. FormatKB     — részeket ServiceNow-kompatibilis HTML-lé alakítja (Predict)
+  2. GenerateKbFromTemplate — a csapat HTML sablonjának evidence-first kitöltése (Predict)
 
 Minden prediktor NEVET kap, hogy a GEPA külön célozhassa a reflection-t.
 A forward() egy dspy.Prediction-t ad vissza, ami tartalmazza az ArticleSections-t
@@ -21,9 +20,7 @@ import dspy
 from snow_kb.schemas import ArticleSections, KBArticle
 from snow_kb.signatures import (
     AnalyzeChanges,
-    DraftSections,
     ExtractChange,
-    FormatKB,
     GenerateKbFromTemplate,
 )
 
@@ -46,11 +43,9 @@ class StoryToKBArticle(dspy.Module):
     def __init__(self) -> None:
         super().__init__()
         # Névvel ellátott prediktorok — a GEPA ezeket célozza.
+        # Spec 009: a legacy draft/format ág kivezetve; a template út az egyetlen.
         self.analyze_changes = dspy.ChainOfThought(AnalyzeChanges)
         self.extract = dspy.ChainOfThought(ExtractChange)
-        self.draft = dspy.ChainOfThought(DraftSections)
-        self.format = dspy.Predict(FormatKB)
-        # Új prediktor: HTML sablon egy-az-egyben történő kitöltése
         self.generate_from_template = dspy.Predict(GenerateKbFromTemplate)
 
     def forward(
@@ -102,84 +97,45 @@ class StoryToKBArticle(dspy.Module):
         # 1. Kinyerés: mi történt, lépések, célközönség
         extracted = self.extract(story_text=full_context)
 
-        # 2. Ha van HTML sablon, használd az egy-az-egyben kitöltő Signature-t
-        if template_context:
-            # A sablon-alapú generálás sokkal rugalmasabb: bármennyi szekciót képes
-            # kezelni, mert közvetlenül a HTML struktúrát tölti ki.
-            story_context_for_template = (
-                f"Change Summary: {extracted.change_summary}\n\n"
-                f"Key Steps: {', '.join(extracted.key_steps)}\n\n"
-                f"Target Audience (style only, do NOT create a section for it): {extracted.audience}\n\n"
-                f"Full Story Context: {full_context}"
-            )
-            template_result = self.generate_from_template(
-                story_context=story_context_for_template,
-                html_template=template_context,
-                related_articles_context=related_articles_context,
-            )
-            final_html = template_result.html
-            # A címet a modell adja (GenerateKbFromTemplate.title); fallback az
-            # extract change_summary-je, ha a mező üresen jönne vissza.
-            final_title = (template_result.title or "").strip()[:120] or extracted.change_summary.split('.')[0][:120] or "KB Article"
-            
-            article = KBArticle(
-                title=final_title,
-                html=final_html,
-                category=category,
-                knowledge_base_id=knowledge_base_id,
-            )
-            
-            return dspy.Prediction(
-                sections=ArticleSections(
-                    title=final_title,
-                    problem=extracted.change_summary,
-                    solution_steps=extracted.key_steps,
-                    summary=extracted.change_summary,
-                    audience=extracted.audience,
-                ),
-                article=article,
-                change_summary=extracted.change_summary,
-                key_steps=extracted.key_steps,
-                audience=extracted.audience,
+        # 2. Template-alapú generálás (spec 009: ez az egyetlen út — a sablon kötelező)
+        if not template_context:
+            raise ValueError(
+                "template_context kötelező (spec 009): a csapat KB sablonja nélkül "
+                "a program nem generál. A pipeline a ServiceNow-ból tölti le a sablont."
             )
 
-        # 2b. Ha NINCS sablon: a hagyományos 3-lépéses pipeline
-        drafted = self.draft(
-            change_summary=extracted.change_summary,
-            key_steps=extracted.key_steps,
-            audience=extracted.audience,
-            template_context=template_context,
+        story_context_for_template = (
+            f"Change Summary: {extracted.change_summary}\n\n"
+            f"Key Steps: {', '.join(extracted.key_steps)}\n\n"
+            f"Target Audience (style only, do NOT create a section for it): {extracted.audience}\n\n"
+            f"Full Story Context: {full_context}"
         )
-
-        # 3. Formázás: HTML törzs
-        formatted = self.format(
-            title=drafted.title,
-            problem=drafted.problem,
-            solution_steps=drafted.solution_steps,
-            summary=drafted.summary,
-            template_context=template_context,
+        template_result = self.generate_from_template(
+            story_context=story_context_for_template,
+            html_template=template_context,
+            related_articles_context=related_articles_context,
         )
-
-        # Típusos köztes és végső objektumok (schemas.py)
-        sections = ArticleSections(
-            title=drafted.title,
-            problem=drafted.problem,
-            solution_steps=drafted.solution_steps,
-            summary=drafted.summary,
-            audience=extracted.audience,
-        )
+        final_html = template_result.html
+        # A címet a modell adja (GenerateKbFromTemplate.title); fallback az
+        # extract change_summary-je, ha a mező üresen jönne vissza.
+        final_title = (template_result.title or "").strip()[:120] or extracted.change_summary.split('.')[0][:120] or "KB Article"
 
         article = KBArticle(
-            title=drafted.title,
-            html=formatted.html,
+            title=final_title,
+            html=final_html,
             category=category,
             knowledge_base_id=knowledge_base_id,
         )
 
         return dspy.Prediction(
-            sections=sections,
+            sections=ArticleSections(
+                title=final_title,
+                problem=extracted.change_summary,
+                solution_steps=extracted.key_steps,
+                summary=extracted.change_summary,
+                audience=extracted.audience,
+            ),
             article=article,
-            # az Extract lépés kimenetei is elérhetők (a metric számára)
             change_summary=extracted.change_summary,
             key_steps=extracted.key_steps,
             audience=extracted.audience,
