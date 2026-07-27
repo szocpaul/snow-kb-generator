@@ -1,26 +1,29 @@
-# Tasks: Direction-Aware KB Quality
+# Tasks: Evidence-First KB Generation
 
 **Spec**: [spec.md](spec.md) | **Plan**: [plan.md](plan.md)
 
-## Phase 1: Direction-Aware Metric (US1)
+## Phase 1: Evidence-Aware Metric (US1)
 
 - [ ] T001 [US1] `detect_direction(story_text)` helper in `eval/metric.py` (inbound/outbound/both/unknown, keyword counting)
-- [ ] T002 [US1] Direction violation check in `template_adherence`: a non-applicable section filled in → penalty + explicit feedback ("Direction violation: ...")
-- [ ] T003 [US1] Tests: outbound+filled Inbound → penalty; outbound+N/A → OK; both/unknown → check skipped (`tests/test_eval_metric.py`)
+- [ ] T002 [US1] Direction violation check in `template_adherence`: a direction section that does not apply is filled → penalty + "Direction violation: ..." feedback
+- [ ] T003 [US1] Unsupported-section penalty: a section that is N/A/absent per the gold is filled in the prediction → penalty + "Unsupported section: ..." feedback
+- [ ] T004 [US1] Tests: direction violation is penalized; N/A → OK; both/unknown → skipped; unsupported section → feedback (`tests/test_eval_metric.py`)
 
-## Phase 2: Signature Rule (US2)
+## Phase 2: Signature + Dataset (US2, US3)
 
-- [ ] T004 [US2] `GenerateKbFromTemplate` docstring: categorical direction rule + placement rule for shared components
+- [ ] T005 [US2] `GenerateKbFromTemplate` docstring: evidence-first (menu, not mandate; unsupported section OMITTED; direction corollary; rule for shared components)
+- [ ] T006 [US3] Gold dataset: delete N/A-only section blocks (script + manual review)
+- [ ] T007 [US3] Aligning the dataset tests with the evidence-first structure (`tests/test_eval_dataset.py`)
 
-## Phase 3: SkilledProposer (US3)
+## Phase 3: SkilledProposer (US4)
 
-- [ ] T005 [US3] `pip install skilled-proposer` + pyproject.toml dev/extras update
-- [ ] T006 [US3] `run_gepa_optimization()`: `instruction_proposer=SkilledProposer(extra_guidance=...)` (direction rule + "never invent KB numbers/titles"), fallback to stock proposer with a warning
-- [ ] T007 [US3] Test: the GEPA is created with SkilledProposer (mock import), fallback branch tested
+- [ ] T008 [US4] `pip install skilled-proposer` + pyproject.toml extras update
+- [ ] T009 [US4] `run_gepa_optimization()`: `instruction_proposer=SkilledProposer(extra_guidance=...)` (evidence-first + direction + KB hallucination ban), stock fallback with a warning
+- [ ] T010 [US4] Test: GEPA is created with SkilledProposer; the fallback branch is tested
 
-## Phase 4: Re-optimization & Validation (US4)
+## Phase 4: Re-optimization & Validation (US5)
 
-- [ ] T008 [US4] Re-run baseline + GEPA (clean `gepa_logs/`) → new `artifacts/program.json`; check: the proposals contain the direction rule
-- [ ] T009 [US4] Valset check: 0 direction violation; optimized score ≥ 0.850
-- [ ] T010 [US4] Full test suite green + server restart + live STRY0010010 validation (Inbound = N/A, components in Outbound)
-- [ ] T011 [US4] Agent.md + README.md update, commit
+- [ ] T011 [US5] Baseline + GEPA re-run (clean `gepa_logs/`) → new `artifacts/program.json`; checking the proposals (the evidence-first rule is in them)
+- [ ] T012 [US5] Valset: 0 direction violations + 0 unsupported sections; optimized score ≥ 0.850
+- [ ] T013 [US5] The full test suite passes + server restart + production STRY0010010 validation (no Inbound section, components in Outbound)
+- [ ] T014 [US5] Update Agent.md + README.md, commit
