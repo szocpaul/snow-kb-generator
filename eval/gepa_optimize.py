@@ -40,10 +40,38 @@ def run_gepa_optimization(program, trainset, valset):
         auto="light",
         reflection_lm=_create_reflection_lm(),
         candidate_selection_strategy="pareto",
+        instruction_proposer=_create_instruction_proposer(),
         track_stats=True,
         log_dir="./gepa_logs",
         seed=0,
     )
+
+
+_EVIDENCE_FIRST_GUIDANCE = """\
+Include only sections the story supports with concrete evidence; if a section has no
+supporting evidence, omit it entirely (no 'N/A' placeholders). For an outbound-only
+story, omit the 'Inbound Technical Implementation' section (and vice versa); shared
+components belong to the direction the story implements. Never invent KB article
+numbers or titles — use only references provided in the inputs."""
+
+
+def _create_instruction_proposer():
+    """SkilledProposer (anti-overfitting) az evidence-first guidance-szel (spec 007).
+
+    Fallback: ha a csomag nem elérhető, stock proposer (None) + warning.
+    """
+    try:
+        from skilled_proposer import SkilledProposer
+
+        return SkilledProposer(additional_instructions=_EVIDENCE_FIRST_GUIDANCE)
+    except ImportError:
+        import warnings
+
+        warnings.warn(
+            "skilled-proposer nincs telepítve — stock GEPA proposer használata. "
+            "Telepítés: ../.venv/bin/pip install skilled-proposer"
+        )
+        return None
 
 
 def compile_with_gepa(optimizer, program, trainset, valset):

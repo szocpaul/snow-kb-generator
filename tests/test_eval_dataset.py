@@ -68,17 +68,30 @@ class TestGoldDatasetValidation:
             assert '"assignment_group"' in story, "Story missing 'assignment_group' field"
 
     def test_dataset_has_kba1_kba11_structure(self):
-        """Minden példa tartalmazza a KBA1-KBA11 struktúrát (Overview, Inbound, Outbound, Usage, Testing, Known Issues, Investigation)."""
+        """Evidence-first (spec 007): minden példa a KBA struktúra TÁMOGATOTT részét tartalmazza.
+
+        A közös szekciók (Overview, Usage, Testing, Known Issues, Investigation) mindenhol
+        megvannak; az irány-szekciók közül csak a story irányának megfelelő szerepel
+        (az ellentétes irány KIHAGYOTT, nem N/A).
+        """
+        from eval.metric import detect_direction
+
         trainset, valset = load_gold_dataset("data/examples/gold_dataset.md")
         for ex in trainset + valset:
             html = ex.html
             assert "<h2>Overview / Summary</h2>" in html, "Missing KBA1 (Overview / Summary)"
-            assert "<h2>Inbound Technical Implementation</h2>" in html, "Missing KBA2 (Inbound Technical Implementation)"
-            assert "<h2>Outbound Technical Implementation</h2>" in html, "Missing KBA3 (Outbound Technical Implementation)"
             assert "<h2>How to Use the Interface</h2>" in html, "Missing KBA4 (How to Use the Interface)"
             assert "<h2>Testing Guide</h2>" in html, "Missing KBA5 (Testing Guide)"
             assert "<h2>Known Issues</h2>" in html, "Missing KBA6-KBA10 (Known Issues)"
             assert "<h2>Investigation Steps</h2>" in html, "Missing KBA11 (Investigation Steps)"
+
+            direction = detect_direction(ex.story_text)
+            if direction == "inbound":
+                assert "<h2>Inbound Technical Implementation</h2>" in html, "Missing KBA2 (Inbound)"
+                assert "<h2>Outbound Technical Implementation</h2>" not in html, "Outbound kihagyandó inbound story-nál"
+            elif direction == "outbound":
+                assert "<h2>Outbound Technical Implementation</h2>" in html, "Missing KBA3 (Outbound)"
+                assert "<h2>Inbound Technical Implementation</h2>" not in html, "Inbound kihagyandó outbound story-nál"
 
 
 class TestGoldDatasetErrorHandling:

@@ -24,6 +24,9 @@ dev = [
     "pytest>=8.0",
     "httpx>=0.28",    # FastAPI TestClient függősége
 ]
+gepa = [
+    "skilled-proposer>=0.1.1",  # anti-overfitting GEPA instruction proposer (spec 007)
+]
 deploy = [
     "mlflow",         # cost/latency observability
     "fastapi>=0.115", # HTTP API szerver (UI Action webhook)

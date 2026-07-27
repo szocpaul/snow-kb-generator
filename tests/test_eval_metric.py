@@ -139,3 +139,68 @@ class TestHallucinationKnownRefs:
         )
         result = rich_metric(gold, pred)
         assert "Hallucinated" not in result.feedback
+
+
+class TestDirectionViolation:
+    """US1 (spec 007): irány-érzékeny template_adherence."""
+
+    OUTBOUND_STORY = "Implement Outbound REST API for Jira bug creation. The outbound payload is sent to Jira."
+    GOLD_OUTBOUND = "<h2>Overview / Summary</h2><p>Outbound integration.</p>"
+
+    def test_outbound_story_with_filled_inbound_is_penalized(self):
+        """Outbound story + kitöltött Inbound szekció → Direction violation feedback."""
+        pred = dspy.Prediction(
+            html="<h2>Overview / Summary</h2><p>Outbound integration.</p>"
+            "<h2>Inbound Technical Implementation</h2><h3>Content</h3>"
+            "<ul><li>Script Includes: JiraIntegrationUtils parses and validates the incoming payload data.</li></ul>"
+        )
+        gold = dspy.Example(story_text=self.OUTBOUND_STORY, html=self.GOLD_OUTBOUND).with_inputs("story_text")
+        result = rich_metric(gold, pred)
+        assert "Direction violation" in result.feedback
+        assert "Inbound Technical Implementation" in result.feedback
+
+    def test_outbound_story_without_inbound_is_ok(self):
+        """Outbound story + Inbound szekció hiányzik/N/A → nincs büntetés."""
+        pred = dspy.Prediction(html="<h2>Overview / Summary</h2><p>Outbound integration.</p>")
+        gold = dspy.Example(story_text=self.OUTBOUND_STORY, html=self.GOLD_OUTBOUND).with_inputs("story_text")
+        result = rich_metric(gold, pred)
+        assert "Direction violation" not in result.feedback
+
+    def test_both_directions_skips_check(self):
+        """Ha a story mindkét irányt említi, az irány-ellenőrzés kihagyott."""
+        gold = dspy.Example(
+            story_text="Bidirectional sync: inbound webhook and outbound REST call.",
+            html=self.GOLD_OUTBOUND,
+        ).with_inputs("story_text")
+        pred = dspy.Prediction(
+            html="<h2>Overview / Summary</h2><p>Sync.</p>"
+            "<h2>Inbound Technical Implementation</h2><h3>Content</h3>"
+            "<ul><li>The inbound webhook listener receives Jira events and maps fields to incidents.</li></ul>"
+        )
+        result = rich_metric(gold, pred)
+        assert "Direction violation" not in result.feedback
+
+    def test_detect_direction_helper(self):
+        from eval.metric import detect_direction
+        assert detect_direction("Outbound REST API, outbound payload") == "outbound"
+        assert detect_direction("Inbound webhook listener") == "inbound"
+        assert detect_direction("inbound and outbound sync") == "both"
+        assert detect_direction("REST integration") == "unknown"
+
+
+class TestUnsupportedSection:
+    """US1 (spec 007): a gold szerint támogatatlan szekció büntetve van."""
+
+    def test_section_absent_in_gold_but_filled_in_pred(self):
+        gold = dspy.Example(
+            story_text="Simple story about config change.",
+            html="<h2>Overview / Summary</h2><p>Config updated.</p>",
+        ).with_inputs("story_text")
+        pred = dspy.Prediction(
+            html="<h2>Overview / Summary</h2><p>Config updated.</p>"
+            "<h2>Testing Guide</h2><h3>Content</h3>"
+            "<ul><li>Run the full regression test suite and verify all integration points behave correctly.</li></ul>"
+        )
+        result = rich_metric(gold, pred)
+        assert "Unsupported section" in result.feedback
+        assert "Testing Guide" in result.feedback

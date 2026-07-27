@@ -150,13 +150,17 @@ class GenerateKbFromTemplate(dspy.Signature):
        and structure (e.g., <h2>Overview</h2>, <h2>Inbound Technical Implementation</h2>).
 
     YOUR TASK (CRITICAL):
-    You MUST return a single, complete HTML document that follows the `html_template` 
-    structure EXACTLY. 
-    - Copy the HTML tags (<h1>, <h2>, <ul>, <li>, <p>) from the template.
-    - Fill in every section of the template with relevant information from the `story_context`.
-    - Do NOT invent new headings. Do NOT remove headings from the template.
-    - If a section does not apply to the story, keep the heading but write "N/A" or 
-      a brief explanation under it.
+    You MUST return a single, complete HTML document built from the `html_template`.
+    The template is a MENU, not a mandate:
+    - Include ONLY the sections the `story_context` supports with concrete evidence.
+    - If a section has no supporting evidence in the story, OMIT it entirely
+      (do NOT write "N/A" placeholders). No evidence, no section.
+    - Corollary: for an outbound-only story, OMIT the 'Inbound Technical Implementation'
+      section (and vice versa). Shared components belong to the direction the story
+      actually implements.
+    - Do NOT invent new headings. Use the template's heading names verbatim.
+    - Copy the HTML tags (<h2>, <ul>, <li>, <p>) style from the template for the
+      sections you include.
     - Do NOT add a "Theme" line or a "Target Audience" section. If the story_context
       mentions a target audience, use it ONLY to adapt the writing style/tone of each
       section (e.g., technical depth for developers, business language for process owners).
