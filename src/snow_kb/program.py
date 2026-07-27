@@ -27,10 +27,12 @@ from snow_kb.signatures import (
     GenerateKbFromTemplate,
 )
 
-# Character limit: if the Update Set payloads together exceed this value,
-# switches on the RLM (Recursive Language Model) step, which recursively processes
-# the big data. Below that the plain LLM handles the context.
-RLM_THRESHOLD_CHARS = 15000
+# The uniform query of the AnalyzeChanges step (a constant — GEPA does not
+# target it, because it is a callsite value, not a signature instruction).
+ANALYZE_CHANGES_QUERY = (
+    "Extract all technical details: JSDoc comments, descriptions, "
+    "function names, and Flow steps."
+)
 
 
 class StoryToKBArticle(dspy.Module):
@@ -92,7 +94,7 @@ class StoryToKBArticle(dspy.Module):
                 
             analysis = self.analyze_changes(
                 update_set_xml=payload_snippet,
-                query="Extract all technical details: JSDoc comments, descriptions, function names, and Flow steps.",
+                query=ANALYZE_CHANGES_QUERY,
             )
             full_context += "\n\n## Update Set Technical Summary (via LLM)\n"
             full_context += analysis.technical_summary
@@ -116,8 +118,9 @@ class StoryToKBArticle(dspy.Module):
                 related_articles_context=related_articles_context,
             )
             final_html = template_result.html
-            # Title extraction from the extract step (or the first <h1> from the HTML)
-            final_title = extracted.change_summary.split('.')[0][:120] or "KB Article"
+            # The title comes from the model (GenerateKbFromTemplate.title); the fallback is
+            # extract change_summary, if the field comes back empty.
+            final_title = (template_result.title or "").strip()[:120] or extracted.change_summary.split('.')[0][:120] or "KB Article"
             
             article = KBArticle(
                 title=final_title,
@@ -129,8 +132,8 @@ class StoryToKBArticle(dspy.Module):
             return dspy.Prediction(
                 sections=ArticleSections(
                     title=final_title,
-                    problem="(Generated from template)",
-                    solution_steps=["See generated HTML"],
+                    problem=extracted.change_summary,
+                    solution_steps=extracted.key_steps,
                     summary=extracted.change_summary,
                     audience=extracted.audience,
                 ),

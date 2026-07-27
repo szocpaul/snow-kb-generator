@@ -1,9 +1,11 @@
 """signatures.py — DSPy Signatures for the steps of the Story → KB pipeline.
 
-Three Signatures, each with a clean Input/Output contract:
-  - ExtractChange : Story text → structured change information
-  - DraftSections : extracted info → KB article sections (title, problem, solution, summary)
-  - FormatKB      : sections → ServiceNow-compatible HTML
+Five Signatures, each with a clean Input/Output contract:
+  - AnalyzeChanges        : Update Set XML → technical summary
+  - ExtractChange         : Story text → structured change information
+  - DraftSections         : extracted info → KB article sections (title, problem, solution, summary)
+  - FormatKB              : sections → ServiceNow-compatible HTML
+  - GenerateKbFromTemplate: story context + HTML template → finished article (primary path)
 
 The instruction comes from the docstring of every Signature — there is NO hardcoded prompt.
 The predictors (Predict / ChainOfThought) are attached to them in program.py.
@@ -14,11 +16,13 @@ The steps of the program Forward should typically pass the data along.
 
 from __future__ import annotations
 
+from typing import Literal
+
 import dspy
 
 
 # ---------------------------------------------------------------------------
-# 0. AnalyzeChanges (RLM) — Recursively analyzes the large changes
+# 0. AnalyzeChanges — technical analysis of the Update Set XML payloads (ChainOfThought)
 # ---------------------------------------------------------------------------
 
 class AnalyzeChanges(dspy.Signature):
@@ -68,9 +72,8 @@ class ExtractChange(dspy.Signature):
              "understand or replicate the change. Each step is a single "
              "string, no numbering prefix."
     )
-    audience: str = dspy.OutputField(
-        desc="Primary audience for a KB article: one of "
-             "'helpdesk', 'end-user', or 'developer'."
+    audience: Literal["helpdesk", "end-user", "developer"] = dspy.OutputField(
+        desc="Primary audience for a KB article."
     )
 
 
@@ -180,9 +183,12 @@ class GenerateKbFromTemplate(dspy.Signature):
     related_articles_context: str = dspy.InputField(
         desc="REAL related KB articles from ServiceNow, one per line as 'KB<number> | <short_description>'. "
         "Use ONLY these in the 'Table of related KB articles' section — never invent article numbers or titles. "
-        "If empty, write 'N/A' in that section."
+        "If empty, OMIT the related articles section entirely (no evidence, no section)."
     )
 
+    title: str = dspy.OutputField(
+        desc="Article title: one descriptive sentence, max 120 characters, no trailing cut-off words."
+    )
     html: str = dspy.OutputField(
         desc="A complete ServiceNow KB article in HTML, strictly following the provided html_template."
     )
