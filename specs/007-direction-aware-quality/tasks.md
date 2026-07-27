@@ -17,8 +17,8 @@
 
 ## Phase 3: SkilledProposer (US4)
 
-- [ ] T008 [US4] `pip install skilled-proposer` + pyproject.toml extras frissítés
-- [ ] T009 [US4] `run_gepa_optimization()`: `instruction_proposer=SkilledProposer(extra_guidance=...)` (evidence-first + irány + KB-hallucináció tiltás), stock fallback warning-gal
+- [ ] T008 [US4] Telepítés a HELYES venv-be: `../.venv/bin/pip install skilled-proposer` (PyPI: 0.1.1, Python ≥3.10, dspy ≥3.0 — ellenőrizve) + `pyproject.toml` extras frissítés (`gepa = ["skilled-proposer>=0.1.1"]`, a `dev` extras rá hivatkozik). FONTOS: NEM rendszer-pip!
+- [ ] T009 [US4] `run_gepa_optimization()`: `instruction_proposer=SkilledProposer(extra_guidance=...)` (evidence-first + irány + KB-hallucináció tiltás), stock fallback warning-gal. Import: `from skilled_proposer import SkilledProposer`
 - [ ] T010 [US4] Teszt: GEPA SkilledProposer-rel jön létre; fallback ág tesztelve
 
 ## Phase 4: Re-optimization & Validation (US5)

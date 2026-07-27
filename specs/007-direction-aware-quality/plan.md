@@ -34,5 +34,5 @@ Sablon (KBA1–KBA11): MENÜ — a cikk a támogatott szekciókból épül fel.
 
 1. **Phase 1 (Metric)**: `detect_direction()` + direction violation + unsupported-section penalty + tesztek.
 2. **Phase 2 (Signature + Dataset)**: evidence-first instrukció; gold dataset N/A-only blokkok törlése; dataset tesztek igazítása.
-3. **Phase 3 (Proposer)**: `skilled-proposer` telepítés + `run_gepa_optimization()` átállás + teszt.
+3. **Phase 3 (Proposer)**: `skilled-proposer` telepítés (`../.venv/bin/pip install skilled-proposer` — PyPI 0.1.1, Python ≥3.10, dspy ≥3.0; pyproject `gepa` extras) + `run_gepa_optimization()` átállás (`from skilled_proposer import SkilledProposer`) + teszt.
 4. **Phase 4 (Re-opt)**: baseline + GEPA + export + éles validáció + docs.
