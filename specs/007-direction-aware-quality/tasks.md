@@ -17,8 +17,8 @@
 
 ## Phase 3: SkilledProposer (US4)
 
-- [ ] T008 [US4] `pip install skilled-proposer` + pyproject.toml extras update
-- [ ] T009 [US4] `run_gepa_optimization()`: `instruction_proposer=SkilledProposer(extra_guidance=...)` (evidence-first + direction + KB hallucination ban), stock fallback with a warning
+- [ ] T008 [US4] Installation into the HELYES venv: `../.venv/bin/pip install skilled-proposer` (PyPI: 0.1.1, Python ≥3.10, dspy ≥3.0 — verified) + updating the `pyproject.toml` extras (`gepa = ["skilled-proposer>=0.1.1"]`, the `dev` extras refers to it). IMPORTANT: NOT the system pip!
+- [ ] T009 [US4] `run_gepa_optimization()`: `instruction_proposer=SkilledProposer(extra_guidance=...)` (evidence-first + direction + KB hallucination ban), stock fallback with a warning. Import: `from skilled_proposer import SkilledProposer`
 - [ ] T010 [US4] Test: GEPA is created with SkilledProposer; the fallback branch is tested
 
 ## Phase 4: Re-optimization & Validation (US5)

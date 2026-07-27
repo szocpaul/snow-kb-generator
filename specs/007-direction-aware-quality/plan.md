@@ -34,5 +34,5 @@ Template (KBA1–KBA11): MENU — the article is built up from the supported sec
 
 1. **Phase 1 (Metric)**: `detect_direction()` + direction violation + unsupported-section penalty + tests.
 2. **Phase 2 (Signature + Dataset)**: evidence-first instruction; deleting the N/A-only blocks from the gold dataset; aligning the dataset tests.
-3. **Phase 3 (Proposer)**: install `skilled-proposer` + switch `run_gepa_optimization()` + test.
+3. **Phase 3 (Proposer)**: installing `skilled-proposer` (`../.venv/bin/pip install skilled-proposer` — PyPI 0.1.1, Python ≥3.10, dspy ≥3.0; pyproject `gepa` extras) + switching `run_gepa_optimization()` to it (`from skilled_proposer import SkilledProposer`) + test.
 4. **Phase 4 (Re-opt)**: baseline + GEPA + export + production validation + docs.
