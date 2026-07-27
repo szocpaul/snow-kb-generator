@@ -193,6 +193,21 @@ def configure_lm(settings: Settings) -> None:
 # Main orchestrator
 # ---------------------------------------------------------------------------
 
+def normalize_code_tags(html: str) -> str:
+    """Replaces the <code> tags with <strong> (grey background in the KB view — permanently forbidden).
+
+    Deterministic post-process: the 35B model may generate <code> even against the
+    instruction, this guardrail normalizes every article.
+    """
+    import re
+
+    if "<code" not in html:
+        return html
+    n = len(re.findall(r"<code", html))
+    logger.info("normalize_code_tags: %d db <code> → <strong> csere", n)
+    return re.sub(r"<code[^>]*>(.*?)</code>", r"<strong>\1</strong>", html, flags=re.DOTALL)
+
+
 def strip_direction_violating_sections(html: str, story_text: str) -> str:
     """Removes the direction-violating sections (spec 007 guardrail).
 
@@ -385,6 +400,8 @@ def generate_kb_article(
         )
         article: KBArticle = pred.article
         article.source_story = story_identifier  # prevents duplication
+        # Format normalization: <code> → <strong> (the grey background is forbidden)
+        article.html = normalize_code_tags(article.html)
         # Spec 007 guardrail: removing the direction-violating sections
         article.html = strip_direction_violating_sections(article.html, story_text)
         # Spec 004/005 guardrail: removing the hallucinated KB references BEFORE the push
