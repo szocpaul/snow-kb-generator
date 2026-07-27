@@ -1,13 +1,12 @@
 """program.py — StoryToKBArticle(dspy.Module), a pipeline magja.
 
-Chains the DSPy Signatures into a single composite Module chain. This is the "program",
-which we baseline and optimize with GEPA.
+It chains the DSPy Signatures into a single composite Module chain. This is the
+"program" that we baseline and optimize with GEPA.
 
-Steps:
-  0. AnalyzeChanges (RLM) — If the Update Set is large, it analyzes it recursively (optional)
+Steps (spec 009: the legacy draft/format branch is removed, the template path is the only one):
+  0. AnalyzeChanges — technical analysis of the Update Set XML payloads (ChainOfThought)
   1. ExtractChange — extracts the essence of the change from the Story text (ChainOfThought)
-  2. DraftSections — edits KB article sections from the extracted info (ChainOfThought)
-  3. FormatKB     — converts the sections into ServiceNow-compatible HTML (Predict)
+  2. GenerateKbFromTemplate — evidence-first filling of the team's HTML template (Predict)
 
 Every predictor gets a NAME so that GEPA can target the reflection separately.
 The forward() returns a dspy.Prediction that contains the ArticleSections
@@ -21,9 +20,7 @@ import dspy
 from snow_kb.schemas import ArticleSections, KBArticle
 from snow_kb.signatures import (
     AnalyzeChanges,
-    DraftSections,
     ExtractChange,
-    FormatKB,
     GenerateKbFromTemplate,
 )
 
@@ -46,11 +43,9 @@ class StoryToKBArticle(dspy.Module):
     def __init__(self) -> None:
         super().__init__()
         # Named predictors — GEPA targets these.
+        # Spec 009: the legacy draft/format branch is removed; the template path is the only one.
         self.analyze_changes = dspy.ChainOfThought(AnalyzeChanges)
         self.extract = dspy.ChainOfThought(ExtractChange)
-        self.draft = dspy.ChainOfThought(DraftSections)
-        self.format = dspy.Predict(FormatKB)
-        # New predictor: one-to-one filling of the HTML template
         self.generate_from_template = dspy.Predict(GenerateKbFromTemplate)
 
     def forward(
@@ -102,84 +97,45 @@ class StoryToKBArticle(dspy.Module):
         # 1. Extraction: what happened, the steps, the audience
         extracted = self.extract(story_text=full_context)
 
-        # 2. If there is an HTML template, use the one-to-one filling Signature
-        if template_context:
-            # Template-based generation is much more flexible: it is able to handle any number of sections
-            # to handle, because it fills in the HTML structure directly.
-            story_context_for_template = (
-                f"Change Summary: {extracted.change_summary}\n\n"
-                f"Key Steps: {', '.join(extracted.key_steps)}\n\n"
-                f"Target Audience (style only, do NOT create a section for it): {extracted.audience}\n\n"
-                f"Full Story Context: {full_context}"
-            )
-            template_result = self.generate_from_template(
-                story_context=story_context_for_template,
-                html_template=template_context,
-                related_articles_context=related_articles_context,
-            )
-            final_html = template_result.html
-            # The title comes from the model (GenerateKbFromTemplate.title); the fallback is
-            # extract change_summary, if the field comes back empty.
-            final_title = (template_result.title or "").strip()[:120] or extracted.change_summary.split('.')[0][:120] or "KB Article"
-            
-            article = KBArticle(
-                title=final_title,
-                html=final_html,
-                category=category,
-                knowledge_base_id=knowledge_base_id,
-            )
-            
-            return dspy.Prediction(
-                sections=ArticleSections(
-                    title=final_title,
-                    problem=extracted.change_summary,
-                    solution_steps=extracted.key_steps,
-                    summary=extracted.change_summary,
-                    audience=extracted.audience,
-                ),
-                article=article,
-                change_summary=extracted.change_summary,
-                key_steps=extracted.key_steps,
-                audience=extracted.audience,
+        # 2. Template-based generation (spec 009: this is the only path — the template is mandatory)
+        if not template_context:
+            raise ValueError(
+                "template_context is mandatory (spec 009): without the team's KB template "
+                "the program does not generate. The pipeline downloads the template from ServiceNow."
             )
 
-        # 2b. If there is NO template: the traditional 3-step pipeline
-        drafted = self.draft(
-            change_summary=extracted.change_summary,
-            key_steps=extracted.key_steps,
-            audience=extracted.audience,
-            template_context=template_context,
+        story_context_for_template = (
+            f"Change Summary: {extracted.change_summary}\n\n"
+            f"Key Steps: {', '.join(extracted.key_steps)}\n\n"
+            f"Target Audience (style only, do NOT create a section for it): {extracted.audience}\n\n"
+            f"Full Story Context: {full_context}"
         )
-
-        # 3. Formatting: HTML body
-        formatted = self.format(
-            title=drafted.title,
-            problem=drafted.problem,
-            solution_steps=drafted.solution_steps,
-            summary=drafted.summary,
-            template_context=template_context,
+        template_result = self.generate_from_template(
+            story_context=story_context_for_template,
+            html_template=template_context,
+            related_articles_context=related_articles_context,
         )
-
-        # Typed intermediate and final objects (schemas.py)
-        sections = ArticleSections(
-            title=drafted.title,
-            problem=drafted.problem,
-            solution_steps=drafted.solution_steps,
-            summary=drafted.summary,
-            audience=extracted.audience,
-        )
+        final_html = template_result.html
+        # The model provides the title (GenerateKbFromTemplate.title); the
+        # fallback is the extract change_summary, if the field comes back empty.
+        final_title = (template_result.title or "").strip()[:120] or extracted.change_summary.split('.')[0][:120] or "KB Article"
 
         article = KBArticle(
-            title=drafted.title,
-            html=formatted.html,
+            title=final_title,
+            html=final_html,
             category=category,
             knowledge_base_id=knowledge_base_id,
         )
 
         return dspy.Prediction(
-            sections=sections,
+            sections=ArticleSections(
+                title=final_title,
+                problem=extracted.change_summary,
+                solution_steps=extracted.key_steps,
+                summary=extracted.change_summary,
+                audience=extracted.audience,
+            ),
             article=article,
-            # the outputs of the Extract step are also accessible (for the metric)
             change_summary=extracted.change_summary,
             key_steps=extracted.key_steps,
             audience=extracted.audience,

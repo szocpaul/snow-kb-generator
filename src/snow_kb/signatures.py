@@ -1,17 +1,15 @@
 """signatures.py — DSPy Signatures for the steps of the Story → KB pipeline.
 
-Five Signatures, each with a clean Input/Output contract:
+Three live Signatures (spec 009: DraftSections/FormatKB removed):
   - AnalyzeChanges        : Update Set XML → technical summary
   - ExtractChange         : Story text → structured change information
-  - DraftSections         : extracted info → KB article sections (title, problem, solution, summary)
-  - FormatKB              : sections → ServiceNow-compatible HTML
-  - GenerateKbFromTemplate: story context + HTML template → finished article (primary path)
+  - GenerateKbFromTemplate: story context + HTML template → finished article (the single generation path)
 
-The instruction comes from the docstring of every Signature — there is NO hardcoded prompt.
+The instruction of every Signature comes from its docstring — there is NO hard-coded prompt.
 The predictors (Predict / ChainOfThought) are attached to them in program.py.
 
-The field names strictly match the Pydantic models of schemas.py, so that the
-The steps of the program Forward should typically pass the data along.
+The field names strictly match the Pydantic models in schemas.py, so that the
+Forward steps of the program can pass the data in a typed way.
 """
 
 from __future__ import annotations
@@ -74,73 +72,6 @@ class ExtractChange(dspy.Signature):
     )
     audience: Literal["helpdesk", "end-user", "developer"] = dspy.OutputField(
         desc="Primary audience for a KB article."
-    )
-
-
-# ---------------------------------------------------------------------------
-# 2. DraftSections — edits KB article sections from the extracted info
-# ---------------------------------------------------------------------------
-
-class DraftSections(dspy.Signature):
-    """Draft Knowledge Base article sections from the extracted change info.
-    
-    CRITICAL OUTPUT FORMAT INSTRUCTION: 
-    You MUST strictly follow the structural outline provided in the `template_context`.
-    Do NOT use generic headings like 'Problem' or 'Solution'.
-    Instead, map the extracted change info into the EXACT sections and headings demanded by the team's template_context.
-    """
-    change_summary: str = dspy.InputField(desc="What changed (from ExtractChange).")
-    key_steps: list[str] = dspy.InputField(desc="Reproducible steps (from ExtractChange).")
-    audience: str = dspy.InputField(desc="Target audience: helpdesk | end-user | developer.")
-    template_context: str = dspy.InputField(
-        desc="HTML/text example of the team's required structure. Mimic this format.",
-        default="",
-    )
-
-    title: str = dspy.OutputField(
-        desc="Article title, 8-120 characters, descriptive and specific."
-    )
-    problem: str = dspy.OutputField(
-        desc="What was the problem or need that prompted this change? "
-             "1-3 sentences."
-    )
-    solution_steps: list[str] = dspy.OutputField(
-        desc="Reproducible solution steps, refined and ordered. Each step "
-             "is a single string without numbering prefix."
-    )
-    summary: str = dspy.OutputField(
-        desc="One-or-two sentence abstract for the top of the article."
-    )
-
-
-# ---------------------------------------------------------------------------
-# 3. FormatKB — converts the sections into ServiceNow-compatible HTML
-# ---------------------------------------------------------------------------
-
-class FormatKB(dspy.Signature):
-    """Format drafted sections into ServiceNow-compatible HTML.
-    
-    CRITICAL INSTRUCTION: You MUST strictly follow the exact HTML tags, headings, 
-    and overall structure provided in the `template_context`. If the template 
-    uses specific <h2> headings (e.g., 'Overview / Summary', 'Inbound Technical Implementation'), 
-    you MUST use those exact headings in your output HTML.
-
-    FORMATTING RULE: NEVER use <code> tags (they render with an ugly gray background
-    in the ServiceNow KB view). Use <strong> for identifiers, script names, field names,
-    endpoints and API paths instead.
-    """
-    title: str = dspy.InputField(desc="Article title.")
-    problem: str = dspy.InputField(desc="Problem statement.")
-    solution_steps: list[str] = dspy.InputField(desc="Ordered solution steps.")
-    summary: str = dspy.InputField(desc="Article summary.")
-    template_context: str = dspy.InputField(
-        desc="HTML structure/example to mimic exactly.",
-        default="",
-    )
-
-    html: str = dspy.OutputField(
-        desc="ServiceNow KB article body as HTML. Must contain at least one "
-             "<p>, <ol>, or <ul> block. No <html>/<head>/<body> wrappers."
     )
 
 

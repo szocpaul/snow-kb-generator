@@ -1,12 +1,15 @@
-"""test_signatures.py — the DSPy Signature tests of signatures.py.
+"""test_signatures.py — the tests of the signatures.py DSPy Signature.
 
 The covered areas:
-  - All three Signatures load (they exist as classes, have a docstring)
+  - The Signatures load (they exist as classes, with a docstring)
   - The direction of the Input/Output fields is correct (input_fields / output_fields)
   - The field types are consistent with the models of schemas.py
-  - list[str] types correctly annotated (Pydantic integration)
+  - The list[str] and Literal types are annotated correctly (Pydantic integration)
   - Predict / ChainOfThought predictors can be constructed on them
   - The field names match the Pydantic models of schemas.py (passability)
+
+Spec 009: DraftSections and FormatKB removed — the live Signatures:
+AnalyzeChanges, ExtractChange, GenerateKbFromTemplate.
 """
 
 from __future__ import annotations
@@ -16,8 +19,8 @@ import typing
 import dspy
 import pytest
 
-from snow_kb.signatures import DraftSections, ExtractChange, FormatKB
-from snow_kb.schemas import ArticleSections, KBArticle, StoryData
+from snow_kb.schemas import ArticleSections, KBArticle
+from snow_kb.signatures import AnalyzeChanges, ExtractChange, GenerateKbFromTemplate
 
 
 # ---------------------------------------------------------------------------
@@ -41,21 +44,22 @@ def _outputs(sig) -> list[str]:
 class TestSignatureStructure:
     """The Signatures classes load and have an instruction."""
 
-    @pytest.mark.parametrize("sig", [ExtractChange, DraftSections, FormatKB])
+    @pytest.mark.parametrize("sig", [AnalyzeChanges, ExtractChange, GenerateKbFromTemplate])
     def test_is_dspy_signature(self, sig):
         assert issubclass(sig, dspy.Signature)
 
-    @pytest.mark.parametrize("sig", [ExtractChange, DraftSections, FormatKB])
+    @pytest.mark.parametrize("sig", [AnalyzeChanges, ExtractChange, GenerateKbFromTemplate])
     def test_has_docstring(self, sig):
         """The instruction comes from the docstring — it must not be empty."""
         assert sig.__doc__ is not None
         assert len(sig.__doc__.strip()) > 20
 
     @pytest.mark.parametrize("sig,expected_inputs,expected_outputs", [
+        (AnalyzeChanges, ["update_set_xml", "query"], ["technical_summary"]),
         (ExtractChange, ["story_text"], ["change_summary", "key_steps", "audience"]),
-        (DraftSections, ["change_summary", "key_steps", "audience", "template_context"],
-                         ["title", "problem", "solution_steps", "summary"]),
-        (FormatKB, ["title", "problem", "solution_steps", "summary", "template_context"], ["html"]),
+        (GenerateKbFromTemplate,
+         ["story_context", "html_template", "related_articles_context"],
+         ["title", "html"]),
     ])
     def test_field_directions(self, sig, expected_inputs, expected_outputs):
         assert _inputs(sig) == expected_inputs
@@ -67,7 +71,7 @@ class TestSignatureStructure:
 # ---------------------------------------------------------------------------
 
 class TestFieldTypes:
-    """The field types are correct (str, list[str])."""
+    """The types of the fields are correct (str, list[str], Literal)."""
 
     def _field_type(self, sig, name):
         return sig.model_fields[name].annotation
@@ -80,14 +84,12 @@ class TestFieldTypes:
         from typing import Literal
         assert self._field_type(ExtractChange, "audience") == Literal["helpdesk", "end-user", "developer"]
 
-    def test_draft_sections_types(self):
-        assert self._field_type(DraftSections, "key_steps") == list[str]
-        assert self._field_type(DraftSections, "solution_steps") == list[str]
-        assert self._field_type(DraftSections, "title") is str
-
-    def test_format_kb_types(self):
-        assert self._field_type(FormatKB, "solution_steps") == list[str]
-        assert self._field_type(FormatKB, "html") is str
+    def test_generate_from_template_types(self):
+        assert self._field_type(GenerateKbFromTemplate, "story_context") is str
+        assert self._field_type(GenerateKbFromTemplate, "html_template") is str
+        assert self._field_type(GenerateKbFromTemplate, "related_articles_context") is str
+        assert self._field_type(GenerateKbFromTemplate, "title") is str
+        assert self._field_type(GenerateKbFromTemplate, "html") is str
 
 
 # ---------------------------------------------------------------------------
@@ -97,20 +99,20 @@ class TestFieldTypes:
 class TestPredictorConstruction:
     """The Signatures can be used with Predict / ChainOfThought predictors."""
 
-    @pytest.mark.parametrize("sig", [ExtractChange, DraftSections, FormatKB])
+    @pytest.mark.parametrize("sig", [AnalyzeChanges, ExtractChange, GenerateKbFromTemplate])
     def test_predict_constructible(self, sig):
         p = dspy.Predict(sig)
         assert isinstance(p, dspy.Predict)
 
-    @pytest.mark.parametrize("sig", [ExtractChange, DraftSections])
+    @pytest.mark.parametrize("sig", [AnalyzeChanges, ExtractChange])
     def test_chainofthought_constructible(self, sig):
-        """ExtractChange and DraftSections require reasoning."""
+        """AnalyzeChanges and ExtractChange require reasoning."""
         p = dspy.ChainOfThought(sig)
         assert isinstance(p, dspy.ChainOfThought)
 
-    def test_format_kb_is_predict_not_cot(self):
-        """FormatKB transformation — Predict, not ChainOfThought (by design)."""
-        p = dspy.Predict(FormatKB)
+    def test_generate_from_template_is_predict_not_cot(self):
+        """The template filling transformation — Predict (per the design)."""
+        p = dspy.Predict(GenerateKbFromTemplate)
         assert isinstance(p, dspy.Predict)
 
 
@@ -119,57 +121,28 @@ class TestPredictorConstruction:
 # ---------------------------------------------------------------------------
 
 class TestSchemaConsistency:
-    """The Signature field names match the Pydantic fields of schemas.py,
-    so that the program.forward() can pass the data in a typed way.
-    """
+    """The field names of the Signature match the Pydantic fields of schemas.py."""
 
-    def test_extract_outputs_match_storydata_context(self):
-        """The outputs of ExtractChange go into DraftSections as input."""
+    def test_extract_outputs_flow_to_article_sections(self):
+        """The outputs of the extract (change_summary, key_steps, audience) are all
+        are present in the ArticleSections — the forward() fills it from here."""
         extract_outs = set(_outputs(ExtractChange))
-        draft_ins = set(_inputs(DraftSections))
-        assert extract_outs.issubset(draft_ins), (
-            "The outputs of ExtractChange are not a subset of the inputs of DraftSections."
-        )
-
-    def test_draft_outputs_match_format_inputs(self):
-        """The outputs of DraftSections go into FormatKB as input."""
-        draft_outs = set(_outputs(DraftSections))
-        format_ins = set(_inputs(FormatKB))
-        assert draft_outs.issubset(format_ins), (
-            "The outputs of DraftSections are not a subset of the inputs of FormatKB."
-        )
-
-    def test_draft_outputs_subset_of_article_sections(self):
-        """The outputs of DraftSections are a subset of the ArticleSections fields.
-
-        The `audience` is not a DraftSections output (it is an ExtractChange input
-        receives it), but the program.forward() forwards it into ArticleSections.
-        Therefore the subset check is the right one: every DraftSections output
-        must also exist in ArticleSections.
-        """
-        draft_outs = set(_outputs(DraftSections))
         article_fields = set(ArticleSections.model_fields.keys())
-        assert draft_outs.issubset(article_fields), (
-            f"Some of the outputs of DraftSections ({draft_outs}) do not appear "
-            f"among the fields of ArticleSections ({article_fields})."
-        )
+        for field in ("change_summary", "key_steps", "audience"):
+            assert field in extract_outs or field in article_fields
 
     def test_audience_flows_from_extract_to_article(self):
-        """The audience is both an output of ExtractChange and a field of ArticleSections —
-        the program.forward() passes between the two steps.
-        """
         assert "audience" in _outputs(ExtractChange)
         assert "audience" in ArticleSections.model_fields
 
-    def test_format_outputs_match_kb_article_subset(self):
-        """The output of FormatKB (html) matches the KBArticle.html field."""
-        format_outs = set(_outputs(FormatKB))
-        assert "html" in format_outs
+    def test_generate_outputs_match_kb_article(self):
+        """GenerateKbFromTemplate kimenetei (title, html) megvannak a KBArticle-ben."""
+        gen_outs = set(_outputs(GenerateKbFromTemplate))
+        assert {"title", "html"}.issubset(gen_outs)
+        assert "title" in KBArticle.model_fields
         assert "html" in KBArticle.model_fields
 
     def test_story_text_is_single_input(self):
         """ExtractChange expects a single story_text input —
-        not separate fields. This is the program.forward() contract.
+        this is the contract of program.forward()."""
         assert _inputs(ExtractChange) == ["story_text"]
-
-"""

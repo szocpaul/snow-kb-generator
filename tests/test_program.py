@@ -1,27 +1,26 @@
 """test_program.py — the tests of the program.py StoryToKBArticle(dspy.Module).
 
 The covered areas:
-  - The program can be constructed without an LM call (dry-run / smoke test)
+  - the program can be constructed without an LM call (dry-run / smoke test)
   - a dspy.Module subclass
-  - Three named predictors (GEPA targeting)
-  - Predictor types: extract/draft = ChainOfThought, format = Predict
-  - The Signatures are wired up correctly
-  - forward() contract: story_text input, Prediction output
+  - three named predictors (the GEPA targets): analyze_changes, extract,
+    generate_from_template (spec 009: the legacy draft/format branch is removed)
+  - the Signatures are wired up correctly
+  - the contract of forward(): the story_text + template_context input, the Prediction output
+  - the template_context is mandatory (without a ValueError)
 
 We do not test the LM calls here (that is the job of the integration/eval tests).
-We use the DSPy_dummy LM to test forward().
 """
 
 from __future__ import annotations
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import dspy
 import pytest
 
 from snow_kb.program import StoryToKBArticle
 from snow_kb.schemas import ArticleSections, KBArticle
-from snow_kb.signatures import DraftSections, ExtractChange, FormatKB
 
 
 # ---------------------------------------------------------------------------
@@ -35,52 +34,38 @@ class TestProgramConstruction:
         program = StoryToKBArticle()
         assert isinstance(program, dspy.Module)
 
-    def test_has_five_predictors(self):
+    def test_has_three_predictors(self):
+        """Spec 009: analyze_changes + extract + generate_from_template."""
         program = StoryToKBArticle()
-        # analyze_changes + extract + draft + format + generate_from_template
-        assert len(program.predictors()) == 5
+        assert len(program.predictors()) == 3
 
     def test_predictors_are_named(self):
         """Every predictor got a name — GEPA targets these."""
         program = StoryToKBArticle()
         names = [name for name, _ in program.named_predictors()]
-        # Due to the internal structure of ChainOfThought the name will be 'extract.predict',
-        # de tartalmazza az eredeti nevet.
         assert any("extract" in n for n in names)
-        assert any("draft" in n for n in names)
-        assert any("format" in n for n in names)
+        assert any("analyze_changes" in n for n in names)
+        assert any("generate_from_template" in n for n in names)
 
     def test_predictor_types(self):
-        """extract and draft ChainOfThought, format Predict."""
+        """extract/analyze_changes ChainOfThought, generate_from_template Predict."""
         program = StoryToKBArticle()
-        # predictors() also returns the internal predictors
-        predictor_map = dict(program.named_predictors())
-
-        # We find the types by name
         types_by_name = {}
         for name, pred in program.named_predictors():
             types_by_name[name] = type(pred).__name__
-
-        # At least one Predict coming from a ChainOfThought and one plain Predict
-        # (ChainOfThought internally contains a Predict)
-        assert len(types_by_name) == 5
+        assert len(types_by_name) == 3
 
     def test_signatures_attached(self):
-        """The predictors use the correct Signatures.
+        """The predictors use the correct Signature fields.
 
-        ChainOfThought internally converts the Signature to a StringSignature
-        (the name is lost, but the fields remain and 'reasoning' is added).
-        Therefore we check the field names, not the class name.
+        ChainOfThought adds a 'reasoning' field internally.
         """
         program = StoryToKBArticle()
 
-        # Collecting the fields in the name -> (inputs, outputs) format
         pred_fields = {}
         for name, pred in program.named_predictors():
             sig = pred.signature
-            ins = list(sig.input_fields.keys())
-            outs = list(sig.output_fields.keys())
-            pred_fields[name] = (ins, outs)
+            pred_fields[name] = (list(sig.input_fields.keys()), list(sig.output_fields.keys()))
 
         # Extract: story_text -> reasoning + change_summary + key_steps + audience
         extract_key = [k for k in pred_fields if k.startswith("extract")][0]
@@ -91,108 +76,97 @@ class TestProgramConstruction:
         assert "audience" in ext_outs
         assert "reasoning" in ext_outs  # ChainOfThought adds it
 
-        # Draft: change_summary/key_steps/audience -> title/problem/solution_steps/summary
-        draft_key = [k for k in pred_fields if k.startswith("draft")][0]
-        _, draft_outs = pred_fields[draft_key]
-        assert "title" in draft_outs
-        assert "solution_steps" in draft_outs
-
-        # Format: title/problem/solution_steps/summary -> html
-        format_key = [k for k in pred_fields if k.startswith("format")][0]
-        _, fmt_outs = pred_fields[format_key]
-        assert "html" in fmt_outs
-        assert "reasoning" not in fmt_outs  # Predict, nem ChainOfThought
+        # GenerateKbFromTemplate: story_context/html_template/related_articles_context -> title + html
+        gen_key = [k for k in pred_fields if k.startswith("generate_from_template")][0]
+        gen_ins, gen_outs = pred_fields[gen_key]
+        assert "story_context" in gen_ins
+        assert "html_template" in gen_ins
+        assert "related_articles_context" in gen_ins
+        assert "title" in gen_outs
+        assert "html" in gen_outs
+        assert "reasoning" not in gen_outs  # Predict, not ChainOfThought
 
 
 # ---------------------------------------------------------------------------
-# forward() tests with a mock LM
+# the forward() tests with mock predictors
 # ---------------------------------------------------------------------------
+
+TEMPLATE = "<h2>Overview / Summary</h2><h3>Content</h3><ul><li>x</li></ul>"
+
 
 class TestForwardContract:
-    """Testing the forward() contract with mocked predictors.
-
-    We do not call a real LM — we mock the return value of the three predictors
-    and check that forward() chains correctly and
-    gives typed output.
-    """
+    """Testing the contract of forward() with mocked predictors."""
 
     def _make_program_with_mock_predictors(self):
-        """Creates a program in which the three predictors are mocked."""
+        """Creates a program in which the predictors are mocked."""
         program = StoryToKBArticle()
 
-        # Mock ExtractChange output
         extract_mock = MagicMock(return_value=dspy.Prediction(
             change_summary="Token TTL bumped from 1800s to 3600s.",
             key_steps=["Patch auth middleware.", "Restart worker pool."],
             audience="helpdesk",
         ))
 
-        # Mock DraftSections output
-        draft_mock = MagicMock(return_value=dspy.Prediction(
+        template_mock = MagicMock(return_value=dspy.Prediction(
             title="Resolving SSO Login Failures After IDP Upgrade",
-            problem="Users could not log in due to short token TTL.",
-            solution_steps=[
-                "Patch the auth middleware to v2.3.",
-                "Restart the worker pool.",
-            ],
-            summary="Fix SSO login by increasing token TTL.",
-        ))
-
-        # Mock FormatKB output
-        format_mock = MagicMock(return_value=dspy.Prediction(
-            html="<h2>Solution</h2><ol><li>Patch middleware.</li></ol>",
+            html="<h2>Overview / Summary</h2><p>Fix SSO by increasing token TTL.</p>",
         ))
 
         program.extract = extract_mock
-        program.draft = draft_mock
-        program.format = format_mock
+        program.generate_from_template = template_mock
 
-        return program, (extract_mock, draft_mock, format_mock)
+        return program, (extract_mock, template_mock)
 
     def test_forward_returns_prediction(self):
         program, _ = self._make_program_with_mock_predictors()
-        result = program("Story: fix login bug")
+        result = program("Story: fix login bug", template_context=TEMPLATE)
         assert isinstance(result, dspy.Prediction)
 
     def test_forward_returns_article(self):
         program, _ = self._make_program_with_mock_predictors()
-        result = program("Story: fix login bug")
+        result = program("Story: fix login bug", template_context=TEMPLATE)
         assert isinstance(result.article, KBArticle)
         assert "Resolving SSO" in result.article.title
-        assert "<ol>" in result.article.html
+        assert "<h2>" in result.article.html
+
+    def test_forward_title_fallback_when_empty(self):
+        """If the model gives an empty title, the change_summary of the extract is the fallback."""
+        program, (_, template_mock) = self._make_program_with_mock_predictors()
+        template_mock.return_value = dspy.Prediction(
+            title="",
+            html="<h2>Overview</h2><p>x</p>",
+        )
+        result = program("story", template_context=TEMPLATE)
+        assert result.article.title.startswith("Token TTL bumped")
 
     def test_forward_returns_sections(self):
         program, _ = self._make_program_with_mock_predictors()
-        result = program("Story: fix login bug")
+        result = program("Story: fix login bug", template_context=TEMPLATE)
         assert isinstance(result.sections, ArticleSections)
         assert result.sections.audience == "helpdesk"
         assert len(result.sections.solution_steps) == 2
 
-    def test_forward_passes_extract_outputs_to_draft(self):
-        """The outputs of Extract are passed as input to Draft."""
-        program, mocks = self._make_program_with_mock_predictors()
-        extract_mock, draft_mock, _ = mocks
-        program("story text here")
+    def test_forward_requires_template_context(self):
+        """Spec 009: a ValueError without the template_context."""
+        program, _ = self._make_program_with_mock_predictors()
+        with pytest.raises(ValueError, match="template_context is mandatory"):
+            program("story text")
 
-        draft_mock.assert_called_once()
-        call_kwargs = draft_mock.call_args.kwargs
-        assert call_kwargs["change_summary"] == "Token TTL bumped from 1800s to 3600s."
-        assert call_kwargs["audience"] == "helpdesk"
+    def test_forward_passes_context_to_template_predictor(self):
+        """The generate_from_template receives the story context, the template and the related context."""
+        program, (_, template_mock) = self._make_program_with_mock_predictors()
+        program("story text here", template_context=TEMPLATE, related_articles_context="KB7654321 | Real article")
 
-    def test_forward_passes_draft_outputs_to_format(self):
-        """The outputs of Draft are passed as input to Format."""
-        program, mocks = self._make_program_with_mock_predictors()
-        _, _, format_mock = mocks
-        program("story text here")
-
-        format_mock.assert_called_once()
-        call_kwargs = format_mock.call_args.kwargs
-        assert "Resolving SSO" in call_kwargs["title"]
-        assert len(call_kwargs["solution_steps"]) == 2
+        template_mock.assert_called_once()
+        call_kwargs = template_mock.call_args.kwargs
+        assert "Token TTL bumped" in call_kwargs["story_context"]
+        assert "helpdesk" in call_kwargs["story_context"]  # as the audience style
+        assert call_kwargs["html_template"] == TEMPLATE
+        assert call_kwargs["related_articles_context"] == "KB7654321 | Real article"
 
     def test_forward_category_defaults_to_general(self):
         program, _ = self._make_program_with_mock_predictors()
-        result = program("story text")
+        result = program("story text", template_context=TEMPLATE)
         assert result.article.category == "General"
         assert result.article.knowledge_base_id == ""
 
@@ -200,6 +174,7 @@ class TestForwardContract:
         program, _ = self._make_program_with_mock_predictors()
         result = program(
             "story text",
+            template_context=TEMPLATE,
             category="Self-Service",
             knowledge_base_id="kb123",
         )
@@ -209,14 +184,13 @@ class TestForwardContract:
     def test_forward_exposes_extract_outputs(self):
         """The outputs of the Extract are available in the Prediction (for the metric)."""
         program, _ = self._make_program_with_mock_predictors()
-        result = program("story text")
+        result = program("story text", template_context=TEMPLATE)
         assert result.change_summary == "Token TTL bumped from 1800s to 3600s."
         assert result.audience == "helpdesk"
         assert len(result.key_steps) == 2
 
     def test_extract_called_with_story_text(self):
         """Az Extract a story_text bemenetet kapja."""
-        program, mocks = self._make_program_with_mock_predictors()
-        extract_mock, _, _ = mocks
-        program("my story text")
+        program, (extract_mock, _) = self._make_program_with_mock_predictors()
+        program("my story text", template_context=TEMPLATE)
         extract_mock.assert_called_once_with(story_text="my story text")
