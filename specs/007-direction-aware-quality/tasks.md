@@ -12,7 +12,7 @@
 ## Phase 2: Signature + Dataset (US2, US3)
 
 - [ ] T005 [US2] `GenerateKbFromTemplate` docstring: evidence-first (menü, nem mandátum; támogatatlan szekció KIHAGYÁS; irány-corollary; megosztott komponensek szabálya)
-- [ ] T006 [US3] Gold dataset: N/A-only szekcióblokkok törlése (script + manuális review)
+- [ ] T006 [US3] Gold dataset: (a) N/A-only szekcióblokkok törlése (5 db irány-ellentétes blokk); (b) fiktív 'related articles' sorok törlése (5 db KBXXXXXXX placeholder sor — unsupported content; a valós hivatkozások a live keresésből jönnek) (script + manuális review)
 - [ ] T007 [US3] Dataset tesztek igazítása az evidence-first struktúrához (`tests/test_eval_dataset.py`)
 
 ## Phase 3: SkilledProposer (US4)
