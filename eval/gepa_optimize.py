@@ -134,6 +134,32 @@ def extract_applied_suggestions(optimized_program) -> list[str]:
     return suggestions
 
 
+class _RefreshingKimiLM(dspy.LM):
+    """dspy.LM, ami minden hívás előtt újraolvassa a Kimi OAuth tokent.
+
+    A Kimi access token ~20 percig érvényes, a GEPA futás 40+ perc — statikus
+    tokennel a futás közepén 401-be ütköznénk. A pi agent frissíti az auth.json-t,
+    ez az LM minden forward előtt beolvassa a friss tokent.
+    """
+
+    def _refresh_api_key(self) -> None:
+        import json
+        from pathlib import Path
+
+        auth_data = json.loads((Path.home() / ".pi" / "agent" / "auth.json").read_text(encoding="utf-8"))
+        fresh = auth_data.get("kimi-coding", {}).get("access")
+        if fresh:
+            self.kwargs["api_key"] = fresh
+
+    def forward(self, *args, **kwargs):
+        self._refresh_api_key()
+        return super().forward(*args, **kwargs)
+
+    async def aforward(self, *args, **kwargs):
+        self._refresh_api_key()
+        return await super().aforward(*args, **kwargs)
+
+
 def _create_reflection_lm():
     """Létrehozza a Kimi K3 reflection modellt (temperature=1.0)."""
     import json
@@ -146,7 +172,7 @@ def _create_reflection_lm():
     # A Kimi K3 endpoint (Pi Agent Kimi előfizetés, OAuth token, OpenAI-kompatibilis)
     api_key = auth_data.get("kimi-coding", {}).get("access") or auth_data.get("kimi-coding", {}).get("apiKey")
 
-    return dspy.LM(
+    return _RefreshingKimiLM(
         "openai/k3",
         api_key=api_key,
         api_base="https://api.kimi.com/coding/v1",
