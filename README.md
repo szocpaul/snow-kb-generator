@@ -118,7 +118,7 @@ snow_kb_generator/
 │   ├── program.py              # StoryToKBArticle(dspy.Module)
 │   └── ...                     # config, schemas, cli
 ├── servicenow/                 # ServiceNow-ba másolandó UI Action script
-├── tests/                      # 221 pytest teszt
+├── tests/                      # 232 pytest teszt
 ├── eval/                       # GEPA eval harness (dataset, rich_metric, baseline, gepa_optimize)
 ├── artifacts/                  # GEPA-optimalizált program (program.json)
 ├── gepa_logs/                  # GEPA checkpointek
@@ -144,7 +144,7 @@ snow_kb_generator/
 - 4. Kész Feature: `004-no-hallucinated-references` (Hallucináció-mentes KB generálás: dataset sanitization + hallucination metric axis + pipeline guardrail).
 - 5. Kész Feature: `005-real-related-kb-articles` (Valódi kapcsolódó KB cikkek ServiceNow kereséssel; nincs találat → N/A).
 - 6. Kész Feature: `006-template-simplification` (Egyszerűsített sablon: nincs H1/Theme/Target Audience szekció; audience = stílusinstrukció).
-- 7. Review alatt: `007-direction-aware-quality` (Irány-érzékeny metric + explicit inbound/outbound N/A szabály + SkilledProposer; implementáció holnap).
+- 7. Kész Feature: `007-direction-aware-quality` (Evidence-first generálás: irány-érzékeny metric + "no evidence, no section" signature + SkilledProposer + direction guardrail).
 
 ## Licenc
 
