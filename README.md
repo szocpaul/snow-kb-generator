@@ -118,7 +118,7 @@ snow_kb_generator/
 │   ├── program.py              # StoryToKBArticle(dspy.Module)
 │   └── ...                     # config, schemas, cli
 ├── servicenow/                 # UI Action script to copy into ServiceNow
-├── tests/                      # 221 pytest tests
+├── tests/                      # 232 pytest tests
 ├── eval/                       # GEPA eval harness (dataset, rich_metric, baseline, gepa_optimize)
 ├── artifacts/                  # GEPA-optimized program (program.json)
 ├── gepa_logs/                  # GEPA checkpointek
@@ -144,7 +144,7 @@ snow_kb_generator/
 - 4. Done Feature: `004-no-hallucinated-references` (hallucination-free KB generation: dataset sanitization + hallucination metric axis + pipeline guardrail).
 - 5. Done Feature: `005-real-related-kb-articles` (real related KB articles via ServiceNow search; no result → N/A).
 - 6. Done Feature: `006-template-simplification` (simplified template: no H1/Theme/Target Audience section; audience = style instruction).
-- 7. Under review: `007-direction-aware-quality` (direction-sensitive metric + explicit inbound/outbound N/A rule + SkilledProposer; implementation tomorrow).
+- 7. Done Feature: `007-direction-aware-quality` (evidence-first generation: direction-sensitive metric + "no evidence, no section" signature + SkilledProposer + direction guardrail).
 
 ## Licenc
 
