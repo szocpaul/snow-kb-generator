@@ -193,6 +193,36 @@ def configure_lm(settings: Settings) -> None:
 # Main orchestrator
 # ---------------------------------------------------------------------------
 
+def strip_direction_violating_sections(html: str, story_text: str) -> str:
+    """Removes the direction-violating sections (spec 007 guardrail).
+
+    For an outbound story it removes the 'Inbound Technical Implementation' section
+    (and vice versa) from the HTML entirely. The 35B task model may fill it in even
+    against the explicit instruction — this is the deterministic last line of defence.
+    With the 'both'/'unknown' direction it leaves the HTML unchanged.
+    """
+    import re
+
+    from eval.metric import _section_has_content, detect_direction
+
+    forbidden = {"inbound": "Outbound Technical Implementation", "outbound": "Inbound Technical Implementation"}
+    direction = detect_direction(story_text)
+    if direction not in forbidden:
+        return html
+
+    heading = forbidden[direction]
+    if not _section_has_content(html, heading):
+        return html
+
+    logger.warning("Direction violation guardrail: '%s' section removed (%s story)", heading, direction)
+    return re.sub(
+        r"\s*<h2[^>]*>\s*" + re.escape(heading) + r"\s*</h2>.*?(?=<h2|$)",
+        "\n",
+        html,
+        flags=re.DOTALL | re.IGNORECASE,
+    )
+
+
 def strip_hallucinated_references(html: str, story_text: str, known_refs: str = "") -> str:
     """Removes the hallucinated KB references from the generated HTML (spec 004/005).
 
@@ -355,6 +385,8 @@ def generate_kb_article(
         )
         article: KBArticle = pred.article
         article.source_story = story_identifier  # prevents duplication
+        # Spec 007 guardrail: removing the direction-violating sections
+        article.html = strip_direction_violating_sections(article.html, story_text)
         # Spec 004/005 guardrail: removing the hallucinated KB references BEFORE the push
         # (the real search hits are protected as known_refs)
         article.html = strip_hallucinated_references(

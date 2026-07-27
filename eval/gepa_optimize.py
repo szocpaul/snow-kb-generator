@@ -63,7 +63,12 @@ def _create_instruction_proposer():
     try:
         from skilled_proposer import SkilledProposer
 
-        return SkilledProposer(additional_instructions=_EVIDENCE_FIRST_GUIDANCE)
+        return SkilledProposer(
+            additional_instructions=_EVIDENCE_FIRST_GUIDANCE,
+            # IMPORTANT: without prompt_model it would use dspy.settings.lm (the local Qwen)
+            # for the suggestions — slow and weak. Kimi K3 is the proposer model as well.
+            prompt_model=_create_reflection_lm(),
+        )
     except ImportError:
         import warnings
 
@@ -144,10 +149,29 @@ class _RefreshingKimiLM(dspy.LM):
 
     def _refresh_api_key(self) -> None:
         import json
+        import subprocess
+        import time
         from pathlib import Path
 
-        auth_data = json.loads((Path.home() / ".pi" / "agent" / "auth.json").read_text(encoding="utf-8"))
-        fresh = auth_data.get("kimi-coding", {}).get("access")
+        auth_path = Path.home() / ".pi" / "agent" / "auth.json"
+        auth_data = json.loads(auth_path.read_text(encoding="utf-8"))
+        kimi = auth_data.get("kimi-coding", {})
+
+        # If the token expires in <120 s, we refresh it proactively with a minimal
+        # pi call (the pi does the OAuth refresh and writes the auth.json).
+        expires_s = kimi.get("expires", 0) / 1000
+        if time.time() > expires_s - 120:
+            try:
+                subprocess.run(
+                    ["pi", "--provider", "kimi-coding", "--model", "k3", "-p", "OK"],
+                    capture_output=True, timeout=90,
+                )
+                auth_data = json.loads(auth_path.read_text(encoding="utf-8"))
+                kimi = auth_data.get("kimi-coding", {})
+            except Exception:
+                pass  # keeps the existing token; the retry/retry logic handles it
+
+        fresh = kimi.get("access")
         if fresh:
             self.kwargs["api_key"] = fresh
 

@@ -367,3 +367,18 @@ For an Outbound Story (STRY0010010) the **Inbound section is filled with content
 - Kimi K3 reflection: `openai/k3` @ `https://api.kimi.com/coding/v1` (OAuth access token; the token can expire after ~1 hour during the run — the run still finishes, but an "invalid API key" warning at the end is normal).
 - ALWAYS delete `gepa_logs/` before a GEPA run (the checkpoint keeps the old, possibly broken state).
 - Server restart: after `pkill -f "uvicorn snow_kb"` run `nohup ../.venv/bin/uvicorn snow_kb.server:app --host 0.0.0.0 --port 8000 >> server.log 2>&1 & disown` (setsid sometimes loses the process).
+
+## 22. Spec 007+008: Evidence-First KB Generation COMPLETED (2026-07-27)
+
+### Delivered (T001-T014)
+- **Metric:** `detect_direction()` + Direction violation + Unsupported section axes, explicit feedback to the reflection model.
+- **Signature:** evidence-first ("The template is a MENU, not a mandate; no evidence, no section").
+- **Gold dataset:** 5 N/A-only blocks + 5 fictional related rows deleted; the dataset test is direction-sensitive.
+- **SkilledProposer:** anti-overfitting proposer + `additional_instructions` (evidence-first + KB hallucination ban). IMPORTANT: `prompt_model=Kimi K3` is required — otherwise it would generate with the local Qwen (slow/weak).
+- **Kimi token fix:** `_RefreshingKimiLM` — because the OAuth token lasts ~20 minutes, auth.json is re-read before every call + a proactive pi-CLI refresh (<120 s). `dspy-lm-auth` does NOT handle the kimi-coding OAuth refresh (it focuses on openai-codex).
+- **GEPA:** 0.300 → 0.600 (with the stricter metric; the direction rule was added to the instructions).
+- **Guardrail (pulled in from out-of-scope, because it was needed):** `strip_direction_violating_sections()` — despite the explicit rule, the 35B still filled the Inbound section in 1 of 2 valset examples → a deterministic post-process removes it.
+- **Validation:** valset 0/2 violations (with the guardrail); production STRY0010010: only supported sections (Overview, Outbound, Usage, Testing), no Inbound, 3 real KB refs. 232/232 tests green.
+
+### Lesson
+With a weak task model (35B) the prompt rule alone is no guarantee — the metric+GEPA improves things significantly, but the critical bans also need the deterministic guardrail.
