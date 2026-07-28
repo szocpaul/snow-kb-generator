@@ -76,6 +76,26 @@ _FIELD_LABELS: dict[str, str] = {
 }
 
 
+def sanitize_html_field(value: str) -> str:
+    """Cleaning of the HTML field value for the story_text.
+
+    The HTML fields of the prod Stories are full of rendering junk (<style> blocks,
+    inline style="" attributes), which unnecessarily burns the context (the SolMan
+    example half of the field was waste). We replace the <code> tags with <strong>
+    (consistently with the KB formatting rule).
+    """
+    import re
+
+    if not value:
+        return value
+    cleaned = re.sub(r"<style[^>]*>.*?</style>", "", value, flags=re.DOTALL)
+    cleaned = re.sub(r"<script[^>]*>.*?</script>", "", cleaned, flags=re.DOTALL)
+    cleaned = re.sub(r'\s+style="[^"]*"', "", cleaned)
+    cleaned = re.sub(r"<code[^>]*>(.*?)</code>", r"<strong>\1</strong>", cleaned, flags=re.DOTALL)
+    cleaned = re.sub(r"\n{3,}", "\n\n", cleaned)
+    return cleaned.strip()
+
+
 def assemble_story_text(story: StoryData, settings: Settings | None = None) -> str:
     """Merges the fields of the Story into a single labelled text.
 
@@ -106,10 +126,13 @@ def assemble_story_text(story: StoryData, settings: Settings | None = None) -> s
     if story.number:
         sections.append(f"# Story: {story.number}")
 
-    # Content fields, labelled, the empty ones skipped
+    # Content fields, labelled, the empty ones skipped, the HTML noise cleaned
     for field_name in field_order:
         value = getattr(story, field_name, None)
         if not value or not str(value).strip():
+            continue
+        value = sanitize_html_field(str(value))
+        if not value:
             continue
         label = _FIELD_LABELS.get(field_name, field_name.replace("_", " ").title())
         sections.append(f"## {label}\n{value}")
