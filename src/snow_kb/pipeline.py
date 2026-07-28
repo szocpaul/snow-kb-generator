@@ -77,12 +77,13 @@ _FIELD_LABELS: dict[str, str] = {
 
 
 def sanitize_html_field(value: str) -> str:
-    """HTML mezőérték megtisztítása a story_text-hez.
+    """HTML mezőérték → plain text a story_text-hez.
 
-    A prod Story-k HTML mezői tele vannak renderelési szeméttel (<style> blokkok,
-    inline style="" attribútumok), ami feleslegesen égeti a kontextust (a SolMan
-    példában a mező fele hulladék volt). A <code> tageket <strong>-ra cseréljük
-    (a KB formázási szabállyal konzisztensen).
+    A gold dataset (1-5. példa) tiszta szöveget használ a mezőkben — a prod
+    Story-k viszont nyers HTML-t tartalmaznak (style-blokkok, tagek). A
+    konzisztens bemenet érdekében: renderelési szemét törlése, majd a HTML
+    struktúra (fejlécek, listaelemek, bekezdések) sortörésekké alakítása,
+    végül az összes tag eltávolítása.
     """
     import re
 
@@ -90,8 +91,16 @@ def sanitize_html_field(value: str) -> str:
         return value
     cleaned = re.sub(r"<style[^>]*>.*?</style>", "", value, flags=re.DOTALL)
     cleaned = re.sub(r"<script[^>]*>.*?</script>", "", cleaned, flags=re.DOTALL)
-    cleaned = re.sub(r'\s+style="[^"]*"', "", cleaned)
-    cleaned = re.sub(r"<code[^>]*>(.*?)</code>", r"<strong>\1</strong>", cleaned, flags=re.DOTALL)
+    # Blokkszintű elemek → sortörések (a struktúra olvasható marad)
+    cleaned = re.sub(r"<li[^>]*>", "\n- ", cleaned, flags=re.IGNORECASE)
+    cleaned = re.sub(r"</(h[1-6]|p|ul|ol|li|tr|table|div|blockquote)>", "\n", cleaned, flags=re.IGNORECASE)
+    cleaned = re.sub(r"<br\s*/?>", "\n", cleaned, flags=re.IGNORECASE)
+    # Minden maradék tag törlése, HTML entitások visszaalakítása
+    cleaned = re.sub(r"<[^>]+>", " ", cleaned)
+    import html as _html
+
+    cleaned = _html.unescape(cleaned)
+    cleaned = re.sub(r"[ \t]+", " ", cleaned)
     cleaned = re.sub(r"\n{3,}", "\n\n", cleaned)
     return cleaned.strip()
 

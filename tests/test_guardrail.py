@@ -147,9 +147,12 @@ class TestSanitizeHtmlField:
         html = '<span style="color: rgb(0,0,0);">Text</span>'
         assert 'style=' not in sanitize_html_field(html)
 
-    def test_converts_code_to_strong(self):
+    def test_converts_to_plain_text(self):
+        """A sanitize plain textet ad (HTML tagek nélkül), a gold formátummal konzisztensen."""
         from snow_kb.pipeline import sanitize_html_field
-        assert sanitize_html_field("<p><code>field_name</code></p>") == "<p><strong>field_name</strong></p>"
+        result = sanitize_html_field("<p><code>field_name</code></p>")
+        assert "<" not in result
+        assert "field_name" in result
 
     def test_plain_text_unchanged(self):
         from snow_kb.pipeline import sanitize_html_field
