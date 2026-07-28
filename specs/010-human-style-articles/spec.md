@@ -18,7 +18,7 @@
 
 ### User Story 1 - Tone Guidance in Signature (Priority: P1, "ingyen" lépés)
 
-A `GenerateKbFromTemplate` instrukció kiegészül explicit stílus-szabályokkal: szakértői hangnem, boilerplate-tiltólista, változatos mondatszerkezet, konkrétumok előnyben.
+A `GenerateKbFromTemplate` docstringje EGYETLEN stílus-blokkal bővül (boilerplate-tiltólista + emberi hangnem). FONTOS: a meglévő instrukció-szöveghez NEM nyúlunk — a docstring konszolidációja/rövidítése KÜLÖN spec tárgya lesz (a hossz növekedése elfogadott átmeneti állapot).
 
 **Why this priority**: Azonnali, nulla költségű javítás — mielőtt bármit mérnénk, a prompt ne kérje eleve a gépies stílust.
 
