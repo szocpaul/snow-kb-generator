@@ -94,14 +94,16 @@ def load_gold_dataset(path: str | Path) -> tuple[list[dspy.Example], list[dspy.E
         ).with_inputs("story_text", "template_context")
         examples.append(ex)
 
-    # Separated split: the first 3 are trainset, the last 2 are valset
+    # Separate split: half of the examples go to the trainset, half to the valset (min. 2 valset).
+    # 6 examples → 3/3; as new (prod) examples arrive, the ratio adjusts automatically.
     if len(examples) < 5:
         raise ValueError(
             f"The gold dataset contains fewer than 5 examples ({len(examples)}). "
             "GEPA optimization needs at least 5 examples."
         )
 
-    trainset = examples[:3]
-    valset = examples[3:5]
+    n_val = max(2, len(examples) // 2)
+    trainset = examples[:-n_val]
+    valset = examples[-n_val:]
 
     return trainset, valset

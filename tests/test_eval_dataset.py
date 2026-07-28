@@ -11,12 +11,13 @@ from eval.dataset import load_gold_dataset
 class TestGoldDataset:
     """Tests for loading and validating the gold_dataset.md file."""
 
-    def test_loads_5_examples(self):
-        """Loads 5 gold example pairs from the file."""
+    def test_loads_examples_and_split(self):
+        """The examples load and the split is balanced (min. 2 valset)."""
         trainset, valset = load_gold_dataset("data/examples/gold_dataset.md")
-        assert len(trainset) == 3, f"Expected 3 trainset examples, got {len(trainset)}"
-        assert len(valset) == 2, f"Expected 2 valset examples, got {len(valset)}"
-        assert len(trainset) + len(valset) == 5
+        total = len(trainset) + len(valset)
+        assert total >= 5, f"At least 5 examples are required, currently {total}"
+        assert len(valset) >= 2, f"The valset needs at least 2 examples, currently {len(valset)}"
+        assert len(trainset) >= 2, f"The trainset needs at least 2 examples, currently {len(trainset)}"
 
     def test_examples_have_story_text(self):
         """Every example contains the story_text field."""
@@ -132,7 +133,9 @@ class TestGoldDatasetNoFictionalReferences:
     def test_no_fictional_kb_numbers_in_gold_articles(self):
         """No example article may contain a KB number disguised as real.
 
-        Allowed: the KBXXXXXXX placeholder. Forbidden: a KB + digits pattern.
+        Allowed: the KBXXXXXXX placeholder, as well as the REAL, hyperlinked
+        references (KB numbers embedded in <a href>, e.g. from the prod STYLE-REF
+        articles linked from the source). Forbidden: a standalone KB + a digit sequence pattern.
         """
         import re
 
@@ -141,5 +144,7 @@ class TestGoldDatasetNoFictionalReferences:
         trainset, valset = load_gold_dataset("data/examples/gold_dataset.md")
         pattern = re.compile(r"\bKB\d{6,}\b")
         for example in trainset + valset:
-            found = pattern.findall(example.html)
+            # Drop the hyperlinked (real) references from the check
+            html_no_links = re.sub(r"<a [^>]*>.*?</a>", "", example.html, flags=re.DOTALL)
+            found = pattern.findall(html_no_links)
             assert not found, f"Fictional KB number in the gold article: {found}"
