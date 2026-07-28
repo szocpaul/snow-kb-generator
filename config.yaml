@@ -15,7 +15,7 @@ pipeline:
   #   draft:   ChainOfThought
   #   format:  Predict (a transformation, no reasoning needed)
   default_temperature: 0.6
-  max_tokens: 8000
+  max_tokens: 16000
   # If True, it reads the API key from the Pi Agent auth.json (GLM subscription).
   # If False, it uses the standard dspy.LM (local endpoint or OPENAI_API_KEY).
   use_pi_auth: false
