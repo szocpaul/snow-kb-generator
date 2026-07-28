@@ -52,9 +52,10 @@ def rich_metric(gold, pred, trace=None, pred_name=None, pred_trace=None):
         matched_facts = sum(1 for f in expected_facts if f in actual_facts)
         content_accuracy = matched_facts / len(expected_facts)
 
-    # 3. Template adherence (template_context compliance)
-    # If the template expects N/A, but the generated one is full of content (or vice versa), that is an error
-    template_adherence = _check_template_adherence(expected_html, actual_html)
+    # 3. Template adherence — only the evidence-first checks (spec 007+).
+    # The old presence-based N/A check (_check_template_adherence) is REMOVED:
+    # since the evidence-first approach the N/A is forbidden everywhere, the layer added noise.
+    template_adherence = 1.0
 
     # 3a. The evidence-first checks (spec 007):
     # - Direction violation: an outbound story + a filled Inbound section (and vice versa)
@@ -96,9 +97,6 @@ def rich_metric(gold, pred, trace=None, pred_name=None, pred_trace=None):
         missing_facts = [f for f in expected_facts if f not in actual_facts]
         if missing_facts:
             parts.append(f"Content mismatch. Missing expected facts: {', '.join(missing_facts)}.")
-
-    if template_adherence < 1.0:
-        parts.append(f"Template violation. Expected 'N/A' for irrelevant section, got actual content instead.")
 
     if direction_violations:
         parts.extend(direction_violations)
@@ -298,22 +296,3 @@ def _find_hallucinated_kb_references(actual_html: str, story_text: str) -> list[
     return sorted(actual_refs - known_refs)
 
 
-def _check_template_adherence(expected_html: str, actual_html: str) -> float:
-    """Checks whether the generated HTML complies with the template_context rules.
-
-    If the template expects N/A (e.g. for the Inbound section, which is in an Outbound Story), but the generated
-    is full of content (hallucination), that is an error. If the template is full, but the generated
-    one writes N/A (underperformance), that is an error too.
-    """
-    # Simple check: if the template contains the text "N/A", the generated one must contain it too
-    expected_na = "N/A" in expected_html
-    actual_na = "N/A" in actual_html
-
-    if expected_na and not actual_na:
-        # The template expects N/A, but the generated one is full of content (hallucination)
-        return 0.5
-    if not expected_na and actual_na:
-        # The template is full, but the generated one writes N/A (underperformance)
-        return 0.5
-
-    return 1.0
