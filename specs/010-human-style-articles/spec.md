@@ -18,7 +18,7 @@
 
 ### User Story 1 - Tone Guidance in Signature (Priority: P1, "free" step)
 
-The `GenerateKbFromTemplate` instruction is supplemented with explicit style rules: expert tone, boilerplate ban list, varied sentence structure, specifics preferred.
+The `GenerateKbFromTemplate` docstring is extended with a SINGLE style block (boilerplate ban list + human tone). IMPORTANT: we do NOT touch the existing instruction text — the consolidation/shortening of the docstring is the subject of a SEPARATE spec (the length increase is an accepted transitional state).
 
 **Why this priority**: An immediate, zero-cost improvement — before measuring anything, the prompt should not ask for the robotic style in the first place.
 
