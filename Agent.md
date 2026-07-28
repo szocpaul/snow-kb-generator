@@ -420,3 +420,11 @@ The metric penalty reduces FREQUENCY (GEPA learns it), the guardrail zeroes the 
 ### Current Status (everything committed and pushed)
 - Spec 009 is done: 3 predictors, template mandatory, the first GEPA measured on the REAL template path (0.300→0.600), 233/233 tests.
 - Production demo article: KB0010009 (STRY0010010).
+
+### Section 24 COMPLETED (2026-07-28)
+- **Metric:** `_find_na_only_sections()` — the N/A-only section is penalised if the gold omits it + feedback. False-positive fix: the presence of the N/A marker is mandatory (short real sections are protected).
+- **Guardrail:** `strip_na_only_sections()` in the pipeline chain (direction → N/A-only → hallucination).
+- **GEPA re-run** with the new metric: baseline 0.300 → optimized 0.450 (stricter metric; ~40 minutes).
+- **Valset:** 0/0/0 (direction, unsupported, N/A-only).
+- **Production validation:** the STRY0010010 article is N/A-free (Overview + Outbound); the model also omitted the Testing/Usage sections — that is correct evidence-first behaviour, but we must watch that the model does not overshoot (under-generation).
+- 239/239 tests green.
