@@ -76,6 +76,26 @@ _FIELD_LABELS: dict[str, str] = {
 }
 
 
+def sanitize_html_field(value: str) -> str:
+    """HTML mezőérték megtisztítása a story_text-hez.
+
+    A prod Story-k HTML mezői tele vannak renderelési szeméttel (<style> blokkok,
+    inline style="" attribútumok), ami feleslegesen égeti a kontextust (a SolMan
+    példában a mező fele hulladék volt). A <code> tageket <strong>-ra cseréljük
+    (a KB formázási szabállyal konzisztensen).
+    """
+    import re
+
+    if not value:
+        return value
+    cleaned = re.sub(r"<style[^>]*>.*?</style>", "", value, flags=re.DOTALL)
+    cleaned = re.sub(r"<script[^>]*>.*?</script>", "", cleaned, flags=re.DOTALL)
+    cleaned = re.sub(r'\s+style="[^"]*"', "", cleaned)
+    cleaned = re.sub(r"<code[^>]*>(.*?)</code>", r"<strong>\1</strong>", cleaned, flags=re.DOTALL)
+    cleaned = re.sub(r"\n{3,}", "\n\n", cleaned)
+    return cleaned.strip()
+
+
 def assemble_story_text(story: StoryData, settings: Settings | None = None) -> str:
     """A Story mezőit egyetlen címkézett szöveggé fűzi össze.
 
@@ -106,10 +126,13 @@ def assemble_story_text(story: StoryData, settings: Settings | None = None) -> s
     if story.number:
         sections.append(f"# Story: {story.number}")
 
-    # Tartalmi mezők, címkézve, üresek kihagyva
+    # Tartalmi mezők, címkézve, üresek kihagyva, HTML szemét tisztítva
     for field_name in field_order:
         value = getattr(story, field_name, None)
         if not value or not str(value).strip():
+            continue
+        value = sanitize_html_field(str(value))
+        if not value:
             continue
         label = _FIELD_LABELS.get(field_name, field_name.replace("_", " ").title())
         sections.append(f"## {label}\n{value}")

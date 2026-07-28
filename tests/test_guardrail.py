@@ -130,3 +130,27 @@ class TestStripNaOnlySections:
         result = strip_na_only_sections(html)
         assert "Known Issues" not in result
         assert "Investigation Steps" not in result
+
+
+class TestSanitizeHtmlField:
+    """HTML mező-tisztítás a story_text-hez (prod szemét ellen)."""
+
+    def test_strips_style_blocks(self):
+        from snow_kb.pipeline import sanitize_html_field
+        html = '<h2>Overview</h2><style>body { color: red; } h1 { margin: 0; }</style><p>Real content</p>'
+        result = sanitize_html_field(html)
+        assert "<style" not in result
+        assert "Real content" in result
+
+    def test_strips_inline_style_attrs(self):
+        from snow_kb.pipeline import sanitize_html_field
+        html = '<span style="color: rgb(0,0,0);">Text</span>'
+        assert 'style=' not in sanitize_html_field(html)
+
+    def test_converts_code_to_strong(self):
+        from snow_kb.pipeline import sanitize_html_field
+        assert sanitize_html_field("<p><code>field_name</code></p>") == "<p><strong>field_name</strong></p>"
+
+    def test_plain_text_unchanged(self):
+        from snow_kb.pipeline import sanitize_html_field
+        assert sanitize_html_field("plain text") == "plain text"
