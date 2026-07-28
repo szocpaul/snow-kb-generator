@@ -429,3 +429,7 @@ A metric-büntetés a GYAKORISÁGOT csökkenti (GEPA megtanulja), a guardrail a 
 - Éles validáció (STRY0010010): tiszta cikk Kimi K3-mal — minden guardrail változatlanul aktív.
 - A GEPA nem kuka: Kimi task modellel is futtatható (kisebb megtérülés), és a checkpoint megőrzve.
 - 243/243 teszt zöld.
+
+### Backlog: külön spec-ek várakoznak
+- **Docstring-konszolidáció:** a `GenerateKbFromTemplate` instrukció rövidítése/átstrukturálása (spec 010-ből kiválasztva).
+- **Valset bővítés prod példákkal** (a 3 régi sablonú cikk — LDAP, Jira bidir, KB Generator — kézi gold-minőségűvé tétele után).
