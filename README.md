@@ -22,7 +22,7 @@ When the developers finish a ServiceNow Story (`STRY...`), a Knowledge Base (KB)
 
 - **Python 3.12**
 - **DSPy 3.2.x** — Signatures + Modules, GEPA optimization
-- **LM:** GLM-5.2 (Pi Agent subscription, for GEPA reflection) + Local Qwen3.6-35B (llama.cpp, for daily generation over Tailscale)
+- **LM:** Kimi K3 (Pi Agent subscription, task model + GEPA reflection) — the local Qwen3.6-35B (llama.cpp) as an optional fallback (`task_model: "local"`)
 - **ServiceNow Table API** (`requests`) — Story fetch + KB creation (CRUD)
 - **FastAPI + Uvicorn** — webhook server for the ServiceNow UI Action
 - **Pydantic v2** — data model and validation
@@ -118,7 +118,7 @@ snow_kb_generator/
 │   ├── program.py              # StoryToKBArticle(dspy.Module)
 │   └── ...                     # config, schemas, cli
 ├── servicenow/                 # UI Action script to copy into ServiceNow
-├── tests/                      # 232 pytest tests
+├── tests/                      # 243 pytest tests
 ├── eval/                       # GEPA eval harness (dataset, rich_metric, baseline, gepa_optimize)
 ├── artifacts/                  # GEPA-optimized program (program.json)
 ├── gepa_logs/                  # GEPA checkpointek
@@ -145,6 +145,8 @@ snow_kb_generator/
 - 5. Done Feature: `005-real-related-kb-articles` (real related KB articles via ServiceNow search; no result → N/A).
 - 6. Done Feature: `006-template-simplification` (simplified template: no H1/Theme/Target Audience section; audience = style instruction).
 - 7. Done Feature: `007-direction-aware-quality` (evidence-first generation: direction-sensitive metric + "no evidence, no section" signature + SkilledProposer + direction guardrail).
+- 8. Done Feature: `009-remove-legacy-draft-format` (legacy draft/format branch removed; 3 predictors, template mandatory).
+- 9. Spec ready (implementation tomorrow): `010-human-style-articles` (human tone: tone guidance + style judge + SkilledProposer style guidance + small GEPA).
 
 ## Licenc
 
