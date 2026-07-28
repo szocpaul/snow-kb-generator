@@ -428,3 +428,12 @@ The metric penalty reduces FREQUENCY (GEPA learns it), the guardrail zeroes the 
 - **Valset:** 0/0/0 (direction, unsupported, N/A-only).
 - **Production validation:** the STRY0010010 article is N/A-free (Overview + Outbound); the model also omitted the Testing/Usage sections — that is correct evidence-first behaviour, but we must watch that the model does not overshoot (under-generation).
 - 239/239 tests green.
+
+## 25. Metric Cleanup + GEPA Medium COMPLETED (2026-07-28)
+
+- **A:** The old N/A check (`_check_template_adherence`) removed from the metric — it was noise since evidence-first.
+- **B:** GEPA re-run with a clean metric: **baseline 0.400 → optimized 0.600** (~27 minutes). The 16000 max_tokens slows the rollouts, but towards the end it clearly speeds up.
+- **Valset:** 0/0/0 (direction, unsupported, N/A-only).
+- **Production validation (STRY0010010):** all 7 supported sections came back (the under-generation is solved!), no N/A, no Inbound, clean ending.
+- **Kimi Code quota:** it ran out during the run (99.97%, reset 07-28 20:55) — wait for the reset before the next GEPA runs; the Qwen-based generation (production pipeline) uses no quota.
+- 239/239 tests green.
