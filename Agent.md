@@ -450,3 +450,7 @@ The metric penalty reduces FREQUENCY (GEPA learns it), the guardrail zeroes the 
 - Production validation (STRY0010010): clean article with Kimi K3 — every guardrail stays active.
 - GEPA is not dead: it can also run with the Kimi task model (smaller payoff), and the checkpoint is preserved.
 - 243/243 tests green.
+
+### Backlog: Separate Specs Are Waiting
+- **Docstring consolidation:** shortening/restructuring the `GenerateKbFromTemplate` instruction (selected from spec 010).
+- **Valset expansion with production examples** (after turning the 3 old template-based articles — LDAP, Jira bidir, KB Generator — into gold-quality examples by hand).
