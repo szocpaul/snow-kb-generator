@@ -193,6 +193,31 @@ def configure_lm(settings: Settings) -> None:
 # Main orchestrator
 # ---------------------------------------------------------------------------
 
+def strip_na_only_sections(html: str) -> str:
+    """Removes the N/A-only sections (evidence-first: omit, not an N/A placeholder).
+
+    Every <h2> section whose content is ~empty or only 'N/A' is deleted.
+    A deterministic post-process against the 35B habit of writing 'N/A' instead of omitting.
+    """
+    import re
+
+    from eval.metric import _section_is_na_only
+
+    removed = []
+    for heading in re.findall(r"<h2[^>]*>(.*?)</h2>", html):
+        if _section_is_na_only(html, heading):
+            removed.append(heading)
+            html = re.sub(
+                r"\s*<h2[^>]*>\s*" + re.escape(heading) + r"\s*</h2>.*?(?=<h2|$)",
+                "\n",
+                html,
+                flags=re.DOTALL | re.IGNORECASE,
+            )
+    if removed:
+        logger.info("strip_na_only_sections: %d sections removed: %s", len(removed), removed)
+    return html
+
+
 def normalize_code_tags(html: str) -> str:
     """Replaces the <code> tags with <strong> (grey background in the KB view — permanently forbidden).
 
@@ -404,6 +429,8 @@ def generate_kb_article(
         article.html = normalize_code_tags(article.html)
         # Spec 007 guardrail: removing the direction-violating sections
         article.html = strip_direction_violating_sections(article.html, story_text)
+        # Evidence-first guardrail: removing the N/A-only sections (omit, not N/A)
+        article.html = strip_na_only_sections(article.html)
         # Spec 004/005 guardrail: removing the hallucinated KB references BEFORE the push
         # (the real search hits are protected as known_refs)
         article.html = strip_hallucinated_references(

@@ -62,7 +62,8 @@ def rich_metric(gold, pred, trace=None, pred_name=None, pred_trace=None):
     story_text_for_direction = getattr(gold, "story_text", "") or ""
     direction_violations = _find_direction_violations(story_text_for_direction, actual_html)
     unsupported_sections = _find_unsupported_sections(expected_html, actual_html)
-    if direction_violations or unsupported_sections:
+    na_only_sections = _find_na_only_sections(expected_html, actual_html)
+    if direction_violations or unsupported_sections or na_only_sections:
         template_adherence = 0.0
 
     # 3b. Hallucination detection (spec 004): the KB appearing in the generated HTML
@@ -107,6 +108,13 @@ def rich_metric(gold, pred, trace=None, pred_name=None, pred_trace=None):
             "Unsupported section(s): "
             + ", ".join(f"'{h}'" for h in unsupported_sections)
             + ". These sections have content but the story provides no evidence for them — omit them entirely (no evidence, no section)."
+        )
+
+    if na_only_sections:
+        parts.append(
+            "N/A-only section(s): "
+            + ", ".join(f"'{h}'" for h in na_only_sections)
+            + ". These sections contain only 'N/A' but the gold article omits them — do NOT write N/A placeholders, omit the section entirely."
         )
 
     if hallucinated:
@@ -243,6 +251,37 @@ def _find_unsupported_sections(expected_html: str, actual_html: str) -> list[str
         if not _section_has_content(expected_html, heading) and _section_has_content(actual_html, heading):
             unsupported.append(heading)
     return unsupported
+
+
+def _section_is_na_only(html: str, heading: str) -> bool:
+    """True, if the section exists, but its content is only 'N/A' (a placeholder, not real content)."""
+    import re
+
+    text = _section_text(html, heading)
+    if not text:
+        return False
+    # It is only N/A-only if it really contains the 'N/A' marker
+    if not re.search(r"\bN/?A\b", text, re.IGNORECASE):
+        return False
+    cleaned = re.sub(r"(?i)\bcontent\b", "", text)
+    cleaned = re.sub(r"(?i)\bN/?A\b[.;]?", "", cleaned).strip(" -—:;")
+    return len(cleaned) <= 10 and not _section_has_content(html, heading)
+
+
+def _find_na_only_sections(expected_html: str, actual_html: str) -> list[str]:
+    """The headings of the sections that are N/A-only in the pred, but missing in the gold.
+
+    According to the evidence-first rule the unsupported section MUST BE LEFT OUT —
+    writing the 'N/A' placeholder is just as much an error as if it were filled in.
+    """
+    na_only = []
+    for heading in _extract_headings(actual_html):
+        if heading.lower() == "content":
+            continue
+        gold_has_section = bool(_section_text(expected_html, heading))
+        if not gold_has_section and _section_is_na_only(actual_html, heading):
+            na_only.append(heading)
+    return na_only
 
 
 def _find_hallucinated_kb_references(actual_html: str, story_text: str) -> list[str]:
