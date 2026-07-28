@@ -163,10 +163,24 @@ def configure_lm(settings: Settings) -> None:
     override only in justified cases per module. The track_usage for the cost/latency
     is needed for observability.
 
+    Ha settings.pipeline.task_model == "kimi", a Kimi K3 a task modell
+    (auto-refreshing OAuth token, strong baseline: 0.655 without GEPA).
     If settings.pipeline.use_pi_auth is True, it uses the dspy_lm_auth.LM class
     (Pi Agent GLM subscription for authentication). Otherwise the standard dspy.LM.
     """
-    if settings.pipeline.use_pi_auth:
+    if settings.pipeline.task_model == "kimi":
+        # Kimi K3 task model (Kimi-direct architecture): a strong model, GEPA is
+        # not needed for the good quality. The token auto-refreshes from the pi auth.json.
+        from eval.gepa_optimize import _RefreshingKimiLM
+
+        lm = _RefreshingKimiLM(
+            "openai/k3",
+            api_key="",  # the _RefreshingKimiLM refreshes it from the auth.json on every call
+            api_base="https://api.kimi.com/coding/v1",
+            temperature=1.0,  # K3 only accepts temperature=1
+            max_tokens=settings.pipeline.max_tokens,
+        )
+    elif settings.pipeline.use_pi_auth:
         # Direct use of the Pi Agent GLM subscription (zai-glm).
         # The dspy_lm_auth only knows the OpenAI Codex/ChatGPT routes,
         # therefore we read the GLM key directly from the Pi auth file.

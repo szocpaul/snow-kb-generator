@@ -437,3 +437,16 @@ The metric penalty reduces FREQUENCY (GEPA learns it), the guardrail zeroes the 
 - **Production validation (STRY0010010):** all 7 supported sections came back (the under-generation is solved!), no N/A, no Inbound, clean ending.
 - **Kimi Code quota:** it ran out during the run (99.97%, reset 07-28 20:55) — wait for the reset before the next GEPA runs; the Qwen-based generation (production pipeline) uses no quota.
 - 239/239 tests green.
+
+## 26. ARCHITECTURE CHANGE: Kimi-direct Task Model (2026-07-28)
+
+### The Measurement That Decided It
+- Qwen 35B base: 0.300 | Qwen+GEPA (hours of optimization): 0.600 | **Kimi K3 base, WITHOUT GEPA: 0.655**
+- The strong model beats the optimized weak model even without optimization → the local+GEPA architecture no longer pays off.
+
+### Change
+- `config.yaml`: `pipeline.task_model: "kimi"` (new option; `"local"` = the old Qwen fallback).
+- `pipeline.configure_lm()`: the kimi branch with `_RefreshingKimiLM` (auto OAuth refresh); temperature=1.0 is mandatory (K3 only accepts that).
+- Production validation (STRY0010010): clean article with Kimi K3 — every guardrail stays active.
+- GEPA is not dead: it can also run with the Kimi task model (smaller payoff), and the checkpoint is preserved.
+- 243/243 tests green.

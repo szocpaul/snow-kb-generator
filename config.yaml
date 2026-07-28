@@ -19,6 +19,8 @@ pipeline:
   # If True, it reads the API key from the Pi Agent auth.json (GLM subscription).
   # If False, it uses the standard dspy.LM (local endpoint or OPENAI_API_KEY).
   use_pi_auth: false
+  # Task model: "local" (Qwen llama.cpp) or "kimi" (Kimi K3, strong, good even without GEPA)
+  task_model: "kimi"
   # Local llama.cpp endpoint (Qwen3.6-35B-A3B) via Tailscale serve
   api_base: "http://llm-server.local:8033/v1"
 
