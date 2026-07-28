@@ -11,12 +11,13 @@ from eval.dataset import load_gold_dataset
 class TestGoldDataset:
     """A gold_dataset.md fájl betöltésének és validálásának tesztjei."""
 
-    def test_loads_5_examples(self):
-        """5 arany példapárt tölt be a fájlból."""
+    def test_loads_examples_and_split(self):
+        """A példák betöltődnek, és a felosztás arányos (min. 2 valset)."""
         trainset, valset = load_gold_dataset("data/examples/gold_dataset.md")
-        assert len(trainset) == 3, f"Expected 3 trainset examples, got {len(trainset)}"
-        assert len(valset) == 2, f"Expected 2 valset examples, got {len(valset)}"
-        assert len(trainset) + len(valset) == 5
+        total = len(trainset) + len(valset)
+        assert total >= 5, f"Legalább 5 példa kell, jelenleg {total}"
+        assert len(valset) >= 2, f"A valset legalább 2 példa, jelenleg {len(valset)}"
+        assert len(trainset) >= 2, f"A trainset legalább 2 példa, jelenleg {len(trainset)}"
 
     def test_examples_have_story_text(self):
         """Minden példa tartalmazza a story_text mezőt."""
@@ -132,7 +133,9 @@ class TestGoldDatasetNoFictionalReferences:
     def test_no_fictional_kb_numbers_in_gold_articles(self):
         """Egyetlen példacikk sem tartalmazhat valódiságnak álcázott KB számot.
 
-        Megengedett: a KBXXXXXXX placeholder. Tiltott: KB + számjegyek minta.
+        Megengedett: a KBXXXXXXX placeholder, valamint a VALÓDI, hyperlinkelt
+        hivatkozások (<a href>-be ágyazott KB számok, pl. a prod KB0010015-ből
+        származó linkelt cikkek). Tiltott: szabadon álló KB + számjegyek minta.
         """
         import re
 
@@ -141,5 +144,7 @@ class TestGoldDatasetNoFictionalReferences:
         trainset, valset = load_gold_dataset("data/examples/gold_dataset.md")
         pattern = re.compile(r"\bKB\d{6,}\b")
         for example in trainset + valset:
-            found = pattern.findall(example.html)
+            # A hyperlinkelt (valódi) hivatkozásokat kivesszük az ellenőrzésből
+            html_no_links = re.sub(r"<a [^>]*>.*?</a>", "", example.html, flags=re.DOTALL)
+            found = pattern.findall(html_no_links)
             assert not found, f"Fiktív KB szám a gold cikkben: {found}"

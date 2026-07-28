@@ -94,14 +94,16 @@ def load_gold_dataset(path: str | Path) -> tuple[list[dspy.Example], list[dspy.E
         ).with_inputs("story_text", "template_context")
         examples.append(ex)
 
-    # Szeparált felosztás: első 3 trainset, utolsó 2 valset
+    # Szeparált felosztás: a példák fele trainset, fele valset (min. 2 valset).
+    # 6 példa → 3/3; ahogy jönnek az új (prod) példák, az arány automatikusan igazodik.
     if len(examples) < 5:
         raise ValueError(
             f"A gold dataset kevesebb mint 5 példát tartalmaz ({len(examples)}). "
             "Legalább 5 példa kell a GEPA optimalizációhoz."
         )
 
-    trainset = examples[:3]
-    valset = examples[3:5]
+    n_val = max(2, len(examples) // 2)
+    trainset = examples[:-n_val]
+    valset = examples[-n_val:]
 
     return trainset, valset
