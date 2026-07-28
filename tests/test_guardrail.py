@@ -102,3 +102,31 @@ class TestDirectionGuardrailNA:
         result = strip_direction_violating_sections(html, "Implement outbound REST API, outbound payload to Jira.")
         assert "Inbound Technical Implementation" not in result
         assert "Outbound Technical Implementation" in result
+
+
+class TestStripNaOnlySections:
+    """Evidence-first guardrail: N/A-only szekciók eltávolítása."""
+
+    def test_removes_na_only_section(self):
+        from snow_kb.pipeline import strip_na_only_sections
+        html = ("<h2>Overview / Summary</h2><p>Real content here about the change.</p>"
+                "<h2>Known Issues</h2><h3>Content</h3><ul><li>N/A</li></ul>"
+                "<h2>Testing Guide</h2><h3>Content</h3><ul><li>Run the tests and verify results.</li></ul>")
+        result = strip_na_only_sections(html)
+        assert "Known Issues" not in result
+        assert "Overview / Summary" in result
+        assert "Testing Guide" in result
+
+    def test_keeps_sections_with_real_content(self):
+        from snow_kb.pipeline import strip_na_only_sections
+        html = "<h2>Known Issues</h2><h3>Content</h3><ul><li>Timeout errors were observed under heavy load conditions.</li></ul>"
+        assert strip_na_only_sections(html) == html
+
+    def test_removes_multiple_na_sections(self):
+        from snow_kb.pipeline import strip_na_only_sections
+        html = ("<h2>Overview</h2><p>x real</p>"
+                "<h2>Known Issues</h2><h3>Content</h3><ul><li>N/A</li></ul>"
+                "<h2>Investigation Steps</h2><h3>Content</h3><ul><li>N/A</li></ul>")
+        result = strip_na_only_sections(html)
+        assert "Known Issues" not in result
+        assert "Investigation Steps" not in result

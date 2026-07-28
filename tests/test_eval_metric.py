@@ -204,3 +204,44 @@ class TestUnsupportedSection:
         result = rich_metric(gold, pred)
         assert "Unsupported section" in result.feedback
         assert "Testing Guide" in result.feedback
+
+
+class TestNAOnlySections:
+    """Spec 007 kiegészítés: az N/A-only szekció büntetése, ha a gold kihagyja."""
+
+    def test_na_only_section_penalized_when_gold_omits(self):
+        """Pred-ben 'Known Issues / N/A', goldban nincs ilyen szekció → büntetés + feedback."""
+        gold = dspy.Example(
+            story_text="Outbound REST integration to Jira, outbound payload.",
+            html="<h2>Overview / Summary</h2><p>Outbound integration.</p>",
+        ).with_inputs("story_text")
+        pred = dspy.Prediction(
+            html="<h2>Overview / Summary</h2><p>Outbound integration.</p>"
+            "<h2>Known Issues</h2><h3>Content</h3><ul><li>N/A</li></ul>"
+        )
+        result = rich_metric(gold, pred)
+        assert "N/A-only section" in result.feedback
+        assert "Known Issues" in result.feedback
+
+    def test_na_only_section_ok_when_gold_has_it(self):
+        """Ha a goldban is megvan a szekció, az N/A-only pred nem büntetett itt."""
+        gold = dspy.Example(
+            story_text="Simple story.",
+            html="<h2>Overview / Summary</h2><p>X.</p><h2>Known Issues</h2><h3>Content</h3><ul><li>Some real issue documented here.</li></ul>",
+        ).with_inputs("story_text")
+        pred = dspy.Prediction(
+            html="<h2>Overview / Summary</h2><p>X.</p><h2>Known Issues</h2><h3>Content</h3><ul><li>N/A</li></ul>"
+        )
+        result = rich_metric(gold, pred)
+        assert "N/A-only section" not in result.feedback
+
+    def test_omitted_section_is_clean(self):
+        """A gold szerint kihagyott szekció tényleges kihagyása → semmilyen feedback."""
+        gold = dspy.Example(
+            story_text="Outbound integration.",
+            html="<h2>Overview / Summary</h2><p>Outbound integration.</p>",
+        ).with_inputs("story_text")
+        pred = dspy.Prediction(html="<h2>Overview / Summary</h2><p>Outbound integration.</p>")
+        result = rich_metric(gold, pred)
+        assert "N/A-only section" not in result.feedback
+        assert "Unsupported section" not in result.feedback

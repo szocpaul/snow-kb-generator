@@ -193,6 +193,31 @@ def configure_lm(settings: Settings) -> None:
 # Fő orchestrátor
 # ---------------------------------------------------------------------------
 
+def strip_na_only_sections(html: str) -> str:
+    """Eltávolítja az N/A-only szekciókat (evidence-first: omit, ne N/A placeholder).
+
+    Minden olyan <h2> szekció törlődik, aminek a tartalma ~üres vagy csak 'N/A'.
+    Determinisztikus post-process a 35B 'N/A-t ír az omit helyett' szokása ellen.
+    """
+    import re
+
+    from eval.metric import _section_is_na_only
+
+    removed = []
+    for heading in re.findall(r"<h2[^>]*>(.*?)</h2>", html):
+        if _section_is_na_only(html, heading):
+            removed.append(heading)
+            html = re.sub(
+                r"\s*<h2[^>]*>\s*" + re.escape(heading) + r"\s*</h2>.*?(?=<h2|$)",
+                "\n",
+                html,
+                flags=re.DOTALL | re.IGNORECASE,
+            )
+    if removed:
+        logger.info("strip_na_only_sections: %d szekció eltávolítva: %s", len(removed), removed)
+    return html
+
+
 def normalize_code_tags(html: str) -> str:
     """<code> tagek cseréje <strong>-ra (szürke háttér a KB nézetben — tartós tiltás).
 
@@ -404,6 +429,8 @@ def generate_kb_article(
         article.html = normalize_code_tags(article.html)
         # Spec 007 guardrail: irány-sértő szekciók eltávolítása
         article.html = strip_direction_violating_sections(article.html, story_text)
+        # Evidence-first guardrail: N/A-only szekciók eltávolítása (omit, ne N/A)
+        article.html = strip_na_only_sections(article.html)
         # Spec 004/005 guardrail: hallucinált KB hivatkozások eltávolítása push ELŐTT
         # (a valódi keresési találatok known_refs-ként védettek)
         article.html = strip_hallucinated_references(
