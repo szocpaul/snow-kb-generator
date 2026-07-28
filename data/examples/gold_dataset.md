@@ -27,7 +27,7 @@
 <h1>Inbound Jira Webhook Integration</h1>
 <h2>Overview / Summary</h2>
 <h3>Purpose / Background / Overview</h3>
-<p>An inbound integration connects Jira and ServiceNow. When a new issue is created in Jira, a webhook automatically sends the issue details to a Scripted REST API in ServiceNow, which parses the data and creates a corresponding Incident record.</p>
+<p>This document outlines the inbound integration between Jira and ServiceNow. When a new issue is created in Jira, a webhook automatically sends the issue details to a Scripted REST API in ServiceNow, which parses the data and creates a corresponding Incident record.</p>
 <h3>Content</h3>
 <ul>
     <li>What the interface is: An inbound webhook listener in ServiceNow that receives Jira issue creation events.</li>
@@ -117,7 +117,7 @@
 <h1>Outbound Jira REST API Integration</h1>
 <h2>Overview / Summary</h2>
 <h3>Purpose / Background / Overview</h3>
-<p>An outbound integration connects ServiceNow and Jira Cloud. When a ServiceNow Incident is escalated, the integration automatically pushes the incident details to Jira to create a linked Bug, keeping tracking consistent across platforms.</p>
+<p>This document outlines the outbound integration between ServiceNow and Jira Cloud. When a ServiceNow Incident is escalated, the integration automatically pushes the incident details to Jira to create a linked Bug, ensuring seamless tracking across platforms.</p>
 <h3>Content</h3>
 <ul>
     <li>What the interface is: An outbound REST API integration from ServiceNow to Jira Cloud.</li>
@@ -205,7 +205,7 @@
 <h1>LDAP Authentication Retry Fix for Service Portal</h1>
 <h2>Overview / Summary</h2>
 <h3>Purpose / Background / Overview</h3>
-<p>Intermittent LDAP authentication failures on the Service Portal caused 'User Not Found' errors during SSO login because LDAP queries timed out under heavy load. A retry mechanism was added to the LDAP connection logic to improve reliability.</p>
+<p>This document describes the fix for intermittent LDAP authentication failures on the Service Portal. Users experienced 'User Not Found' errors during SSO login due to LDAP query timeouts under heavy load. A retry mechanism was added to the LDAP connection logic to improve reliability.</p>
 <h3>Content</h3>
 <ul>
     <li>What the interface is: An enhanced LDAP authentication module for the Service Portal with retry logic.</li>
@@ -295,7 +295,7 @@
 <h1>SAP IDOC Status 51 Error Handling for Vendor Invoices</h1>
 <h2>Overview / Summary</h2>
 <h3>Purpose / Background / Overview</h3>
-<p>SAP IDOC status 51 failures during Vendor Invoice (MIR4) creation are now reported back to ServiceNow: the middleware (PI/PO) sends a callback with the exact IDOC error message, allowing the finance team to identify and resolve tax code mismatches or missing purchase order references automatically.</p>
+<p>This document describes the fix for SAP IDOC status 51 failures during Vendor Invoice (MIR4) creation. The middleware (PI/PO) now sends a callback to ServiceNow with the exact IDOC error message, allowing the finance team to identify and resolve tax code mismatches or missing purchase order references automatically.</p>
 <h3>Content</h3>
 <ul>
     <li>What the interface is: An error handling and notification system for SAP IDOC status 51 failures in ServiceNow.</li>
@@ -360,262 +360,7 @@
 
 ---
 
-## Example 5: Outbound Integration (KB Generator Pipeline, with Update Set)
-
-### Story
-```json
-{
-  "number": "STRY0010016",
-  "short_description": "[KB Generator]: Automate Knowledge Base creation from Stories via AI pipeline",
-  "description": "Implemented a fully automated workflow to generate Knowledge Base articles directly from completed ServiceNow Stories. When a developer completes a Story, they can click a UI Action button to send the Story context (including technical specifications and modifications) to an external AI pipeline. The pipeline processes the request, generates a formatted HTML KB article, creates it in the ServiceNow KB, and returns the link directly to the Story's work notes.",
-  "acceptance_criteria": "1. A custom field 'u_technical_specification' is created on the rm_story table to capture deep technical context.\n2. A client-callable Script Include 'SnowKbGenerator' exists to handle the REST API integration.\n3. A server-side UI Action 'Create KB Article' is available on the Story form, restricted to 'Closed Complete' state.\n4. The UI Action successfully updates the Story work_notes with the URL of the newly created KB article.",
-  "u_technical_specification": "The implementation relies on native ServiceNow REST capabilities (sn_ws.RESTMessageV2) communicating with a FastAPI server.\n1. The 'SnowKbGenerator' Script Include initializes the API endpoint (http://10.20.30.40:8000/generate-kb) and API key.\n2. It uses the native JSON encoder (new JSON().encode()) to construct the payload safely.\n3. The POST request includes a 120-second timeout to accommodate the AI generation time.\n4. The UI Action script runs server-side, extracts 'current.number', triggers the REST call, parses the JSON response, and writes the 'kb_url' directly into 'current.work_notes' before the automatic form save occurs.",
-  "work_notes": "2026-07-15 14:00: Dev - Created u_technical_specification field on rm_story.\n2026-07-15 17:30: Dev - Implemented SnowKbGenerator Script Include with RESTMessageV2 call.\n2026-07-16 16:00: Dev - Added 'Create KB Article' UI Action, tested end-to-end: KB link written to work_notes.",
-  "comments": "2026-07-16 17:00: Integration Team - Verified KB creation from a Closed Complete story; duplicate and missing-group errors handled gracefully.",
-  "state": "Closed Complete",
-  "assigned_to": "Jane Dev",
-  "assignment_group": "Integration Team"
-}
-```
-
-### Update Set Payloads
-```xml
-<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_script_include"><sys_script_include action="INSERT_OR_UPDATE"><access>package_private</access><active>false</active><api_name>global.SnowKbGenerator</api_name><caller_access/><client_callable>true</client_callable><description/><mobile_callable>false</mobile_callable><name>SnowKbGenerator</name><sandbox_callable>false</sandbox_callable><script><![CDATA[// ============================================================================
-// Script Include: SnowKbGenerator
-// ============================================================================
-// Copy this script into a new Script Include record in ServiceNow.
-// Name: SnowKbGenerator
-// Client callable: true (required for the UI Action GlideAjax call)
-//
-// This script runs on the server and makes an HTTP REST call to the FastAPI pipeline.
-// ============================================================================
-
-var SnowKbGenerator = Class.create();
-SnowKbGenerator.prototype = {
-    initialize: function() {
-        // --- SETTINGS ---
-        // Put the address and API key of your FastAPI server here!
-        this.API_URL = 'http://10.20.30.40:8000/generate-kb';
-        this.API_KEY = 'REDACTED-API-KEY';
-    },
-
-    /**
-     * Starts the KB generation for the given Story.
-     * @param {string} storyId - The Story number (e.g. STRY0010012)
-     * @param {string} storySysId - The Story sys_id
-     * @return {string} JSON response {success, kb_url, title, message}
-     */
-    generateKb: function(storyId, storySysId) {
-        // Build the HTTP request
-        var requestBody = JSON.stringify({
-            story_id: storyId,
-            push: true
-        });
-
-        // REST call to the FastAPI server
-        var restMessage = new sn_ws.RESTMessageV2();
-        restMessage.setEndpoint(this.API_URL);
-        restMessage.setHttpMethod('POST');
-        restMessage.setRequestHeader('Content-Type', 'application/json');
-        restMessage.setRequestHeader('X-API-Key', this.API_KEY);
-        restMessage.setRequestBody(requestBody);
-
-        // Set the timeout (60 seconds — the GLM generation takes time)
-        restMessage.setRequestTimeout(60000);
-
-        var response = restMessage.execute();
-        var httpStatus = response.getStatusCode();
-        var responseBody = response.getBody();
-
-        // Process the response
-        if (httpStatus === 200) {
-            var result = JSON.parse(responseBody);
-
-            // On success, store the KB link in the Story's work_notes field
-            if (result.success && result.kb_url) {
-                this._addWorkNote(storySysId, "KB article created: " + result.kb_url + " (" + result.title + ")");
-            }
-
-            return JSON.stringify(result);
-        } else {
-            // Error
-            var errorMsg = 'HTTP ' + httpStatus + ': ' + responseBody;
-            this._addWorkNote(storySysId, "KB article generation FAILED: " + errorMsg.substring(0, 200));
-            return JSON.stringify({
-                success: false,
-                message: errorMsg
-            });
-        }
-    },
-
-    /**
-     * Adds a work note to the Story.
-     * @param {string} storySysId - The Story sys_id
-     * @param {string} note - The work note text
-     */
-    _addWorkNote: function(storySysId, note) {
-        try {
-            var gr = new GlideRecord('rm_story');
-            if (gr.get(storySysId)) {
-                // Update the work_notes field
-                gr.work_notes = gr.getValue('work_notes') + '\n' + note;
-                gr.update();
-            }
-        } catch (ex) {
-            // If writing the work note fails, we do not raise an exception
-            gs.log('SnowKbGenerator work_note error: ' + ex.message);
-        }
-    },
-
-    type: 'SnowKbGenerator'
-};]]></script><sys_class_name>sys_script_include</sys_class_name><sys_created_by>developer</sys_created_by><sys_created_on>2026-07-13 18:09:37</sys_created_on><sys_id>anon0000000000000000000000000002</sys_id><sys_mod_count>2</sys_mod_count><sys_name>SnowKbGenerator</sys_name><sys_package display_value="Global" source="global">global</sys_package><sys_policy/><sys_scope display_value="Global">global</sys_scope><sys_update_name>sys_script_include_anon0000000000000000000000000002</sys_update_name><sys_updated_by>developer</sys_updated_by><sys_updated_on>2026-07-13 19:52:24</sys_updated_on></sys_script_include><sys_es_latest_script action="INSERT_OR_UPDATE"><id>anon0000000000000000000000000002</id><sys_created_by>developer</sys_created_by><sys_created_on>2026-07-13 18:09:37</sys_created_on><sys_id>anon0000000000000000000000000001</sys_id><sys_mod_count>0</sys_mod_count><sys_updated_by>developer</sys_updated_by><sys_updated_on>2026-07-13 18:09:37</sys_updated_on><table>sys_script_include</table><use_es_latest>true</use_es_latest></sys_es_latest_script></record_update>
-
-
-
-<?xml version="1.0" encoding="UTF-8"?><record_update sys_domain="global" table="sys_ui_action"><sys_ui_action action="INSERT_OR_UPDATE"><action_name>create_kb_server_action</action_name><active>true</active><client>false</client><client_script_v2><![CDATA[function onClick(g_form) {
-
-}]]></client_script_v2><comments/><condition>current.state == '3'</condition><form_action>true</form_action><form_button>true</form_button><form_button_v2>false</form_button_v2><form_context_menu>false</form_context_menu><form_link>false</form_link><form_menu_button_v2>false</form_menu_button_v2><form_style/><format_for_configurable_workspace>false</format_for_configurable_workspace><hint/><isolate_script>false</isolate_script><list_action>false</list_action><list_banner_button>false</list_banner_button><list_button>false</list_button><list_choice>false</list_choice><list_context_menu>false</list_context_menu><list_link>false</list_link><list_save_with_form_button>false</list_save_with_form_button><list_style/><messages/><name>createKbArticle</name><onclick/><order>100</order><script><![CDATA[// ============================================================================
-// UI Action Script: Create KB Article (SERVER-SIDE)
-// ============================================================================
-// This script runs on the ServiceNow server and calls our
-// FastAPI server on the VPS. It handles the 200, 409 (Duplicate),
-// 422 (Missing Group) and other error codes.
-// ============================================================================
-
-// 1. The 'current' variable automatically contains the opened Story
-var storyId = current.number;
-
-// --- SETTINGS ---
-var apiUrl = 'http://10.20.30.40:8000/generate-kb';
-var apiKey = 'REDACTED-API-KEY';
-
-// 2. Build the payload
-var payload = {};
-payload.story_id = storyId + ''; // coerce to string
-payload.push = true;
-// By clicking the UI Action button the user has already approved the generation,
-// so we send force_update=true to overwrite an existing article if there is one.
-payload.force_update = true;
-
-// 3. Start the REST call to our VPS server
-var restMessage = new sn_ws.RESTMessageV2();
-restMessage.setEndpoint(apiUrl);
-restMessage.setHttpMethod('POST');
-restMessage.setRequestHeader('Content-Type', 'application/json');
-restMessage.setRequestHeader('X-API-Key', apiKey);
-restMessage.setRequestBody(JSON.stringify(payload));
-restMessage.setRequestTimeout(120000); // 120 second timeout because the GLM generation takes time
-
-var response = restMessage.execute();
-var httpStatus = response.getStatusCode();
-var responseBody = response.getBody();
-
-// 4. Process the response based on the HTTP status code
-if (httpStatus === 200) {
-    // Successful generation or update
-    var result = JSON.parse(responseBody);
-    if (result.success && result.kb_url) {
-        current.work_notes = "KB article created/updated: " + result.kb_url + " (" + result.title + ")";
-    } else {
-        current.work_notes = "KB generation finished, but response was invalid.";
-    }
-} else if (httpStatus === 422) {
-    // Unprocessable Entity (e.g. the Assignment Group is missing)
-    var errData = JSON.parse(responseBody).detail;
-    current.work_notes = "Generation aborted: " + (errData.message || 'Missing mandatory data (e.g. Assignment Group).');
-    gs.addErrorMessage("Error: the Assignment Group field is mandatory for the Story!");
-} else if (httpStatus === 409) {
-    // Conflict (a KB article already exists for the Story)
-    current.work_notes = "Warning: a KB article already exists for this Story. Clicking the button again overwrites the existing one.";
-    gs.addInfoMessage("A KB article already exists. Click the button again to overwrite it!");
-} else {
-    // Other errors (e.g. 500 Internal Server Error, or 0 Connection Refused)
-    current.work_notes = "An error occurred (HTTP " + httpStatus + "): " + responseBody.substring(0, 150);
-    gs.addErrorMessage("Error during generation (HTTP " + httpStatus + ")");
-}
-
-// 5. Navigation setting: keep the Story open after the update
-action.setRedirectURL(current);
-action.setReturnURL(current);]]></script><show_insert>false</show_insert><show_multiple_update>false</show_multiple_update><show_query>false</show_query><show_update>true</show_update><sys_class_name>sys_ui_action</sys_class_name><sys_created_by>developer</sys_created_by><sys_created_on>2026-07-13 18:23:25</sys_created_on><sys_domain>global</sys_domain><sys_domain_path>/</sys_domain_path><sys_id>anon0000000000000000000000000004</sys_id><sys_mod_count>14</sys_mod_count><sys_name>createKbArticle</sys_name><sys_overrides/><sys_package display_value="Global" source="global">global</sys_package><sys_policy/><sys_scope display_value="Global">global</sys_scope><sys_update_name>sys_ui_action_anon0000000000000000000000000004</sys_update_name><sys_updated_by>developer</sys_updated_by><sys_updated_on>2026-07-16 18:16:15</sys_updated_on><table>rm_story</table><ui11_compatible>true</ui11_compatible><ui16_compatible>false</ui16_compatible></sys_ui_action><sys_es_latest_script action="INSERT_OR_UPDATE"><id>anon0000000000000000000000000004</id><sys_created_by>developer</sys_created_by><sys_created_on>2026-07-13 18:23:19</sys_created_on><sys_id>anon0000000000000000000000000003</sys_id><sys_mod_count>1</sys_mod_count><sys_updated_by>developer</sys_updated_by><sys_updated_on>2026-07-13 18:31:12</sys_updated_on><table>sys_ui_action</table><use_es_latest>false</use_es_latest></sys_es_latest_script></record_update>
-
-
-```
-
-### Expected KB Article (Gold Article)
-```html
-<h1>Automated KB Article Generation from Stories</h1>
-<h2>Overview / Summary</h2>
-<h3>Purpose / Background / Overview</h3>
-<p>An outbound integration connects ServiceNow Stories with an external AI pipeline. When a developer completes a Story, clicking the 'Create KB Article' UI Action sends the Story context to the pipeline, which generates a formatted HTML KB article, creates it in the ServiceNow KB, and writes the article link back into the Story work_notes.</p>
-<h3>Content</h3>
-<ul>
-    <li>What the interface is: An outbound REST call from ServiceNow to an external FastAPI-based AI pipeline that generates Knowledge Base articles from Story data.</li>
-    <li>Who uses it: Developers on the Integration Team who want to document a completed Story as a KB article without manual writing.</li>
-    <li>What type of data is exchanged: The Story number (story_id) is sent out; the pipeline returns a JSON response with success flag, kb_url, and title.</li>
-    <li>High-level process flow: Story closed → developer clicks 'Create KB Article' → UI Action posts to the pipeline → pipeline generates and creates the KB article → kb_url written to Story work_notes.</li>
-    <li>Table of related KB articles: N/A
-    </li>
-</ul>
-<hr />
-<h2>Outbound Technical Implementation</h2>
-<h3>Content</h3>
-<ul>
-    <li>Script Includes and their functions: SnowKbGenerator (client-callable, builds and executes the REST call via sn_ws.RESTMessageV2; its generateKb function sends story_id with push=true and processes the JSON response; _addWorkNote appends the result link to the rm_story work_notes).</li>
-    <li>REST endpoints called: http://10.20.30.40:8000/generate-kb (POST method).</li>
-    <li>UI Action: 'Create KB Article' (createKbArticle) on the rm_story table, server-side, visible only when the Story state is Closed Complete.</li>
-    <li>Authentication: X-API-Key request header with a pre-shared API key configured in the script.</li>
-    <li>Payload sample: {"story_id": "STRY0010016", "push": true, "force_update": true}.</li>
-    <li>Timeout: the UI Action request uses a 120-second timeout to accommodate AI generation time (the Script Include variant uses 60 seconds).</li>
-    <li>Response handling by HTTP status: 200 → kb_url written to current.work_notes; 409 → duplicate KB exists, user prompted to confirm overwrite; 422 → missing mandatory data (e.g. Assignment Group), generation aborted; other codes → error written to work_notes.</li>
-    <li>Flow and its steps: 1. UI Action reads current.number → 2. POST to the pipeline with X-API-Key header → 3. Pipeline generates the HTML article and creates the KB record → 4. JSON response parsed → 5. kb_url stored in work_notes → 6. Form redirects back to the Story.</li>
-</ul>
-<hr />
-<h2>How to Use the Interface</h2>
-<h3>Content</h3>
-<ul>
-    <li>Typical usage scenarios: A Story is complete and its technical details should be published as a KB article.</li>
-    <li>Step-by-step instructions: 1. Fill in the Technical Specification (u_technical_specification) field on the Story. 2. Move the Story to Closed Complete state. 3. Click the 'Create KB Article' button on the Story form. 4. Wait for the generation (up to 120 seconds). 5. Check the work_notes for the KB article link.</li>
-    <li>Expected results: A new KB article exists in the Knowledge Base and its URL appears in the Story work_notes.</li>
-</ul>
-<hr />
-<h2>Testing Guide</h2>
-<h3>Content</h3>
-<ul>
-    <li>Test scenarios: End-to-end KB generation from a Closed Complete Story, duplicate handling, and missing-data handling.</li>
-    <li>Test data: A test Story (e.g. STRY0010016) with a filled Technical Specification.</li>
-    <li>Step-by-step testing instructions: 1. Open a Closed Complete Story. 2. Click 'Create KB Article'. 3. Verify the work_notes entry contains a valid kb_url. 4. Click the button again to verify the 409 duplicate prompt. 5. Test with a Story missing Assignment Group to verify the 422 response.</li>
-    <li>Expected results: KB article created; on repeat click the system warns about the existing article before overwriting.</li>
-    <li>Where to check logs: ServiceNow System Logs (syslog) for SnowKbGenerator messages and the external pipeline server logs.</li>
-</ul>
-<hr />
-<h2>Known Issues</h2>
-<h3>Content</h3>
-<ul>
-    <li>Symptoms: Clicking the button does not create an article, or work_notes show a failure message.</li>
-    <li>Root causes: The external pipeline is unreachable (HTTP 0), the API key is invalid, the Story misses mandatory data (HTTP 422), or a KB article already exists (HTTP 409).</li>
-    <li>Diagnostic steps: 1. Check the Story work_notes for the HTTP status code. 2. Verify the pipeline endpoint (http://10.20.30.40:8000/generate-kb) is reachable. 3. Check syslog for 'SnowKbGenerator work_note error' entries.</li>
-    <li>Resolution / Workaround: Fix the missing data (e.g. Assignment Group) and retry; for duplicates, confirm the overwrite by clicking the button again.</li>
-    <li>Prevention: Always fill the Technical Specification and Assignment Group before closing the Story.</li>
-</ul>
-<hr />
-<h2>Investigation Steps</h2>
-<h3>Content</h3>
-<ul>
-    <li>Quick, structured troubleshooting guide
-        <ul>
-            <li>When to use this guide: If KB generation fails or the work_notes entry is missing after clicking 'Create KB Article'.</li>
-            <li>Step-by-step investigation flow: 1. Check work_notes for the HTTP status code. 2. Verify the Story is in Closed Complete state (the button only appears there). 3. Test the pipeline endpoint connectivity. 4. Review syslog for Script Include errors.</li>
-            <li>Where to check logs: ServiceNow System Logs (syslog), external pipeline server logs.</li>
-            <li>Key components: 'Create KB Article' UI Action, SnowKbGenerator Script Include, pipeline REST endpoint.</li>
-            <li>Escalation guide: Escalate to the Integration Team if the endpoint is reachable but generation consistently fails with HTTP 500.</li>
-        </ul>
-    </li>
-</ul>
-```
-
----
-
-## Example 6: SolMan Data Consistency
+## Example 5: SolMan Data Consistency
 
 ### Story
 ```json
@@ -625,7 +370,7 @@ action.setReturnURL(current);]]></script><show_insert>false</show_insert><show_m
   "description": "Implemented a fix for data inconsistencies between ServiceNow Change Tasks (CTASKs) and SolMan Change Documents (CDs). CTASKs were not automatically closing when their corresponding SolMan CDs reached terminal states ('Confirmed' or 'Withdrawn'). A Business Rule and a Fix Script were implemented to synchronize the states and close orphaned CTASKs.",
   "acceptance_criteria": "1. When a SolMan CD state changes to 'Confirmed' or 'Withdrawn', the corresponding CTASK is automatically closed (state=3).\n2. A Fix Script reconciles historical CTASKs that were stuck open due to this gap.\n3. A log output is generated to validate the count and correctness of updated records.",
   "u_technical_specification": "1. Reviewed the Business Rule named 'SolMan: Sync CD State to CTASK Closure Readiness' on the change_task table. Confirmed it is configured to run Before update with the condition u_cd_state.changesTo() == true.\n2. Verified the Business Rule logic: when a CTASK's u_cd_state changes to 'Confirmed' or 'Withdrawn', the script queries all sibling CTASKs linked to the same parent CHG and auto-closes them (state=3) only if every sibling CTASK has a terminal CD state.\n3. In a non-production environment, executed the Fix Script named 'SolMan: Fix CD State Inconsistencies' as a one-time Scheduled Script Execution.\n4. Confirmed the Fix Script queries all CTASKs where u_cd_state IN ('Confirmed', 'Withdrawn') AND state != 3, verifies the parent CHG has no active CTASKs with non-terminal CD states, and updates qualifying CTASKs to state=3.\n5. Reviewed the log output in non-prod to validate the count and correctness of updated records before proceeding.",
-  "work_notes": "2024-07-16 10:00: Dev - Reproduced: CTASK stayed open after the SolMan CD reached 'Confirmed'.\n2024-07-16 14:00: Dev - Reviewed Business Rule 'SolMan: Sync CD State to CTASK Closure Readiness'; confirmed it runs Before update with condition u_cd_state.changesTo() == true.\n2024-07-16 16:00: Dev - Executed Fix Script 'SolMan: Fix CD State Inconsistencies' in non-prod as a one-time Scheduled Script Execution; verified the log counts.\n2024-07-16 17:00: Dev - Confirmed sibling CTASKs auto-close (state=3) only when every sibling CTASK has a terminal CD state.",
+  "work_notes": "2024-07-16 10:00: Dev - Reproduced locally with test IDP instance.\n2024-07-16 14:00: Dev - Identified hardcoded TTL in auth/middleware.py line 142.\n2024-07-16 16:00: Dev - Patched to v2.3, added env var support.\n2024-07-16 11:00: Dev - Deployed to staging, verified login works.",
   "comments": "2024-07-16 12:00: QA Team - Confirmed resolved in staging environment. Running full regression.\n2024-07-16 15:00: QA Team - All regression tests passed. Ready for production.",
   "state": "Closed Complete",
   "assigned_to": "Jane Dev",
@@ -638,7 +383,7 @@ action.setReturnURL(current);]]></script><show_insert>false</show_insert><show_m
 <h1>SolMan Change Task State Synchronization Fix</h1>
 <h2>Overview / Summary</h2>
 <h3>Purpose / Background / Overview</h3>
-<p>Data inconsistencies between ServiceNow Change Tasks (CTASKs) and SolMan Change Documents (CDs) are fixed by a Business Rule and a Fix Script. CTASKs were not automatically closing when their corresponding SolMan CDs reached terminal states ('Confirmed' or 'Withdrawn'); the two scripts synchronize the states and close orphaned CTASKs.</p>
+<p>This document describes the fix for data inconsistencies between ServiceNow Change Tasks (CTASKs) and SolMan Change Documents (CDs). CTASKs were not automatically closing when their corresponding SolMan CDs reached terminal states ('Confirmed' or 'Withdrawn'). A Business Rule and a Fix Script were implemented to synchronize the states and close orphaned CTASKs.</p>
 <h3>Content</h3>
 <ul>
     <li>What the interface is: A state synchronization mechanism between ServiceNow Change Tasks and SolMan Change Documents.</li>
@@ -715,7 +460,7 @@ These golden example pairs cover ServiceNow Stories of different types and their
 
 Every example contains the Story text and the expected KB article (HTML format), built according to the template. These example pairs serve as the gold standard for GEPA optimization, used by the metric and by the reflection model (Kimi K3) for learning.
 
-## Example 7: SolMan Bidirectional Integration (Conigma)
+## Example 6: SolMan Bidirectional Integration (Conigma)
 
 ### Story
 ```json
@@ -724,7 +469,7 @@ Every example contains the Story text and the expected KB article (HTML format),
   "short_description": "[ServiceNow]: Implement bidirectional integration between ServiceNow and SAP SolMan (Conigma) for Change Requests and Change Tasks",
   "description": "Implemented a bidirectional integration between ServiceNow and SAP Solution Manager (Conigma) to synchronize Change Requests and Change Tasks. Inbound: a Scripted REST API receives SolMan CD state updates and maps them to change_task records. Outbound: a REST Message Function pushes Change Request state changes to SolMan via mTLS-authenticated calls. Supporting Script Includes handle payload mapping, validation, and logging through the Integration Framework.",
   "acceptance_criteria": "1. SolMan can POST CD state updates to the ServiceNow Scripted REST endpoint (/api/x_do/solman/change/task), which updates the corresponding change_task record.\n2. When a Change Request state changes in ServiceNow, an outbound REST call notifies SolMan with the new state.\n3. Authentication: inbound requires an integration user with the SNC internal role; outbound uses mTLS certificates.\n4. All integration events are logged via IntegrationFrameworkUtil for traceability.",
-  "u_technical_specification": "1. Created Scripted REST API 'SolMan' (namespace /api/x_do/solman) with resource POST /change/task for inbound CD state updates; enforces ACL 00000000000000000000000000000060.\n2. Implemented Script Include 'ChangeSyncInterface' for inbound payload mapping and validation (mandatory fields: number, sys_id, short_description, u_cd_state, u_cd_number).\n3. Implemented Script Include 'IntegrationFrameworkUtil' as the generic framework for interface logic and logging.\n4. Created REST Message Function for outbound notifications to the Conigma endpoint, authenticated via mTLS certificate records.\n5. Configured Business Rule on change_request to trigger the outbound call on state changes.\n6. Validated end-to-end: inbound POST updates change_task; outbound state change is received by SolMan.",
+  "u_technical_specification": "1. Created Scripted REST API 'SolMan' (namespace /api/x_do/solman) with resource POST /change/task for inbound CD state updates; enforces ACL 00000000000000000000000000000010.\n2. Implemented Script Include 'ChangeSyncInterface' for inbound payload mapping and validation (mandatory fields: number, sys_id, short_description, u_cd_state, u_cd_number).\n3. Implemented Script Include 'IntegrationFrameworkUtil' as the generic framework for interface logic and logging.\n4. Created REST Message Function for outbound notifications to the Conigma endpoint, authenticated via mTLS certificate records.\n5. Configured Business Rule on change_request to trigger the outbound call on state changes.\n6. Validated end-to-end: inbound POST updates change_task; outbound state change is received by SolMan.",
   "work_notes": "2026-07-27 10:00: Dev - Created Scripted REST API and ACL for the SolMan namespace.\n2026-07-27 12:00: Dev - Implemented ChangeSyncInterface payload mapping and mandatory field validation.\n2026-07-27 14:00: Dev - Configured outbound REST Message Function with mTLS certificates; tested from non-prod.\n2026-07-27 16:00: Dev - End-to-end test passed in both directions.",
   "comments": "2026-07-27 17:00: Integration Team - Reviewed interface logs in IntegrationFrameworkUtil; both directions traceable. Ready for production rollout.",
   "state": "Closed Complete",
@@ -743,7 +488,7 @@ Every example contains the Story text and the expected KB article (HTML format),
 <p>Outbound processing starts from ServiceNow Business Rules. IntegrationFrameworkUtil evaluates the trigger configuration, generates the payload and sends the request to Conigma. Inbound updates are received through POST /api/x_do/solman/change/task and processed by ChangeSyncInterface.</p>
 <h3>Related KB articles</h3>
 <p>The following articles were returned as related content. Their relevance should be reviewed before they are linked from the published article.</p>
-<ul style="list-style-position: inside;"><li><a href="https://example.service-now.com/kb_view.do?sysparm_article&#61;KB9000001" target="_blank" aria-label="KB9000001 - Open record: KB9000001 v6.0" rel="noopener noreferrer nofollow">KB9000001</a> - Deployment Manager incident or emergency change handling</li><li><a href="https://example.service-now.com/kb_view.do?sysparm_article&#61;KB9000002" target="_blank" aria-label="KB9000002 - Open record: KB9000002 v5.0" rel="noopener noreferrer nofollow">KB9000002</a>  - Application - Deployment and change tooling</li><li><a href="https://example.service-now.com/kb_view.do?sysparm_article&#61;KB9000003" target="_blank" aria-label="KB9000003 - Open record: KB9000003 v2.0" rel="noopener noreferrer nofollow">KB9000003</a>  - Deployment Manager interface issue in ServiceNow</li><li><a href="https://example.service-now.com/kb_view.do?sysparm_article&#61;KB9000004" target="_blank" aria-label="KB9000004 - Open record: KB9000004 v14.0" rel="noopener noreferrer nofollow">KB9000004</a>  - Deployment Manager is not working</li><li><a href="https://example.service-now.com/kb_knowledge.do?sys_id&#61;44444444444444444444444444444444&amp;sysparm_record_target&#61;kb_knowledge&amp;sysparm_record_row&#61;5&amp;sysparm_record_rows&#61;5&amp;sysparm_record_list&#61;workflow_state%3Dpublished%5Esys_class_name%21%3Dkb_knowledge_block%5Eshort_descriptionCONTAINSsolman%5EORDERBYsys_updated_on%5EORDERBYsys_id" target="_blank" aria-label="KB9000005 - Open record: KB9000005 v2.0" rel="noopener noreferrer nofollow">KB9000005</a>  - Technical issue in the deployment tooling or in the interface to it</li></ul>
+<ul style="list-style-position: inside;"><li><a href="https://example.service-now.com/kb_view.do?sysparm_article&#61;KB9000001" target="_blank" aria-label="KB9000001 - Open record: KB9000001 v6.0" rel="noopener noreferrer nofollow">KB9000001</a> - Deployment Manager incident or emergency change handling</li><li><a href="https://example.service-now.com/kb_view.do?sysparm_article&#61;KB9000002" target="_blank" aria-label="KB9000002 - Open record: KB9000002 v5.0" rel="noopener noreferrer nofollow">KB9000002</a>  - Application - Deployment and change tooling</li><li><a href="https://example.service-now.com/kb_view.do?sysparm_article&#61;KB9000003" target="_blank" aria-label="KB9000003 - Open record: KB9000003 v2.0" rel="noopener noreferrer nofollow">KB9000003</a>  - Deployment Manager interface issue in ServiceNow</li><li><a href="https://example.service-now.com/kb_view.do?sysparm_article&#61;KB9000004" target="_blank" aria-label="KB9000004 - Open record: KB9000004 v14.0" rel="noopener noreferrer nofollow">KB9000004</a>  - Deployment Manager is not working</li><li><a href="https://example.service-now.com/kb_knowledge.do?sys_id&#61;00000000000000000000000000000061&amp;sysparm_record_target&#61;kb_knowledge&amp;sysparm_record_row&#61;5&amp;sysparm_record_rows&#61;5&amp;sysparm_record_list&#61;workflow_state%3Dpublished%5Esys_class_name%21%3Dkb_knowledge_block%5Eshort_descriptionCONTAINSsolman%5EORDERBYsys_updated_on%5EORDERBYsys_id" target="_blank" aria-label="KB9000005 - Open record: KB9000005 v2.0" rel="noopener noreferrer nofollow">KB9000005</a>  - Technical issue in the deployment tooling or in the interface to it</li></ul>
 <h2>Inbound Technical Implementation</h2>
 <h3>Content</h3>
 <p>Conigma sends Change Task updates to the SolMan Scripted REST API. The resource delegates processing to ChangeSyncInterface.updateChangeTaskFromAPI(), which validates the request and updates the matching change_task record.</p>
@@ -821,188 +566,7 @@ Every example contains the Story text and the expected KB article (HTML format),
 <p>Use this guide when SolMan data is out of sync, an expected transaction is missing, or an interface call returns an error.</p>
 <ol style="list-style-position: inside;"><li>Identify the direction. Determine whether the failing flow is outbound from ServiceNow or inbound from SolMan.</li><li>Locate the transaction. Search u_interface_transaction using the Change Request or Change Task number and review the latest request, response and HTTP status.</li><li>For outbound issues, verify eligibility. Check the Change Model, correlation_display, active tasks, changed fields and Business Rule conditions.</li><li>For outbound connection issues, verify routing and mutual TLS. Confirm the selected endpoint, certificate validity and Conigma availability.</li><li>For inbound issues, verify the request. Check mandatory values, bearer-token access, ACL/role configuration and UPN mappings.</li><li>Review application logs. Check syslog for messages associated with integration.solman and for errors raised by the Script Includes.</li><li>Reproduce safely. Use a non-production test record and repeat the smallest update that should trigger the interface.</li></ol>
 <h3>Key components</h3>
-<ul style="list-style-position: inside;"><li>IntegrationFrameworkUtil - <a href="https://dev.example.service-now.com/now/nav/ui/classic/params/target/sys_script_include.do%3Fsys_id%3D11111111111111111111111111111111%26sysparm_record_target%3Dsys_script_include%26sysparm_record_row%3D1%26sysparm_record_rows%3D2%26sysparm_record_list%3DnameSTARTSWITHIntegrationFrameworkUtil%255Ename%2521%253DSNCAPICallWrapper%255EORDERBYname" rel="nofollow">IntegrationFrameworkUtil | Script Include | SNOW | DEV</a> </li><li>ChangeSyncInterface - <a href="https://dev.example.service-now.com/now/nav/ui/classic/params/target/sys_script_include.do%3Fsys_id%3Dd46079041b18c51034b7dceacd4bcb20%26sysparm_record_target%3Dsys_script_include%26sysparm_record_row%3D1%26sysparm_record_rows%3D1%26sysparm_record_list%3DnameSTARTSWITHChangeSyncInterface%255Ename%2521%253DSNCAPICallWrapper%255EORDERBYname" rel="nofollow">ChangeSyncInterface | Script Include | SNOW | DEV</a> </li><li>Change Task | Post Scripted REST resource - <a href="https://dev.example.service-now.com/now/nav/ui/classic/params/target/sys_ws_operation.do%3Fsys_id%3D33333333333333333333333333333333%26sysparm_record_target%3Dsys_ws_operation%26sysparm_record_row%3D1%26sysparm_record_rows%3D1%26sysparm_record_list%3DnameSTARTSWITHChange%2BTask%255EORDERBYname" rel="nofollow">Change Task | Post | Scripted REST Resource | SNOW | DEV</a> </li><li>u_interface_trigger_condition - <a href="https://dev.example.service-now.com/now/nav/ui/classic/params/target/u_interface_trigger_condition_list.do%3Fsysparm_filter_pinned%3Dtrue%26sysparm_query%3D" rel="nofollow">Interface Trigger Conditions | SNOW | DEV</a> </li><li>u_interface_transaction - <a href="https://dev.example.service-now.com/now/nav/ui/classic/params/target/u_interface_transaction_list.do%3Fsysparm_filter_pinned%3Dtrue%26sysparm_query%3D" rel="nofollow">Interface Transactions | SNOW | DEV</a> </li></ul>
+<ul style="list-style-position: inside;"><li>IntegrationFrameworkUtil - <a href="https://dev.example.service-now.com/now/nav/ui/classic/params/target/sys_script_include.do%3Fsys_id%3D69b110be1bff3f4034b7dceacd4bcbb6%26sysparm_record_target%3Dsys_script_include%26sysparm_record_row%3D1%26sysparm_record_rows%3D2%26sysparm_record_list%3DnameSTARTSWITHIntegrationFrameworkUtil%255Ename%2521%253DSNCAPICallWrapper%255EORDERBYname" rel="nofollow">IntegrationFrameworkUtil | Script Include | SNOW | DEV</a> </li><li>ChangeSyncInterface - <a href="https://dev.example.service-now.com/now/nav/ui/classic/params/target/sys_script_include.do%3Fsys_id%3Dd46079041b18c51034b7dceacd4bcb20%26sysparm_record_target%3Dsys_script_include%26sysparm_record_row%3D1%26sysparm_record_rows%3D1%26sysparm_record_list%3DnameSTARTSWITHChangeSyncInterface%255Ename%2521%253DSNCAPICallWrapper%255EORDERBYname" rel="nofollow">ChangeSyncInterface | Script Include | SNOW | DEV</a> </li><li>Change Task | Post Scripted REST resource - <a href="https://dev.example.service-now.com/now/nav/ui/classic/params/target/sys_ws_operation.do%3Fsys_id%3D94369acc1bdcc51034b7dceacd4bcb45%26sysparm_record_target%3Dsys_ws_operation%26sysparm_record_row%3D1%26sysparm_record_rows%3D1%26sysparm_record_list%3DnameSTARTSWITHChange%2BTask%255EORDERBYname" rel="nofollow">Change Task | Post | Scripted REST Resource | SNOW | DEV</a> </li><li>u_interface_trigger_condition - <a href="https://dev.example.service-now.com/now/nav/ui/classic/params/target/u_interface_trigger_condition_list.do%3Fsysparm_filter_pinned%3Dtrue%26sysparm_query%3D" rel="nofollow">Interface Trigger Conditions | SNOW | DEV</a> </li><li>u_interface_transaction - <a href="https://dev.example.service-now.com/now/nav/ui/classic/params/target/u_interface_transaction_list.do%3Fsysparm_filter_pinned%3Dtrue%26sysparm_query%3D" rel="nofollow">Interface Transactions | SNOW | DEV</a> </li></ul>
 <h3>Escalation</h3>
 <ul style="list-style-position: inside;"><li>Engage Network/Security for endpoint connectivity, firewall or mutual TLS certificate problems.</li><li>Engage the ALDI Integration team for trigger, payload, mapping or Script Include logic problems.</li><li>Provide the transaction record, timestamp, affected record number, environment and relevant system log entries with the escalation.</li></ul>
-```
-
-## Example 8: ALMEX SOAP Integration (Repair Process Automation)
-
-### Story
-```json
-{
-  "number": "STRY0010013",
-  "short_description": "ALMEX: Repair Process Automation (new SOAP integration)",
-  "description": "As a product owner I want the requested ALMEX interface to be created in order to leverage automation on the repair process for ALMEX devices and ensure that there is a workflow established with the vendor (ALMEX SAP system via SOAP).",
-  "acceptance_criteria": "ALDI ServiceNow is integrated with the ALMEX SAP system via SOAP.   \r\n  ALDI ServiceNow acts as the SOAP server while ALMEX system will send unidirectional calls on a periodic basis to update ServiceNow with data from the repair orders created on ALMEX side.   \r\n  It is possible to create a mostly automated ServiceNow SSR for ALMEX repair cases which will allow stores to easily send out devices for repair (ideally only needing to enter the device serial into the SSR) and track the whole process by automatically generating a repair order and exchanging data like parcel tracking and status information. A diagramme of the suggested flow can be found in the attachments as well as a SOAP Call documentation, which has been pulled from an already existing test system at ALMEX.",
-  "u_technical_specification": "The recording function does not work correctly after the release change. Since the one catalog item consists of almost 70 objects, I left it in the original update set, although I actually only wanted to have one update set. Update Sets STRY0429735_V2 and STRY0429735_V3 cover only small adjustments/new requirements after the preview/UAT of this request.  \r\n The integration is a SOAP inbound interface on platform side. The Static WSDL &#34;  VendorService &#34;  is here required as ALMEX expects a SOAP standard here and not a ServiceNow SOAP/WSDL. The Scripted Web Service   &#34;VendorService &#34;  defines the endpoint.  \r\n Script Include &#34;  VendorInterface  &#34; contains all required logic for the two defined SOAP operations &#34; GetReturns&#34;  and &#34; ConfirmReturns&#34; . The Interface Trigger Condition is &#34;  ALMEX -&gt; SN  &#34;.  Script Include   &#34;VendorInterfaceClient  &#34; contains support functions like reference qualifiers or reading some sys properties for Catalog Item &#34;  ALMEX Customer Repair Request  &#34;.  The requests from the catalog item &#34;  ALMEX Customer Repair Request  &#34; is the data for ALMEX integration here.   ALMEX uses the SOAP endpoint and its methods to read all open ALMEX requests and to update or to close them.   \r\n For an easier data handling in the requested item the  correlation_id  and  correlation_display  are set by the flow   &#34;Cat Item: ALMEX Customer Repair Order  ”. This means that it is no longer necessary to access variables that are unique for ALMEX, such as the serial number. The serial number is used as an ID in ALMEX. We always provide in the response payload next to the serial number the requested item sys_id and the requested item number.  There are several Catalog Client Scripts for request validation and loading default data.   There are three System Properties. Sys Property &#34;  integration.vendor.config &#34;  holds all required global properties.  Sys Property &#34;  vendor.config.list  &#34; defines the countries for the requests and if for the country a vat id is required or not.  Sys Property &#34;  integration.vendor.config.matrix  &#34; defines the SOAP response layout and its mapped fields from the catalog item.   The integration User is &#34;  interface.vendor.service  &#34; is created for this integration. The user has the  snc_internal  role and all soap roles except delete.",
-  "work_notes": "2026-07-27 10:00: Dev - Implementation completed and verified in non-prod.",
-  "comments": "2026-07-27 16:00: Integration Team - Reviewed and approved for production.",
-  "state": "Closed Complete",
-  "assigned_to": "Integration Dev",
-  "assignment_group": "Integration Team"
-}
-```
-
-### Expected KB Article (Gold Article)
-```html
-<h2>Overview / Summary</h2>
-<h3>Content</h3>
-<ul><li><strong>Interface Description:</strong> A bidirectional SOAP integration between ALDI ServiceNow and the ALMEX SAP system to automate the repair process for ALMEX devices. ALDI ServiceNow acts as the SOAP server.</li><li><strong>Users:</strong> ALMEX SAP system (inbound updates) and ALDI Stores (outbound repair requests via Catalog).</li><li><strong>Data Exchanged:</strong>
-        <ul><li><strong>Inbound (ALMEX -&gt; SN):</strong> Repair order status updates, parcel tracking information, and open request data via the <code>GetReturns</code> and <code>ConfirmReturns</code> operations.</li><li><strong>Outbound (SN -&gt; ALMEX):</strong> Repair order creation and status updates triggered by the <strong>ALMEX Customer Repair Request</strong> catalog item.</li></ul>
-    </li><li><strong>High-level Process Flow:</strong>
-        <ol><li>Stores create a repair request via the <strong>ALMEX Customer Repair Request</strong> catalog item, entering the device serial number.</li><li>A Flow sets the <code>correlation_id</code> and <code>correlation_display</code> based on the serial number.</li><li>Data is sent to ALMEX via SOAP.</li><li>ALMEX periodically calls the ServiceNow SOAP endpoint to update or close repair orders.</li></ol>
-    </li><li><strong>Table of related KB articles:</strong>
-        <ul><li>Short description: Fix for the ALMEX SOAP integration repair process automation</li><li>Article number: KBXXXXXXX</li></ul>
-    </li></ul>
-
-<hr />
-
-<h2>Inbound Technical Implementation</h2>
-<h3>Content</h3>
-<ul><li><strong>Script Includes and Functions:</strong>
-        <ul><li><code>VendorInterface</code>: Contains the core logic for processing the <strong>GetReturns</strong> and <strong>ConfirmReturns</strong> SOAP operations.</li><li><code>VendorInterfaceClient</code>: Supports reference qualifiers and reads system properties for the Catalog Item.</li></ul>
-    </li><li><strong>Scripted Web Services and Endpoints:</strong>
-        <ul><li><strong>Static WSDL:</strong> <code>VendorService</code> (sys_id: 00000000000000000000000000000032). Defines the standard SOAP endpoint required by ALMEX.</li><li><strong>Scripted Web Service:</strong> <code>VendorService</code> (sys_id: 00000000000000000000000000000027). Exposes the endpoint and operations.</li></ul>
-    </li><li><strong>Required Parameters:</strong>
-        <ul><li><strong>Interface Trigger Condition:</strong> <code>ALMEX -&gt; SN</code> (sys_id: 00000000000000000000000000000062). Manages inbound message processing.</li><li><strong>System Properties:</strong>
-                <ul><li><code>integration.vendor.config</code>: Global settings.</li><li><code>vendor.config.list</code>: Country and VAT ID rules.</li><li><code>integration.vendor.config.matrix</code>: SOAP response layout and field mapping.</li></ul>
-            </li></ul>
-    </li><li><strong>Flow and Steps:</strong>
-        <ul><li><strong>Catalog Item:</strong> <code>ALMEX Customer Repair Request</code> (sys_id: 00000000000000000000000000000023).</li><li><strong>Flow:</strong> <code>Cat Item: ALMEX Customer Repair Order</code> (sys_id: 00000000000000000000000000000035). Sets correlation fields based on device serial number.</li></ul>
-    </li><li><strong>Validation Steps:</strong> Catalog Client Scripts are used for request validation and loading default data within the Catalog Item.</li></ul>
-
-<hr />
-<h2>How to Use the Interface</h2>
-<h3>Content</h3>
-<ul><li><strong>Typical Usage Scenarios:</strong>
-        <ul><li><strong>Initiating Repair:</strong> A store technician creates a repair request for an ALMEX device.</li><li><strong>Tracking Repair:</strong> ALMEX updates the status of the repair order, which is reflected in ServiceNow.</li></ul>
-    </li><li><strong>Step-by-Step Instructions:</strong>
-        <ol><li>Navigate to the <strong>ALMEX Customer Repair Request</strong> catalog item.</li><li>Enter the device serial number.</li><li>Submit the request. The Flow automatically sets correlation IDs.</li><li>Monitor status updates via the SOAP integration with ALMEX.</li></ol>
-    </li><li><strong>Expected Results:</strong>
-        <ul><li>A repair order is created in ServiceNow.</li><li>Data is exchanged with ALMEX SAP via SOAP.</li><li>Status updates (e.g., parcel tracking, repair status) are reflected in the ServiceNow record.</li></ul>
-    </li></ul>
-
-<hr />
-
-<h2>Testing Guide</h2>
-<h3>Content</h3>
-<ul><li><strong>Test Scenarios:</strong>
-        <ul><li>Create a new repair request via the Catalog Item.</li><li>Verify SOAP payload sent to ALMEX.</li><li>Simulate/Verify inbound SOAP calls from ALMEX (GetReturns/ConfirmReturns).</li></ul>
-    </li><li><strong>Test Data:</strong>
-        <ul><li>Valid Device Serial Number.&lt;/            </li><li>Valid Country Code (from <code>vendor.config.list</code>).</li></ul>
-    </li><li><strong>Step-by-Step Testing Instructions:</strong>
-        <ol><li>Submit a Catalog Request with the test serial number.</li><li>Check the Script Include logs for <code>VendorInterfaceClient</code> outbound calls.</li><li>Trigger the <code>ALMEX -&gt; SN</code> interface trigger condition.</li><li>Verify the repair order status updates in ServiceNow.</li></ol>
-    </li><li><strong>Expected Results:</strong>
-        <ul><li>Outbound SOAP request is successful.</li><li>Inbound SOAP response correctly maps to the ServiceNow record via <code>integration.vendor.config.matrix</code>.</li></ul>
-    </li><li><strong>Where to Check Logs:</strong>
-        <ul><li>System Logs &gt; Scheduled Jobs / Script Includes execution logs.</li><li>SOAP Request/Response logs associated with the <code>VendorService</code> Web Service.</li></ul>
-    </li></ul>
-
-<hr />
-
-<h2>Known Issues</h2>
-<h3>Content</h3>
-<ul><li><strong>Symptoms:</strong> Recording function may not work correctly after release changes due to update set structure.</li><li><strong>Root Causes:</strong> The catalog item contains ~70 objects in the original update set. Subsequent adjustments were made in <code>STRY0429735_V2</code> and <code>STRY0429735_V3</code>.</li><li><strong>Diagnostic Steps:</strong> Verify update set history and ensure <code>STRY0429735_V2</code> and <code>STRY0429735_V3</code> are applied.</li><li><strong>Resolution / Workaround:</strong> Apply the specific adjustment update sets as noted in the story context.</li><li><strong>Prevention:</strong> Review update set composition during deployment to ensure all dependent objects are captured.</li></ul>
-
-<hr />
-
-<h2>Investigation Steps</h2>
-<h3>Content</h3>
-<ul><li><strong>Quick, Structured Troubleshooting Guide:</strong>
-        <ul><li><strong>When to Use:</strong> When repair status is not updating or outbound requests are failing.</li><li><strong>Step-by-Step Investigation Flow:</strong>
-                <ol><li><strong>Check Outbound:</strong> Verify <code>VendorInterfaceClient</code> logs for successful SOAP calls to ALMEX.</li><li><strong>Check Inbound:</strong> Verify <code>VendorInterface</code> logs for processing of <code>GetReturns</code> and <code>ConfirmReturns</code>.</li><li><strong>Check Configuration:</strong> Validate System Properties (<code>integration.vendor.config</code>, etc.) for correct country/VAT settings.</li><li><strong>Check Authentication:</strong> Ensure <code>interface.vendor.service</code> has valid roles and is not locked.</li></ol>
-            </li><li><strong>Where to Check Logs:</strong>
-                <ul><li>Script Include execution logs.</li><li>SOAP Service logs.</li><li>System Logs &gt; Scheduled Jobs.</li></ul>
-            </li><li><strong>Key Components:</strong> <code>VendorInterface</code>, <code>VendorInterfaceClient</code>, <code>ALMEX -&gt; SN</code> Trigger Condition.</li><li><strong>Escalation Guide:</strong> If SOAP errors persist, check the ALMEX SAP side for endpoint connectivity and WSDL compatibility issues.</li></ul>
-    </li></ul>
-```
-
----
-
-## Example 9: Outbound Integration (SAP S/4HANA OData)
-
-### Story
-```json
-{
-  "number": "STRY0010015",
-  "short_description": "[Interface Mgmt]: Outbound OData integration - Push approved Change Request dates to SAP S/4HANA Project System",
-  "description": "Implemented an outbound integration that pushes approved Change Request (CHG) planned start and end dates from ServiceNow to SAP S/4HANA Project System (PS) via OData. When a CHG reaches the 'Scheduled' state, a Business Rule triggers the Integration Framework, which builds the payload and calls the S/4HANA OData endpoint API_PROJECT_MAINTAIN with the WBS element reference stored on the CHG. The S/4HANA side updates the project milestone dates accordingly.",
-  "acceptance_criteria": "1. When a CHG moves to 'Scheduled', the planned start/end dates are sent to S/4HANA within 5 minutes.\n2. The WBS element reference (u_wbs_element) on the CHG is mandatory; missing values block the outbound call and log an error.\n3. Failed calls are retried up to 3 times with exponential backoff and logged in the Integration Framework log table.\n4. The OData response code and message are stored on the integration log record for traceability.",
-  "u_technical_specification": "Business Rule 'Milestone Dates Push to ERP' on the change_request table, runs After update with condition state changes to 'Scheduled' (-1). Script Include 'S4ProjectInterface' builds the JSON payload (WBS element, planned dates, CHG number) and calls REST Message 'ERP OData Outbound', function 'UpdateProjectDates'. Authentication: OAuth 2.0 client credentials against the S/4HANA OData gateway (token endpoint https://s4hana.example-service.com/sap/bc/sec/oauth2/token). Endpoint: https://s4hana.example-service.com/sap/opu/odata/sap/API_PROJECT_MAINTAIN/ProjectMilestone. Retry logic: up to 3 attempts, exponential backoff (1/5/15 minutes), implemented via the Integration Framework retry queue. Payload validation: u_wbs_element mandatory; empty value aborts the call and writes an error log.",
-  "work_notes": "2024-08-05 09:30: Dev - Confirmed with SAP team that API_PROJECT_MAINTAIN is exposed on the S/4HANA gateway.\n2024-08-05 14:00: Dev - Implemented S4ProjectInterface payload builder; unit tested with sample WBS element PRJ-1002345-01.\n2024-08-06 10:15: Dev - OAuth2 client credentials configured in ServiceNow OAuth registry; token fetch verified from non-prod.\n2024-08-06 16:45: Dev - End-to-end test passed: CHG0001234 moved to Scheduled, milestone dates updated in S/4HANA within 2 minutes.",
-  "comments": "2024-08-07 09:00: SAP Basis - Conigma throttling limit is 100 calls/minute; current volume is well below.\n2024-08-07 11:30: QA Team - Verified retry behavior by temporarily blocking the endpoint; 3 retries logged with correct backoff.",
-  "state": "Closed Complete",
-  "assigned_to": "John Integration",
-  "assignment_group": "Integration Team"
-}
-```
-
-### Expected KB Article (Gold Article)
-```html
-<h1>SAP S/4HANA Project System Outbound OData Integration</h1>
-<h2>Overview / Summary</h2>
-<h3>Purpose / Background / Overview</h3>
-<p>Approved Change Request planned dates flow from ServiceNow to SAP S/4HANA Project System through an outbound OData integration. When a CHG reaches the 'Scheduled' state, the integration sends the planned start and end dates to the corresponding WBS element in S/4HANA, so project milestones in SAP always reflect the approved change schedule.</p>
-<h3>Content</h3>
-<ul>
-    <li>What the interface is: An outbound REST/OData push of Change Request planned dates to SAP S/4HANA Project System milestones.</li>
-    <li>Who uses it: Change Managers and SAP project coordinators who need S/4HANA project milestones to match the approved change schedule.</li>
-    <li>What type of data is exchanged: CHG number, WBS element reference (u_wbs_element), planned start date, planned end date, and the OData response code/message stored on the integration log.</li>
-    <li>High-level process flow: CHG moves to 'Scheduled' → Business Rule triggers → S4ProjectInterface builds the payload → REST Message 'ERP OData Outbound' calls API_PROJECT_MAINTAIN → S/4HANA updates milestone dates → response logged; failures retried up to 3 times.</li>
-    <li>Table of related KB articles: N/A
-    </li>
-</ul>
-<hr />
-<h2>Outbound Technical Implementation</h2>
-<h3>Content</h3>
-<ul>
-    <li>Technical components used: Business Rule 'Milestone Dates Push to ERP' (After update, condition: state changes to 'Scheduled'), Script Include 'S4ProjectInterface', REST Message 'ERP OData Outbound' function 'UpdateProjectDates', Integration Framework retry queue.</li>
-    <li>Dependencies between records or functions: The CHG must carry a valid WBS element reference (u_wbs_element); the Script Include aborts the call and logs an error if it is empty.</li>
-    <li>Authentication method: OAuth 2.0 client credentials against the S/4HANA OData gateway (token endpoint https://s4hana.example-service.com/sap/bc/sec/oauth2/token).</li>
-    <li>Endpoint: https://s4hana.example-service.com/sap/opu/odata/sap/API_PROJECT_MAINTAIN/ProjectMilestone.</li>
-    <li>Retry and error handling: Up to 3 attempts with exponential backoff (1/5/15 minutes) via the Integration Framework retry queue; the OData response code and message are stored on the integration log record.</li>
-</ul>
-<hr />
-<h2>How to Use the Interface</h2>
-<h3>Content</h3>
-<ul>
-    <li>Typical usage scenarios: A Change Request is approved and moved to 'Scheduled'; its planned dates must appear on the matching S/4HANA project milestone without manual re-entry.</li>
-    <li>Step-by-step instructions: 1. Fill u_wbs_element on the CHG with the target WBS element (e.g. PRJ-1002345-01). 2. Move the CHG to 'Scheduled'. 3. The Business Rule fires automatically and the payload is sent. 4. Check the integration log record for the OData response code.</li>
-    <li>Expected results: The WBS element milestone in S/4HANA shows the CHG planned start/end dates, and the integration log shows a 2xx response.</li>
-</ul>
-<hr />
-<h2>Testing Guide</h2>
-<h3>Content</h3>
-<ul>
-    <li>Test scenarios: Happy path (Scheduled CHG with valid WBS element updates the milestone), missing WBS element (call aborted, error logged), endpoint unavailable (3 retries with backoff, then error state).</li>
-    <li>Test data: A test CHG with u_wbs_element set to a test WBS element in the non-prod S/4HANA client.</li>
-    <li>Step-by-step testing instructions: 1. Create a test CHG and set u_wbs_element. 2. Move the CHG to 'Scheduled'. 3. Verify in the integration log that the payload was sent and the response is 2xx. 4. Check in S/4HANA that the milestone dates match the CHG planned dates. 5. For retry testing, block the endpoint temporarily and confirm 3 retry attempts with 1/5/15 minute backoff.</li>
-    <li>Expected results: Milestone dates updated in S/4HANA within 5 minutes; all outcomes traceable in the integration log.</li>
-    <li>Where to check logs: Integration Framework log table; ServiceNow System Logs (syslog) for Business Rule execution.</li>
-</ul>
-<hr />
-<h2>Known Issues</h2>
-<h3>Content</h3>
-<ul>
-    <li>Symptoms: Milestone dates in S/4HANA do not update after the CHG is Scheduled, or the integration log shows repeated failures.</li>
-    <li>Root causes: Missing or invalid u_wbs_element, expired OAuth2 client secret, S/4HANA gateway throttling (100 calls/minute), or the ProjectMilestone entity not exposed for the target client.</li>
-    <li>Diagnostic steps: 1. Check the integration log record for the OData response code. 2. Verify u_wbs_element on the CHG. 3. Test the OAuth2 token fetch from the ServiceNow OAuth registry. 4. Ask SAP Basis to confirm the gateway throttling counters.</li>
-    <li>Resolution / Workaround: Set a valid WBS element and re-trigger by moving the CHG away from and back to 'Scheduled'; renew the OAuth2 client secret if token fetch fails.</li>
-    <li>Prevention: Make u_wbs_element mandatory on the CHG form for interface-relevant changes, and monitor the integration log daily.</li>
-</ul>
-<hr />
-<h2>Investigation Steps</h2>
-<h3>Content</h3>
-<ul>
-    <li>Quick, structured troubleshooting guide
-        <ul>
-            <li>When to use this guide: If S/4HANA milestone dates do not reflect the CHG planned dates, or the integration log shows errors.</li>
-            <li>Step-by-step investigation flow: 1. Open the integration log record for the CHG and read the OData response code. 2. If 4xx: check u_wbs_element and the OAuth2 credentials. 3. If 5xx or timeout: check the retry queue and ask SAP Basis about gateway availability. 4. If no log record exists: verify the Business Rule fired (System Logs).</li>
-            <li>Where to check logs: Integration Framework log, ServiceNow System Logs (syslog), S/4HANA gateway access logs.</li>
-            <li>Key components: Business Rule 'Milestone Dates Push to ERP', Script Include 'S4ProjectInterface', REST Message 'ERP OData Outbound', integration log record.</li>
-            <li>Escalation guide: Escalate to SAP Basis for gateway/throttling issues, or to integration developers if the payload builder produces invalid JSON.</li>
-        </ul>
-    </li>
-</ul>
 ```
