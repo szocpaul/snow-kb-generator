@@ -454,3 +454,23 @@ The metric penalty reduces FREQUENCY (GEPA learns it), the guardrail zeroes the 
 ### Backlog: Separate Specs Are Waiting
 - **Docstring consolidation:** shortening/restructuring the `GenerateKbFromTemplate` instruction (selected from spec 010).
 - **Valset expansion with production examples** (after turning the 3 old template-based articles — LDAP, Jira bidir, KB Generator — into gold-quality examples by hand).
+
+## 27. Evening Wrap-Up (2026-07-28) — Tomorrow: spec 010 implementation (T001)
+
+### What Happened Today (big day!)
+- **Architecture change:** Kimi-direct task model (`task_model: "kimi"` in config.yaml). The deciding measurement: Kimi K3 base **0.655** vs Qwen+GEPA 0.600. Production validation succeeded with both Stories (STRY0010010 + STRY0010014 with the UI Action → KB0010012, the previously truncated article recovered).
+- **Gold dataset:** example 6 (SolMan bidirectional, hand-written in the style of examples 1-5) + example 7 (ALMEX SOAP). There are now 7 examples, 4 train / 3 val.
+- **Pipeline fix:** `sanitize_html_field()` — the Story HTML fields now arrive as plain text (gold ↔ production consistency).
+- **Spec 010 written (NOT implemented):** `specs/010-human-style-articles/` (spec.md + plan.md + tasks.md) — a human tone in the articles.
+
+### WE CONTINUE HERE TOMORROW: spec 010 T001-T014
+1. **T001-T003:** `BANNED_PHRASES` constant + signature style block (at the end of the docstring, the existing text untouched)
+2. **T004-T007:** StyleJudge (LLM-as-judge, Kimi K3) into the metric, 5th axis, new weights (0.25/0.25/0.15/0.15/0.20), error tolerance 0.5
+3. **T008-T009:** SkilledProposer style guidance
+4. **T010-T014:** baseline → GEPA (≤250 calls, Kimi task+reflection) → proving the style improvement → production validation → docs
+
+### Important Reminders for Tomorrow
+- Watch the Kimi Code quota (the rollouts are Kimi calls now!); the T011 GEPA has max 250 calls.
+- K3 only accepts `temperature=1.0` (already built in).
+- The GEPA checkpoint from yesterday's stopped run is available, but spec 010 needs a clean run with the new metric (`rm -rf gepa_logs` before the run).
+- Backlog: docstring consolidation (separate spec), valset expansion with production examples.
