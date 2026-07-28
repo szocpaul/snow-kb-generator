@@ -399,3 +399,11 @@ A metric-büntetés a GYAKORISÁGOT csökkenti (GEPA megtanulja), a guardrail a 
 ### Mai állapot (mind commitolva és pusholva)
 - Spec 009 kész: 3 prediktor, template kötelező, első VALÓS template-úton mért GEPA (0.300→0.600), 233/233 teszt.
 - Éles demo cikk: KB0010009 (STRY0010010).
+
+### 24. szekció BEFEJEZVE (2026-07-28)
+- **Metric:** `_find_na_only_sections()` — N/A-only szekció büntetve, ha a gold kihagyja + feedback. False-positive fix: az N/A-jelölés jelenléte kötelező (rövid valódi szekciók védve).
+- **Guardrail:** `strip_na_only_sections()` a pipeline láncban (direction → N/A-only → hallucination).
+- **GEPA újrafutás** az új metric-kel: baseline 0.300 → optimized 0.450 (szigorúbb metric; ~40 perc).
+- **Valset:** 0/0/0 (direction, unsupported, N/A-only).
+- **Éles validáció:** STRY0010010 cikk N/A-mentes (Overview + Outbound); a modell a Testing/Usage szekciókat is kihagyta — az evidence-first korrekt, de figyelendő, hogy a modell ne essen át a ló túloldalára (alul-generálás).
+- 239/239 teszt zöld.
