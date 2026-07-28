@@ -407,3 +407,12 @@ A metric-büntetés a GYAKORISÁGOT csökkenti (GEPA megtanulja), a guardrail a 
 - **Valset:** 0/0/0 (direction, unsupported, N/A-only).
 - **Éles validáció:** STRY0010010 cikk N/A-mentes (Overview + Outbound); a modell a Testing/Usage szekciókat is kihagyta — az evidence-first korrekt, de figyelendő, hogy a modell ne essen át a ló túloldalára (alul-generálás).
 - 239/239 teszt zöld.
+
+## 25. Metric-tisztítás + GEPA medium BEFEJEZVE (2026-07-28)
+
+- **A:** Régi N/A-check (`_check_template_adherence`) kivezetve a metricből — az evidence-first óta zaj volt.
+- **B:** GEPA újrafutás tiszta metric-kel: **baseline 0.400 → optimized 0.600** (~27 perc). A 16000-es max_tokens a rolloutokat lassítja, de a vége felismerhetően felgyorsul.
+- **Valset:** 0/0/0 (direction, unsupported, N/A-only).
+- **Éles validáció (STRY0010010):** mind a 7 támogatott szekció visszatért (az alul-generálás megoldódott!), nincs N/A, nincs Inbound, tiszta befejezés.
+- **Kimi Code kvóta:** a futás alatt merült ki (99.97%, reset 07-28 20:55) — a következő GEPA futásokig várjunk a resetre; a Qwen-alapú generálás (éles pipeline) kvóta-mentes.
+- 239/239 teszt zöld.
