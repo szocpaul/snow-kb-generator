@@ -433,3 +433,23 @@ A metric-büntetés a GYAKORISÁGOT csökkenti (GEPA megtanulja), a guardrail a 
 ### Backlog: külön spec-ek várakoznak
 - **Docstring-konszolidáció:** a `GenerateKbFromTemplate` instrukció rövidítése/átstrukturálása (spec 010-ből kiválasztva).
 - **Valset bővítés prod példákkal** (a 3 régi sablonú cikk — LDAP, Jira bidir, KB Generator — kézi gold-minőségűvé tétele után).
+
+## 27. Esti zárás (2026-07-28) — Holnap: spec 010 implementáció (T001)
+
+### Ma történt (nagy nap!)
+- **Architektúra-váltás:** Kimi-direct task modell (`task_model: "kimi"` a config.yaml-ben). A döntő mérés: Kimi K3 base **0.655** vs Qwen+GEPA 0.600. Éles validáció mindkét Story-n sikeres (STRY0010010 + UI Action-nel STRY0010014 → KB0010012, a korábban csonkított cikk meggyógyult).
+- **Gold dataset:** példa 6 (SolMan bidirectional, 1-5. példa stílusában kézzel írva) + példa 7 (ALMEX SOAP). Jelenleg 7 példa, 4 train / 3 val.
+- **Pipeline javítás:** `sanitize_html_field()` — a Story HTML mezők most plain textként érkeznek (gold ↔ produkció konzisztencia).
+- **Spec 010 megírva (NINCS implementálva):** `specs/010-human-style-articles/` (spec.md + plan.md + tasks.md) — emberi hangnem a cikkekben.
+
+### HOLNAP ITT FOLYTATJUK: spec 010 T001-T014
+1. **T001-T003:** `BANNED_PHRASES` konstans + signature stílus-blokk (docstring végéhez, a meglévő szöveg érintetlen)
+2. **T004-T007:** StyleJudge (LLM-as-judge, Kimi K3) a metric-be, 5. tengely, új súlyok (0.25/0.25/0.15/0.15/0.20), hibatűrés 0.5
+3. **T008-T009:** SkilledProposer style guidance
+4. **T010-T014:** baseline → GEPA (≤250 call, Kimi task+reflection) → style javulás igazolása → éles validáció → docs
+
+### Fontos emlékeztetők holnapra
+- A Kimi Code kvóta figyelendő (a rolloutok most Kimi-hívások!); a T011 GEPA max 250 call.
+- A K3 csak `temperature=1.0`-t fogad el (már be van építve).
+- A GEPA checkpoint a tegnapi leállított futásból megvan, de a spec 010 új metric-kel tiszta futás kell (`rm -rf gepa_logs` a futás előtt).
+- Backlog: docstring-konszolidáció (külön spec), valset bővítés prod példákkal.
