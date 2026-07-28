@@ -22,7 +22,7 @@ Amikor a fejlesztők befejeznek egy ServiceNow Story-t (`STRY...`), kézzel kell
 
 - **Python 3.12**
 - **DSPy 3.2.x** — Signatures + Modules, GEPA optimalizáció
-- **LM:** GLM-5.2 (Pi Agent előfizetés, GEPA reflectionhöz) + Lokális Qwen3.6-35B (llama.cpp, napi generáláshoz Tailscale-en keresztül)
+- **LM:** Kimi K3 (Pi Agent előfizetés, task modell + GEPA reflection) — a lokális Qwen3.6-35B (llama.cpp) opcionális fallback (`task_model: "local"`)
 - **ServiceNow Table API** (`requests`) — Story lekérés + KB létrehozás (CRUD)
 - **FastAPI + Uvicorn** — Webhook szerver a ServiceNow UI Action-nek
 - **Pydantic v2** — adatmodell és validáció
@@ -118,7 +118,7 @@ snow_kb_generator/
 │   ├── program.py              # StoryToKBArticle(dspy.Module)
 │   └── ...                     # config, schemas, cli
 ├── servicenow/                 # ServiceNow-ba másolandó UI Action script
-├── tests/                      # 232 pytest teszt
+├── tests/                      # 243 pytest teszt
 ├── eval/                       # GEPA eval harness (dataset, rich_metric, baseline, gepa_optimize)
 ├── artifacts/                  # GEPA-optimalizált program (program.json)
 ├── gepa_logs/                  # GEPA checkpointek
@@ -145,6 +145,8 @@ snow_kb_generator/
 - 5. Kész Feature: `005-real-related-kb-articles` (Valódi kapcsolódó KB cikkek ServiceNow kereséssel; nincs találat → N/A).
 - 6. Kész Feature: `006-template-simplification` (Egyszerűsített sablon: nincs H1/Theme/Target Audience szekció; audience = stílusinstrukció).
 - 7. Kész Feature: `007-direction-aware-quality` (Evidence-first generálás: irány-érzékeny metric + "no evidence, no section" signature + SkilledProposer + direction guardrail).
+- 8. Kész Feature: `009-remove-legacy-draft-format` (Legacy draft/format ág kivezetve; 3 prediktor, template kötelező).
+- 9. Spec kész (implementáció holnap): `010-human-style-articles` (Emberi hangnem: tone guidance + style judge + SkilledProposer style guidance + kis-GEPA).
 
 ## Licenc
 
