@@ -52,9 +52,10 @@ def rich_metric(gold, pred, trace=None, pred_name=None, pred_trace=None):
         matched_facts = sum(1 for f in expected_facts if f in actual_facts)
         content_accuracy = matched_facts / len(expected_facts)
 
-    # 3. Template adherence (template_context betartása)
-    # Ha a template N/A-t vár, de a generált tele van tartalommal (vagy fordítva), az hiba
-    template_adherence = _check_template_adherence(expected_html, actual_html)
+    # 3. Template adherence — csak az evidence-first ellenőrzések (spec 007+).
+    # A régi N/A-jelenlét-alapú check (_check_template_adherence) KIVEZETVE:
+    # az evidence-first óta az N/A mindenhol tiltott, a réteg zajt adott.
+    template_adherence = 1.0
 
     # 3a. Evidence-first ellenőrzések (spec 007):
     # - Direction violation: outbound story + kitöltött Inbound szekció (és fordítva)
@@ -96,9 +97,6 @@ def rich_metric(gold, pred, trace=None, pred_name=None, pred_trace=None):
         missing_facts = [f for f in expected_facts if f not in actual_facts]
         if missing_facts:
             parts.append(f"Content mismatch. Missing expected facts: {', '.join(missing_facts)}.")
-
-    if template_adherence < 1.0:
-        parts.append(f"Template violation. Expected 'N/A' for irrelevant section, got actual content instead.")
 
     if direction_violations:
         parts.extend(direction_violations)
@@ -298,22 +296,3 @@ def _find_hallucinated_kb_references(actual_html: str, story_text: str) -> list[
     return sorted(actual_refs - known_refs)
 
 
-def _check_template_adherence(expected_html: str, actual_html: str) -> float:
-    """Ellenőrzi, hogy a generált HTML betartja-e a template_context szabályait.
-
-    Ha a template N/A-t vár (pl. Inbound fejezetre, ami Outbound Story-ban), de a generált
-    tele van tartalommal (hallucination), az hiba. Ha a template tele van, de a generált
-    N/A-t ír (alulteljesítés), az is hiba.
-    """
-    # Egyszerű ellenőrzés: ha a template "N/A" szöveget tartalmaz, a generáltnek is kell tartalmaznia
-    expected_na = "N/A" in expected_html
-    actual_na = "N/A" in actual_html
-
-    if expected_na and not actual_na:
-        # A template N/A-t vár, de a generált tele van tartalommal (hallucination)
-        return 0.5
-    if not expected_na and actual_na:
-        # A template tele van, de a generált N/A-t ír (alulteljesítés)
-        return 0.5
-
-    return 1.0
