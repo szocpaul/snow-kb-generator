@@ -77,12 +77,13 @@ _FIELD_LABELS: dict[str, str] = {
 
 
 def sanitize_html_field(value: str) -> str:
-    """Cleaning of the HTML field value for the story_text.
+    """An HTML field value → plain text for the story_text.
 
-    The HTML fields of the prod Stories are full of rendering junk (<style> blocks,
-    inline style="" attributes), which unnecessarily burns the context (the SolMan
-    example half of the field was waste). We replace the <code> tags with <strong>
-    (consistently with the KB formatting rule).
+    The gold dataset (examples 1-5) uses plain text in the fields — for a
+    Story-k viszont nyers HTML-t tartalmaznak (style-blokkok, tagek). A
+    consistent production input we delete the rendering noise, then turn the HTML
+    structure (headings, list items, paragraphs) into line breaks, and finally
+    remove all the tags.
     """
     import re
 
@@ -90,8 +91,16 @@ def sanitize_html_field(value: str) -> str:
         return value
     cleaned = re.sub(r"<style[^>]*>.*?</style>", "", value, flags=re.DOTALL)
     cleaned = re.sub(r"<script[^>]*>.*?</script>", "", cleaned, flags=re.DOTALL)
-    cleaned = re.sub(r'\s+style="[^"]*"', "", cleaned)
-    cleaned = re.sub(r"<code[^>]*>(.*?)</code>", r"<strong>\1</strong>", cleaned, flags=re.DOTALL)
+    # Block-level elements → line breaks (the structure stays readable)
+    cleaned = re.sub(r"<li[^>]*>", "\n- ", cleaned, flags=re.IGNORECASE)
+    cleaned = re.sub(r"</(h[1-6]|p|ul|ol|li|tr|table|div|blockquote)>", "\n", cleaned, flags=re.IGNORECASE)
+    cleaned = re.sub(r"<br\s*/?>", "\n", cleaned, flags=re.IGNORECASE)
+    # Delete every remaining tag, convert the HTML entities back
+    cleaned = re.sub(r"<[^>]+>", " ", cleaned)
+    import html as _html
+
+    cleaned = _html.unescape(cleaned)
+    cleaned = re.sub(r"[ \t]+", " ", cleaned)
     cleaned = re.sub(r"\n{3,}", "\n\n", cleaned)
     return cleaned.strip()
 
