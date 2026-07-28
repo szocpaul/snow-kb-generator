@@ -416,3 +416,16 @@ A metric-büntetés a GYAKORISÁGOT csökkenti (GEPA megtanulja), a guardrail a 
 - **Éles validáció (STRY0010010):** mind a 7 támogatott szekció visszatért (az alul-generálás megoldódott!), nincs N/A, nincs Inbound, tiszta befejezés.
 - **Kimi Code kvóta:** a futás alatt merült ki (99.97%, reset 07-28 20:55) — a következő GEPA futásokig várjunk a resetre; a Qwen-alapú generálás (éles pipeline) kvóta-mentes.
 - 239/239 teszt zöld.
+
+## 26. ARCHITEKTÚRA-VÁLTÁS: Kimi-direct task modell (2026-07-28)
+
+### Mérés, ami eldöntötte
+- Qwen 35B base: 0.300 | Qwen+GEPA (órák optimalizálás): 0.600 | **Kimi K3 base, GEPA NÉLKÜL: 0.655**
+- Az erős modell nyersen is felülmúlja a gyenge modell optimalizáltját → a lokális+GEPA architektúra megtérülése megszűnt.
+
+### Változás
+- `config.yaml`: `pipeline.task_model: "kimi"` (új opció; `"local"` = régi Qwen fallback).
+- `pipeline.configure_lm()`: kimi ág a `_RefreshingKimiLM`-mel (auto OAuth refresh); temperature=1.0 kötelező (K3 csak azt fogadja).
+- Éles validáció (STRY0010010): tiszta cikk Kimi K3-mal — minden guardrail változatlanul aktív.
+- A GEPA nem kuka: Kimi task modellel is futtatható (kisebb megtérülés), és a checkpoint megőrzve.
+- 243/243 teszt zöld.

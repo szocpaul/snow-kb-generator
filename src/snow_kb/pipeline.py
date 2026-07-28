@@ -163,10 +163,24 @@ def configure_lm(settings: Settings) -> None:
     modulonként csak indokolt esetben override. A track_usage a cost/latency
     megfigyelhetőségséhez kell.
 
+    Ha settings.pipeline.task_model == "kimi", a Kimi K3 a task modell
+    (auto-refreshing OAuth token, erős baseline: 0.655 GEPA nélkül).
     Ha settings.pipeline.use_pi_auth True, a dspy_lm_auth.LM osztályt használja
     (Pi Agent GLM előfizetés hitelesítéshez). Egyébként a szabványos dspy.LM-et.
     """
-    if settings.pipeline.use_pi_auth:
+    if settings.pipeline.task_model == "kimi":
+        # Kimi K3 task modell (Kimi-direct architektúra): erős modell, nincs
+        # szükség GEPA-ra a jó minőséghez. A token auto-refresh a pi auth.json-ból.
+        from eval.gepa_optimize import _RefreshingKimiLM
+
+        lm = _RefreshingKimiLM(
+            "openai/k3",
+            api_key="",  # a _RefreshingKimiLM minden hívásnál frissíti az auth.json-ból
+            api_base="https://api.kimi.com/coding/v1",
+            temperature=1.0,  # a K3 csak temperature=1-et fogad el
+            max_tokens=settings.pipeline.max_tokens,
+        )
+    elif settings.pipeline.use_pi_auth:
         # A Pi Agent GLM előfizetés (zai-glm) közvetlen használata.
         # A dspy_lm_auth csak OpenAI Codex/ChatGPT route-okat ismer,
         # ezert a GLM kulcsot közvetlenül a Pi auth fájlból olvassuk.

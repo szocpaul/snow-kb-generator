@@ -70,6 +70,7 @@ class ServiceNowConfig(BaseModel):
 class PipelineConfig(BaseModel):
     default_temperature: float = 0.0
     max_tokens: int = 2000
+    task_model: str = "local"  # "local" (Qwen/llama.cpp) | "kimi" (Kimi K3, Pi OAuth)
     use_pi_auth: bool = False  # Ha True, Pi Agent auth.json-t használ (GLM/Kimi)
     api_base: str = ""         # Opcionális API végpont (pl. GLM proxy)
 
