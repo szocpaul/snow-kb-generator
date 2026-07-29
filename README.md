@@ -1,13 +1,13 @@
 # snow-kb-generator
 
-> DSPy pipeline that turns completed ServiceNow **Stories** into **Knowledge Base articles** — automatically, powered by GLM-5.2 and a ServiceNow UI Action button.
+> DSPy pipeline that turns completed ServiceNow **Stories** into **Knowledge Base articles** — automatically, powered by a local Qwen3.6-35B (llama.cpp) and a ServiceNow UI Action button.
 
 ## Mi ez?
 
 When the developers finish a ServiceNow Story (`STRY...`), a Knowledge Base (KB) article should be written by hand about the solution. This project **fully automates** that:
 1. The developer clicks the **"Create KB Article"** button in the ServiceNow interface.
 2. The Story data is sent to a FastAPI web server (running on a VPS).
-3. An AI pipeline (DSPy + GLM-5.2) generates a structured KB article.
+3. An AI pipeline (DSPy + local Qwen3.6-35B) generates a structured KB article.
 4. The article is created automatically in the ServiceNow KB, and its link is inserted into the Story `work_notes` field.
 
 **Input:** closed ServiceNow Story — `short_description`, `description`, `acceptance_criteria`, `u_technical_specification`, `work_notes`, `comments`, `state`.
@@ -22,7 +22,7 @@ When the developers finish a ServiceNow Story (`STRY...`), a Knowledge Base (KB)
 
 - **Python 3.12**
 - **DSPy 3.2.x** — Signatures + Modules, GEPA optimization
-- **LM:** Kimi K3 (Pi Agent subscription, task model + GEPA reflection) — the local Qwen3.6-35B (llama.cpp) as an optional fallback (`task_model: "local"`)
+- **LM:** local Qwen3.6-35B-A3B (llama.cpp, task model — `task_model: "local"`) + Kimi K3 (Pi Agent subscription, GEPA reflection/proposer). Clean measurement (2026-07-29, `cache=False`): K3 0.769 vs local 0.733 — alongside the local model, the zero marginal cost decided it
 - **ServiceNow Table API** (`requests`) — Story fetch + KB creation (CRUD)
 - **FastAPI + Uvicorn** — webhook server for the ServiceNow UI Action
 - **Pydantic v2** — data model and validation
@@ -39,7 +39,7 @@ ServiceNow (Developer UI)
 FastAPI server (VPS - Hetzner, port 8000)
     │  1. ServiceNowClient.get_story() – requests the Story
     │  2. ServiceNowClient.get_update_set_changes() – fetches the modified code (XML)
-    │  3. StoryToKBArticle (DSPy + GLM-5.2) – code analysis and article generation
+    │  3. StoryToKBArticle (DSPy + Qwen3.6-35B) – code analysis and article generation
     │  4. ServiceNowClient.create_kb_article() – Pusholja a KB-be
     ▼
 Response to ServiceNow:
@@ -54,7 +54,7 @@ The UI Action updates the Story work_notes field with the link.
 ### 1. Requirements
 - Python 3.12+
 - ServiceNow instance (access to the Table API and UI Actions)
-- GLM API key (or another LM supported by DSPy)
+- A running llama.cpp server with the Qwen3.6-35B-A3B model (Windows machine, Tailscale endpoint) OR a Kimi Code subscription (`task_model: "kimi"`)
 
 ### 2. Configuration
 ```bash
@@ -118,7 +118,7 @@ snow_kb_generator/
 │   ├── program.py              # StoryToKBArticle(dspy.Module)
 │   └── ...                     # config, schemas, cli
 ├── servicenow/                 # UI Action script to copy into ServiceNow
-├── tests/                      # 243 pytest tests
+├── tests/                      # 258 pytest tests (with the .venv interpreter!)
 ├── eval/                       # GEPA eval harness (dataset, rich_metric, baseline, gepa_optimize)
 ├── artifacts/                  # GEPA-optimized program (program.json)
 ├── gepa_logs/                  # GEPA checkpointek

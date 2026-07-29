@@ -45,14 +45,15 @@ class TestRichMetric:
         assert "Correct" in result.feedback or "perfect" in result.feedback.lower()
 
     def test_mismatch_returns_low_score(self):
-        """If the generated HTML differs from the gold (header and content too), the score is low.
+        """If the generated HTML differs from the gold (both the heading and a fact), the score is low.
 
-        Note (spec 004): with the new weights (0.3/0.3/0.2/0.2) the non-hallucinated
-        output gets 0.2 hallucination points, so the threshold is 0.45.
+        Note (spec 010): the content axis matches the fact identifiers (it is style-
+        agnostic), therefore the example is intentionally identifier-rich — they are missing in the pred.
         """
         gold = dspy.Example(
             story_text="Test story",
-            html="<h2>Problem</h2><p>Expected problem.</p><h2>Solution</h2><ol><li>Step 1.</li></ol>",
+            html="<h2>Problem</h2><p>LDAP query timeout in LDAP_Retry_Authenticator on u_user table.</p>"
+            "<h2>Solution</h2><ol><li>Step 1.</li></ol>",
         ).with_inputs("story_text")
         pred = dspy.Prediction(
             html="<h2>Different</h2><p>Wrong content entirely.</p>"
@@ -67,7 +68,7 @@ class TestRichMetric:
         """The feedback is a critique in natural language (not just "error")."""
         gold = dspy.Example(
             story_text="Test story",
-            html="<h2>Problem</h2><p>Expected problem.</p>",
+            html="<h2>Problem</h2><p>LDAP timeout in LDAP_Retry_Authenticator.</p>",
         ).with_inputs("story_text")
         pred = dspy.Prediction(
             html="<h2>Different</h2><p>Wrong content.</p>"

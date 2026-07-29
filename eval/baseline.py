@@ -75,6 +75,50 @@ def run_baseline(program, valset, output_path: str | Path = "runs/baseline.json"
     return EvaluationResult(score=average_score, results=result.results)
 
 
+def configure_kimi_lm():
+    """Configures the DSPy LM globally for Kimi K3 (for a clean measurement, cache=False)."""
+    import dspy
+
+    from eval.gepa_optimize import _RefreshingKimiLM
+
+    lm = _RefreshingKimiLM(
+        "openai/k3",
+        api_key="",  # the _RefreshingKimiLM refreshes it from the auth.json on every call
+        api_base="https://api.kimi.com/coding/v1",
+        temperature=1.0,  # K3 only accepts temperature=1
+        max_tokens=8000,
+        cache=False,
+    )
+    dspy.configure(lm=lm, track_usage=True)
+
+
+def main(argv: list[str] | None = None) -> None:
+    """The CLI entry point: python -m eval.baseline --model local|kimi [--output ...]."""
+    import argparse
+
+    parser = argparse.ArgumentParser(description="Baseline measurement with the StoryToKBArticle program.")
+    parser.add_argument("--model", default="local", choices=["local", "kimi"],
+                        help="Task model: local (Qwen, llama.cpp) or kimi (K3).")
+    parser.add_argument("--dataset", default="data/examples/gold_dataset.md")
+    parser.add_argument("--output", default="runs/baseline.json")
+    args = parser.parse_args(argv)
+
+    from eval.dataset import load_gold_dataset
+    from snow_kb.program import StoryToKBArticle
+
+    trainset, valset = load_gold_dataset(args.dataset)
+    print(f"Dataset: {len(trainset)} train / {len(valset)} val examples")
+
+    if args.model == "kimi":
+        # run_baseline calls the module-global configure_lm — for Kimi we replace it.
+        import eval.baseline as _self
+
+        _self.configure_lm = configure_kimi_lm
+
+    result = run_baseline(StoryToKBArticle(), valset, output_path=args.output)
+    print(f"\nBaseline ({args.model}) average score: {result.score:.3f} → {args.output}")
+
+
 def configure_lm():
     """Configures the DSPy LM globally from the settings (Qwen task LM)."""
     import json
@@ -97,5 +141,13 @@ def configure_lm():
         api_base=api_base,
         temperature=0.6,
         max_tokens=8000,
+        # The measurement must not come from the ~/.dspy_cache (otherwise an earlier,
+        # run with a different model is replayed — see
+        # the false local baseline of 0.655 from 2026-07-29).
+        cache=False,
     )
     dspy.configure(lm=lm, track_usage=True)
+
+
+if __name__ == "__main__":
+    main()

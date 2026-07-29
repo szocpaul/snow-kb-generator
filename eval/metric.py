@@ -9,6 +9,23 @@ from __future__ import annotations
 
 import dspy
 
+# Spec 010 (US1): the shared boilerplate prohibition list.
+# The same list is used by: the style block of GenerateKbFromTemplate (in sync with the
+# check of tests/test_style_guidance.py), the style judge prompt (US2) and the
+# SC-001 regex check.
+BANNED_PHRASES: list[str] = [
+    "This document describes",
+    "This document outlines",
+    "This article describes",
+    "seamless",
+    "seamlessly",
+    "leverage",
+    "In today's fast-paced world",
+    "It is important to note",
+    "plays a crucial role",
+    "In conclusion",
+]
+
 
 def rich_metric(gold, pred, trace=None, pred_name=None, pred_trace=None):
     """Evaluates the generated KB article against the gold standard.
@@ -75,12 +92,17 @@ def rich_metric(gold, pred, trace=None, pred_name=None, pred_trace=None):
     hallucinated = _find_hallucinated_kb_references(actual_html, known_refs)
     hallucination_score = 0.0 if hallucinated else 1.0
 
-    # Weighted sum (0.3 structure + 0.3 content + 0.2 template + 0.2 hallucination)
+    # 5. The style axis (spec 010, US2): LLM-as-judge, with error tolerance (FR-002).
+    style_score, style_critique = _style_score(actual_html) if actual_html else (0.5, "")
+
+    # The weighted sum — spec 010: 0.25 structure + 0.25 content + 0.15 template
+    # + 0.15 hallucination + 0.20 style (the old one: 0.3/0.3/0.2/0.2, without style).
     score = (
-        0.3 * structure_match
-        + 0.3 * content_accuracy
-        + 0.2 * template_adherence
-        + 0.2 * hallucination_score
+        0.25 * structure_match
+        + 0.25 * content_accuracy
+        + 0.15 * template_adherence
+        + 0.15 * hallucination_score
+        + 0.20 * style_score
     )
 
     # 4. The feedback (the critique in natural language)
@@ -122,6 +144,9 @@ def rich_metric(gold, pred, trace=None, pred_name=None, pred_trace=None):
             + ". These KB article numbers do not appear in the source Story — remove them or use the KBXXXXXXX placeholder / 'N/A'."
         )
 
+    if style_critique:
+        parts.append(f"Style: {style_critique}")
+
     if not parts:
         parts.append("Correct structure, accurate content, and proper template adherence.")
 
@@ -137,34 +162,73 @@ def _extract_headings(html: str) -> list[str]:
     return [h.strip() for h in headings if h.strip()]
 
 
+# The internal system names that are still counted as facts.
+_DOMAIN_NAMES: set[str] = {"Jira", "Conigma", "Almex", "Solman"}
+
+# The generic words that are NOT counted as facts (template text / general English).
+# Without these the content axis would give "free" points, or it would be noisy.
+_FACT_STOPLIST: set[str] = {
+    # template and section words
+    "This", "That", "When", "What", "Who", "How", "Where", "Expected", "Symptoms",
+    "Causes", "Steps", "Guide", "Issues", "Overview", "Summary", "Content", "Testing",
+    "Known", "Investigation", "Resolution", "Prevention", "Purpose", "Background",
+    "Typical", "Usage", "Scenarios", "Results", "Data", "Table", "Dependencies",
+    "Authentication", "Method", "Retry", "Error", "Handling", "Technical",
+    "Components", "Validation", "Quick", "Escalation", "Root", "Diagnostic",
+    # the too generic technical abbreviations (they are in every article → free points)
+    "API", "REST", "SOAP", "JSON", "HTML", "URL", "AND", "FOR", "THE", "NOT",
+}
+
+
 def _extract_facts(html: str) -> list[str]:
-    """Extracts the more important facts from the HTML (e.g. number, short_description, description, p content)."""
+    """Extracts the fact identifiers from the HTML (NOT the sentence prefixes!).
+
+    The lesson of spec 010: the earlier version matched the first 50 characters of the gold <p>
+    sentences — that rewarded imitating the wording of the gold, which collided head-on
+    with the style axis (the GEPA coded the "This document describes..." pattern in as
+    mandatory because it brought the content point). Therefore the content axis
+    is now STYLE-AGNOSTIC: it matches field names, component names, endpoints,
+    article numbers and values — it rewards the FACTS, not the wording.
+    """
     import re
-    facts = []
 
-    # number (pl. STRY0010001)
-    number_match = re.search(r'"number"\s*:\s*"([^"]+)"', html)
-    if number_match:
-        facts.append(number_match.group(1))
+    text = re.sub(r'<[^>]+>', ' ', html)  # removing the HTML tags
+    facts: set[str] = set()
 
-    # short_description (pl. "[Interface Mgmt]: ...")
-    short_desc_match = re.search(r'"short_description"\s*:\s*"([^"]+)"', html)
-    if short_desc_match:
-        facts.append(short_desc_match.group(1))
+    # The quoted names: 'the name of the Business Rule', "Script Include" — typical component references
+    for m in re.findall(r"['\u2018\u2019]([^'\u2018\u2019]{3,80})['\u2018\u2019]", text):
+        facts.add(m.strip())
 
-    # description (pl. "Implemented an outbound REST integration...")
-    desc_match = re.search(r'"description"\s*:\s*"([^"]+)"', html)
-    if desc_match:
-        facts.append(desc_match.group(1)[:80])  # First 80 characters
+    # Record/article numbers (STRY0010005, STYLE-REF, CHG0001234)
+    facts.update(re.findall(r'\b(?:KB\d{6,}|STRY\d{6,}|CHG\d{6,}|CTASK\d{6,})\b', text))
 
-    # <p> content (e.g. "Expected problem.")
-    p_matches = re.findall(r'<p[^>]*>(.*?)</p>', html, re.DOTALL)
-    for p in p_matches:
-        p_clean = re.sub(r'<[^>]+>', '', p).strip()  # removing the HTML tags
-        if p_clean and len(p_clean) > 5:
-            facts.append(p_clean[:50])  # First 50 characters
+    # URL-ek / endpointok
+    facts.update(u.rstrip('.,;') for u in re.findall(r'https?://[^\s<)&]+', text))
 
-    return facts
+    # The snake_case and dot-separated identifiers (u_cd_state, change_task, auth.config)
+    facts.update(re.findall(r'\b[A-Za-z][A-Za-z0-9]*(?:_[A-Za-z0-9]+)+\b', text))
+    facts.update(re.findall(r'\b[a-z]+(?:\.[a-z0-9]+){1,}\b', text))
+
+    # The camelCase identifiers (uCdState, acmeIntegrationFramework)
+    facts.update(re.findall(r'\b[a-z]+[A-Z][A-Za-z0-9]+\b', text))
+
+    # The ALLCAPS abbreviations (LDAP, IDOC, WBS, SSO, ACME)
+    facts.update(re.findall(r'\b[A-Z][A-Z0-9]{2,}\b', text))
+
+    # The internal capitalised system/component names (ServiceNow, SolMan, OData,
+    # ScriptedWebService) — the plain TitleCase words ("Change", "Business")
+    # would be too noisy, so we only match the internal capitalised ones.
+    facts.update(re.findall(r'\b[A-Z][a-z]+[A-Z][A-Za-z0-9]*\b', text))
+    facts.update(re.findall(r'\b[A-Z]{2,}[a-z]+[A-Z][A-Za-z0-9]*\b', text))  # VendorService-like
+
+    # The domain whitelist: the internal system names without an internal capital letter
+    facts.update(w for w in re.findall(r'\b[A-Z][a-z]{3,}\b', text) if w in _DOMAIN_NAMES)
+
+    # Filtering: the stop list, too short, empty
+    return sorted(
+        f for f in facts
+        if f and len(f) >= 3 and f not in _FACT_STOPLIST
+    )
 
 
 def detect_direction(story_text: str) -> str:
@@ -296,3 +360,85 @@ def _find_hallucinated_kb_references(actual_html: str, story_text: str) -> list[
     return sorted(actual_refs - known_refs)
 
 
+# ---------------------------------------------------------------------------
+# Spec 010 (US2): Style axis — LLM-as-judge
+# ---------------------------------------------------------------------------
+
+
+class StyleJudge(dspy.Signature):
+    """You are a strict writing-style reviewer for ServiceNow KB articles.
+
+    You receive an article (article_html) and a positive style reference
+    (style_reference) — an excerpt from a hand-written KB article by a senior
+    engineer (STYLE-REF). Judge ONLY the writing style, not factual accuracy.
+
+    Score the article from 0.0 to 1.0:
+    - 1.0: reads like the reference — direct facts, concrete identifiers
+      (field names, endpoints, script names, values), varied sentence rhythm,
+      active voice.
+    - 0.0: machine-generated boilerplate — generic filler, vague claims,
+      uniform sentence length.
+
+    AUTOMATIC deductions for boilerplate phrases such as: "This document describes",
+    "This document outlines", "This article describes", "seamless", "seamlessly",
+    "leverage", "In today's fast-paced world", "It is important to note",
+    "plays a crucial role", "In conclusion".
+
+    In the critique, ALWAYS name the concrete phrase or sentence you penalized
+    and explain briefly why it sounds machine-generated.
+    """
+
+    article_html: str = dspy.InputField(desc="The generated KB article HTML to judge.")
+    style_reference: str = dspy.InputField(
+        desc="Excerpt from a hand-written senior-engineer KB article (positive style example)."
+    )
+    style_score: float = dspy.OutputField(desc="Style score between 0.0 and 1.0.")
+    critique: str = dspy.OutputField(
+        desc="Concrete critique: which phrase/sentence sounds machine-generated and why."
+    )
+
+
+_STYLE_REFERENCE_CACHE: str | None = None
+
+
+def _load_style_reference() -> str:
+    """Loads the STYLE-REF style reference excerpt (cached).
+
+    Instead of the full HTML we take a representative excerpt from the beginning
+    (token saving — the judge prompt is sent on every metric call).
+    In case of a missing file an empty string: the judge can work without a reference.
+    """
+    global _STYLE_REFERENCE_CACHE
+    if _STYLE_REFERENCE_CACHE is None:
+        from pathlib import Path
+
+        ref_path = Path("data/examples/style_reference.html")
+        _STYLE_REFERENCE_CACHE = (
+            ref_path.read_text(encoding="utf-8")[:3000] if ref_path.exists() else ""
+        )
+    return _STYLE_REFERENCE_CACHE
+
+
+def _style_score(html: str) -> tuple[float, str]:
+    """Runs the style judge on the generated HTML.
+
+    Returns:
+        (score, critique) — score 0.0..1.0.
+
+    FR-002 (error tolerance): any judge error (the LM is not configured, the local
+    server is not available, parse error) case (0.5, "") — a neutral point, and the
+    the metric never stops because of it. The error is logged at WARNING level.
+    """
+    import logging
+
+    try:
+        judge = dspy.Predict(StyleJudge)
+        result = judge(article_html=html[:8000], style_reference=_load_style_reference())
+        score = float(result.style_score)
+        score = max(0.0, min(1.0, score))  # clamp: the model sometimes goes out of the scale
+        return score, str(result.critique or "")
+    except Exception as exc:  # noqa: BLE001 — deliberately wide net (FR-002)
+        logging.getLogger(__name__).warning(
+            "style judge error — neutral 0.5 point: %s: %s", type(exc).__name__, exc
+        )
+        return 0.5, ""

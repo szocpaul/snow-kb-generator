@@ -474,3 +474,43 @@ The metric penalty reduces FREQUENCY (GEPA learns it), the guardrail zeroes the 
 - K3 only accepts `temperature=1.0` (already built in).
 - The GEPA checkpoint from yesterday's stopped run is available, but spec 010 needs a clean run with the new metric (`rm -rf gepa_logs` before the run).
 - Backlog: docstring consolidation (separate spec), valset expansion with production examples.
+
+## 28. Spec 010 Implementation + Metric Improvement (2026-07-29) — PARTIALLY DONE, the style-GEPA question is open
+
+### Model Decision (clean measurements, `cache=False`!)
+- Kimi K3: **0.769** | local Qwen3.6-35B-A3B: **0.733** (old dataset, 3 val) — the K3 is better, but the task model **stays the local Qwen** (the marginal cost of the GEPA rollouts is zero). Reflection/proposer: **Kimi K3** stays.
+- K2.7 Coding measured: 0.519 (thinking overhead, dropped out).
+- **IMPORTANT:** the DSPy disk cache (`~/.dspy_cache`) replays the answers without model identification — in the measurement scripts `cache=False` is MANDATORY (`eval/baseline.py` and `eval/gepa_optimize.py` already run this way).
+
+### Dataset Cleanup + Expansion
+- The banned phrases were removed from the gold HTML files ("This document describes/outlines", "seamless") — the content axis previously rewarded what the style axis penalises.
+- Example 5 story work_notes cleaned (LDAP/auth leftovers deleted).
+- New 8th example (SAP S/4HANA outbound OData, synthetic) → **4 train / 4 val**.
+- **STYLE-REF style reference downloaded:** `data/examples/style_reference.html` (the positive sample of the style judge).
+
+### Spec 010 Implementation (T001-T009b, T010-T011 done)
+- `BANNED_PHRASES` (eval/metric.py) + signature WRITING STYLE block (US1) — in the production STRY0010013 article **0 hits on the banned list** ✅
+- `StyleJudge` + `_style_score()` for the 5th axis (US2), error tolerance 0.5 (FR-002); new weights 0.25/0.25/0.15/0.15/0.20
+- Judge validated (SC-002): machine test icon **0.00**, STYLE-REF **1.00**
+- SkilledProposer guidance extended with style rules (US3); the evidence-first rules remain
+- `eval/baseline.py` CLI: `python -m eval.baseline --model local|kimi --output ...` (T009b; `scripts/` deleted)
+
+### Metric Improvement (the most important lesson of the day)
+- `_extract_facts` previously matched the **first 50 characters** of the gold <p> sentences → GEPA rewarded imitating the gold wording and encoded the "This document describes..." pattern as MANDATORY in the instruction (pareto winner cand 2!).
+- Fixed: **style-neutral fact matching** (quoted names, snake_case/camelCase identifiers, ALLCAPS, URLs, record numbers, domain whitelist) — it rewards the FACTS, not the wording.
+
+### Measurement Results (new dataset, new metric, cache=False)
+- Baseline (local Qwen): **0.699** (`runs/baseline.json`) — THIS is the reference
+- First GEPA (old metric): style 0.425 → 0.425 (no improvement — due to the metric bug)
+- Trial GEPA with 60 calls (new metric): the banned markers improved to 0.77-0.78, but the minibatch noise made the selection noisy; the full 200-call run is postponed
+- Production STRY0010013: SC-001 ✅ (0 banned-list hits), judge 0.45 (criticism: monotonous "Label: Description" bullet rhythm), SC-003 human review in progress
+
+### NEXT TIME WE CONTINUE HERE
+1. Decision: a full 200-call GEPA with the fixed metric (~1.5-2 hours) — to improve the style axis (0.425), OR accept the current level
+2. Open: the formal rhythm variety of the local Qwen is weak — the style ceiling may be 0.5-0.55
+3. After T012-T014: optimized vs baseline per axis (`runs/t012_style_compare.json` sample script in /tmp — worth moving into `eval/`), production validation, docs
+
+### Other
+- Tests: **258/258 green** with the `.venv` interpreter (the system Python has no fastapi/skilled_proposer!)
+- `skilled-proposer` installed into the `.venv`
+- `config.yaml`: `task_model: "local"` (the production pipeline also runs with the local Qwen now)

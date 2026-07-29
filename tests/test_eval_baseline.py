@@ -15,7 +15,7 @@ from eval.dataset import load_gold_dataset
 class TestBaselineEvaluation:
     """The integration tests of the baseline evaluation (dspy.Evaluate)."""
 
-    def test_baseline_returns_evaluation_result(self):
+    def test_baseline_returns_evaluation_result(self, tmp_path):
         """A baseline evaluation returns a dspy.EvaluationResult."""
         trainset, valset = load_gold_dataset("data/examples/gold_dataset.md")
         program = MagicMock()
@@ -24,7 +24,7 @@ class TestBaselineEvaluation:
         )
 
         with patch("eval.baseline.configure_lm"):
-            result = run_baseline(program, valset)
+            result = run_baseline(program, valset, output_path=tmp_path / "baseline.json")
 
         assert isinstance(result, dspy.Evaluate) or hasattr(result, "score")
 
@@ -44,7 +44,7 @@ class TestBaselineEvaluation:
         assert "average_score" in data
         assert "timestamp" in data
 
-    def test_baseline_average_score_computed(self):
+    def test_baseline_average_score_computed(self, tmp_path):
         """It computes the average baseline score from the valset examples."""
         trainset, valset = load_gold_dataset("data/examples/gold_dataset.md")
         program = MagicMock()
@@ -53,7 +53,7 @@ class TestBaselineEvaluation:
         )
 
         with patch("eval.baseline.configure_lm"):
-            result = run_baseline(program, valset)
+            result = run_baseline(program, valset, output_path=tmp_path / "baseline.json")
 
         # The average score is between 0 and 1
         assert 0.0 <= result.score <= 1.0
@@ -79,7 +79,7 @@ class TestBaselineSave:
         assert "timestamp" in data
         assert isinstance(data["average_score"], float)
 
-    def test_baseline_result_is_dspy_evaluate(self):
+    def test_baseline_result_is_dspy_evaluate(self, tmp_path):
         """The baseline result is a dspy.Evaluate object (not a dict)."""
         trainset, valset = load_gold_dataset("data/examples/gold_dataset.md")
         program = MagicMock()
@@ -88,6 +88,6 @@ class TestBaselineSave:
         )
 
         with patch("eval.baseline.configure_lm"):
-            result = run_baseline(program, valset)
+            result = run_baseline(program, valset, output_path=tmp_path / "baseline.json")
 
         assert isinstance(result, dspy.Evaluate) or hasattr(result, "score")

@@ -4,7 +4,12 @@
 
 ## Technical Context
 
-- Python 3.12, DSPy 3.2.x, Kimi K3 (task + judge LM, `_RefreshingKimiLM`)
+- Python 3.12, DSPy 3.2.x
+- **Task + judge LM: local Qwen3.6-35B-A3B** (llama.cpp, `http://llm-server.local:8033/v1`) — clean measurements from 2026-07-29 (`cache=False`, old dataset): K3 0.769 > local 0.733; the zero marginal cost was decisive (GEPA rollouts)
+- **Dataset**: cleaned, 8 examples (4 train / 4 val, 2026-07-29) — the gold HTMLs are boilerplate-free, the STYLE-REF reference is in `data/examples/`; the baseline must be re-measured on it (T010)
+- **GEPA reflection/proposer: Kimi K3** (`_RefreshingKimiLM`) — the only remaining Kimi dependency, with few calls
+- Judge and task use the same model — a deliberate trade-off (zero cost); the SC-002 validation (robotic/human test fixtures) checks the bias of the judge
+- `cache=False` is mandatory in the measurement scripts (lesson from the false cache replay, 2026-07-29)
 - Affected files: `src/snow_kb/signatures.py` (US1), `eval/metric.py` (US2), `eval/gepa_optimize.py` (US3), `tests/`
 
 ## Architecture
@@ -13,7 +18,7 @@
                         (US1) signature docstring + style block
                                     │
 generated article ──► rich_metric ───┼── structure / content / template / hallucination
-                    │               └── (US2) style_judge() [Kimi K3, LLM-as-judge]
+                    │               └── (US2) style_judge() [local Qwen, LLM-as-judge]
                     │                     score 0-1 + specific critique
                     ▼
               GEPA reflection sees the feedback
@@ -22,22 +27,24 @@ generated article ──► rich_metric ───┼── structure / content /
          (US3) SkilledProposer(additional_instructions = style guidance)
                     │  generalizable style rules into the prompts
                     ▼
-         (US4) small-budget GEPA (≤300 calls) → proof of style axis improvement
+         (US4) GEPA (max_metric_calls=200, local rollout + Kimi K3 reflection)
+                    → proving the style axis improvement
 ```
 
 ## Key Decisions
 
-1. **The judge is a `dspy.Signature` in metric.py** (`StyleJudge`: article_html + style_reference → score + critique), with a Kimi K3 LM. Not a separate module — the metric is its home.
-2. **Error tolerance:** judge exception → score=0.5 + warning log; the metric never stops.
+1. **The judge is a `dspy.Signature` in metric.py** (`StyleJudge`: article_html + style_reference → score + critique), **with the local Qwen LM** (the same endpoint as the task model). Not a separate module — the metric is its place.
+2. **Fault tolerance:** a judge exception (e.g. the local server is not reachable) → score=0.5 + warning log; the metric never stops.
 3. **Weights:** 0.25 structure + 0.25 content + 0.15 template + 0.15 hallucination + 0.20 style. The thresholds of the existing tests must be aligned.
 4. **The style reference is baked into the judge prompt**: a representative excerpt of the STYLE-REF gold article (not the full HTML — token saving).
 5. **The boilerplate ban list is a shared constant** (`BANNED_PHRASES`): the signature block, the judge prompt and the SC-001 regex check use the same list.
-6. **US3 only replaces the text of `additional_instructions`** on the existing SkilledProposer instance — the fallback logic and the prompt_model stay unchanged.
+6. **US3 only replaces the `additional_instructions` text** on the existing SkilledProposer instance — the fallback logic and the prompt_model (Kimi K3) stay unchanged.
 7. **No docstring consolidation** (separate spec, backlog).
+8. **Cache hygiene:** every measurement path (`run_baseline`, GEPA compile, validation) runs with a `cache=False` LM — the disk cache can also replay the answers of another model (the false baseline of 2026-07-29). The fix of `eval/baseline.py` has already happened.
 
 ## Phases
 
 1. **Phase 1 (US1)**: signature style block + `BANNED_PHRASES` constant + tests.
 2. **Phase 2 (US2)**: `StyleJudge` signature + `style_score()` in the metric + fault tolerance + tests (with a mock judge).
 3. **Phase 3 (US3)**: SkilledProposer style guidance + test.
-4. **Phase 4 (US4)**: GEPA run (≤300 calls, Kimi task+reflection) → proof of style axis improvement + live validation + docs.
+4. **Phase 4 (US4)**: GEPA run (`max_metric_calls=200`, local task + judge + Kimi K3 reflection; ~2.5-3.5 hours, `-np 2` / `num_threads=2`) → proof of style axis improvement + live validation + docs.

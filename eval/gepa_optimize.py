@@ -1,10 +1,10 @@
 """gepa_optimize.py — GEPA optimization for the StoryToKBArticle program.
 
-It runs the GEPA optimization with the help of the Kimi K3 reflection model, and
+It runs the GEPA optimization with the help of the Kimi K3 reflection model and
 saves the optimized program to the artifacts/program.json file.
 
 CLI usage (quickstart Scenario 3-4):
-    python -m eval.gepa_optimize --auto light
+    python -m eval.gepa_optimize
 """
 
 from __future__ import annotations
@@ -17,7 +17,7 @@ import dspy
 from eval.metric import rich_metric
 
 
-def run_gepa_optimization(program, trainset, valset):
+def run_gepa_optimization(program, trainset, valset, max_metric_calls: int = 200):
     """Creates the GEPA optimizer with the help of the Kimi K3 reflection model.
 
     It does NOT run the compile — that must be called separately (see compile_with_gepa),
@@ -37,11 +37,14 @@ def run_gepa_optimization(program, trainset, valset):
     # Creating the GEPA optimizer with the help of the Kimi K3 reflection model
     return dspy.GEPA(
         metric=rich_metric,
-        auto="light",
+        # Spec 010 / FR-004: an explicit time limit (instead of the auto preset). The style judge
+        # doubles the cost of a metric call (generation + scoring), ~60 s per local call:
+        # 200 calls ≈ 2.5-3.5 hours with the llama-server -np 2 slots.
+        max_metric_calls=max_metric_calls,
         reflection_lm=_create_reflection_lm(),
         candidate_selection_strategy="pareto",
         instruction_proposer=_create_instruction_proposer(),
-        num_threads=4,  # aligned with the llama.cpp -np 4 slots
+        num_threads=2,  # aligned with the llama.cpp -np 2 slots
         track_stats=True,
         log_dir="./gepa_logs",
         seed=0,
@@ -53,7 +56,16 @@ Include only sections the story supports with concrete evidence; if a section ha
 supporting evidence, omit it entirely (no 'N/A' placeholders). For an outbound-only
 story, omit the 'Inbound Technical Implementation' section (and vice versa); shared
 components belong to the direction the story implements. Never invent KB article
-numbers or titles — use only references provided in the inputs."""
+numbers or titles — use only references provided in the inputs.
+
+WRITING STYLE (spec 010): the article must read as if a senior engineer wrote it.
+Forbid boilerplate phrases ("This document describes", "This document outlines",
+"seamless", "leverage", "In today's fast-paced world", "It is important to note",
+"plays a crucial role", "In conclusion"). Require direct factual statements with
+concrete identifiers (field names, endpoints, script names, values) instead of
+generic claims, varied sentence rhythm, and active voice. When the reflection
+feedback mentions style, turn it into a general, reusable style rule — do not
+hardcode story-specific facts into the instruction."""
 
 
 def _create_instruction_proposer():
@@ -227,12 +239,13 @@ def configure_lm():
         api_base=api_base,
         temperature=0.6,
         max_tokens=8000,
+        cache=False,  # FR-006: during GEPA do not replay earlier answers
     )
     dspy.configure(lm=lm, track_usage=True)
 
 
 # ---------------------------------------------------------------------------
-# CLI entry point (python -m eval.gepa_optimize --auto light)
+# The CLI entry point (python -m eval.gepa_optimize)
 # ---------------------------------------------------------------------------
 
 
@@ -241,12 +254,12 @@ def main(argv: list[str] | None = None) -> None:
     import argparse
 
     parser = argparse.ArgumentParser(description="GEPA optimization for the StoryToKBArticle program.")
-    parser.add_argument("--auto", default="light", choices=["light", "medium", "heavy"],
-                        help="GEPA budget preset (default: light).")
     parser.add_argument("--dataset", default="data/examples/gold_dataset.md",
                         help="The path of the gold dataset markdown file.")
     parser.add_argument("--output", default="artifacts/program.json",
                         help="The output JSON file of the optimized program.")
+    parser.add_argument("--max-metric-calls", type=int, default=200,
+                        help="The GEPA budget (default: 200; 60 for a trial run).")
     args = parser.parse_args(argv)
 
     from eval.baseline import run_baseline
@@ -271,8 +284,8 @@ def main(argv: list[str] | None = None) -> None:
 
     # 3. Creating the GEPA optimizer + compile (T012)
     program = StoryToKBArticle()
-    optimizer = run_gepa_optimization(program, trainset, valset)
-    print("GEPA compile fut... (auto=%s)" % args.auto)
+    optimizer = run_gepa_optimization(program, trainset, valset, max_metric_calls=args.max_metric_calls)
+    print(f"GEPA compile fut... (max_metric_calls={args.max_metric_calls}, FR-004)")
     optimized_program = compile_with_gepa(optimizer, program, trainset, valset)
 
     # 4. Extracting the applied reflection suggestions (T013)
