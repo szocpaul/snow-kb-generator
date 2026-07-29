@@ -104,6 +104,17 @@ class GenerateKbFromTemplate(dspy.Signature):
     - Do NOT add a "Theme" line or a "Target Audience" section. If the story_context
       mentions a target audience, use it ONLY to adapt the writing style/tone of each
       section (e.g., technical depth for developers, business language for process owners).
+
+    WRITING STYLE — write like a senior engineer documenting their own work:
+    - NEVER use these boilerplate phrases (they make the article sound AI-generated):
+      "This document describes", "This document outlines", "This article describes",
+      "seamless", "seamlessly", "leverage", "In today's fast-paced world",
+      "It is important to note", "plays a crucial role", "In conclusion".
+    - State facts directly: name the concrete field, endpoint, script, or value instead
+      of generalizing (e.g., "The Business Rule 'ALDI: CHG Scheduled' fires on update",
+      not "A robust mechanism ensures timely synchronization").
+    - Vary sentence length and structure; do not start consecutive sentences the same way.
+    - Prefer active voice and plain verbs over buzzwords.
     """
     story_context: str = dspy.InputField(
         desc="The extracted summary, change details, and technical implementation info."

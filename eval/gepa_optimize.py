@@ -4,7 +4,7 @@ Lefuttatja a GEPA optimalizációt a Kimi K3 reflection modell segítségével, 
 elmenti az optimalizált programot az artifacts/program.json fájlba.
 
 CLI használat (quickstart Scenario 3-4):
-    python -m eval.gepa_optimize --auto light
+    python -m eval.gepa_optimize
 """
 
 from __future__ import annotations
@@ -17,7 +17,7 @@ import dspy
 from eval.metric import rich_metric
 
 
-def run_gepa_optimization(program, trainset, valset):
+def run_gepa_optimization(program, trainset, valset, max_metric_calls: int = 200):
     """Létrehozza a GEPA optimizert a Kimi K3 reflection modell segítségével.
 
     A compile-t NEM futtatja — azt külön kell meghívni (ld. compile_with_gepa),
@@ -37,11 +37,14 @@ def run_gepa_optimization(program, trainset, valset):
     # GEPA optimizer létrehozása a Kimi K3 reflection modell segítségével
     return dspy.GEPA(
         metric=rich_metric,
-        auto="light",
+        # Spec 010 / FR-004: explicit időkorlát (auto preset helyett). A style judge
+        # megduplázza a metric call árát (generálás + pontozás), ~60 mp/lokális hívás:
+        # 200 call ≈ 2.5-3.5 óra a llama-server -np 2 slotjaival.
+        max_metric_calls=max_metric_calls,
         reflection_lm=_create_reflection_lm(),
         candidate_selection_strategy="pareto",
         instruction_proposer=_create_instruction_proposer(),
-        num_threads=4,  # a llama.cpp -np 4 slotjaihoz igazítva
+        num_threads=2,  # a llama.cpp -np 2 slotjaihoz igazítva
         track_stats=True,
         log_dir="./gepa_logs",
         seed=0,
@@ -53,7 +56,16 @@ Include only sections the story supports with concrete evidence; if a section ha
 supporting evidence, omit it entirely (no 'N/A' placeholders). For an outbound-only
 story, omit the 'Inbound Technical Implementation' section (and vice versa); shared
 components belong to the direction the story implements. Never invent KB article
-numbers or titles — use only references provided in the inputs."""
+numbers or titles — use only references provided in the inputs.
+
+WRITING STYLE (spec 010): the article must read as if a senior engineer wrote it.
+Forbid boilerplate phrases ("This document describes", "This document outlines",
+"seamless", "leverage", "In today's fast-paced world", "It is important to note",
+"plays a crucial role", "In conclusion"). Require direct factual statements with
+concrete identifiers (field names, endpoints, script names, values) instead of
+generic claims, varied sentence rhythm, and active voice. When the reflection
+feedback mentions style, turn it into a general, reusable style rule — do not
+hardcode story-specific facts into the instruction."""
 
 
 def _create_instruction_proposer():
@@ -227,12 +239,13 @@ def configure_lm():
         api_base=api_base,
         temperature=0.6,
         max_tokens=8000,
+        cache=False,  # FR-006: GEPA közben ne játssza vissza korábbi válaszokat
     )
     dspy.configure(lm=lm, track_usage=True)
 
 
 # ---------------------------------------------------------------------------
-# CLI belépési pont (python -m eval.gepa_optimize --auto light)
+# CLI belépési pont (python -m eval.gepa_optimize)
 # ---------------------------------------------------------------------------
 
 
@@ -241,12 +254,12 @@ def main(argv: list[str] | None = None) -> None:
     import argparse
 
     parser = argparse.ArgumentParser(description="GEPA optimalizáció a StoryToKBArticle programhoz.")
-    parser.add_argument("--auto", default="light", choices=["light", "medium", "heavy"],
-                        help="GEPA budget preset (alapértelmezett: light).")
     parser.add_argument("--dataset", default="data/examples/gold_dataset.md",
                         help="A gold dataset markdown fájl útvonala.")
     parser.add_argument("--output", default="artifacts/program.json",
                         help="Az optimalizált program kimeneti JSON fájlja.")
+    parser.add_argument("--max-metric-calls", type=int, default=200,
+                        help="GEPA büdzsé (alapértelmezett: 200; próba-futáshoz 60).")
     args = parser.parse_args(argv)
 
     from eval.baseline import run_baseline
@@ -271,8 +284,8 @@ def main(argv: list[str] | None = None) -> None:
 
     # 3. GEPA optimizer létrehozása + compile (T012)
     program = StoryToKBArticle()
-    optimizer = run_gepa_optimization(program, trainset, valset)
-    print("GEPA compile fut... (auto=%s)" % args.auto)
+    optimizer = run_gepa_optimization(program, trainset, valset, max_metric_calls=args.max_metric_calls)
+    print(f"GEPA compile fut... (max_metric_calls={args.max_metric_calls}, FR-004)")
     optimized_program = compile_with_gepa(optimizer, program, trainset, valset)
 
     # 4. Alkalmazott reflection javaslatok kinyerése (T013)

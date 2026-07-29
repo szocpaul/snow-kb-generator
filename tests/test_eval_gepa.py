@@ -87,6 +87,19 @@ class TestInstructionProposer:
         proposer = _create_instruction_proposer()
         assert type(proposer).__name__ == "SkilledProposer"
 
+    def test_proposer_guidance_contains_style_rules(self):
+        """T009 (spec 010): a guidance stílus-szabályokat ÉS evidence-first szabályokat is tartalmaz."""
+        from eval.gepa_optimize import _EVIDENCE_FIRST_GUIDANCE
+
+        # Stílus-fókusz (US3)
+        assert "WRITING STYLE" in _EVIDENCE_FIRST_GUIDANCE
+        assert "senior engineer" in _EVIDENCE_FIRST_GUIDANCE
+        assert "boilerplate" in _EVIDENCE_FIRST_GUIDANCE.lower()
+        # A meglévő szabályok MEGMARADNAK (FR-005)
+        assert "no 'N/A' placeholders" in _EVIDENCE_FIRST_GUIDANCE
+        assert "Never invent KB article" in _EVIDENCE_FIRST_GUIDANCE
+        assert "omit the 'Inbound Technical Implementation' section" in _EVIDENCE_FIRST_GUIDANCE
+
     def test_gepa_optimizer_uses_proposer(self):
         """A GEPA optimizer az instruction_proposer-t kapja meg."""
         from unittest.mock import MagicMock, patch

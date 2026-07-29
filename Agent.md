@@ -453,3 +453,43 @@ A metric-büntetés a GYAKORISÁGOT csökkenti (GEPA megtanulja), a guardrail a 
 - A K3 csak `temperature=1.0`-t fogad el (már be van építve).
 - A GEPA checkpoint a tegnapi leállított futásból megvan, de a spec 010 új metric-kel tiszta futás kell (`rm -rf gepa_logs` a futás előtt).
 - Backlog: docstring-konszolidáció (külön spec), valset bővítés prod példákkal.
+
+## 28. Spec 010 implementáció + metrika-javítás (2026-07-29) — RÉSZBEN KÉSZ, style-GEPA kérdés nyitott
+
+### Modell-döntés (tiszta mérések, `cache=False`!)
+- Kimi K3: **0.769** | lokális Qwen3.6-35B-A3B: **0.733** (régi dataset, 3 val) — a K3 jobb, de a task modell a **lokális Qwen marad** (GEPA-rolloutok marginális költsége nulla). Reflection/proposer: **Kimi K3** marad.
+- K2.7 Coding kimérve: 0.519 (thinking-overhead, kiesett).
+- **FONtos:** a DSPy disk cache (`~/.dspy_cache`) modell-azonosítás nélkül visszajátssza a válaszokat — a mérési scriptekben `cache=False` KÖTELEZŐ (`eval/baseline.py`, `eval/gepa_optimize.py` már így fut).
+
+### Dataset-tisztítás + bővítés
+- Gold HTML-ekből a tiltólistás fordulatok kiszedve ("This document describes/outlines", "seamless") — a content tengely korábban azt jutalmazta, amit a style axis büntet.
+- Példa 5 story work_notes tisztítva (LDAP/auth maradvány törölve).
+- Új 8. példa (SAP S/4HANA outbound OData, szintetikus) → **4 train / 4 val**.
+- **KB0010015 stílus-referencia letöltve:** `data/examples/kb0010015_style_reference.html` (a style judge pozitív mintája).
+
+### Spec 010 implementáció (T001-T009b, T010-T011 kész)
+- `BANNED_PHRASES` (eval/metric.py) + signature WRITING STYLE blokk (US1) — éles STRY0010013 cikkben **0 találat a tiltólistára** ✅
+- `StyleJudge` + `_style_score()` az 5. tengelyhez (US2), hibatűrés 0.5 (FR-002); új súlyok 0.25/0.25/0.15/0.15/0.20
+- Judge validálva (SC-002): gépies teszt-ikon **0.00**, KB0010015 **1.00**
+- SkilledProposer guidance kiegészülve stílus-szabályokkal (US3); evidence-first szabályok megmaradtak
+- `eval/baseline.py` CLI: `python -m eval.baseline --model local|kimi --output ...` (T009b; `scripts/` törölve)
+
+### Metrika-javítás (a nap legfontosabb tanulsága)
+- A `_extract_facts` korábban a gold <p> mondatok **első 50 karakterét** illesztette → a GEPA a gold-megfogalmazás utánzását jutalmazta, és a "This document describes..." sémát KÖTELEZŐVÉ kódolta az instrukcióba (pareto-nyertes cand 2!).
+- Javítva: **stílus-semleges tény-illesztés** (idézett nevek, snake_case/camelCase azonosítók, ALLCAPS, URL-ek, rekordszámok, domain whitelist) — a TÉNYEKET jutalmazza, nem a fogalmazást.
+
+### Mérési eredmények (új dataset, új metric, cache=False)
+- Baseline (lokális Qwen): **0.699** (`runs/baseline.json`) — EZ a referencia
+- Első GEPA (régi metric): style 0.425 → 0.425 (nem javult — a metrika-bug miatt)
+- Próba-GEPA 60 call (új metric): a tiltó jelöltek 0.77-0.78-ra javultak, de a minibatch-zaj miatt a kiválasztás zajos; a teljes 200 call-os futás elnapolva
+- Éles STRY0010013: SC-001 ✅ (0 tiltólista-találat), judge 0.45 (kritika: monoton "Label: Description" bullet-ritmus), SC-003 emberi review folyamatban
+
+### KÖVETKEZŐ ALKALOM ITT FOLYTATJUK
+1. Döntés: teljes 200 call-os GEPA a javított metrikával (~1.5-2 óra) — a style axis (0.425) javulásáért, VAGY a mostani szint elfogadása
+2. Nyitott: a lokális Qwen formai ritmus-változatossága gyenge — lehet, hogy a style-plafon 0.5-0.55
+3. T012-T014 utána: optimized vs baseline tengelyenként (`runs/t012_style_compare.json` minta-script a /tmp-ben — érdemes `eval/`-be emelni), éles validáció, docs
+
+### Egyéb
+- Tesztek: **258/258 zöld** a `.venv` interpreterrel (a rendszer-pythonban nincs fastapi/skilled_proposer!)
+- `skilled-proposer` telepítve a `.venv`-be
+- `config.yaml`: `task_model: "local"` (az éles pipeline is lokális Qwennel fut most)

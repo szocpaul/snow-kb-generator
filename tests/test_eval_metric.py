@@ -45,14 +45,15 @@ class TestRichMetric:
         assert "Correct" in result.feedback or "perfect" in result.feedback.lower()
 
     def test_mismatch_returns_low_score(self):
-        """Ha a generált HTML eltér a gold-tól (fejléc és tartalom is), a score alacsony.
+        """Ha a generált HTML eltér a gold-tól (fejléc és tény is), a score alacsony.
 
-        Megjegyzés (spec 004): az új súlyok (0.3/0.3/0.2/0.2) mellett a nem-hallucinált
-        output 0.2 hallucination pontot kap, így a küszöb 0.45.
+        Megjegyzés (spec 010): a content tengely tény-azonosítókat illeszt (stílus-
+        semleges), ezért a példa szándékosan azonosító-dús — a pred-ben ezek hiányoznak.
         """
         gold = dspy.Example(
             story_text="Test story",
-            html="<h2>Problem</h2><p>Expected problem.</p><h2>Solution</h2><ol><li>Step 1.</li></ol>",
+            html="<h2>Problem</h2><p>LDAP query timeout in LDAP_Retry_Authenticator on u_user table.</p>"
+            "<h2>Solution</h2><ol><li>Step 1.</li></ol>",
         ).with_inputs("story_text")
         pred = dspy.Prediction(
             html="<h2>Different</h2><p>Wrong content entirely.</p>"
@@ -67,7 +68,7 @@ class TestRichMetric:
         """A feedback természetes nyelvű kritika (nem csak "error")."""
         gold = dspy.Example(
             story_text="Test story",
-            html="<h2>Problem</h2><p>Expected problem.</p>",
+            html="<h2>Problem</h2><p>LDAP timeout in LDAP_Retry_Authenticator.</p>",
         ).with_inputs("story_text")
         pred = dspy.Prediction(
             html="<h2>Different</h2><p>Wrong content.</p>"

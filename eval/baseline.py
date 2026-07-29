@@ -75,6 +75,50 @@ def run_baseline(program, valset, output_path: str | Path = "runs/baseline.json"
     return EvaluationResult(score=average_score, results=result.results)
 
 
+def configure_kimi_lm():
+    """Globálisan konfigurálja a DSPy LM-et Kimi K3-ra (tiszta méréshez, cache=False)."""
+    import dspy
+
+    from eval.gepa_optimize import _RefreshingKimiLM
+
+    lm = _RefreshingKimiLM(
+        "openai/k3",
+        api_key="",  # a _RefreshingKimiLM minden hívásnál frissíti az auth.json-ból
+        api_base="https://api.kimi.com/coding/v1",
+        temperature=1.0,  # a K3 csak temperature=1-et fogad el
+        max_tokens=8000,
+        cache=False,
+    )
+    dspy.configure(lm=lm, track_usage=True)
+
+
+def main(argv: list[str] | None = None) -> None:
+    """CLI belépési pont: python -m eval.baseline --model local|kimi [--output ...]."""
+    import argparse
+
+    parser = argparse.ArgumentParser(description="Baseline mérés a StoryToKBArticle programmal.")
+    parser.add_argument("--model", default="local", choices=["local", "kimi"],
+                        help="Task modell: local (Qwen, llama.cpp) vagy kimi (K3).")
+    parser.add_argument("--dataset", default="data/examples/gold_dataset.md")
+    parser.add_argument("--output", default="runs/baseline.json")
+    args = parser.parse_args(argv)
+
+    from eval.dataset import load_gold_dataset
+    from snow_kb.program import StoryToKBArticle
+
+    trainset, valset = load_gold_dataset(args.dataset)
+    print(f"Dataset: {len(trainset)} train / {len(valset)} val példa")
+
+    if args.model == "kimi":
+        # A run_baseline a modul-globális configure_lm-et hívja — Kimi-nél lecseréljük.
+        import eval.baseline as _self
+
+        _self.configure_lm = configure_kimi_lm
+
+    result = run_baseline(StoryToKBArticle(), valset, output_path=args.output)
+    print(f"\nBaseline ({args.model}) átlag score: {result.score:.3f} → {args.output}")
+
+
 def configure_lm():
     """Globálisan konfigurálja a DSPy LM-et a settings-ből (Qwen task LM)."""
     import json
@@ -97,5 +141,13 @@ def configure_lm():
         api_base=api_base,
         temperature=0.6,
         max_tokens=8000,
+        # A mérés ne a ~/.dspy_cache-ből jöjjön (különben egy korábbi,
+        # más modellel készült futás eredményét játssza vissza — lásd
+        # a 2026-07-29-i fals 0.655-ös lokális baseline-t).
+        cache=False,
     )
     dspy.configure(lm=lm, track_usage=True)
+
+
+if __name__ == "__main__":
+    main()

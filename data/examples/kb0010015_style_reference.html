@@ -1,0 +1,89 @@
+<h2>Overview / Summary</h2>
+<h3>Content</h3>
+<p>This interface synchronizes SAP-related Change Requests and Change Tasks between ServiceNow and SAP Solution Manager (SolMan). Communication is routed through the Conigma middleware. ServiceNow sends change and task information to SolMan, while SolMan returns technical deployment status and transport details.</p>
+<p>The integration is used for changes managed through the SolMan process, including normal and emergency change models. A record is synchronized only when it meets the configured SolMan identification and trigger conditions.</p>
+<ul style="list-style-position: inside;"><li>Interface: Bidirectional REST integration between ServiceNow and SolMan through Conigma.</li><li>Users: Change Management process users, SAP Solution Manager, integration operators, and support teams.</li><li>Outbound data: Change Request attributes such as coordinator and priority, together with Change Task details such as description, CD state and transport request.</li><li>Inbound data: Change Task status, CD state, actual start and end dates, and transport information.</li></ul>
+<p>Outbound processing starts from ServiceNow Business Rules. ALDIIntegrationFrameworkUtil evaluates the trigger configuration, generates the payload and sends the request to Conigma. Inbound updates are received through POST /api/aldie/solman/change/task and processed by ALDISolManChangeInterface.</p>
+<h3>Related KB articles</h3>
+<p>The following articles were returned as related content. Their relevance should be reviewed before they are linked from the published article.</p>
+<ul style="list-style-position: inside;"><li><a href="https://aldiprod.service-now.com/kb_view.do?sysparm_article&#61;KB0038409" target="_blank" aria-label="KB0038409 - Open record: KB0038409 v6.0" rel="noopener noreferrer nofollow">KB0038409</a> - C&amp;D: SAP - SolMan (Solution Manager) or ChaRM(Change Request Management) incident</li><li><a href="https://aldiprod.service-now.com/kb_view.do?sysparm_article&#61;KB0041535" target="_blank" aria-label="KB0041535 - Open record: KB0041535 v5.0" rel="noopener noreferrer nofollow">KB0041535</a>  - OpH - Application - ALM (SAP SolMan)</li><li><a href="https://aldiprod.service-now.com/kb_view.do?sysparm_article&#61;KB0044855" target="_blank" aria-label="KB0044855 - Open record: KB0044855 v2.0" rel="noopener noreferrer nofollow">KB0044855</a>  - C&amp;D: SAP Solution Manager (SolMan) interface issue in ServiceNow</li><li><a href="https://aldiprod.service-now.com/kb_view.do?sysparm_article&#61;KB0018578" target="_blank" aria-label="KB0018578 - Open record: KB0018578 v14.0" rel="noopener noreferrer nofollow">KB0018578</a>  - C&amp;D: Solution Manager/SolMan/SM1 is not working</li><li><a href="https://aldiprod.service-now.com/kb_knowledge.do?sys_id&#61;82c6e4073b40e250754c454a85e45ad0&amp;sysparm_record_target&#61;kb_knowledge&amp;sysparm_record_row&#61;5&amp;sysparm_record_rows&#61;5&amp;sysparm_record_list&#61;workflow_state%3Dpublished%5Esys_class_name%21%3Dkb_knowledge_block%5Eshort_descriptionCONTAINSsolman%5EORDERBYsys_updated_on%5EORDERBYsys_id" target="_blank" aria-label="KB0041670 - Open record: KB0041670 v2.0" rel="noopener noreferrer nofollow">KB0041670</a>  - C&amp;D: Technical issue in Solution Manager (SolMan) or issues with interface between SolMan and SNow</li></ul>
+<h2>Inbound Technical Implementation</h2>
+<h3>Content</h3>
+<p>Conigma sends Change Task updates to the ALDI SolMan Scripted REST API. The resource delegates processing to ALDISolManChangeInterface.updateChangeTaskFromAPI(), which validates the request and updates the matching change_task record.</p>
+<ul style="list-style-position: inside;"><li>Scripted REST service: ALDI SolMan</li><li>Base path: /api/aldie/solman</li><li>Resource: Change Task | Post</li><li>Endpoint: POST /change/task</li><li>Handler: ALDISolManChangeInterface.updateChangeTaskFromAPI()</li></ul>
+<h3>Required parameters</h3>
+<ul style="list-style-position: inside;"><li>number - Change Task number</li><li>sys_id - Change Task sys_id</li><li>short_description</li><li>u_cd_state - CD state</li><li>u_cd_number - CD number</li></ul>
+<h3>Payload sample</h3>
+<pre>{
+  &#34;number&#34;: &#34;CTASK0012345&#34;,
+  &#34;sys_id&#34;: &#34;&#34;,
+  &#34;short_description&#34;: &#34;Deploy transport CD12345&#34;,
+  &#34;u_cd_state&#34;: &#34;Confirmed&#34;,
+  &#34;u_cd_number&#34;: &#34;CD12345&#34;,
+  &#34;u_cd_transport_request&#34;: &#34;TRK900123&#34;,
+  &#34;u_cd_url&#34;: &#34;<a href="https://solman/" rel="nofollow">https://solman/</a>...&#34;,
+  &#34;u_cd_actual_start_date&#34;: &#34;2025-08-22 08:00:00&#34;,
+  &#34;u_cd_actual_end_date&#34;: &#34;2025-08-22 10:30:00&#34;,
+  &#34;cr_u_developer&#34;: &#34;developer&#64;aldi.com&#34;,
+  &#34;cr_u_change_coordinator&#34;: &#34;coordinator&#64;aldi.com&#34;,
+  &#34;cr_u_technical_change_manager&#34;: &#34;tcm&#64;aldi.com&#34;
+}</pre>
+<h3>Flow and validation</h3>
+<ol style="list-style-position: inside;"><li>The Scripted REST API authenticates the caller and checks access through the configured SNC internal role.</li><li>The handler verifies the mandatory request values. Missing mandatory data results in an HTTP 400 response.</li><li>The target Change Task is identified and the supplied CD, transport and date values are applied.</li><li>User values such as cr_u_developer are resolved against ServiceNow users by UPN.</li><li>If the CD state becomes <em>Confirmed</em> or <em>Withdrawn</em>, follow-up logic may close the task. When all applicable tasks are closed, the parent Change Request can move to Review.</li></ol>
+<p>Inbound access is controlled by bearer-token authentication and the related ACL with sys_id.</p>
+<h2>Outbound Technical Implementation</h2>
+<h3>Content</h3>
+<p>Outbound synchronization is triggered by Business Rules on eligible Change Requests and Change Tasks. The implementation uses the common ALDI Integration Framework for trigger evaluation, payload generation, routing and transaction logging.</p>
+<h3>Technical components</h3>
+<ul style="list-style-position: inside;"><li>ALDISolManChangeInterface: SolMan-specific validation, payload construction and inbound update logic.</li><li>ALDIIntegrationFrameworkUtil: Generic trigger handling, payload generation and REST dispatch.</li><li>ALDI Interface SolMan Change Request: Handles relevant Change Request updates.</li><li>ALDI Interface SolMan Change Task: Handles relevant Change Task updates while the task is in Pending state (-5).</li><li>ALDI SolMan async CD or ChTask State upd: Updates the parent request after a task CD state changes to Confirmed or Withdrawn.</li><li>REST Message: ALDI SolMan Interface FrameWork, using the Conigma PROD function and <a href="https://conigma.prd.aldi-sued.com/$" rel="nofollow">https://conigma.prd.aldi-sued.com/$</a>{rest_uri}.</li></ul>
+<h3>Dependencies and authentication</h3>
+<p>Routing is configured through u_aldi_interface_trigger_condition records and their environment-specific REST endpoints. Payload generation can use a referenced u_flow_action; if no Flow Action is configured, the framework falls back to the u_fields mapping.</p>
+<p>Outbound requests use mutual TLS configured on the parent REST Message. The required certificate must be installed, valid and bound to the REST Message.</p>
+<h3>Validation steps</h3>
+<ul style="list-style-position: inside;"><li>Confirm that the Change Request is SolMan-managed, including the expected model and correlation_display &#61; &#39;SolMan&#39;.</li><li>Confirm that the Change Request has at least one active Change Task.</li><li>Check that a monitored field has changed and the corresponding Business Rule conditions are satisfied.</li><li>Updates made by interface.solman are excluded to prevent an inbound update from triggering another outbound call.</li></ul>
+<h2>How to Use the Interface</h2>
+<h3>Content</h3>
+<p>No manual action is normally required for outbound synchronization. Use an eligible SolMan Change Model, such as <em>SolMan Normal</em> or <em>SolMan Emergency</em>, and make sure the record meets the configured assignment and trigger criteria.</p>
+<h3>Outbound</h3>
+<ol style="list-style-position: inside;"><li>Create or update an eligible Change Request and ensure that it has an active Change Task.</li><li>Update a monitored field, for example the change coordinator, priority or a relevant task field.</li><li>Open u_aldi_interface_transaction and check the latest outbound transaction.</li><li>Verify the target endpoint, payload and Conigma response.</li></ol>
+<h3>Inbound</h3>
+<ol style="list-style-position: inside;"><li>SolMan or Conigma sends the Change Task payload to /api/aldie/solman/change/task.</li><li>ServiceNow validates the request, resolves user references and updates the Change Task.</li><li>Check the Change Task for the received CD state, CD number, dates and transport information.</li><li>If the final applicable task is closed, verify the resulting state of the parent Change Request.</li></ol>
+<p>A successful call is recorded in u_aldi_interface_transaction. The transaction record contains the endpoint, request, response and HTTP status used for operational verification.</p>
+<h2>Testing Guide</h2>
+<h3>Content</h3>
+<h3>Outbound scenarios</h3>
+<ul style="list-style-position: inside;"><li>Update the coordinator or priority of an eligible SolMan Change Request.</li><li>Update a monitored field on a Change Task in Pending state (-5).</li><li>Verify that the generated payload contains the expected values and is sent to the correct environment.</li></ul>
+<h3>Inbound scenarios</h3>
+<ul style="list-style-position: inside;"><li>Send a valid request with CD state <em>Confirmed</em>.</li><li>Send a request with one mandatory value omitted and verify that it is rejected.</li><li>Send user UPN values and verify that they resolve to the expected ServiceNow users.</li></ul>
+<h3>Suggested test data</h3>
+<ul style="list-style-position: inside;"><li>Change Request model: <em>SolMan Normal</em></li><li>Assigned user: <em>Dummy Change User</em></li><li>Assignment group: <em>Trigger_SNow2SolMan_Interface</em></li><li>Linked Change Task state: <em>Pending</em> (-5)</li></ul>
+<h3>Test procedure</h3>
+<ol style="list-style-position: inside;"><li>Update u_change_coordinator on the test Change Request.</li><li>Check u_aldi_interface_transaction for the outbound request and response.</li><li>Send a valid JSON request to the inbound endpoint.</li><li>Verify that u_cd_state, u_cd_number and the supplied transport data were updated.</li><li>Review syslog if the expected transaction or record update is missing.</li></ol>
+<h2>Known Issues</h2>
+<h3>Content</h3>
+<h3>Outbound synchronization is not triggered</h3>
+<p>Symptoms: No transaction is created after an apparently valid Change Request or Change Task update.</p>
+<p>Likely cause: The record no longer meets the SolMan identification criteria, no active Change Task exists, or the updated field is not part of the configured trigger.</p>
+<p>Diagnostic steps: Check the model, correlation_display, active tasks, Business Rule conditions and ALDISolManChangeInterface.isChangeRequestValidToSync().</p>
+<p>Resolution: Correct the record or trigger configuration. Legacy records may require verification or migration to the current Change Model.</p>
+<p>Prevention: Keep model and trigger configuration aligned across environments and include eligibility checks in regression testing.</p>
+<h3>Outbound transaction fails</h3>
+<p>Symptoms: A transaction exists, but Conigma does not accept the request or the connection fails.</p>
+<p>Likely cause: Incorrect environment routing, endpoint availability, or an expired or incorrectly bound mutual TLS certificate.</p>
+<p>Diagnostic steps: Review the endpoint, payload, response and HTTP status in u_aldi_interface_transaction. Check the certificate configuration on the parent REST Message.</p>
+<p>Resolution: Correct the endpoint or certificate binding. Engage the Network/Security team for connectivity and mutual TLS problems.</p>
+<p>Prevention: Monitor certificate expiry and verify environment-specific routing after deployments or clones.</p>
+<h3>Inbound update is rejected or fails</h3>
+<p>Symptoms: The caller receives an error and the Change Task is not updated.</p>
+<p>Likely cause: A mandatory field is missing, authentication or role validation fails, or a supplied UPN cannot be mapped.</p>
+<p>Diagnostic steps: Review u_aldi_interface_transaction and syslog. Compare the request with the mandatory field list and verify user records.</p>
+<p>Resolution: Correct the source payload, access configuration or user mapping. Do not bypass request validation in the Scripted REST resource.</p>
+<p>Prevention: Validate payloads in the source system and maintain the required integration user access and UPN data.</p>
+<h2>Investigation Steps</h2>
+<h3>Content</h3>
+<p>Use this guide when SolMan data is out of sync, an expected transaction is missing, or an interface call returns an error.</p>
+<ol style="list-style-position: inside;"><li>Identify the direction. Determine whether the failing flow is outbound from ServiceNow or inbound from SolMan.</li><li>Locate the transaction. Search u_aldi_interface_transaction using the Change Request or Change Task number and review the latest request, response and HTTP status.</li><li>For outbound issues, verify eligibility. Check the Change Model, correlation_display, active tasks, changed fields and Business Rule conditions.</li><li>For outbound connection issues, verify routing and mutual TLS. Confirm the selected endpoint, certificate validity and Conigma availability.</li><li>For inbound issues, verify the request. Check mandatory values, bearer-token access, ACL/role configuration and UPN mappings.</li><li>Review application logs. Check syslog for messages associated with aldi.solman and for errors raised by the Script Includes.</li><li>Reproduce safely. Use a non-production test record and repeat the smallest update that should trigger the interface.</li></ol>
+<h3>Key components</h3>
+<ul style="list-style-position: inside;"><li>ALDIIntegrationFrameworkUtil - <a href="https://aldidev.service-now.com/now/nav/ui/classic/params/target/sys_script_include.do%3Fsys_id%3D69b110be1bff3f4034b7dceacd4bcbb6%26sysparm_record_target%3Dsys_script_include%26sysparm_record_row%3D1%26sysparm_record_rows%3D2%26sysparm_record_list%3DnameSTARTSWITHALDIIntegrationFrameworkUtil%255Ename%2521%253DSNCAPICallWrapper%255EORDERBYname" rel="nofollow">ALDIIntegrationFrameworkUtil | Script Include | SNOW | DEV</a> </li><li>ALDISolManChangeInterface - <a href="https://aldidev.service-now.com/now/nav/ui/classic/params/target/sys_script_include.do%3Fsys_id%3Dd46079041b18c51034b7dceacd4bcb20%26sysparm_record_target%3Dsys_script_include%26sysparm_record_row%3D1%26sysparm_record_rows%3D1%26sysparm_record_list%3DnameSTARTSWITHALDISolManChangeInterface%255Ename%2521%253DSNCAPICallWrapper%255EORDERBYname" rel="nofollow">ALDISolManChangeInterface | Script Include | SNOW | DEV</a> </li><li>Change Task | Post Scripted REST resource - <a href="https://aldidev.service-now.com/now/nav/ui/classic/params/target/sys_ws_operation.do%3Fsys_id%3D94369acc1bdcc51034b7dceacd4bcb45%26sysparm_record_target%3Dsys_ws_operation%26sysparm_record_row%3D1%26sysparm_record_rows%3D1%26sysparm_record_list%3DnameSTARTSWITHChange%2BTask%255EORDERBYname" rel="nofollow">Change Task | Post | Scripted REST Resource | SNOW | DEV</a> </li><li>u_aldi_interface_trigger_condition - <a href="https://aldidev.service-now.com/now/nav/ui/classic/params/target/u_aldi_interface_trigger_condition_list.do%3Fsysparm_filter_pinned%3Dtrue%26sysparm_query%3D" rel="nofollow">ALDI Interface Trigger Conditions | SNOW | DEV</a> </li><li>u_aldi_interface_transaction - <a href="https://aldidev.service-now.com/now/nav/ui/classic/params/target/u_aldi_interface_transaction_list.do%3Fsysparm_filter_pinned%3Dtrue%26sysparm_query%3D" rel="nofollow">ALDI Interface Transactions | SNOW | DEV</a> </li></ul>
+<h3>Escalation</h3>
+<ul style="list-style-position: inside;"><li>Engage Network/Security for endpoint connectivity, firewall or mutual TLS certificate problems.</li><li>Engage the ALDI Integration team for trigger, payload, mapping or Script Include logic problems.</li><li>Provide the transaction record, timestamp, affected record number, environment and relevant system log entries with the escalation.</li></ul>

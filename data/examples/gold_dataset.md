@@ -27,7 +27,7 @@
 <h1>Inbound Jira Webhook Integration</h1>
 <h2>Overview / Summary</h2>
 <h3>Purpose / Background / Overview</h3>
-<p>This document outlines the inbound integration between Jira and ServiceNow. When a new issue is created in Jira, a webhook automatically sends the issue details to a Scripted REST API in ServiceNow, which parses the data and creates a corresponding Incident record.</p>
+<p>An inbound integration connects Jira and ServiceNow. When a new issue is created in Jira, a webhook automatically sends the issue details to a Scripted REST API in ServiceNow, which parses the data and creates a corresponding Incident record.</p>
 <h3>Content</h3>
 <ul>
     <li>What the interface is: An inbound webhook listener in ServiceNow that receives Jira issue creation events.</li>
@@ -117,7 +117,7 @@
 <h1>Outbound Jira REST API Integration</h1>
 <h2>Overview / Summary</h2>
 <h3>Purpose / Background / Overview</h3>
-<p>This document outlines the outbound integration between ServiceNow and Jira Cloud. When a ServiceNow Incident is escalated, the integration automatically pushes the incident details to Jira to create a linked Bug, ensuring seamless tracking across platforms.</p>
+<p>An outbound integration connects ServiceNow and Jira Cloud. When a ServiceNow Incident is escalated, the integration automatically pushes the incident details to Jira to create a linked Bug, keeping tracking consistent across platforms.</p>
 <h3>Content</h3>
 <ul>
     <li>What the interface is: An outbound REST API integration from ServiceNow to Jira Cloud.</li>
@@ -205,7 +205,7 @@
 <h1>LDAP Authentication Retry Fix for Service Portal</h1>
 <h2>Overview / Summary</h2>
 <h3>Purpose / Background / Overview</h3>
-<p>This document describes the fix for intermittent LDAP authentication failures on the Service Portal. Users experienced 'User Not Found' errors during SSO login due to LDAP query timeouts under heavy load. A retry mechanism was added to the LDAP connection logic to improve reliability.</p>
+<p>Intermittent LDAP authentication failures on the Service Portal caused 'User Not Found' errors during SSO login because LDAP queries timed out under heavy load. A retry mechanism was added to the LDAP connection logic to improve reliability.</p>
 <h3>Content</h3>
 <ul>
     <li>What the interface is: An enhanced LDAP authentication module for the Service Portal with retry logic.</li>
@@ -295,7 +295,7 @@
 <h1>SAP IDOC Status 51 Error Handling for Vendor Invoices</h1>
 <h2>Overview / Summary</h2>
 <h3>Purpose / Background / Overview</h3>
-<p>This document describes the fix for SAP IDOC status 51 failures during Vendor Invoice (MIR4) creation. The middleware (PI/PO) now sends a callback to ServiceNow with the exact IDOC error message, allowing the finance team to identify and resolve tax code mismatches or missing purchase order references automatically.</p>
+<p>SAP IDOC status 51 failures during Vendor Invoice (MIR4) creation are now reported back to ServiceNow: the middleware (PI/PO) sends a callback with the exact IDOC error message, allowing the finance team to identify and resolve tax code mismatches or missing purchase order references automatically.</p>
 <h3>Content</h3>
 <ul>
     <li>What the interface is: An error handling and notification system for SAP IDOC status 51 failures in ServiceNow.</li>
@@ -370,7 +370,7 @@
   "description": "Implemented a fix for data inconsistencies between ServiceNow Change Tasks (CTASKs) and SolMan Change Documents (CDs). CTASKs were not automatically closing when their corresponding SolMan CDs reached terminal states ('Confirmed' or 'Withdrawn'). A Business Rule and a Fix Script were implemented to synchronize the states and close orphaned CTASKs.",
   "acceptance_criteria": "1. When a SolMan CD state changes to 'Confirmed' or 'Withdrawn', the corresponding CTASK is automatically closed (state=3).\n2. A Fix Script reconciles historical CTASKs that were stuck open due to this gap.\n3. A log output is generated to validate the count and correctness of updated records.",
   "u_technical_specification": "1. Reviewed the Business Rule named 'SolMan: Sync CD State to CTASK Closure Readiness' on the change_task table. Confirmed it is configured to run Before update with the condition u_cd_state.changesTo() == true.\n2. Verified the Business Rule logic: when a CTASK's u_cd_state changes to 'Confirmed' or 'Withdrawn', the script queries all sibling CTASKs linked to the same parent CHG and auto-closes them (state=3) only if every sibling CTASK has a terminal CD state.\n3. In a non-production environment, executed the Fix Script named 'SolMan: Fix CD State Inconsistencies' as a one-time Scheduled Script Execution.\n4. Confirmed the Fix Script queries all CTASKs where u_cd_state IN ('Confirmed', 'Withdrawn') AND state != 3, verifies the parent CHG has no active CTASKs with non-terminal CD states, and updates qualifying CTASKs to state=3.\n5. Reviewed the log output in non-prod to validate the count and correctness of updated records before proceeding.",
-  "work_notes": "2024-07-16 10:00: Dev - Reproduced locally with test IDP instance.\n2024-07-16 14:00: Dev - Identified hardcoded TTL in auth/middleware.py line 142.\n2024-07-16 16:00: Dev - Patched to v2.3, added env var support.\n2024-07-16 11:00: Dev - Deployed to staging, verified login works.",
+  "work_notes": "2024-07-16 10:00: Dev - Reproduced: CTASK stayed open after the SolMan CD reached 'Confirmed'.\n2024-07-16 14:00: Dev - Reviewed Business Rule 'SolMan: Sync CD State to CTASK Closure Readiness'; confirmed it runs Before update with condition u_cd_state.changesTo() == true.\n2024-07-16 16:00: Dev - Executed Fix Script 'SolMan: Fix CD State Inconsistencies' in non-prod as a one-time Scheduled Script Execution; verified the log counts.\n2024-07-16 17:00: Dev - Confirmed sibling CTASKs auto-close (state=3) only when every sibling CTASK has a terminal CD state.",
   "comments": "2024-07-16 12:00: QA Team - Confirmed resolved in staging environment. Running full regression.\n2024-07-16 15:00: QA Team - All regression tests passed. Ready for production.",
   "state": "Closed Complete",
   "assigned_to": "Jane Dev",
@@ -383,7 +383,7 @@
 <h1>SolMan Change Task State Synchronization Fix</h1>
 <h2>Overview / Summary</h2>
 <h3>Purpose / Background / Overview</h3>
-<p>This document describes the fix for data inconsistencies between ServiceNow Change Tasks (CTASKs) and SolMan Change Documents (CDs). CTASKs were not automatically closing when their corresponding SolMan CDs reached terminal states ('Confirmed' or 'Withdrawn'). A Business Rule and a Fix Script were implemented to synchronize the states and close orphaned CTASKs.</p>
+<p>Data inconsistencies between ServiceNow Change Tasks (CTASKs) and SolMan Change Documents (CDs) are fixed by a Business Rule and a Fix Script. CTASKs were not automatically closing when their corresponding SolMan CDs reached terminal states ('Confirmed' or 'Withdrawn'); the two scripts synchronize the states and close orphaned CTASKs.</p>
 <h3>Content</h3>
 <ul>
     <li>What the interface is: A state synchronization mechanism between ServiceNow Change Tasks and SolMan Change Documents.</li>
@@ -661,4 +661,93 @@ Minden példa tartalmazza a Story szövegét és a várt KB cikket (HTML formát
                 <ul><li>Script Include execution logs.</li><li>SOAP Service logs.</li><li>System Logs &gt; Scheduled Jobs.</li></ul>
             </li><li><strong>Key Components:</strong> <code>ALDIAlmexInterface</code>, <code>ALDIAlmexInterfaceClient</code>, <code>ALMEX -&gt; SN</code> Trigger Condition.</li><li><strong>Escalation Guide:</strong> If SOAP errors persist, check the ALMEX SAP side for endpoint connectivity and WSDL compatibility issues.</li></ul>
     </li></ul>
+```
+
+---
+
+## Példa 8: Outbound Integráció (SAP S/4HANA OData)
+
+### Story
+```json
+{
+  "number": "STRY0010015",
+  "short_description": "[Interface Mgmt]: Outbound OData integration - Push approved Change Request dates to SAP S/4HANA Project System",
+  "description": "Implemented an outbound integration that pushes approved Change Request (CHG) planned start and end dates from ServiceNow to SAP S/4HANA Project System (PS) via OData. When a CHG reaches the 'Scheduled' state, a Business Rule triggers the ALDI Integration Framework, which builds the payload and calls the S/4HANA OData endpoint API_PROJECT_MAINTAIN with the WBS element reference stored on the CHG. The S/4HANA side updates the project milestone dates accordingly.",
+  "acceptance_criteria": "1. When a CHG moves to 'Scheduled', the planned start/end dates are sent to S/4HANA within 5 minutes.\n2. The WBS element reference (u_wbs_element) on the CHG is mandatory; missing values block the outbound call and log an error.\n3. Failed calls are retried up to 3 times with exponential backoff and logged in the ALDI Integration Framework log table.\n4. The OData response code and message are stored on the integration log record for traceability.",
+  "u_technical_specification": "Business Rule 'ALDI: CHG Scheduled - Push Dates to S4' on the change_request table, runs After update with condition state changes to 'Scheduled' (-1). Script Include 'ALDIS4ProjectInterface' builds the JSON payload (WBS element, planned dates, CHG number) and calls REST Message 'ALDI S4 OData Outbound', function 'UpdateProjectDates'. Authentication: OAuth 2.0 client credentials against the S/4HANA OData gateway (token endpoint https://s4hana.prd.aldi-sued.com/sap/bc/sec/oauth2/token). Endpoint: https://s4hana.prd.aldi-sued.com/sap/opu/odata/sap/API_PROJECT_MAINTAIN/ProjectMilestone. Retry logic: up to 3 attempts, exponential backoff (1/5/15 minutes), implemented via the ALDI Integration Framework retry queue. Payload validation: u_wbs_element mandatory; empty value aborts the call and writes an error log.",
+  "work_notes": "2024-08-05 09:30: Dev - Confirmed with SAP team that API_PROJECT_MAINTAIN is exposed on the S/4HANA gateway.\n2024-08-05 14:00: Dev - Implemented ALDIS4ProjectInterface payload builder; unit tested with sample WBS element PRJ-1002345-01.\n2024-08-06 10:15: Dev - OAuth2 client credentials configured in ServiceNow OAuth registry; token fetch verified from non-prod.\n2024-08-06 16:45: Dev - End-to-end test passed: CHG0001234 moved to Scheduled, milestone dates updated in S/4HANA within 2 minutes.",
+  "comments": "2024-08-07 09:00: SAP Basis - Gateway throttling limit is 100 calls/minute; current volume is well below.\n2024-08-07 11:30: QA Team - Verified retry behavior by temporarily blocking the endpoint; 3 retries logged with correct backoff.",
+  "state": "Closed Complete",
+  "assigned_to": "John Integration",
+  "assignment_group": "Integration Team"
+}
+```
+
+### Várt KB Cikk (Gold Article)
+```html
+<h1>SAP S/4HANA Project System Outbound OData Integration</h1>
+<h2>Overview / Summary</h2>
+<h3>Purpose / Background / Overview</h3>
+<p>Approved Change Request planned dates flow from ServiceNow to SAP S/4HANA Project System through an outbound OData integration. When a CHG reaches the 'Scheduled' state, the integration sends the planned start and end dates to the corresponding WBS element in S/4HANA, so project milestones in SAP always reflect the approved change schedule.</p>
+<h3>Content</h3>
+<ul>
+    <li>What the interface is: An outbound REST/OData push of Change Request planned dates to SAP S/4HANA Project System milestones.</li>
+    <li>Who uses it: Change Managers and SAP project coordinators who need S/4HANA project milestones to match the approved change schedule.</li>
+    <li>What type of data is exchanged: CHG number, WBS element reference (u_wbs_element), planned start date, planned end date, and the OData response code/message stored on the integration log.</li>
+    <li>High-level process flow: CHG moves to 'Scheduled' → Business Rule triggers → ALDIS4ProjectInterface builds the payload → REST Message 'ALDI S4 OData Outbound' calls API_PROJECT_MAINTAIN → S/4HANA updates milestone dates → response logged; failures retried up to 3 times.</li>
+    <li>Table of related KB articles: N/A
+    </li>
+</ul>
+<hr />
+<h2>Outbound Technical Implementation</h2>
+<h3>Content</h3>
+<ul>
+    <li>Technical components used: Business Rule 'ALDI: CHG Scheduled - Push Dates to S4' (After update, condition: state changes to 'Scheduled'), Script Include 'ALDIS4ProjectInterface', REST Message 'ALDI S4 OData Outbound' function 'UpdateProjectDates', ALDI Integration Framework retry queue.</li>
+    <li>Dependencies between records or functions: The CHG must carry a valid WBS element reference (u_wbs_element); the Script Include aborts the call and logs an error if it is empty.</li>
+    <li>Authentication method: OAuth 2.0 client credentials against the S/4HANA OData gateway (token endpoint https://s4hana.prd.aldi-sued.com/sap/bc/sec/oauth2/token).</li>
+    <li>Endpoint: https://s4hana.prd.aldi-sued.com/sap/opu/odata/sap/API_PROJECT_MAINTAIN/ProjectMilestone.</li>
+    <li>Retry and error handling: Up to 3 attempts with exponential backoff (1/5/15 minutes) via the Integration Framework retry queue; the OData response code and message are stored on the integration log record.</li>
+</ul>
+<hr />
+<h2>How to Use the Interface</h2>
+<h3>Content</h3>
+<ul>
+    <li>Typical usage scenarios: A Change Request is approved and moved to 'Scheduled'; its planned dates must appear on the matching S/4HANA project milestone without manual re-entry.</li>
+    <li>Step-by-step instructions: 1. Fill u_wbs_element on the CHG with the target WBS element (e.g. PRJ-1002345-01). 2. Move the CHG to 'Scheduled'. 3. The Business Rule fires automatically and the payload is sent. 4. Check the integration log record for the OData response code.</li>
+    <li>Expected results: The WBS element milestone in S/4HANA shows the CHG planned start/end dates, and the integration log shows a 2xx response.</li>
+</ul>
+<hr />
+<h2>Testing Guide</h2>
+<h3>Content</h3>
+<ul>
+    <li>Test scenarios: Happy path (Scheduled CHG with valid WBS element updates the milestone), missing WBS element (call aborted, error logged), endpoint unavailable (3 retries with backoff, then error state).</li>
+    <li>Test data: A test CHG with u_wbs_element set to a test WBS element in the non-prod S/4HANA client.</li>
+    <li>Step-by-step testing instructions: 1. Create a test CHG and set u_wbs_element. 2. Move the CHG to 'Scheduled'. 3. Verify in the integration log that the payload was sent and the response is 2xx. 4. Check in S/4HANA that the milestone dates match the CHG planned dates. 5. For retry testing, block the endpoint temporarily and confirm 3 retry attempts with 1/5/15 minute backoff.</li>
+    <li>Expected results: Milestone dates updated in S/4HANA within 5 minutes; all outcomes traceable in the integration log.</li>
+    <li>Where to check logs: ALDI Integration Framework log table; ServiceNow System Logs (syslog) for Business Rule execution.</li>
+</ul>
+<hr />
+<h2>Known Issues</h2>
+<h3>Content</h3>
+<ul>
+    <li>Symptoms: Milestone dates in S/4HANA do not update after the CHG is Scheduled, or the integration log shows repeated failures.</li>
+    <li>Root causes: Missing or invalid u_wbs_element, expired OAuth2 client secret, S/4HANA gateway throttling (100 calls/minute), or the ProjectMilestone entity not exposed for the target client.</li>
+    <li>Diagnostic steps: 1. Check the integration log record for the OData response code. 2. Verify u_wbs_element on the CHG. 3. Test the OAuth2 token fetch from the ServiceNow OAuth registry. 4. Ask SAP Basis to confirm the gateway throttling counters.</li>
+    <li>Resolution / Workaround: Set a valid WBS element and re-trigger by moving the CHG away from and back to 'Scheduled'; renew the OAuth2 client secret if token fetch fails.</li>
+    <li>Prevention: Make u_wbs_element mandatory on the CHG form for interface-relevant changes, and monitor the integration log daily.</li>
+</ul>
+<hr />
+<h2>Investigation Steps</h2>
+<h3>Content</h3>
+<ul>
+    <li>Quick, structured troubleshooting guide
+        <ul>
+            <li>When to use this guide: If S/4HANA milestone dates do not reflect the CHG planned dates, or the integration log shows errors.</li>
+            <li>Step-by-step investigation flow: 1. Open the integration log record for the CHG and read the OData response code. 2. If 4xx: check u_wbs_element and the OAuth2 credentials. 3. If 5xx or timeout: check the retry queue and ask SAP Basis about gateway availability. 4. If no log record exists: verify the Business Rule fired (System Logs).</li>
+            <li>Where to check logs: ALDI Integration Framework log, ServiceNow System Logs (syslog), S/4HANA gateway access logs.</li>
+            <li>Key components: Business Rule 'ALDI: CHG Scheduled - Push Dates to S4', Script Include 'ALDIS4ProjectInterface', REST Message 'ALDI S4 OData Outbound', integration log record.</li>
+            <li>Escalation guide: Escalate to SAP Basis for gateway/throttling issues, or to integration developers if the payload builder produces invalid JSON.</li>
+        </ul>
+    </li>
+</ul>
 ```

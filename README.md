@@ -1,13 +1,13 @@
 # snow-kb-generator
 
-> DSPy pipeline that turns completed ServiceNow **Stories** into **Knowledge Base articles** — automatically, powered by GLM-5.2 and a ServiceNow UI Action button.
+> DSPy pipeline that turns completed ServiceNow **Stories** into **Knowledge Base articles** — automatically, powered by a local Qwen3.6-35B (llama.cpp) and a ServiceNow UI Action button.
 
 ## Mi ez?
 
 Amikor a fejlesztők befejeznek egy ServiceNow Story-t (`STRY...`), kézzel kellene Knowledge Base (KB) cikket írni a megoldásról. Ez a project **teljesen automatizálja** ezt:
 1. A fejlesztő rákattint a **"Create KB Article"** gombra a ServiceNow felületen.
 2. A Story adatai egy FastAPI webszerverre kerülnek (VPS-en fut).
-3. Egy AI pipeline (DSPy + GLM-5.2) strukturált KB cikket generál.
+3. Egy AI pipeline (DSPy + lokális Qwen3.6-35B) strukturált KB cikket generál.
 4. A cikk automatikusan létrejön a ServiceNow KB-ben, a linkje pedig bekerül a Story `work_notes` mezőjébe.
 
 **Bemenet:** lezárt ServiceNow Story — `short_description`, `description`, `acceptance_criteria`, `u_technical_specification`, `work_notes`, `comments`, `state`.
@@ -22,7 +22,7 @@ Amikor a fejlesztők befejeznek egy ServiceNow Story-t (`STRY...`), kézzel kell
 
 - **Python 3.12**
 - **DSPy 3.2.x** — Signatures + Modules, GEPA optimalizáció
-- **LM:** Kimi K3 (Pi Agent előfizetés, task modell + GEPA reflection) — a lokális Qwen3.6-35B (llama.cpp) opcionális fallback (`task_model: "local"`)
+- **LM:** lokális Qwen3.6-35B-A3B (llama.cpp, task modell — `task_model: "local"`) + Kimi K3 (Pi Agent előfizetés, GEPA reflection/proposer). Tiszta mérés (2026-07-29, `cache=False`): K3 0.769 vs lokális 0.733 — a lokális mellett a nulla marginális költség döntött
 - **ServiceNow Table API** (`requests`) — Story lekérés + KB létrehozás (CRUD)
 - **FastAPI + Uvicorn** — Webhook szerver a ServiceNow UI Action-nek
 - **Pydantic v2** — adatmodell és validáció
@@ -39,7 +39,7 @@ ServiceNow (Fejlesztői UI)
 FastAPI szerver (VPS - Hetzner, 8000-as port)
     │  1. ServiceNowClient.get_story() – Elkéri a Story-t
     │  2. ServiceNowClient.get_update_set_changes() – Lekéri a módosított kódokat (XML)
-    │  3. StoryToKBArticle (DSPy + GLM-5.2) – Kódok elemzése és cikk generálása
+    │  3. StoryToKBArticle (DSPy + Qwen3.6-35B) – Kódok elemzése és cikk generálása
     │  4. ServiceNowClient.create_kb_article() – Pusholja a KB-be
     ▼
 Válasz a ServiceNow-nak:
@@ -54,7 +54,7 @@ UI Action frissíti a Story work_notes mezőjét a linkkel.
 ### 1. Követelmények
 - Python 3.12+
 - ServiceNow instance (hozzáférés a Table API-hoz és UI Action-ökhoz)
-- GLM API kulcs (vagy más DSPy által támogatott LM)
+- Futó llama.cpp szerver a Qwen3.6-35B-A3B modellel (Windows gép, Tailscale endpoint) VAGY Kimi Code előfizetés (`task_model: "kimi"`)
 
 ### 2. Beállítás
 ```bash
@@ -118,7 +118,7 @@ snow_kb_generator/
 │   ├── program.py              # StoryToKBArticle(dspy.Module)
 │   └── ...                     # config, schemas, cli
 ├── servicenow/                 # ServiceNow-ba másolandó UI Action script
-├── tests/                      # 243 pytest teszt
+├── tests/                      # 258 pytest teszt (.venv interpreterrel!)
 ├── eval/                       # GEPA eval harness (dataset, rich_metric, baseline, gepa_optimize)
 ├── artifacts/                  # GEPA-optimalizált program (program.json)
 ├── gepa_logs/                  # GEPA checkpointek
