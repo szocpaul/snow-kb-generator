@@ -24,7 +24,13 @@
 
 - [x] T009b [US4] Consolidating the ad-hoc measurement scripts `scripts/run_*_baseline.py`: the baseline run should be reachable via the CLI of `eval/baseline.py` (`python -m eval.baseline --model local|kimi --output ...`), the `scripts/` folder is to be deleted — needed before T010
 - [x] T010 [US4] Baseline measurement with the new metric (style axis visible), with `cache=False`, on the cleaned 8-example dataset (4 train / 4 val) → `runs/baseline.json` — THIS is the new reference (SC-004); the old 0.733/0.769 numbers refer to the outdated dataset
+- [ ] T010c [US4] Per-axis persistence: make `run_baseline` expose the axis values — `per_example: [{score, axes: {structure, content, template, hallucination, style}, feedback}]` in runs/*.json (currently only `average_score` + textual feedback is written, the style-axis number gets lost). This makes T012 automatable; needed BEFORE T011
 - [ ] T011 [US4] GEPA run `max_metric_calls=200` (local task rollout + judge + Kimi K3 reflection; time limit ~2.5-3.5 hours, `-np 2` / `num_threads=2` — FR-004)
-- [ ] T012 [US4] Check: optimized style average > baseline style average (`runs/optimized.json`); the other axes do not degrade
-- [ ] T013 [US4] Full test suite green + production STRY0010010 generation + human review (ban list regex 0 matches)
+  - Preflight BEFORE the deletion: llama.cpp endpoint health check + Kimi K3 availability (1 cheap test call) + a 1-call smoke generation — the clean run should only start if both backends are alive (otherwise after the `rm -rf` the old checkpoint is also lost, and the run fails immediately)
+  - Then: `rm -rf gepa_logs` (clean run with the new metric — the checkpoint of the old, stopped run is built on the old metric)
+  - Every measurement with `cache=False` (DSPy disk cache replay bug: it replays the answers without model identification — see the spec Background "Cache hygiene")
+  - Kimi quota monitoring: only the reflection/proposer may go to Kimi; the task rollout and the judge are local. In case of a quota error the compile may stop with an exception — in that case the GEPA continues from the checkpoint when it is **restarted with the same `log_dir`** (DSPy 3.3.0b1, verified); in that case you must NOT run `rm -rf gepa_logs`
+  - Result: `runs/optimized.json` + a fresh `artifacts/program.json`
+- [ ] T012 [US4] Check: optimized style average ≥ baseline style average **+ 0.05**; max **−0.02** degradation on the other axes (per-axis data in runs/*.json, based on T010c; can be gated as a one-line assert)
+- [ ] T013 [US4] Full test suite green + production STRY0010010 generation + ban list regex 0 matches (automatic part) → then **MANUAL GATE**: human review — the agent cannot review its own article, this checkbox can only be ticked with human approval
 - [ ] T014 [US4] Update Agent.md + README.md, commit, push

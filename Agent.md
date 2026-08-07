@@ -514,3 +514,10 @@ The metric penalty reduces FREQUENCY (GEPA learns it), the guardrail zeroes the 
 - Tests: **258/258 green** with the `.venv` interpreter (the system Python has no fastapi/skilled_proposer!)
 - `skilled-proposer` installed into the `.venv`
 - `config.yaml`: `task_model: "local"` (the production pipeline also runs with the local Qwen now)
+
+## 29. DSPy 3.3.0 update + spec 010 review fixes (2026-08-07)
+
+- **DSPy 3.3.0b1 → 3.3.0 stable** in the shared `../.venv` (3.3.0 was released on Aug 3; `gepa` stayed at 0.1.1). **258/258 tests green** with the new version.
+- The 3.3.0 GEPA API changes (`detailed_results` shapes) do NOT affect the code: the `val_aggregate_scores` field remains, `extract_applied_suggestions` is `hasattr`-protected; `best_outputs_valset` is now a dict, but the code only calls `len()` on it.
+- **Fixes after the spec 010 review** (spec.md/plan.md/tasks.md): new **T010c** (per-axis persistence — until now only `average_score` was written, so T012 was not measurable), T011 preflight + checkpoint-resume rule (DSPy 3.3.0 `log_dir` resume verified), T012 made numeric (style ≥ baseline + 0.05, other axes max −0.02), T013 human review = MANUAL GATE, FR-007/FR-008, plan.md interpreter (`../.venv`) fixed.
+- For T010c: the `runs/t012_style_compare.json` sample script (still in /tmp) should be promoted into `eval/` — it is the basis of the per-axis comparison.

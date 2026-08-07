@@ -4,7 +4,7 @@
 
 **Created**: 2026-07-28
 
-**Status**: Draft
+**Status**: In Progress (US1–US3 implemented and validated; US4 is in the T010c–T014 phase)
 
 **Input**: User description: "The finished KB articles look very AI-written, not human enough. The structure and the facts are fine, but the tone is robotic: boilerplate phrases ('This document describes', 'seamless', 'leverage'), uniform sentence rhythm, generalizations instead of specifics. The goal: the articles should read as if a senior engineer had written them — the hand-written STYLE-REF is the style reference."
 
@@ -74,7 +74,7 @@ GEPA run with the **local task model** (the rollouts are free), Kimi K3 reflecti
 
 **Acceptance Scenarios**:
 
-1. **Given** a GEPA run, **When** it completes, **Then** the optimized program's style average > baseline style average (measured in runs/*.json).
+1. **Given** the GEPA run, **When** it completes, **Then** the style average of the optimized program ≥ baseline style average + 0.05, and the other axes degrade by at most −0.02 (per-axis data in runs/*.json, T010c).
 2. **Given** the optimized program, **When** a production STRY0010010 generation happens, **Then** according to a human review the article is less robotic than the previous version.
 
 ---
@@ -89,13 +89,15 @@ GEPA run with the **local task model** (the rollouts are free), Kimi K3 reflecti
 - **FR-004**: The GEPA run has a controlled time budget: `max_metric_calls = 200` (time limit, not quota protection — the rollouts are local; together with the judge calls ~2.5-3.5 hours with the `-np 2` slots). The reflection/proposer calls still go to Kimi K3, their number is small. `num_threads` is matched to the server slots (2).
 - **FR-005**: `run_gepa_optimization()` creates the SkilledProposer with the style-focused `additional_instructions`; the existing evidence-first and KB-hallucination rules remain.
 - **FR-006**: Every measurement script (baseline, GEPA, validation) runs with `cache=False` — the DSPy disk cache can replay earlier answers without model identification (lesson from the false baseline on 2026-07-29).
+- **FR-007**: The measurement outputs (runs/*.json) also persist per-axis scores (`per_example` axes) — the style improvement should be verifiable automatically, not only readable from the textual feedback.
+- **FR-008**: An interrupted GEPA run (e.g. a Kimi quota error in the reflection) restarted with the same `log_dir` continues from the checkpoint (DSPy 3.3.0b1); the `rm -rf gepa_logs` of a clean run is only allowed for an intentional, preflighted restart.
 
 ### Success Criteria
 
 - **SC-001**: 0 banned phrases in the production articles (also measurable with an automatic regex check).
 - **SC-002**: The style judge is validated (robotic < 0.4, human > 0.7 on the test fixtures). If it failed because of the tight thresholds: the fallback criterion is the relative gap (robotic < human − 0.3).
 - **SC-003**: Human review: the final articles "look human" (subjective, but the spec records it as a goal too).
-- **SC-004**: The baseline reference is the fresh measurement of T010 on the **cleaned, 8-example dataset** (4 train / 4 val, `cache=False`, new 5-axis metrics) → `runs/baseline.json`. We measure the style improvement against the style-axis average there (the 2026-07-29 figures 0.733/0.769 refer to the old dataset and are not comparable).
+- **SC-004**: The baseline reference is the fresh measurement from T010 on the **cleaned, 8-example dataset** (4 train / 4 val, `cache=False`, new 5-axis metric) → `runs/baseline.json`. The style improvement is measured against the style-axis average there (the numbers 0.733/0.769 from 2026-07-29 refer to the old dataset and are not comparable). T010c persists the axis values into runs/*.json; the improvement threshold: **style ≥ baseline + 0.05**, the other axes degrade by at most **−0.02** — this can be checked automatically as a gate command.
 
 ## Out of Scope
 

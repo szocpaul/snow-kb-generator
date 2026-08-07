@@ -4,7 +4,8 @@
 
 ## Technical Context
 
-- Python 3.12, DSPy 3.2.x
+- Python 3.12, DSPy **3.3.0** (updated from 3.3.0b1 on 2026-08-07, 258/258 tests pass; the GEPA `log_dir` checkpoint-resume is verified — an interrupted run can be continued with the same `log_dir`)
+- **Interpreter: `../.venv`** (the shared venv of the parent directory — the project has NO `.venv` of its own, and it is NOT the system Python; see Agent.md) — every gate and measurement command runs with it
 - **Task + judge LM: local Qwen3.6-35B-A3B** (llama.cpp, `http://llm-server.local:8033/v1`) — clean measurements from 2026-07-29 (`cache=False`, old dataset): K3 0.769 > local 0.733; the zero marginal cost was decisive (GEPA rollouts)
 - **Dataset**: cleaned, 8 examples (4 train / 4 val, 2026-07-29) — the gold HTMLs are boilerplate-free, the STYLE-REF reference is in `data/examples/`; the baseline must be re-measured on it (T010)
 - **GEPA reflection/proposer: Kimi K3** (`_RefreshingKimiLM`) — the only remaining Kimi dependency, with few calls
@@ -40,11 +41,12 @@ generated article ──► rich_metric ───┼── structure / content /
 5. **The boilerplate ban list is a shared constant** (`BANNED_PHRASES`): the signature block, the judge prompt and the SC-001 regex check use the same list.
 6. **US3 only replaces the `additional_instructions` text** on the existing SkilledProposer instance — the fallback logic and the prompt_model (Kimi K3) stay unchanged.
 7. **No docstring consolidation** (separate spec, backlog).
-8. **Cache hygiene:** every measurement path (`run_baseline`, GEPA compile, validation) runs with a `cache=False` LM — the disk cache can also replay the answers of another model (the false baseline of 2026-07-29). The fix of `eval/baseline.py` has already happened.
+8. **Per-axis persistence (FR-007):** `run_baseline` also writes the axis values into runs/*.json (`per_example[].axes`) — otherwise the T012 style threshold cannot be automated (currently only `average_score` + textual feedback are written).
+9. **Cache hygiene:** every measurement path (`run_baseline`, GEPA compile, validation) runs with a `cache=False` LM — the disk cache can replay the answers of another model (false baseline on 2026-07-29). The fix in `eval/baseline.py` has already been made.
 
 ## Phases
 
 1. **Phase 1 (US1)**: signature style block + `BANNED_PHRASES` constant + tests.
 2. **Phase 2 (US2)**: `StyleJudge` signature + `style_score()` in the metric + fault tolerance + tests (with a mock judge).
 3. **Phase 3 (US3)**: SkilledProposer style guidance + test.
-4. **Phase 4 (US4)**: GEPA run (`max_metric_calls=200`, local task + judge + Kimi K3 reflection; ~2.5-3.5 hours, `-np 2` / `num_threads=2`) → proof of style axis improvement + live validation + docs.
+4. **Phase 4 (US4)**: per-axis persistence (T010c) → GEPA run (T011, with preflight) (`max_metric_calls=200`, local task + judge + Kimi K3 reflection; ~2.5-3.5 hours, `-np 2` / `num_threads=2`) → proof of style axis improvement + live validation + docs.
