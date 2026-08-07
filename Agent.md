@@ -493,3 +493,10 @@ A metric-büntetés a GYAKORISÁGOT csökkenti (GEPA megtanulja), a guardrail a 
 - Tesztek: **258/258 zöld** a `.venv` interpreterrel (a rendszer-pythonban nincs fastapi/skilled_proposer!)
 - `skilled-proposer` telepítve a `.venv`-be
 - `config.yaml`: `task_model: "local"` (az éles pipeline is lokális Qwennel fut most)
+
+## 29. DSPy 3.3.0 frissítés + spec 010 review-javítások (2026-08-07)
+
+- **DSPy 3.3.0b1 → 3.3.0 stabil** a közös `../.venv`-ben (a 3.3.0 aug. 3-án jelent meg; `gepa` 0.1.1 maradt). **258/258 teszt zöld** az új verzióval.
+- A 3.3.0 GEPA API-változásai (`detailed_results` alakzatok) NEM érintik a kódot: a `val_aggregate_scores` mező megmaradt, az `extract_applied_suggestions` `hasattr`-védett; a `best_outputs_valset` most dict, de a kód csak `len()`-t hív rá.
+- **Spec 010 review utáni javítások** (spec.md/plan.md/tasks.md): új **T010c** (per-axis perzisztálás — eddig csak `average_score` íródott, a T012 mérhetetlen volt), T011 preflight + checkpoint-resume szabály (DSPy 3.3.0 `log_dir`-resume verifikálva), T012 számszerűsítve (style ≥ baseline + 0.05, többi tengely max −0.02), T013 emberi review = MANUÁLIS KAPU, FR-007/FR-008, plan.md interpreter (`../.venv`) rögzítve.
+- A T010c-hez: a `runs/t012_style_compare.json` minta-scriptet (még /tmp-ben) érdemes `eval/`-be emelni — ez a per-axis összevetés alapja.

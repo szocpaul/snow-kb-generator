@@ -24,7 +24,13 @@
 
 - [x] T009b [US4] A `scripts/run_*_baseline.py` ad-hoc mérési scriptek konszolidálása: a baseline-futtatás legyen `eval/baseline.py` CLI-jével (`python -m eval.baseline --model local|kimi --output ...`) elérhető, a `scripts/` mappa törlendő — T010 előtt kell
 - [x] T010 [US4] Baseline mérés az új metric-kel (style axis látható), `cache=False`-szal, a tisztított 8 példás dataseten (4 train / 4 val) → `runs/baseline.json` — EZ az új referencia (SC-004); a régi 0.733/0.769 számok elavult datasetre vonatkoznak
+- [ ] T010c [US4] Per-axis perzisztálás: a `run_baseline` tegye elérhetővé a tengely-értékeket — `per_example: [{score, axes: {structure, content, template, hallucination, style}, feedback}]` a runs/*.json-ben (jelenleg csak `average_score` + szöveges feedback íródik, a style-axis szám elvész). Ez teszi a T012-t automatizálhatóvá; T011 ELŐTT kell
 - [ ] T011 [US4] GEPA futás `max_metric_calls=200` (lokális task rollout + judge + Kimi K3 reflection; időkorlát ~2.5-3.5 óra, `-np 2` / `num_threads=2` — FR-004)
-- [ ] T012 [US4] Ellenőrzés: optimized style-átlag > baseline style-átlag (`runs/optimized.json`); a többi tengely nem romlik
-- [ ] T013 [US4] Teljes tesztcsomag zöld + éles STRY0010010 generálás + emberi review (tiltólista-regex 0 találat)
+  - Preflight a törlés ELŐTT: llama.cpp endpoint health-check + Kimi K3 elérhetőség (1 olcsó teszthívás) + 1 call-os smoke generálás — a clean run csak akkor induljon, ha mindkét backend él (különben az `rm -rf` után a régi checkpoint is elvész, és a futás azonnal elhasal)
+  - Ezután: `rm -rf gepa_logs` (tiszta futás az új metric-kel — a régi, leállított futás checkpointja elavult metric-re épül)
+  - Minden mérés `cache=False`-szal (DSPy disk cache replay-bug: modell-azonosítás nélkül játssza vissza a válaszokat — ld. spec Background "Cache-higiénia")
+  - Kimi kvóta-figyelés: csak a reflection/proposer mehet Kimire; a task rollout és a judge lokális. Kvóta-hiba esetén a compile kivétellel megállhat — ilyenkor **ugyanazzal a `log_dir`-rel újraindítva** a GEPA a checkpointból folytat (DSPy 3.3.0b1, verifikálva); ilyenkor NEM szabad `rm -rf gepa_logs`-t futtatni
+  - Eredmény: `runs/optimized.json` + friss `artifacts/program.json`
+- [ ] T012 [US4] Ellenőrzés: optimized style-átlag ≥ baseline style-átlag **+ 0.05**; a többi tengely max **−0.02** romlás (per-axis adatok a runs/*.json-ben, T010c alapján; egy soros assert-ként gate-elhető)
+- [ ] T013 [US4] Teljes tesztcsomag zöld + éles STRY0010010 generálás + tiltólista-regex 0 találat (automatikus rész) → utána **MANUÁLIS KAPU**: emberi review — az agent a saját cikkét nem review-zhatja, ez a checkbox csak emberi jóváhagyással pipálható
 - [ ] T014 [US4] Agent.md + README.md frissítés, commit, push

@@ -4,7 +4,8 @@
 
 ## Technical Context
 
-- Python 3.12, DSPy 3.2.x
+- Python 3.12, DSPy **3.3.0** (2026-08-07 frissítve 3.3.0b1-ről, 258/258 teszt zöld; a GEPA `log_dir`-es checkpoint-resume-ja verifikálva — megszakadt futás azonos `log_dir`-rel folytatható)
+- **Interpreter: `../.venv`** (a szülőkönyvtár közös venv-je — a projektnek NINCS saját `.venv`-je, és NEM rendszer-Python; ld. Agent.md) — minden gate- és mérési parancs ezzel fusson
 - **Task + judge LM: lokális Qwen3.6-35B-A3B** (llama.cpp, `http://desktop-c5ikame-1.tailee6bc1.ts.net:8033/v1`) — 2026-07-29-i TISZTA mérések (`cache=False`, régi dataset): K3 0.769 > lokális 0.733; a lokális mellett a nulla marginális költség döntött (GEPA-rolloutok)
 - **Dataset**: tisztított, 8 példás (4 train / 4 val, 2026-07-29) — gold HTML-ek boilerplate-mentesek, KB0010015 referencia a `data/examples/`-ben; a baseline-t ezen kell újramérni (T010)
 - **GEPA reflection/proposer: Kimi K3** (`_RefreshingKimiLM`) — az egyetlen megmaradt Kimi-függés, kevés hívással
@@ -40,11 +41,12 @@ generált cikk ──► rich_metric ──────┼── structure / con
 5. **Boilerplate-tiltólista megosztott konstans** (`BANNED_PHRASES`): a signature-blokk, a judge prompt és az SC-001 regex-ellenőrzés ugyanazt a listát használja.
 6. **US3 csak az `additional_instructions` szövegét cseréli** a meglévő SkilledProposer-példányon — a fallback-logika és a prompt_model (Kimi K3) változatlan.
 7. **Nincs docstring-konszolidáció** (külön spec, backlog).
-8. **Cache-higiénia:** minden mérési útvonal (`run_baseline`, GEPA compile, validáció) `cache=False` LM-mel fut — a disk cache más modell válaszait is visszajátszhatja (2026-07-29-i fals baseline). Az `eval/baseline.py` javítása már megtörtént.
+8. **Per-axis perzisztálás (FR-007):** a `run_baseline` a tengely-értékeket is kiírja a runs/*.json-be (`per_example[].axes`) — különben a T012 style-küszöb nem automatizálható (jelenleg csak `average_score` + szöveges feedback íródik).
+9. **Cache-higiénia:** minden mérési útvonal (`run_baseline`, GEPA compile, validáció) `cache=False` LM-mel fut — a disk cache más modell válaszait is visszajátszhatja (2026-07-29-i fals baseline). Az `eval/baseline.py` javítása már megtörtént.
 
 ## Phases
 
 1. **Phase 1 (US1)**: signature stílus-blokk + `BANNED_PHRASES` konstans + tesztek.
 2. **Phase 2 (US2)**: `StyleJudge` signature + `style_score()` a metric-ben + hibatűrés + tesztek (mock judge-dal).
 3. **Phase 3 (US3)**: SkilledProposer style guidance + teszt.
-4. **Phase 4 (US4)**: GEPA futás (`max_metric_calls=200`, lokális task + judge + Kimi K3 reflection; ~2.5-3.5 óra, `-np 2` / `num_threads=2`) → style axis javulásának igazolása + éles validáció + docs.
+4. **Phase 4 (US4)**: per-axis perzisztálás (T010c) → GEPA futás (T011, preflight-tel) (`max_metric_calls=200`, lokális task + judge + Kimi K3 reflection; ~2.5-3.5 óra, `-np 2` / `num_threads=2`) → style axis javulásának igazolása + éles validáció + docs.

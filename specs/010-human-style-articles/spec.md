@@ -4,7 +4,7 @@
 
 **Created**: 2026-07-28
 
-**Status**: Draft
+**Status**: In Progress (US1–US3 implementálva és validálva; US4 a T010c–T014 fázisban)
 
 **Input**: User description: "Az elkészített KB cikkek nagyon AI által írtnak tűnnek, nem elég emberiek. A struktúra és a tények rendben vannak, de a hangnem gépies: boilerplate fordulatok ('This document describes', 'seamless', 'leverage'), egyforma mondatritmus, általánosítások a konkrétumok helyett. A cél: a cikkek úgy olvashatók legyenek, mintha senior mérnök írta volna őket — a kézzel írt KB0010015 a stílus-referencia."
 
@@ -74,7 +74,7 @@ GEPA futás **lokális task modellel** (a rolloutok ingyenesek), Kimi K3 reflect
 
 **Acceptance Scenarios**:
 
-1. **Given** a GEPA futás, **When** befejeződik, **Then** az optimized program style-átlaga > baseline style-átlag (mérve a runs/*.json-ben).
+1. **Given** a GEPA futás, **When** befejeződik, **Then** az optimized program style-átlaga ≥ baseline style-átlag + 0.05, és a többi tengely max −0.02 romlás (per-axis adatok a runs/*.json-ben, T010c).
 2. **Given** az optimalizált program, **When** éles STRY0010010 generálás történik, **Then** emberi review szerint a cikk kevésbé gépies, mint az előző változat.
 
 ---
@@ -89,13 +89,15 @@ GEPA futás **lokális task modellel** (a rolloutok ingyenesek), Kimi K3 reflect
 - **FR-004**: A GEPA futás időkerete kontrollált: `max_metric_calls = 200` (időkorlát, nem kvótavédelem — a rolloutok lokálisak; a judge-hívásokkal együtt ~2.5-3.5 óra a `-np 2` slotokkal). A reflection/proposer hívások továbbra is Kimi K3-ra mennek, azok száma kicsi. A `num_threads` a szerver slotjaihoz igazított (2).
 - **FR-005**: A `run_gepa_optimization()` a SkilledProposer-t a stílus-fókuszú `additional_instructions`-szel hozza létre; a meglévő evidence-first és KB-hallucináció szabályok megmaradnak.
 - **FR-006**: Minden mérési script (baseline, GEPA, validáció) `cache=False`-szal fut — a DSPy disk cache modell-azonosítás nélkül visszajátszhatja korábbi válaszokat (2026-07-29-i fals baseline tanulsága).
+- **FR-007**: A mérési kimenetek (runs/*.json) tengelyenkénti pontszámokat is perzisztálnak (`per_example` axes) — a style-javulás automatizáltan ellenőrizhető legyen, ne csak a szöveges feedbackből olvasható ki.
+- **FR-008**: Megszakadt GEPA futás (pl. Kimi kvóta-hiba a reflection-ben) ugyanazzal a `log_dir`-rel újraindítva a checkpointból folytatódik (DSPy 3.3.0b1); a clean run `rm -rf gepa_logs`-ja csak szándékos, preflight-olt újraindításnál megengedett.
 
 ### Success Criteria
 
 - **SC-001**: Éles cikkekben 0 tiltólistás fordulat (automatikus regex-ellenőrzéssel is mérhető).
 - **SC-002**: A style judge validált (gépies < 0.4, emberi > 0.7 a teszt-ikonokon). Ha a szoros küszöbök miatt elbukna: fallback kritérium a relatív gap (gépies < emberi − 0.3).
 - **SC-003**: Emberi review: a végleges cikkek "emberinek tűnnek" (subjektív, de a spec ezt is rögzíti mint cél).
-- **SC-004**: A baseline referencia a T010-es friss mérés a **tisztított, 8 példás dataseten** (4 train / 4 val, `cache=False`, új 5-tengelyes metric-kel) → `runs/baseline.json`. A style javulást az ottani style-axis átlaghoz mérjük (a 2026-07-29-i 0.733/0.769 számok a régi datasetre vonatkoznak, nem összehasonlíthatók).
+- **SC-004**: A baseline referencia a T010-es friss mérés a **tisztított, 8 példás dataseten** (4 train / 4 val, `cache=False`, új 5-tengelyes metric-kel) → `runs/baseline.json`. A style javulást az ottani style-axis átlaghoz mérjük (a 2026-07-29-i 0.733/0.769 számok a régi datasetre vonatkoznak, nem összehasonlíthatók). A tengely-értékeket a T010c perzisztálja a runs/*.json-be; a javulás küszöbe: **style ≥ baseline + 0.05**, a többi tengely max **−0.02** romlás — ez gate-parancsként automatikusan ellenőrizhető.
 
 ## Out of Scope
 
