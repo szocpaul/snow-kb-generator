@@ -49,4 +49,4 @@ generated article ──► rich_metric ───┼── structure / content /
 1. **Phase 1 (US1)**: signature style block + `BANNED_PHRASES` constant + tests.
 2. **Phase 2 (US2)**: `StyleJudge` signature + `style_score()` in the metric + fault tolerance + tests (with a mock judge).
 3. **Phase 3 (US3)**: SkilledProposer style guidance + test.
-4. **Phase 4 (US4)**: per-axis persistence (T010c) → GEPA run (T011, with preflight) (`max_metric_calls=200`, local task + judge + Kimi K3 reflection; ~2.5-3.5 hours, `-np 2` / `num_threads=2`) → proof of style axis improvement + live validation + docs.
+4. **Phase 4 (US4)**: per-axis persistence (T010c, done on 2026-08-08) → GEPA run (T011, with a preflight) (`max_metric_calls=200`, local task + judge + Kimi K3 reflection; ~1.5-2 hours, `-np 4` / `num_threads=4`) → proving the style axis improvement with the `eval/compare.py` gate (T012) + production validation + docs.

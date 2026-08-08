@@ -39,12 +39,12 @@ def run_gepa_optimization(program, trainset, valset, max_metric_calls: int = 200
         metric=rich_metric,
         # Spec 010 / FR-004: an explicit time limit (instead of the auto preset). The style judge
         # doubles the cost of a metric call (generation + scoring), ~60 s per local call:
-        # 200 calls ≈ 2.5-3.5 hours with the llama-server -np 2 slots.
+        # 200 calls ≈ 1.5-2 hours with the llama-server -np 4 slots (2026-08-08: -np 2 → 4).
         max_metric_calls=max_metric_calls,
         reflection_lm=_create_reflection_lm(),
         candidate_selection_strategy="pareto",
         instruction_proposer=_create_instruction_proposer(),
-        num_threads=2,  # aligned with the llama.cpp -np 2 slots
+        num_threads=4,  # aligned with the llama.cpp -np 4 slots (verified with preflight)
         track_stats=True,
         log_dir="./gepa_logs",
         seed=0,

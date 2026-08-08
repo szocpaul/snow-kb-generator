@@ -152,7 +152,20 @@ def rich_metric(gold, pred, trace=None, pred_name=None, pred_trace=None):
 
     feedback = " ".join(parts)
 
-    return dspy.Prediction(score=score, feedback=feedback)
+    # T010c / FR-007: we put the axis values into the Prediction as well, so that the
+    # run_baseline can persist per-axis statistics into runs/*.json
+    # (this does not violate the GEPA contract: the score + feedback are unchanged).
+    return dspy.Prediction(
+        score=score,
+        feedback=feedback,
+        axes={
+            "structure": structure_match,
+            "content": content_accuracy,
+            "template": template_adherence,
+            "hallucination": hallucination_score,
+            "style": style_score,
+        },
+    )
 
 
 def _extract_headings(html: str) -> list[str]:
