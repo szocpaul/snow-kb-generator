@@ -49,4 +49,4 @@ generált cikk ──► rich_metric ──────┼── structure / con
 1. **Phase 1 (US1)**: signature stílus-blokk + `BANNED_PHRASES` konstans + tesztek.
 2. **Phase 2 (US2)**: `StyleJudge` signature + `style_score()` a metric-ben + hibatűrés + tesztek (mock judge-dal).
 3. **Phase 3 (US3)**: SkilledProposer style guidance + teszt.
-4. **Phase 4 (US4)**: per-axis perzisztálás (T010c) → GEPA futás (T011, preflight-tel) (`max_metric_calls=200`, lokális task + judge + Kimi K3 reflection; ~2.5-3.5 óra, `-np 2` / `num_threads=2`) → style axis javulásának igazolása + éles validáció + docs.
+4. **Phase 4 (US4)**: per-axis perzisztálás (T010c, kész 2026-08-08) → GEPA futás (T011, preflight-tel) (`max_metric_calls=200`, lokális task + judge + Kimi K3 reflection; ~1.5-2 óra, `-np 4` / `num_threads=4`) → style axis javulásának igazolása az `eval/compare.py` gate-tel (T012) + éles validáció + docs.

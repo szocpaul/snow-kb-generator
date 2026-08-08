@@ -53,16 +53,31 @@ def run_baseline(program, valset, output_path: str | Path = "runs/baseline.json"
         if isinstance(metric_output, dspy.Prediction):
             score = float(metric_output.score)
             feedback = str(metric_output.feedback)
+            # T010c / FR-007: a rich_metric az axes-t is a Predictionbe teszi
+            axes = metric_output.get("axes")
         else:
             score = float(metric_output)
             feedback = ""
+            axes = None
         scores.append(score)
-        per_example.append({"score": score, "feedback": feedback})
+        entry = {"score": score, "feedback": feedback}
+        if axes:
+            entry["axes"] = {k: float(v) for k, v in axes.items()}
+        per_example.append(entry)
 
     average_score = sum(scores) / len(scores) if scores else 0.0
 
+    # T010c / FR-007: tengelyenkénti átlagok — a T012 style-küszöb ezekre hivatkozik
+    axis_averages = {}
+    axis_names = ["structure", "content", "template", "hallucination", "style"]
+    for name in axis_names:
+        vals = [e["axes"][name] for e in per_example if e.get("axes") and name in e["axes"]]
+        if vals:
+            axis_averages[name] = sum(vals) / len(vals)
+
     baseline_data = {
         "average_score": average_score,
+        "axis_averages": axis_averages,
         "per_example": per_example,
         "timestamp": datetime.now(timezone.utc).isoformat(),
     }

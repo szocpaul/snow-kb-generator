@@ -39,12 +39,12 @@ def run_gepa_optimization(program, trainset, valset, max_metric_calls: int = 200
         metric=rich_metric,
         # Spec 010 / FR-004: explicit időkorlát (auto preset helyett). A style judge
         # megduplázza a metric call árát (generálás + pontozás), ~60 mp/lokális hívás:
-        # 200 call ≈ 2.5-3.5 óra a llama-server -np 2 slotjaival.
+        # 200 call ≈ 1.5-2 óra a llama-server -np 4 slotjaival (2026-08-08: -np 2 → 4).
         max_metric_calls=max_metric_calls,
         reflection_lm=_create_reflection_lm(),
         candidate_selection_strategy="pareto",
         instruction_proposer=_create_instruction_proposer(),
-        num_threads=2,  # a llama.cpp -np 2 slotjaihoz igazítva
+        num_threads=4,  # a llama.cpp -np 4 slotjaihoz igazítva (preflight-tal verifikálva)
         track_stats=True,
         log_dir="./gepa_logs",
         seed=0,

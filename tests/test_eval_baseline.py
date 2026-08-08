@@ -91,3 +91,45 @@ class TestBaselineSave:
             result = run_baseline(program, valset, output_path=tmp_path / "baseline.json")
 
         assert isinstance(result, dspy.Evaluate) or hasattr(result, "score")
+
+
+class TestBaselineAxes:
+    """T010c / FR-007: a per-axis pontszámok perzisztálása a runs/*.json-be."""
+
+    def test_baseline_json_contains_axes_per_example(self, tmp_path):
+        """A per_example bejegyzések tartalmazzák az öt tengelyt."""
+        trainset, valset = load_gold_dataset("data/examples/gold_dataset.md")
+        program = MagicMock()
+        program.return_value = dspy.Prediction(
+            html="<h2>Problem</h2><p>Same problem.</p>"
+        )
+
+        with patch("eval.baseline.configure_lm"):
+            run_baseline(program, valset, output_path=tmp_path / "baseline.json")
+
+        data = json.loads((tmp_path / "baseline.json").read_text())
+        expected_axes = {"structure", "content", "template", "hallucination", "style"}
+        assert data["per_example"], "üres per_example"
+        for entry in data["per_example"]:
+            assert set(entry["axes"].keys()) == expected_axes
+            for v in entry["axes"].values():
+                assert 0.0 <= v <= 1.0
+
+    def test_baseline_json_contains_axis_averages(self, tmp_path):
+        """A top-level axis_averages a per_example axes-ek átlaga."""
+        trainset, valset = load_gold_dataset("data/examples/gold_dataset.md")
+        program = MagicMock()
+        program.return_value = dspy.Prediction(
+            html="<h2>Problem</h2><p>Same problem.</p>"
+        )
+
+        with patch("eval.baseline.configure_lm"):
+            run_baseline(program, valset, output_path=tmp_path / "baseline.json")
+
+        data = json.loads((tmp_path / "baseline.json").read_text())
+        assert set(data["axis_averages"].keys()) == {
+            "structure", "content", "template", "hallucination", "style"
+        }
+        for name, avg in data["axis_averages"].items():
+            vals = [e["axes"][name] for e in data["per_example"]]
+            assert avg == pytest.approx(sum(vals) / len(vals))

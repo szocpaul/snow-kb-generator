@@ -152,7 +152,20 @@ def rich_metric(gold, pred, trace=None, pred_name=None, pred_trace=None):
 
     feedback = " ".join(parts)
 
-    return dspy.Prediction(score=score, feedback=feedback)
+    # T010c / FR-007: a tengely-értékeket is a Predictionbe tesszük, hogy a
+    # run_baseline per-axis statisztikát perzisztálhasson a runs/*.json-be
+    # (a GEPA contractot ez nem sérti: a score + feedback változatlan).
+    return dspy.Prediction(
+        score=score,
+        feedback=feedback,
+        axes={
+            "structure": structure_match,
+            "content": content_accuracy,
+            "template": template_adherence,
+            "hallucination": hallucination_score,
+            "style": style_score,
+        },
+    )
 
 
 def _extract_headings(html: str) -> list[str]:
