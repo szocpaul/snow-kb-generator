@@ -544,3 +544,19 @@ The metric penalty reduces FREQUENCY (GEPA learns it), the guardrail zeroes the 
 2. **Dataset gap**: the gold dataset does not exercise the `analyze_changes` branch (0 update_set examples → about half of the GEPA reflection iterations were idle); 1-2 update set examples are needed
 3. If the dataset is not extended: exclude `analyze_changes` from the GEPA targets
 4. The `runs/t012_style_compare` sample script is still in /tmp — since T010c, `eval/compare.py` does the job; the /tmp script can be deleted
+
+### Backlog addition (2026-08-09): component-hallucination prototype + axis renaming
+
+**Spot-check result:** the component names of the approved `stry0010010_hotfixed.json` article are 4/4 verifiable from the story (`JiraIntegrationUtils`, `example.atlassian.net`, `Escalated`, `ServiceNow`) — the hotfixed article is clean.
+
+**Refining the blind spot:** the hallucination axis is not false, it is narrow — the spec 004 `kb_reference_accuracy` (KB number validation) is accurate, but in the JSON it promises more under the name `hallucination` than it measures. Proposal: rename the axis or add a scope comment, so the reader does not read it as "no hallucination".
+
+**The spec 011 `_find_hallucinated_components` prototype** (from the spot-check, ~15 lines):
+```python
+candidates  = re.findall(r"'([A-Z][A-Za-z0-9 _.:/-]{2,50})'", html)        # quoted names
+candidates += re.findall(r"\b([a-z]+[a-z0-9]*(?:\.[a-z0-9_]+)+)\b", html) # dotted identifiers
+candidates += re.findall(r"\b([A-Z][a-z]+(?:[A-Z][a-z]+)+)\b", html)     # CamelCase
+hallucinated = [c for c in candidates
+                if c not in story_text and c not in WHITELIST]  # general words filtered out
+```
+The whitelist is `story_text` + `related_articles_context` + general product terms ("Business Rule", "Script Include", "Incident"). It would go into the rich_metric NEXT TO `_find_hallucinated_kb_references`; until then it can also run as a gate on production validations (T013 pattern).
