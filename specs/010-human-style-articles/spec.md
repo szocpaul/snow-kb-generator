@@ -99,6 +99,8 @@ GEPA run with the **local task model** (the rollouts are free), Kimi K3 reflecti
 - **SC-003**: Human review: the final articles "look human" (subjective, but the spec records it as a goal too).
 - **SC-004**: The baseline reference is the fresh measurement from T010 on the **cleaned, 8-example dataset** (4 train / 4 val, `cache=False`, new 5-axis metric) → `runs/baseline.json`. The style improvement is measured against the style-axis average there (the numbers 0.733/0.769 from 2026-07-29 refer to the old dataset and are not comparable). T010c persists the axis values into runs/*.json; the improvement threshold: **style ≥ baseline + 0.05**, the other axes degrade by at most **−0.02** — this can be checked automatically as a gate command.
 
+**Methodological note (2026-08-09, lesson from T012):** on the 4-example valset the measurement noise is ±0.05-0.08 per axis (the baseline content axis scattered 0.766→0.682 between two identical runs). Therefore the interpretation of the thresholds: **a single measurement does not decide — if an axis deviates by ±0.05 within the tolerance, a double measurement (both baseline AND optimized again) and a check of the range overlap is required**. The final decision of T012 was made this way: the style improvement has no overlap (+0.15-0.20), the structure/content difference is within the variance of the baseline itself.
+
 ## Out of Scope
 
 - A full manual rewrite by a human (the goal is the quality of the generated articles, not the manual work).

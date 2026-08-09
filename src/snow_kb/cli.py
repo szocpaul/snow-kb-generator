@@ -144,6 +144,10 @@ def main(argv: list[str] | None = None) -> int:
             client=client,
             settings=settings,
             push=not args.no_push,
+            # Load the GEPA-optimized program if it exists (server pattern):
+            # server.py OPTIMIZED_PROGRAM_PATH). Fallback a base programra,
+            # if the file is missing or broken — see pipeline._load_program.
+            program_path="artifacts/program.json",
         )
     except ServiceNowError as exc:
         print(f"ServiceNow error: {exc}", file=sys.stderr)

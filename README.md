@@ -21,7 +21,7 @@ When the developers finish a ServiceNow Story (`STRY...`), a Knowledge Base (KB)
 ## Tech stack
 
 - **Python 3.12**
-- **DSPy 3.2.x** — Signatures + Modules, GEPA optimization
+- **DSPy 3.3.x** — Signatures + Modules, GEPA optimization
 - **LM:** local Qwen3.6-35B-A3B (llama.cpp, task model — `task_model: "local"`) + Kimi K3 (Pi Agent subscription, GEPA reflection/proposer). Clean measurement (2026-07-29, `cache=False`): K3 0.769 vs local 0.733 — alongside the local model, the zero marginal cost decided it
 - **ServiceNow Table API** (`requests`) — Story fetch + KB creation (CRUD)
 - **FastAPI + Uvicorn** — webhook server for the ServiceNow UI Action
@@ -132,7 +132,7 @@ snow_kb_generator/
 3. **Data** — ✅ Done (Gold Dataset: 5 gold example pairs in gold_dataset.md)
 4. **Rich metric** — ✅ Done (rich_metric: structure_match + content_accuracy + template_adherence + hallucination)
 5. **Baseline** — ✅ Done (runs/baseline.json: 0.386)
-6. **GEPA optimization** — ✅ Done (Kimi K3 reflection; current run on the spec 006 template: 0.300 → 0.850)
+6. **GEPA optimization** — ✅ Done (Kimi K3 reflection; spec 010 run 2026-08-08: aggregate 0.773 → 0.825-0.859, style 0.450 → 0.600-0.650 on the cleaned 8-example dataset)
 7. **Export & deploy** — ✅ Done (artifacts/program.json; the FastAPI server loads it at startup, fallback to the base program)
 
 **Hallucination protection (spec 004):** 3 defense lines — (1) sanitized gold dataset (`KBXXXXXXX` placeholder), (2) hallucination axis in the metric (GEPA feedback), (3) `strip_hallucinated_references()` guardrail in the pipeline before push. Production validation: the generated articles contain 0 hallucinated references.

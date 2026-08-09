@@ -521,3 +521,26 @@ The metric penalty reduces FREQUENCY (GEPA learns it), the guardrail zeroes the 
 - The 3.3.0 GEPA API changes (`detailed_results` shapes) do NOT affect the code: the `val_aggregate_scores` field remains, `extract_applied_suggestions` is `hasattr`-protected; `best_outputs_valset` is now a dict, but the code only calls `len()` on it.
 - **Fixes after the spec 010 review** (spec.md/plan.md/tasks.md): new **T010c** (per-axis persistence — until now only `average_score` was written, so T012 was not measurable), T011 preflight + checkpoint-resume rule (DSPy 3.3.0 `log_dir` resume verified), T012 made numeric (style ≥ baseline + 0.05, other axes max −0.02), T013 human review = MANUAL GATE, FR-007/FR-008, plan.md interpreter (`../.venv`) fixed.
 - For T010c: the `runs/t012_style_compare.json` sample script (still in /tmp) should be promoted into `eval/` — it is the basis of the per-axis comparison.
+
+## 30. Spec 010 CLOSED: GEPA 200-call + T012-T013 (2026-08-08/09)
+
+### T011 GEPA run (with a dedicated autonomous agent, prime-agent long-running arch)
+- 200/200 calls, ~3.5 hours, local Qwen (`-np 4`, `num_threads=4`) + Kimi K3 reflection; an infra-watcher agent monitored the llama.cpp endpoint (there was one false alarm: 4-slot saturation ≠ dead server — the watcher's criteria were refined afterwards: smoke 90s + log-mtime stagnation check)
+- Result: best valset 0.873 (baseline 0.773)
+
+### T012 — ACCEPTED after a double measurement (human decision)
+- The first gate was RED (structure −0.042 / content −0.021), but re-measuring BOTH the baseline AND the optimized program showed: on the 4-example valset the noise is ±0.05-0.08 (the baseline's content score swings from 0.766 to 0.682 between two identical runs!)
+- **2×2 range analysis:** style base 0.450-0.463 vs opt 0.600-0.650 (**non-overlapping, a real improvement**); template 0.750→1.000; structure/content overlapping ranges (noise); overall 0.755-0.773 → 0.825-0.859
+- The methodological lesson is recorded in spec SC-004: a single measurement does not decide, a ±0.05 noise band or a double measurement is needed
+
+### T013 — the human review caught a hallucination! (the metric did not)
+- The article mentioned the 'CHG Scheduled' Business Rule — 0 occurrences in the Story. The model fabricated it from the `example.atlassian.net` URL + the 'CHG Scheduled' EXAMPLE SENTENCE in the base docstring (our own example was the poison!)
+- Root cause chain: (a) fabricated name in the style block's example; (b) **the CLI did not load the optimized program** (program_path was missing from cli.py — the server loads it, the CLI does not); (c) the hallucination axis only validates KB numbers → **metric blind spot**
+- Hotfix chain: example replacement in signatures.py + anti-fabrication ban | program.json artifact hotfix (backup exists) | cli.py program_path | regeneration with the optimized program → 0 hits for 'ALDI', referenced by BR function, SC-001 ✅, 265/265 tests ✅
+- Human review: **APPROVED** ("I really like the generated KB article")
+
+### Backlog (spec 011 candidates)
+1. **Metric blind spot**: the hallucination check should extend to named components (every quoted/CamelCase component name must be present in the story_text)
+2. **Dataset gap**: the gold dataset does not exercise the `analyze_changes` branch (0 update_set examples → about half of the GEPA reflection iterations were idle); 1-2 update set examples are needed
+3. If the dataset is not extended: exclude `analyze_changes` from the GEPA targets
+4. The `runs/t012_style_compare` sample script is still in /tmp — since T010c, `eval/compare.py` does the job; the /tmp script can be deleted
