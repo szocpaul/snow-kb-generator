@@ -560,3 +560,22 @@ hallucinated = [c for c in candidates
                 if c not in story_text and c not in WHITELIST]  # general words filtered out
 ```
 The whitelist is `story_text` + `related_articles_context` + general product terms ("Business Rule", "Script Include", "Incident"). It would go into the rich_metric NEXT TO `_find_hallucinated_kb_references`; until then it can also run as a gate on production validations (T013 pattern).
+
+## 31. Production end-to-end validation from ServiceNow (2026-08-09)
+
+### Incident: HTTP 0 at the ServiceNow button
+- The "Create KB Article" button died with **HTTP 0** — it turned out: **the FastAPI server was not running** on the VPS (it probably went down with the 08-07 daemon shutdowns; the server.log only had port scanners).
+- Restart with the documented command (`nohup ../.venv/bin/uvicorn snow_kb.server:app --host 0.0.0.0 --port 8000`), health 200 locally AND on the external IPv4 (192.0.2.10).
+- **Note:** `--host 0.0.0.0` binds IPv4 only — the server does not answer the machine's IPv6 address. If the UI Action uses a hostname, HTTP 0 can come back in the case of an AAAA record.
+- **TODO (open):** the server is not supervised — a systemd unit (`Restart=always`) or docker-compose `restart: unless-stopped` is needed, otherwise every reboot requires a manual restart.
+
+### Production validation result (STRY0010013 → KB c8c05f4a, update path, mod_count 5)
+- The button ran successfully (POST /generate-kb 200), the July 27 article was updated with the optimized+hotfixed program.
+- Compared to the July version: longer (8.5k vs 7.6k), 14 headings + 43 bullets (before: 0 headings + 69 bullets "list wall") — the spec 010 style goal is visible in production too.
+- Component-hallucination check (with the spot-check prototype): 4/4 names verified from the story, 0 invented.
+- Human review: **"perfect"** ✅ — the production pipeline is fully validated by this.
+
+### Open items from here
+1. systemd/docker restart policy for the server (to prevent HTTP 0)
+2. Decision on versioning `artifacts/` (the approved program.json + hotfix exist only locally!)
+3. spec 011 candidates: component-hallucination metric + dataset update_set expansion

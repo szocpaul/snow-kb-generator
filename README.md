@@ -130,10 +130,10 @@ snow_kb_generator/
 1. **Spec** — ✅ Done
 2. **Program** — ✅ Done (Signatures + Module + Update Set Code Analyzer)
 3. **Data** — ✅ Done (Gold Dataset: 5 gold example pairs in gold_dataset.md)
-4. **Rich metric** — ✅ Done (rich_metric: structure_match + content_accuracy + template_adherence + hallucination)
-5. **Baseline** — ✅ Done (runs/baseline.json: 0.386)
+4. **Rich metric** — ✅ Done (rich_metric 5 axes: structure + content + template + hallucination + style, spec 010)
+5. **Baseline** — ✅ Done (per-axis format; reference: 0.773 aggregate, style 0.450, 2026-08-08)
 6. **GEPA optimization** — ✅ Done (Kimi K3 reflection; spec 010 run 2026-08-08: aggregate 0.773 → 0.825-0.859, style 0.450 → 0.600-0.650 on the cleaned 8-example dataset)
-7. **Export & deploy** — ✅ Done (artifacts/program.json; the FastAPI server loads it at startup, fallback to the base program)
+7. **Export & deploy** — ✅ Done (artifacts/program.json; the FastAPI server AND the CLI also load it at startup, fallback to the base program). **Production end-to-end validation (2026-08-09)**: ServiceNow button → generation → KB update successful, human review approved
 
 **Hallucination protection (spec 004):** 3 defense lines — (1) sanitized gold dataset (`KBXXXXXXX` placeholder), (2) hallucination axis in the metric (GEPA feedback), (3) `strip_hallucinated_references()` guardrail in the pipeline before push. Production validation: the generated articles contain 0 hallucinated references.
 
