@@ -500,3 +500,26 @@ A metric-büntetés a GYAKORISÁGOT csökkenti (GEPA megtanulja), a guardrail a 
 - A 3.3.0 GEPA API-változásai (`detailed_results` alakzatok) NEM érintik a kódot: a `val_aggregate_scores` mező megmaradt, az `extract_applied_suggestions` `hasattr`-védett; a `best_outputs_valset` most dict, de a kód csak `len()`-t hív rá.
 - **Spec 010 review utáni javítások** (spec.md/plan.md/tasks.md): új **T010c** (per-axis perzisztálás — eddig csak `average_score` íródott, a T012 mérhetetlen volt), T011 preflight + checkpoint-resume szabály (DSPy 3.3.0 `log_dir`-resume verifikálva), T012 számszerűsítve (style ≥ baseline + 0.05, többi tengely max −0.02), T013 emberi review = MANUÁLIS KAPU, FR-007/FR-008, plan.md interpreter (`../.venv`) rögzítve.
 - A T010c-hez: a `runs/t012_style_compare.json` minta-scriptet (még /tmp-ben) érdemes `eval/`-be emelni — ez a per-axis összevetés alapja.
+
+## 30. Spec 010 LEZÁRVA: GEPA 200-call + T012-T013 (2026-08-08/09)
+
+### T011 GEPA futás (dedikált autonóm agenttel, prime-agent long-running arch)
+- 200/200 call, ~3.5 óra, lokális Qwen (`-np 4`, `num_threads=4`) + Kimi K3 reflection; infra-watcher agent figyelte a llama.cpp endpointot (egy hamis riasztás volt: a 4 slot telítettsége ≠ halott szerver — a watcher kritériumai utána pontosítva: smoke 90s + log-mtime stagnálás-ellenőrzés)
+- Eredmény: best valset 0.873 (baseline 0.773)
+
+### T012 — dupla mérés után ELFOGADVA (emberi döntés)
+- Első gate PIROS volt (structure −0.042 / content −0.021), de a baseline ÉS optimized újramérés kimutatta: a 4 példás valseten a zaj ±0.05-0.08 (a baseline content-je is 0.766→0.682-öt szór két azonos futás közben!)
+- **2×2 tartomány-elemzés:** style base 0.450-0.463 vs opt 0.600-0.650 (**átfedésmentes, valós javulás**); template 0.750→1.000; structure/content átfedő tartományok (zaj); összesített 0.755-0.773 → 0.825-0.859
+- Módszertani tanulság a spec SC-004-ben rögzítve: egyetlen mérés nem dönt, ±0.05 zaj-sáv vagy dupla mérés kell
+
+### T013 — az emberi review hallucinációt fogott! (a metrika nem)
+- A cikk 'ALDI: CHG Scheduled' Business Rule-nevet említett — a Story-ban 0 előfordulás. A modell az `aldi.atlassian.net` URL-ből + a base docstring 'ALDI: CHG Scheduled' PÉLDAMONDATÁBÓL fabrikálta (a saját példánk volt a méreg!)
+- Root cause lánc: (a) fabrikált név a style-blokk példájában; (b) **a CLI nem töltötte be az optimized programot** (program_path hiányzott a cli.py-ból — a server betölti, a CLI nem); (c) a hallucináció-tengely csak KB-számokat validál → **metrika-vakfolt**
+- Hotfix-lánc: signatures.py példacsere + anti-fabrikációs tiltás | program.json artifact-hotfix (backup megvan) | cli.py program_path | újragenerálás optimized programmal → 'ALDI' 0 találat, BR funkcióval hivatkozva, SC-001 ✅, 265/265 teszt ✅
+- Emberi review: **JÓVÁHAGYVA** ("nagyon tetszik a generált KB cikk")
+
+### Backlog (spec 011-jelöltek)
+1. **Metrika-vakfolt**: a hallucináció-ellenőrzés terjedjen ki nevesített komponensekre (minden idézett/CamelCase komponensnév a story_text-ben legyen benne)
+2. **Dataset-hézag**: a gold dataset nem gyakorolja az `analyze_changes` ágat (0 update_set példa → a GEPA reflection-iterációk ~fele üresjárat volt); 1-2 update set-es példa kell
+3. Ha a dataset nem bővül: az `analyze_changes` kivétele a GEPA célpontok közül
+4. A `runs/t012_style_compare` minta-script még /tmp-ben — a T010c óta `eval/compare.py` végzi; a /tmp-s script törölhető

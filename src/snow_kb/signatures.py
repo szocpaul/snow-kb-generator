@@ -111,8 +111,12 @@ class GenerateKbFromTemplate(dspy.Signature):
       "seamless", "seamlessly", "leverage", "In today's fast-paced world",
       "It is important to note", "plays a crucial role", "In conclusion".
     - State facts directly: name the concrete field, endpoint, script, or value instead
-      of generalizing (e.g., "The Business Rule 'ALDI: CHG Scheduled' fires on update",
-      not "A robust mechanism ensures timely synchronization").
+      of generalizing (e.g., "The Business Rule fires when the Incident state changes
+      to Escalated (6)", not "A robust mechanism ensures timely synchronization").
+    - NEVER invent component names: if the story does not name a Business Rule,
+      Script Include, table, or endpoint explicitly, refer to it by its function
+      (e.g., "a Business Rule on the incident table") — do not fabricate a
+      plausible-looking name, even partially derived from URLs or group names.
     - Vary sentence length and structure; do not start consecutive sentences the same way.
     - Prefer active voice and plain verbs over buzzwords.
     """

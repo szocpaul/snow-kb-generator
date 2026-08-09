@@ -99,6 +99,8 @@ GEPA futás **lokális task modellel** (a rolloutok ingyenesek), Kimi K3 reflect
 - **SC-003**: Emberi review: a végleges cikkek "emberinek tűnnek" (subjektív, de a spec ezt is rögzíti mint cél).
 - **SC-004**: A baseline referencia a T010-es friss mérés a **tisztított, 8 példás dataseten** (4 train / 4 val, `cache=False`, új 5-tengelyes metric-kel) → `runs/baseline.json`. A style javulást az ottani style-axis átlaghoz mérjük (a 2026-07-29-i 0.733/0.769 számok a régi datasetre vonatkoznak, nem összehasonlíthatók). A tengely-értékeket a T010c perzisztálja a runs/*.json-be; a javulás küszöbe: **style ≥ baseline + 0.05**, a többi tengely max **−0.02** romlás — ez gate-parancsként automatikusan ellenőrizhető.
 
+**Módszertani megjegyzés (2026-08-09, T012 tanulsága):** a 4 példás valseten a mérési zaj tengelyenként ±0.05-0.08 (a baseline content-je két azonos futás közben 0.766→0.682-öt szórt). Ezért a küszöbök értelmezése: **egyetlen mérés nem dönt — ha egy tengely a tolerancián belül ±0.05-tel tér el, dupla mérés (baseline ÉS optimized újra) és tartomány-átfedés vizsgálata kell**. A T012 végleges döntése így született: a style-javulás átfedésmentes (+0.15-0.20), a structure/content eltérés a baseline saját szórásán belüli.
+
 ## Out of Scope
 
 - Teljes újraírás emberi kézzel (a cél a generált minőség, nem a manuális munka).

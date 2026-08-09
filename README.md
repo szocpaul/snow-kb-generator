@@ -21,7 +21,7 @@ Amikor a fejlesztők befejeznek egy ServiceNow Story-t (`STRY...`), kézzel kell
 ## Technológiai verem
 
 - **Python 3.12**
-- **DSPy 3.2.x** — Signatures + Modules, GEPA optimalizáció
+- **DSPy 3.3.x** — Signatures + Modules, GEPA optimalizáció
 - **LM:** lokális Qwen3.6-35B-A3B (llama.cpp, task modell — `task_model: "local"`) + Kimi K3 (Pi Agent előfizetés, GEPA reflection/proposer). Tiszta mérés (2026-07-29, `cache=False`): K3 0.769 vs lokális 0.733 — a lokális mellett a nulla marginális költség döntött
 - **ServiceNow Table API** (`requests`) — Story lekérés + KB létrehozás (CRUD)
 - **FastAPI + Uvicorn** — Webhook szerver a ServiceNow UI Action-nek
@@ -132,7 +132,7 @@ snow_kb_generator/
 3. **Data** — ✅ Kész (Gold Dataset: 5 arany példapár a gold_dataset.md-ben)
 4. **Rich metric** — ✅ Kész (rich_metric: structure_match + content_accuracy + template_adherence + hallucination)
 5. **Baseline** — ✅ Kész (runs/baseline.json: 0.386)
-6. **GEPA optimalizáció** — ✅ Kész (Kimi K3 reflection; aktuális futam a spec 006-os sablonon: 0.300 → 0.850)
+6. **GEPA optimalizáció** — ✅ Kész (Kimi K3 reflection; spec 010 futam 2026-08-08: összesített 0.773 → 0.825-0.859, style 0.450 → 0.600-0.650 a tisztított 8 példás dataseten)
 7. **Export & deploy** — ✅ Kész (artifacts/program.json; a FastAPI szerver startup-kor betölti, fallback az alap program)
 
 **Hallucináció-védelem (spec 004):** 3 védelmi vonal — (1) megtisztított gold dataset (`KBXXXXXXX` placeholder), (2) hallucination axis a metrikában (GEPA feedback), (3) `strip_hallucinated_references()` guardrail a pipeline-ban push előtt. Éles validáció: a generált cikkek 0 hallucinált hivatkozást tartalmaznak.

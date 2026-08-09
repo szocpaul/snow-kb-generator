@@ -144,6 +144,10 @@ def main(argv: list[str] | None = None) -> int:
             client=client,
             settings=settings,
             push=not args.no_push,
+            # A GEPA-optimalizált program betöltése, ha létezik (server-minta:
+            # server.py OPTIMIZED_PROGRAM_PATH). Fallback a base programra,
+            # ha a fájl hiányzik/hibás — ld. pipeline._load_program.
+            program_path="artifacts/program.json",
         )
     except ServiceNowError as exc:
         print(f"ServiceNow hiba: {exc}", file=sys.stderr)
