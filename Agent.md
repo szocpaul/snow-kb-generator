@@ -523,3 +523,19 @@ A metric-büntetés a GYAKORISÁGOT csökkenti (GEPA megtanulja), a guardrail a 
 2. **Dataset-hézag**: a gold dataset nem gyakorolja az `analyze_changes` ágat (0 update_set példa → a GEPA reflection-iterációk ~fele üresjárat volt); 1-2 update set-es példa kell
 3. Ha a dataset nem bővül: az `analyze_changes` kivétele a GEPA célpontok közül
 4. A `runs/t012_style_compare` minta-script még /tmp-ben — a T010c óta `eval/compare.py` végzi; a /tmp-s script törölhető
+
+### Backlog-kiegészítés (2026-08-09): komponens-hallucináció prototípus + tengely-átkeresztelés
+
+**Spot-check eredmény:** a jóváhagyott `stry0010010_hotfixed.json` cikk komponensnevei 4/4 igazolhatók a story-ból (`JiraIntegrationUtils`, `aldi.atlassian.net`, `Escalated`, `ServiceNow`) — a hotfixelt cikk tiszta.
+
+**A vakfolt pontosítása:** a hallucináció-tengely NEM hamis, hanem szűk — a spec 004-es `kb_reference_accuracy` (KB-szám validáció) hiteles, de a JSON-ben `hallucination` néven többet ígér, mint amit mér. Javaslat: tengely átkeresztelése vagy scope-komment, hogy az olvasó ne értse "nincs hallucináció"-ként.
+
+**A spec 011-es `_find_hallucinated_components` prototípusa** (a spot-checkből, ~15 sor):
+```python
+candidates  = re.findall(r"'([A-Z][A-Za-z0-9 _.:/-]{2,50})'", html)        # idézett nevek
+candidates += re.findall(r"\b([a-z]+[a-z0-9]*(?:\.[a-z0-9_]+)+)\b", html) # dotted azonosítók
+candidates += re.findall(r"\b([A-Z][a-z]+(?:[A-Z][a-z]+)+)\b", html)     # CamelCase
+hallucinated = [c for c in candidates
+                if c not in story_text and c not in WHITELIST]  # általános szavak kiszűrve
+```
+Whitelist az `story_text` + `related_articles_context` + általános termékek ("Business Rule", "Script Include", "Incident"). A rich_metric-be a `_find_hallucinated_kb_references` MELLÉ kerülne; addig is gate-ként futhat éles validációknál (T013-minta).
