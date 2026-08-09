@@ -130,10 +130,10 @@ snow_kb_generator/
 1. **Spec** — ✅ Kész
 2. **Program** — ✅ Kész (Signatures + Module + Update Set Code Analyzer)
 3. **Data** — ✅ Kész (Gold Dataset: 5 arany példapár a gold_dataset.md-ben)
-4. **Rich metric** — ✅ Kész (rich_metric: structure_match + content_accuracy + template_adherence + hallucination)
-5. **Baseline** — ✅ Kész (runs/baseline.json: 0.386)
+4. **Rich metric** — ✅ Kész (rich_metric 5 tengely: structure + content + template + hallucination + style, spec 010)
+5. **Baseline** — ✅ Kész (per-axis formátum, T010c; referencia: 0.773 összesített, style 0.450, 2026-08-08)
 6. **GEPA optimalizáció** — ✅ Kész (Kimi K3 reflection; spec 010 futam 2026-08-08: összesített 0.773 → 0.825-0.859, style 0.450 → 0.600-0.650 a tisztított 8 példás dataseten)
-7. **Export & deploy** — ✅ Kész (artifacts/program.json; a FastAPI szerver startup-kor betölti, fallback az alap program)
+7. **Export & deploy** — ✅ Kész (artifacts/program.json; a FastAPI szerver ÉS a CLI is betölti startup-kor, fallback az alap program). **Éles end-to-end validáció (2026-08-09)**: ServiceNow gomb → generálás → KB update sikeres, emberi review elfogadva
 
 **Hallucináció-védelem (spec 004):** 3 védelmi vonal — (1) megtisztított gold dataset (`KBXXXXXXX` placeholder), (2) hallucination axis a metrikában (GEPA feedback), (3) `strip_hallucinated_references()` guardrail a pipeline-ban push előtt. Éles validáció: a generált cikkek 0 hallucinált hivatkozást tartalmaznak.
 

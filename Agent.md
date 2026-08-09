@@ -539,3 +539,22 @@ hallucinated = [c for c in candidates
                 if c not in story_text and c not in WHITELIST]  # általános szavak kiszűrve
 ```
 Whitelist az `story_text` + `related_articles_context` + általános termékek ("Business Rule", "Script Include", "Incident"). A rich_metric-be a `_find_hallucinated_kb_references` MELLÉ kerülne; addig is gate-ként futhat éles validációknál (T013-minta).
+
+## 31. Éles end-to-end validáció ServiceNow-ból (2026-08-09)
+
+### Incidens: HTTP 0 a ServiceNow gombnál
+- A "Create KB Article" gomb **HTTP 0**-val elhasalt — kiderült: **a FastAPI szerver nem futott** a VPS-en (valószínűleg a 08-07-i daemon-leállásokkal ment el; a server.log-ban csak port-scannerek voltak).
+- Restart a dokumentált paranccsal (`nohup ../.venv/bin/uvicorn snow_kb.server:app --host 0.0.0.0 --port 8000`), health 200 lokálisan ÉS külső IPv4-en (91.99.175.157).
+- **Megjegyzés:** `--host 0.0.0.0` csak IPv4-re bindol — a gép IPv6-címe felé a szerver nem válaszol. Ha a UI Action hostname-t használ, AAAA-rekord esetén HTTP 0 jöhet újra.
+- **TODO (nyitott):** a szerver nincs felügyelve — systemd unit (`Restart=always`) vagy docker-compose `restart: unless-stopped` kell, különben minden újraindításnál kézi restart.
+
+### Éles validáció eredménye (STRY0010013 → KB c8c05f4a, update-ág, mod_count 5)
+- A gomb sikeresen lefutott (POST /generate-kb 200), a júl. 27-i cikk frissült az optimized+hotfixelt programmal.
+- Összevetés a júliusi verzióval: hosszabb (8.5k vs 7.6k), 14 bekezdés + 43 bullet (régen: 0 bekezdés + 69 bullet "listafal") — a spec 010 stílus-cél élesben is látszik.
+- Komponens-hallucináció ellenőrzés (a spot-check prototípussal): 4/4 név igazolt a story-ból, 0 kitalált.
+- Emberi review: **"tökéletes"** ✅ — az éles pipeline ezzel teljesen validált.
+
+### Nyitott tételek innen
+1. systemd/docker restart-policy a szervernek (HTTP 0-megelőzés)
+2. `artifacts/` verziózás eldöntése (a jóváhagyott program.json + hotfix csak lokálisan létezik!)
+3. spec 011 jelöltek: komponens-hallucináció metrika + dataset update_set-bővítés
