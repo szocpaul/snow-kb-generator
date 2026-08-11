@@ -622,3 +622,17 @@ Reason: the measurement noise (±0.03 overall, ±0.19 style) > the realistically
 
 ### Meta-lesson (autonomous agents)
 The spec011-runner + calib-runner chain worked well: preflight → implementation → gate (pytest) → calibration with a separate agent → completion message to the main session (agent_message). The "GEPA FORBIDDEN / code modification FORBIDDEN" clauses paid off.
+
+## 33. Spec 012: Style judge noise reduction (multi-sample) COMPLETED (2026-08-11)
+
+### What was achieved (T001-T009, dedicated runner agent)
+
+- **Multi-sample style judge (US1):** `_style_score()` now issues `STYLE_JUDGE_SAMPLES = 3` judge calls, the score is the average of the clamped scores of the SUCCESSFUL samples; the critique is the one from the sample closest to the mean (so the GEPA reflection gets a representative text). Partial error tolerance (FR-001): 1-2 errors → mean(remaining) + warning, NOT 0.5; all errors → the spec 010 behaviour (0.5, "") is unchanged. The constant can be overridden in tests (FR-002). +8 mock tests, **282/282 green**.
+- **Judge discrimination revalidated (SC-003):** machine test icon **0.017** (< 0.4 ✅), STYLE-REF **0.950** (> 0.7 ✅) — `runs/t005_judge_revalidation.json`.
+- **Calibration (SC-002 MET):** axis deviations of 3 identical baseline runs (`cache=False`, preflight: llama.cpp health + smoke OK): hallucination 0.000, template 0.000, structure 0.042, content 0.039, **style 0.017** (down from 0.188 — the target was ≤ 0.10, better than the expected ~0.11). Overall noise: 0.018. The N=5 / temp=0 fallback options were not needed.
+- **New baseline reference:** `runs/baseline.json` average **0.751** (structure 0.875 / content 0.667 / template 0.750 / hallucination 1.000 / style 0.513). The spec 011 numbers are OUTDATED (saved: `runs/*_pre_spec012.json`).
+- **Numeric re-evaluation of mini-GEPA (T008, in tasks.md):** interpretability threshold = measured deviation (0.018) + margin (0.02) ≈ **0.04**; the upper end of the expected gain (+0.02–0.05) is already above the threshold → the original reason for the postponement is gone. GEPA DID NOT run; **the decision is the human's** (estimated time ~5-7 hours based on the 200-call run, because a metric call goes from 2→4 local calls).
+
+### Lessons
+- The per-example style deviation is still 0.20-0.27, because it also contains the variance of the task generation (temp=0.6) — SC-002 deliberately speaks about the deviation of the axis averages (same method as the original calibration).
+- The 3 baseline runs took only ~4 min/run even with an N=3 judge (instead of the estimated 15-25) — the local judge is cheap.

@@ -563,26 +563,61 @@ def _load_style_reference() -> str:
     return _STYLE_REFERENCE_CACHE
 
 
+# Spec 012 (US1): multi-sample style scoring — the number of the judge calls.
+# The tests can override it (FR-002). The standard deviation of the average of the samples is ≈ σ/√n,
+# so N=3 reduces the between-run standard deviation of 0.188 to ~0.11 (plan Key Decision 2).
+STYLE_JUDGE_SAMPLES: int = 3
+
+
 def _style_score(html: str) -> tuple[float, str]:
-    """Runs the style judge on the generated HTML.
+    """Runs the style judge on the generated HTML with N samples (spec 012).
 
     Returns:
-        (score, critique) — score 0.0..1.0.
+        (score, critique) — the score is the average of the clamped points of the SUCCESSFUL samples
+        (0.0..1.0); the critique comes from the sample closest to the average (FR-003 — the GEPA
+        reflection needs a concrete, representative text).
 
-    FR-002 (error tolerance): any judge error (the LM is not configured, the local
-    server is not available, parse error) case (0.5, "") — a neutral point, and the
-    the metric never stops because of it. The error is logged at WARNING level.
+    Error tolerance:
+      - 1..N-1 failed calls (FR-001): mean(the remaining successful samples) + warning —
+        NOT a neutral 0.5 (the error tolerance must not be a noise source);
+      - every call failed (spec 010 FR-002, untouched): (0.5, "") — a neutral
+        point, the metric never stops because of it, a warning is logged.
     """
     import logging
 
-    try:
-        judge = dspy.Predict(StyleJudge)
-        result = judge(article_html=html[:8000], style_reference=_load_style_reference())
-        score = float(result.style_score)
-        score = max(0.0, min(1.0, score))  # clamp: the model sometimes goes out of the scale
-        return score, str(result.critique or "")
-    except Exception as exc:  # noqa: BLE001 — deliberately wide net (FR-002)
-        logging.getLogger(__name__).warning(
-            "style judge error — neutral 0.5 point: %s: %s", type(exc).__name__, exc
+    logger = logging.getLogger(__name__)
+    n = max(1, int(STYLE_JUDGE_SAMPLES))
+    samples: list[tuple[float, str]] = []
+    failures = 0
+    for i in range(n):
+        try:
+            judge = dspy.Predict(StyleJudge)
+            result = judge(
+                article_html=html[:8000], style_reference=_load_style_reference()
+            )
+            score = float(result.style_score)
+            score = max(0.0, min(1.0, score))  # clamp: the model sometimes goes out of the scale
+            samples.append((score, str(result.critique or "")))
+        except Exception as exc:  # noqa: BLE001 — a deliberately wide net (FR-001)
+            failures += 1
+            logger.warning(
+                "style judge sample %d/%d error: %s: %s",
+                i + 1, n, type(exc).__name__, exc,
+            )
+
+    if not samples:
+        logger.warning(
+            "style judge: all %d calls failed — a neutral 0.5 point", n
         )
         return 0.5, ""
+
+    if failures:
+        logger.warning(
+            "style judge: %d/%d calls failed — the average of the remaining %d samples",
+            failures, n, len(samples),
+        )
+
+    mean_score = sum(s for s, _ in samples) / len(samples)
+    # The critique comes from the sample closest to the mean (FR-003 / plan Key Decision 4).
+    closest = min(samples, key=lambda sc: abs(sc[0] - mean_score))
+    return mean_score, closest[1]

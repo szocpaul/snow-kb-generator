@@ -131,7 +131,7 @@ snow_kb_generator/
 2. **Program** — ✅ Done (Signatures + Module + Update Set Code Analyzer)
 3. **Data** — ✅ Done (Gold Dataset: 9 gold example pairs in gold_dataset.md — 5 train / 4 val; Example 5 also has Update Set XML payloads, spec 011)
 4. **Rich metric** — ✅ Done (rich_metric 5 axes: structure + content + template + hallucination + style, spec 010; since spec 011 the hallucination axis also validates KB numbers AND named component names)
-5. **Baseline** — ✅ Done (per-axis format, T010c; reference: 0.755 aggregate, hallucination 1.000, style 0.475, 2026-08-11 spec 011 metric — the earlier 0.773 (2026-08-08) is OUTDATED)
+5. **Baseline** — ✅ Done (per-axis format, T010c; reference: 0.751 aggregate, hallucination 1.000, style 0.513, 2026-08-11 spec 012 multi-sample judge — the earlier 0.755 (spec 011) is OUTDATED; measured run-to-run noise: aggregate 0.018, style 0.017)
 6. **GEPA optimization** — ✅ Done (Kimi K3 reflection; spec 010 run 2026-08-08: aggregate 0.773 → 0.825-0.859, style 0.450 → 0.600-0.650 on the cleaned 8-example dataset)
 7. **Export & deploy** — ✅ Done (artifacts/program.json; the FastAPI server AND the CLI also load it at startup, fallback to the base program). **Production end-to-end validation (2026-08-09)**: ServiceNow button → generation → KB update successful, human review approved
 
@@ -148,6 +148,7 @@ snow_kb_generator/
 - 8. Done Feature: `009-remove-legacy-draft-format` (legacy draft/format branch removed; 3 predictors, template mandatory).
 - 9. Done Feature: `010-human-style-articles` (human tone: tone guidance + style judge + SkilledProposer style guidance + GEPA 200-call; T013 human review approved).
 - 10. Done Feature: `011-component-hallucination-metric` (component hallucination detection in the metric + Update Set dataset coverage: the hallucination axis also validates named components; Example 5 with real, anonymized Update Set XMLs; baseline re-measured: 0.755).
+- 11. Done Feature: `012-style-judge-noise-reduction` (multi-sample style judge: it returns the average of the N=3 samples of `_style_score`, with partial error tolerance; the style run-to-run deviation is 0.188 → 0.017; judge discrimination unchanged; re-evaluated numerically with mini-GEPA — the decision is the human's).
 
 ## Licenc
 

@@ -113,3 +113,87 @@ class TestStyleReference:
         doc = eval.metric.StyleJudge.__doc__ or ""
         for phrase in BANNED_PHRASES:
             assert phrase in doc, f"It is missing from the StyleJudge docstring: {phrase!r}"
+
+
+class TestMultiSampleStyleScore:
+    """Spec 012 (US1 / T004): multi-sample _style_score mock judge-dal."""
+
+    def _scripted_judge(self, monkeypatch, script):
+        """It replaces the dspy.Predict with a scripted fake judge.
+
+        The elements of the script are float (a successful sample) or an Exception instance (an error).
+        The call counter is SHARED — the _style_score creates a new Predict instance
+        for every sample, so the order lives in the closure.
+        """
+        state = {"calls": 0}
+
+        class _FakeJudge:
+            def __call__(self, **kwargs):
+                item = script[state["calls"]]
+                state["calls"] += 1
+                if isinstance(item, Exception):
+                    raise item
+                return dspy.Prediction(style_score=item, critique=f"critique-{item}")
+
+        monkeypatch.setattr(eval.metric.dspy, "Predict", lambda sig: _FakeJudge())
+
+    def test_mean_of_successful_samples(self, monkeypatch):
+        """(a) [0.4, 0.6, 0.8] → 0.6 (FR-003 / acceptance 1)."""
+        self._scripted_judge(monkeypatch, [0.4, 0.6, 0.8])
+        score, _ = eval.metric._style_score("<h2>X</h2>")
+        assert score == pytest.approx(0.6, abs=1e-3)
+
+    def test_partial_failure_uses_remaining_mean(self, monkeypatch, caplog):
+        """(b) 2 errors + 1 success → the successful value (NOT 0.5) + a warning (FR-001)."""
+        import logging
+
+        self._scripted_judge(
+            monkeypatch,
+            [ConnectionError("boom"), TimeoutError("boom"), 0.7],
+        )
+        with caplog.at_level(logging.WARNING, logger="eval.metric"):
+            score, _ = eval.metric._style_score("<h2>X</h2>")
+        assert score == pytest.approx(0.7, abs=1e-3)
+        assert any("calls failed" in r.message for r in caplog.records)
+
+    def test_all_failures_fall_back_to_0_5(self, monkeypatch):
+        """(c) all errors → (0.5, '') — the behaviour of FR-002 of spec 010 is untouched."""
+        self._scripted_judge(
+            monkeypatch,
+            [ConnectionError("a"), TimeoutError("b"), ValueError("c")],
+        )
+        score, critique = eval.metric._style_score("<h2>X</h2>")
+        assert score == 0.5
+        assert critique == ""
+
+    def test_critique_is_from_sample_closest_to_mean(self, monkeypatch):
+        """(d) the critique comes from the sample closest to the average (FR-003 / plan KD 4)."""
+        # mean = 0.6 → the 0.6 sample is the closest (neither the 0.4 nor the 0.8)
+        self._scripted_judge(monkeypatch, [0.4, 0.6, 0.8])
+        _, critique = eval.metric._style_score("<h2>X</h2>")
+        assert critique == "critique-0.6"
+
+    def test_critique_closest_to_mean_with_asymmetric_samples(self, monkeypatch):
+        """(d2) mean = 0.5 → the 0.6 is closer to the 0.5 (0.1) than the 0.3 (0.2)."""
+        self._scripted_judge(monkeypatch, [0.3, 0.6, 0.6])
+        _, critique = eval.metric._style_score("<h2>X</h2>")
+        assert critique == "critique-0.6"
+
+    def test_samples_constant_overridable(self, monkeypatch):
+        """FR-002: STYLE_JUDGE_SAMPLES can be overridden (N=1 → single sample behaviour)."""
+        monkeypatch.setattr(eval.metric, "STYLE_JUDGE_SAMPLES", 1)
+        self._scripted_judge(monkeypatch, [0.42])
+        score, _ = eval.metric._style_score("<h2>X</h2>")
+        assert score == pytest.approx(0.42, abs=1e-3)
+
+
+class TestRichMetricAxes:
+    """Spec 012 / T004 (e): the rich_metric axes are still 5 axes."""
+
+    def test_axes_has_five_axes(self, monkeypatch):
+        monkeypatch.setattr(eval.metric, "_style_score", lambda html: (0.7, "ok"))
+        result = rich_metric(_gold(), _pred())
+        assert set(result.axes.keys()) == {
+            "structure", "content", "template", "hallucination", "style",
+        }
+        assert result.axes["style"] == pytest.approx(0.7)
