@@ -563,26 +563,61 @@ def _load_style_reference() -> str:
     return _STYLE_REFERENCE_CACHE
 
 
+# Spec 012 (US1): multi-sample style pontozás — a judge-hívások száma.
+# A tesztek felüldefiniálhatják (FR-002). A minták átlagának szórása ≈ σ/√n,
+# így N=3 a 0.188-as futásközi szórást ~0.11-re csökkenti (plan Key Decision 2).
+STYLE_JUDGE_SAMPLES: int = 3
+
+
 def _style_score(html: str) -> tuple[float, str]:
-    """Lefuttatja a style judge-t a generált HTML-en.
+    """Lefuttatja a style judge-t a generált HTML-en, N mintával (spec 012).
 
     Returns:
-        (score, critique) — score 0.0..1.0.
+        (score, critique) — score a SIKERES minták clamp-elt pontjainak átlaga
+        (0.0..1.0); a critique az átlaghoz legközelebbi mintáé (FR-003 — a GEPA
+        reflectionnek egy konkrét, reprezentatív szöveg kell).
 
-    FR-002 (hibatűrés): bármilyen judge-hiba (LM nincs konfigurálva, a lokális
-    szerver nem elérhető, parse-hiba) esetén (0.5, "") — semleges pont, és a
-    metric sosem áll meg miatta. A hiba WARNING szinten naplózva.
+    Hibatűrés:
+      - 1..N-1 sikertelen hívás (FR-001): mean(maradék sikeres minták) + warning —
+        NEM semleges 0.5 (a hibatűrés nem lehet zajforrás);
+      - minden hívás sikertelen (spec 010 FR-002, érintetlen): (0.5, "") — semleges
+        pont, a metric sosem áll meg miatta, warning naplózva.
     """
     import logging
 
-    try:
-        judge = dspy.Predict(StyleJudge)
-        result = judge(article_html=html[:8000], style_reference=_load_style_reference())
-        score = float(result.style_score)
-        score = max(0.0, min(1.0, score))  # clamp: a model néha kilóg a skáláról
-        return score, str(result.critique or "")
-    except Exception as exc:  # noqa: BLE001 — szándékosan széles háló (FR-002)
-        logging.getLogger(__name__).warning(
-            "style judge hiba — semleges 0.5 pont: %s: %s", type(exc).__name__, exc
+    logger = logging.getLogger(__name__)
+    n = max(1, int(STYLE_JUDGE_SAMPLES))
+    samples: list[tuple[float, str]] = []
+    failures = 0
+    for i in range(n):
+        try:
+            judge = dspy.Predict(StyleJudge)
+            result = judge(
+                article_html=html[:8000], style_reference=_load_style_reference()
+            )
+            score = float(result.style_score)
+            score = max(0.0, min(1.0, score))  # clamp: a model néha kilóg a skáláról
+            samples.append((score, str(result.critique or "")))
+        except Exception as exc:  # noqa: BLE001 — szándékosan széles háló (FR-001)
+            failures += 1
+            logger.warning(
+                "style judge minta %d/%d hiba: %s: %s",
+                i + 1, n, type(exc).__name__, exc,
+            )
+
+    if not samples:
+        logger.warning(
+            "style judge: mind a %d hívás sikertelen — semleges 0.5 pont", n
         )
         return 0.5, ""
+
+    if failures:
+        logger.warning(
+            "style judge: %d/%d hívás sikertelen — a maradék %d minta átlaga",
+            failures, n, len(samples),
+        )
+
+    mean_score = sum(s for s, _ in samples) / len(samples)
+    # A critique a mean-hez legközelebbi mintáé (FR-003 / plan Key Decision 4).
+    closest = min(samples, key=lambda sc: abs(sc[0] - mean_score))
+    return mean_score, closest[1]

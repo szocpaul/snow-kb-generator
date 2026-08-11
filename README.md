@@ -131,7 +131,7 @@ snow_kb_generator/
 2. **Program** — ✅ Kész (Signatures + Module + Update Set Code Analyzer)
 3. **Data** — ✅ Kész (Gold Dataset: 9 arany példapár a gold_dataset.md-ben — 5 train / 4 val; a Példa 5 Update Set XML payloadokkal is rendelkezik, spec 011)
 4. **Rich metric** — ✅ Kész (rich_metric 5 tengely: structure + content + template + hallucination + style, spec 010; a hallucination tengely spec 011 óta KB-számokat ÉS nevesített komponensneveket is validál)
-5. **Baseline** — ✅ Kész (per-axis formátum, T010c; referencia: 0.755 összesített, hallucination 1.000, style 0.475, 2026-08-11 spec 011 metrika — a korábbi 0.773 (2026-08-08) ELAVULT)
+5. **Baseline** — ✅ Kész (per-axis formátum, T010c; referencia: 0.751 összesített, hallucination 1.000, style 0.513, 2026-08-11 spec 012 multi-sample judge — a korábbi 0.755 (spec 011) ELAVULT; mért futásközi zaj: összesített 0.018, style 0.017)
 6. **GEPA optimalizáció** — ✅ Kész (Kimi K3 reflection; spec 010 futam 2026-08-08: összesített 0.773 → 0.825-0.859, style 0.450 → 0.600-0.650 a tisztított 8 példás dataseten)
 7. **Export & deploy** — ✅ Kész (artifacts/program.json; a FastAPI szerver ÉS a CLI is betölti startup-kor, fallback az alap program). **Éles end-to-end validáció (2026-08-09)**: ServiceNow gomb → generálás → KB update sikeres, emberi review elfogadva
 
@@ -148,6 +148,7 @@ snow_kb_generator/
 - 8. Kész Feature: `009-remove-legacy-draft-format` (Legacy draft/format ág kivezetve; 3 prediktor, template kötelező).
 - 9. Kész Feature: `010-human-style-articles` (Emberi hangnem: tone guidance + style judge + SkilledProposer style guidance + GEPA 200-call; T013 emberi review jóváhagyva).
 - 10. Kész Feature: `011-component-hallucination-metric` (Komponens-hallucináció detektálás a metrikában + Update Set dataset-lefedettség: a hallucination tengely nevesített komponenseket is validál; Példa 5 valódi, anonymizált Update Set XML-ekkel; baseline újramérve: 0.755).
+- 11. Kész Feature: `012-style-judge-noise-reduction` (Multi-sample style judge: a `_style_score` N=3 minta átlagát adja, részleges hibatűréssel; a style futásközi szórás 0.188 → 0.017; judge-diszkrimináció változatlan; mini-GEPA számszerűen újraértékelve — a döntés az emberé).
 
 ## Licenc
 

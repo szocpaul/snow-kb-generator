@@ -601,3 +601,17 @@ Indok: a mérési zaj (±0.03 összesített, ±0.19 style) > mini-GEPA reális v
 
 ### Meta-tanulság (autonóm agentek)
 A spec011-runner + calib-runner lánc jól működött: preflight → implementáció → gate (pytest) → kalibráció külön agenttel → befejezés-üzenet a main-sessionnek (agent_message). A "GEPA TILOS / kód módosítása TILOS" klauzulák beváltak.
+
+## 33. Spec 012: Style judge zajcsökkentés (multi-sample) BEFEJEZVE (2026-08-11)
+
+### Mi valósult meg (T001-T009, dedikált runner agent)
+
+- **Multi-sample style judge (US1):** `_style_score()` mostantól `STYLE_JUDGE_SAMPLES = 3` judge-hívást ad ki, a SIKERES minták clamp-elt pontjainak átlaga a score; a critique a mean-hez legközelebbi mintáé (a GEPA reflection reprezentatív szöveget kap). Részleges hibatűrés (FR-001): 1-2 hiba → mean(maradék) + warning, NEM 0.5; mind-hiba → a spec 010-es (0.5, "") viselkedés érintetlen. A konstans tesztekben felüldefiniálható (FR-002). +8 mock-teszt, **282/282 zöld**.
+- **Judge diszkrimináció újravalidálva (SC-003):** gépies teszt-ikon **0.017** (< 0.4 ✅), KB0010015 **0.950** (> 0.7 ✅) — `runs/t005_judge_revalidation.json`.
+- **Kalibráció (SC-002 TELJESÜL):** 3 azonos baseline-futás (`cache=False`, preflight: llama.cpp health + smoke OK) tengely-szórásai: hallucination 0.000, template 0.000, structure 0.042, content 0.039, **style 0.017** (a 0.188-ról — a cél ≤ 0.10 volt, a várt ~0.11-nél is jobb). Összesített zaj: 0.018. Az N=5 / temp=0 tartalék-opciókra nem volt szükség.
+- **Új baseline-referencia:** `runs/baseline.json` átlag **0.751** (structure 0.875 / content 0.667 / template 0.750 / hallucination 1.000 / style 0.513). A spec 011-i számok ELAVULTAK (mentve: `runs/*_pre_spec012.json`).
+- **Mini-GEPA számszerű újraértékelés (T008, a tasks.md-ben):** értelmezhetőségi küszöb = mért szórás (0.018) + marge (0.02) ≈ **0.04**; a várható nyereség (+0.02–0.05) felső vége már a küszöb felett → az elhalasztás eredeti oka megszűnt. GEPA NEM futott; **a döntés az emberé** (becsült idő ~5-7 óra a 200-call mintájára, mert a metric call 2→4 lokális hívás).
+
+### Tanulságok
+- A per-példa style szórás továbbra is 0.20-0.27, mert abban a task-generálás varianciája (temp=0.6) is benne van — az SC-002 szándékosan a tengely-átlagok szórására szól (az eredeti kalibrációval azonos módszer).
+- A 3 baseline-futás N=3 judge mellett is csak ~4 perc/db volt (a becsült 15-25 helyett) — a lokális judge olcsó.
