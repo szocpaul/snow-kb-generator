@@ -1,0 +1,17 @@
+[Unit]
+Description=snow-kb-generator FastAPI server (ServiceNow KB article generator)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=snowkb
+WorkingDirectory=/opt/snow-kb-generator
+ExecStart=/opt/snow-kb-venv/bin/uvicorn snow_kb.server:app --host 0.0.0.0 --port 8000
+Restart=always
+RestartSec=5
+StandardOutput=append:/opt/snow-kb-generator/server.log
+StandardError=append:/opt/snow-kb-generator/server.log
+
+[Install]
+WantedBy=multi-user.target
