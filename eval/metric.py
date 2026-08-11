@@ -84,13 +84,35 @@ def rich_metric(gold, pred, trace=None, pred_name=None, pred_trace=None):
     if direction_violations or unsupported_sections or na_only_sections:
         template_adherence = 0.0
 
-    # 3b. Hallucination detection (spec 004): a generált HTML-ben szereplő KB
-    # cikkszámoknak a story_text-ben kell lenniük (vagy placeholder-nek).
+    # 3b. Hallucination detection. FIGYELEM: a tengely neve történeti okból
+    # "hallucination", de a scope-ja PONTOSAN: (a) KB cikkszám-validáció
+    # (spec 004, érintetlen) + (b) nevesített komponensnevek validációja
+    # (spec 011) — általános "nincs hallucináció" garanciát NEM jelent.
     story_text = getattr(gold, "story_text", "") or ""
     # Spec 005: a valódi KB keresési találatok (related_articles_context) ismert hivatkozások
-    known_refs = story_text + "\n" + (getattr(gold, "related_articles_context", "") or "")
+    related_context = getattr(gold, "related_articles_context", "") or ""
+    known_refs = story_text + "\n" + related_context
     hallucinated = _find_hallucinated_kb_references(actual_html, known_refs)
-    hallucination_score = 0.0 if hallucinated else 1.0
+    # Spec 011 (US1): fabrikált komponensnevek. FR-002 (hibatűrés): bármilyen
+    # belső hiba esetén warning + semleges viselkedés (a tengely nem állhat meg).
+    # Spec 011 (US2): az update_set_payloads is evidencia-forrás — a kódelemzésből
+    # (analyze_changes) származó nevek NEM hallucinációk, hiszen a program látta őket.
+    update_set_payloads = getattr(gold, "update_set_payloads", "") or ""
+    evidence_context = related_context + (
+        "\n" + update_set_payloads if update_set_payloads else ""
+    )
+    try:
+        hallucinated_components = _find_hallucinated_components(
+            actual_html, story_text, evidence_context
+        )
+    except Exception as exc:  # noqa: BLE001 — szándékosan széles háló (FR-002)
+        import logging
+
+        logging.getLogger(__name__).warning(
+            "komponens-hallucináció check hiba — kihagyva: %s: %s", type(exc).__name__, exc
+        )
+        hallucinated_components = []
+    hallucination_score = 0.0 if (hallucinated or hallucinated_components) else 1.0
 
     # 5. Style axis (spec 010, US2): LLM-as-judge, hibatűrő (FR-002).
     style_score, style_critique = _style_score(actual_html) if actual_html else (0.5, "")
@@ -142,6 +164,14 @@ def rich_metric(gold, pred, trace=None, pred_name=None, pred_trace=None):
             "Hallucinated reference(s): "
             + ", ".join(hallucinated)
             + ". These KB article numbers do not appear in the source Story — remove them or use the KBXXXXXXX placeholder / 'N/A'."
+        )
+
+    if hallucinated_components:
+        parts.append(
+            "Hallucinated component name(s): "
+            + ", ".join(f"'{c}'" for c in hallucinated_components)
+            + ". These component names do not appear in the source Story — remove them, "
+            "or refer to the component by its function instead of a fabricated name."
         )
 
     if style_critique:
@@ -371,6 +401,107 @@ def _find_hallucinated_kb_references(actual_html: str, story_text: str) -> list[
     actual_refs = set(pattern.findall(actual_html))
     known_refs = set(pattern.findall(story_text))
     return sorted(actual_refs - known_refs)
+
+
+# Spec 011 (US1): általános terminusok/terméknevek, amik NEM komponensnevek.
+# A BANNED_PHRASES mintájára közös helyen él; a _find_hallucinated_components
+# ezzel szűri a jelölteket (FR-003). False positive-first: inkább bővítjük,
+# mint hogy zajt adjunk a GEPA-nak (plan Key Decision 2).
+COMPONENT_NAME_WHITELIST: list[str] = [
+    # általános ServiceNow komponens-TÍPUSOK (idézőjelben is típust jelölnek, nem nevet)
+    "Business Rule", "Script Include", "Client Script", "UI Action", "UI Policy",
+    "Scripted REST API", "REST Message", "Flow Designer", "Update Set",
+    "Access Control", "Data Policy", "Scheduled Job", "Email Notification",
+    # rekord-/tábla-típusok
+    "Incident", "Change Request", "Change Task", "Problem",
+    "Service Catalog", "Catalog Item", "Knowledge Base",
+    # terméknevek
+    "ServiceNow",
+]
+
+# Casefold-olt nézet a gyors lookup-hoz.
+_COMPONENT_WHITELIST_CF: set[str] = {w.casefold() for w in COMPONENT_NAME_WHITELIST}
+
+
+def _candidate_parts(candidate: str) -> list[str]:
+    """A jelölt szétbontása értékelhető részekre (CamelCase púpok + elválasztók mentén).
+
+    Csak a >= 3 karakteres részek számítanak ("Ch", "e", "g" túl rövid ahhoz,
+    hogy azonosítót jelöljenek — az 'e.g'/'i.e' rövidítések is így esnek ki).
+    """
+    import re
+
+    words = re.findall(r"[A-Z]+(?![a-z])|[A-Z][a-z0-9]*|[a-z0-9]+", candidate)
+    return [w.lower() for w in words if len(w) >= 3]
+
+
+def _component_verified(candidate: str, haystack: str) -> bool:
+    """True, ha a jelölt igazolható a forrásszövegből (false positive-first).
+
+    Három egyre engedékenyebb próba (FR-001 / plan Key Decision 2-3):
+      1. pontos (case-sensitive) előfordulás,
+      2. alfanumerikusan normalizált substring ('FrameWork' ~ '...FrameworkUtil'),
+      3. minden >= 3 karakteres rész (CamelCase púp / dotted szegmens) külön-külön
+         benne van a normalizált szövegben — a gold cikkek gyakran töredék-alakban
+         hivatkoznak ('ChTask' ~ 'Change Tasks', 'interface.solman' ~ user-id).
+    """
+    import re
+
+    if candidate in haystack:
+        return True
+    norm_hay = re.sub(r"[^a-z0-9]", "", haystack.lower())
+    norm_cand = re.sub(r"[^a-z0-9]", "", candidate.lower())
+    if norm_cand and norm_cand in norm_hay:
+        return True
+    parts = _candidate_parts(candidate)
+    return bool(parts) and all(p in norm_hay for p in parts)
+
+
+def _find_hallucinated_components(
+    html: str, story_text: str, related_articles_context: str = ""
+) -> list[str]:
+    """Megkeresi a fabrikált komponensneveket a generált HTML-ben (spec 011, US1).
+
+    A spec 004-es KB-szám-check MELLÉ kerül: a nevesített komponensekre terjeszti
+    ki a hallucináció-detektálást (a 2026-08-09-i T013 review vakfoltja:
+    'ALDI: CHG Scheduled' fabrikált Business Rule-név, hallucination: 1.000 mellett).
+
+    Jelöltek (konzervatív kinyerés, plan Key Decision 3 — az Agent.md 30. szekcióbeli
+    prototípusból, false positive-mentesre hangolva a 8 gold cikken):
+      - 'idézett nevek' (nagybetűvel kezdődő, szimpla idézőjel között),
+      - dotted azonosítók (min. 2 karakteres szegmens kell — az 'e.g' kiesik),
+      - CamelCase azonosítók.
+    URL-ek, email címek és HTML attribútumok NEM jelöltek (előbb eltávolítjuk őket).
+
+    Egy jelölt fabrikált, ha NEM igazolható a story_text + related_articles_context
+    összefűzött szövegéből (ld. _component_verified) ÉS nincs a
+    COMPONENT_NAME_WHITELIST-en.
+    """
+    import re
+
+    text = re.sub(r"<[^>]+>", " ", html)  # tagek + attribútum-URL-ek eldobása
+    text = re.sub(r"https?://\S+", " ", text)  # látható URL-ek (pl. link-szöveg)
+    text = re.sub(r"\b\S+@\S+\b", " ", text)  # email címek
+
+    candidates = re.findall(r"'([A-Z][A-Za-z0-9 _.:/-]{2,50})'", text)  # idézett nevek
+    candidates += [
+        d
+        for d in re.findall(r"\b([a-z]+[a-z0-9]*(?:\.[a-z0-9_]+)+)\b", text)
+        if any(len(seg) >= 2 for seg in d.split("."))  # 'e.g'/'i.e' kiesik
+    ]
+    candidates += re.findall(r"\b([A-Z][a-z]+(?:[A-Z][a-z]+)+)\b", text)  # CamelCase
+
+    haystack = story_text + "\n" + related_articles_context
+    hallucinated = []
+    for cand in candidates:
+        cand = cand.strip()
+        if not cand or cand in hallucinated:
+            continue
+        if cand.casefold() in _COMPONENT_WHITELIST_CF:
+            continue
+        if not _component_verified(cand, haystack):
+            hallucinated.append(cand)
+    return hallucinated
 
 
 # ---------------------------------------------------------------------------

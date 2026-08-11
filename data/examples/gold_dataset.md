@@ -360,7 +360,262 @@
 
 ---
 
-## Példa 5: SolMan Adatinkonzisztencia
+## Példa 5: Outbound Integráció (KB Generator Pipeline, Update Set-tel)
+
+### Story
+```json
+{
+  "number": "STRY0010016",
+  "short_description": "[KB Generator]: Automate Knowledge Base creation from Stories via AI pipeline",
+  "description": "Implemented a fully automated workflow to generate Knowledge Base articles directly from completed ServiceNow Stories. When a developer completes a Story, they can click a UI Action button to send the Story context (including technical specifications and modifications) to an external AI pipeline. The pipeline processes the request, generates a formatted HTML KB article, creates it in the ServiceNow KB, and returns the link directly to the Story's work notes.",
+  "acceptance_criteria": "1. A custom field 'u_technical_specification' is created on the rm_story table to capture deep technical context.\n2. A client-callable Script Include 'SnowKbGenerator' exists to handle the REST API integration.\n3. A server-side UI Action 'Create KB Article' is available on the Story form, restricted to 'Closed Complete' state.\n4. The UI Action successfully updates the Story work_notes with the URL of the newly created KB article.",
+  "u_technical_specification": "The implementation relies on native ServiceNow REST capabilities (sn_ws.RESTMessageV2) communicating with a FastAPI server.\n1. The 'SnowKbGenerator' Script Include initializes the API endpoint (http://10.20.30.40:8000/generate-kb) and API key.\n2. It uses the native JSON encoder (new JSON().encode()) to construct the payload safely.\n3. The POST request includes a 120-second timeout to accommodate the AI generation time.\n4. The UI Action script runs server-side, extracts 'current.number', triggers the REST call, parses the JSON response, and writes the 'kb_url' directly into 'current.work_notes' before the automatic form save occurs.",
+  "work_notes": "2026-07-15 14:00: Dev - Created u_technical_specification field on rm_story.\n2026-07-15 17:30: Dev - Implemented SnowKbGenerator Script Include with RESTMessageV2 call.\n2026-07-16 16:00: Dev - Added 'Create KB Article' UI Action, tested end-to-end: KB link written to work_notes.",
+  "comments": "2026-07-16 17:00: Integration Team - Verified KB creation from a Closed Complete story; duplicate and missing-group errors handled gracefully.",
+  "state": "Closed Complete",
+  "assigned_to": "Jane Dev",
+  "assignment_group": "Integration Team"
+}
+```
+
+### Update Set Payloads
+```xml
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_script_include"><sys_script_include action="INSERT_OR_UPDATE"><access>package_private</access><active>false</active><api_name>global.SnowKbGenerator</api_name><caller_access/><client_callable>true</client_callable><description/><mobile_callable>false</mobile_callable><name>SnowKbGenerator</name><sandbox_callable>false</sandbox_callable><script><![CDATA[// ============================================================================
+// Script Include: SnowKbGenerator
+// ============================================================================
+// Ezt a scriptet egy új Script Include recordba kell másolni a ServiceNow-ban.
+// Name: SnowKbGenerator
+// Client callable: true (a UI Action GlideAjax hívása miatt)
+//
+// Ez a script a szerveren fut, és HTTP REST hívást intéz a FastAPI pipeline-hez.
+// ============================================================================
+
+var SnowKbGenerator = Class.create();
+SnowKbGenerator.prototype = {
+    initialize: function() {
+        // --- BEÁLLÍTÁSOK ---
+        // Ide írd a FastAPI szervered címét és API kulcsát!
+        this.API_URL = 'http://10.20.30.40:8000/generate-kb';
+        this.API_KEY = 'REDACTED-API-KEY';
+    },
+
+    /**
+     * Elindítja a KB generálást a megadott Story-hoz.
+     * @param {string} storyId - A Story száma (pl. STRY0010012)
+     * @param {string} storySysId - A Story sys_id-ja
+     * @return {string} JSON válasz {success, kb_url, title, message}
+     */
+    generateKb: function(storyId, storySysId) {
+        // HTTP kérés összeállítása
+        var requestBody = JSON.stringify({
+            story_id: storyId,
+            push: true
+        });
+
+        // REST hívás a FastAPI szerverhez
+        var restMessage = new sn_ws.RESTMessageV2();
+        restMessage.setEndpoint(this.API_URL);
+        restMessage.setHttpMethod('POST');
+        restMessage.setRequestHeader('Content-Type', 'application/json');
+        restMessage.setRequestHeader('X-API-Key', this.API_KEY);
+        restMessage.setRequestBody(requestBody);
+
+        // Timeout beállítása (60 másodperc — a GLM generálás időbe telik)
+        restMessage.setRequestTimeout(60000);
+
+        var response = restMessage.execute();
+        var httpStatus = response.getStatusCode();
+        var responseBody = response.getBody();
+
+        // Válasz feldolgozása
+        if (httpStatus === 200) {
+            var result = JSON.parse(responseBody);
+
+            // Ha sikeres, belerakjuk a KB linket a Story work_notes mezőjébe
+            if (result.success && result.kb_url) {
+                this._addWorkNote(storySysId, "KB article created: " + result.kb_url + " (" + result.title + ")");
+            }
+
+            return JSON.stringify(result);
+        } else {
+            // Hiba
+            var errorMsg = 'HTTP ' + httpStatus + ': ' + responseBody;
+            this._addWorkNote(storySysId, "KB article generation FAILED: " + errorMsg.substring(0, 200));
+            return JSON.stringify({
+                success: false,
+                message: errorMsg
+            });
+        }
+    },
+
+    /**
+     * Work note hozzáadása a Story-hoz.
+     * @param {string} storySysId - A Story sys_id-ja
+     * @param {string} note - A work note szövege
+     */
+    _addWorkNote: function(storySysId, note) {
+        try {
+            var gr = new GlideRecord('rm_story');
+            if (gr.get(storySysId)) {
+                // work_notes mező frissítése
+                gr.work_notes = gr.getValue('work_notes') + '\n' + note;
+                gr.update();
+            }
+        } catch (ex) {
+            // Ha hiba van a work note írásakor, nem dobunk kivételt
+            gs.log('SnowKbGenerator work_note error: ' + ex.message);
+        }
+    },
+
+    type: 'SnowKbGenerator'
+};]]></script><sys_class_name>sys_script_include</sys_class_name><sys_created_by>developer</sys_created_by><sys_created_on>2026-07-13 18:09:37</sys_created_on><sys_id>anon0000000000000000000000000002</sys_id><sys_mod_count>2</sys_mod_count><sys_name>SnowKbGenerator</sys_name><sys_package display_value="Global" source="global">global</sys_package><sys_policy/><sys_scope display_value="Global">global</sys_scope><sys_update_name>sys_script_include_anon0000000000000000000000000002</sys_update_name><sys_updated_by>developer</sys_updated_by><sys_updated_on>2026-07-13 19:52:24</sys_updated_on></sys_script_include><sys_es_latest_script action="INSERT_OR_UPDATE"><id>anon0000000000000000000000000002</id><sys_created_by>developer</sys_created_by><sys_created_on>2026-07-13 18:09:37</sys_created_on><sys_id>anon0000000000000000000000000001</sys_id><sys_mod_count>0</sys_mod_count><sys_updated_by>developer</sys_updated_by><sys_updated_on>2026-07-13 18:09:37</sys_updated_on><table>sys_script_include</table><use_es_latest>true</use_es_latest></sys_es_latest_script></record_update>
+
+
+
+<?xml version="1.0" encoding="UTF-8"?><record_update sys_domain="global" table="sys_ui_action"><sys_ui_action action="INSERT_OR_UPDATE"><action_name>create_kb_server_action</action_name><active>true</active><client>false</client><client_script_v2><![CDATA[function onClick(g_form) {
+
+}]]></client_script_v2><comments/><condition>current.state == '3'</condition><form_action>true</form_action><form_button>true</form_button><form_button_v2>false</form_button_v2><form_context_menu>false</form_context_menu><form_link>false</form_link><form_menu_button_v2>false</form_menu_button_v2><form_style/><format_for_configurable_workspace>false</format_for_configurable_workspace><hint/><isolate_script>false</isolate_script><list_action>false</list_action><list_banner_button>false</list_banner_button><list_button>false</list_button><list_choice>false</list_choice><list_context_menu>false</list_context_menu><list_link>false</list_link><list_save_with_form_button>false</list_save_with_form_button><list_style/><messages/><name>createKbArticle</name><onclick/><order>100</order><script><![CDATA[// ============================================================================
+// UI Action Script: Create KB Article (SERVER-SIDE)
+// ============================================================================
+// Ez a script a ServiceNow szerverén fut, és közvetlenül onnan hívja meg a 
+// VPS-en lévő FastAPI szerverünket. Kezeli a 200, 409 (Duplicate), 
+// 422 (Missing Group) és egyéb hibakódokat.
+// ============================================================================
+
+// 1. A 'current' változó automatikusan a megnyitott Story-t tartalmazza
+var storyId = current.number;
+
+// --- BEÁLLÍTÁSOK ---
+var apiUrl = 'http://10.20.30.40:8000/generate-kb';
+var apiKey = 'REDACTED-API-KEY';
+
+// 2. Payload összeállítása
+var payload = {};
+payload.story_id = storyId + ''; // string-ként kényszerítés
+payload.push = true;
+// A UI Action gombra kattintva a felhasználó már jóváhagyta a generálást,
+// ezért a force_update=true-t küldjük, hogy felülírja a régit, ha van.
+payload.force_update = true;
+
+// 3. REST hívás indítása a VPS szerverünknek
+var restMessage = new sn_ws.RESTMessageV2();
+restMessage.setEndpoint(apiUrl);
+restMessage.setHttpMethod('POST');
+restMessage.setRequestHeader('Content-Type', 'application/json');
+restMessage.setRequestHeader('X-API-Key', apiKey);
+restMessage.setRequestBody(JSON.stringify(payload));
+restMessage.setRequestTimeout(120000); // 120 másodperc timeout a GLM generálás miatt
+
+var response = restMessage.execute();
+var httpStatus = response.getStatusCode();
+var responseBody = response.getBody();
+
+// 4. Válasz feldolgozása a HTTP státuszkód alapján
+if (httpStatus === 200) {
+    // Sikeres generálás vagy frissítés
+    var result = JSON.parse(responseBody);
+    if (result.success && result.kb_url) {
+        current.work_notes = "KB article created/updated: " + result.kb_url + " (" + result.title + ")";
+    } else {
+        current.work_notes = "KB generation finished, but response was invalid.";
+    }
+} else if (httpStatus === 422) {
+    // Unprocessable Entity (pl. hiányzik az Assignment Group)
+    var errData = JSON.parse(responseBody).detail;
+    current.work_notes = "Generálás megszakítva: " + (errData.message || 'Hiányzó kötelező adat (pl. Assignment Group).');
+    gs.addErrorMessage("Hiba: A Story-n kötelező az Assignment Group mező!");
+} else if (httpStatus === 409) {
+    // Conflict (Már létezik KB cikk a Story-hoz)
+    current.work_notes = "Figyelem: Már létezik KB cikk ehhez a Story-hoz. A gomb ismételt megnyomásával a rendszer felül fogja írni a régit.";
+    gs.addInfoMessage("Már létezik KB cikk. Kattints a gombra mégegyszer a felülíráshoz!");
+} else {
+    // Egyéb hibák (pl. 500 Internal Server Error, vagy 0 Connection Refused)
+    current.work_notes = "Hiba történt (HTTP " + httpStatus + "): " + responseBody.substring(0, 150);
+    gs.addErrorMessage("Hiba a generálás során (HTTP " + httpStatus + ")");
+}
+
+// 5. Irányítás beállítása: maradjon nyitva a Story-n a frissítés után
+action.setRedirectURL(current);
+action.setReturnURL(current);]]></script><show_insert>false</show_insert><show_multiple_update>false</show_multiple_update><show_query>false</show_query><show_update>true</show_update><sys_class_name>sys_ui_action</sys_class_name><sys_created_by>developer</sys_created_by><sys_created_on>2026-07-13 18:23:25</sys_created_on><sys_domain>global</sys_domain><sys_domain_path>/</sys_domain_path><sys_id>anon0000000000000000000000000004</sys_id><sys_mod_count>14</sys_mod_count><sys_name>createKbArticle</sys_name><sys_overrides/><sys_package display_value="Global" source="global">global</sys_package><sys_policy/><sys_scope display_value="Global">global</sys_scope><sys_update_name>sys_ui_action_anon0000000000000000000000000004</sys_update_name><sys_updated_by>developer</sys_updated_by><sys_updated_on>2026-07-16 18:16:15</sys_updated_on><table>rm_story</table><ui11_compatible>true</ui11_compatible><ui16_compatible>false</ui16_compatible></sys_ui_action><sys_es_latest_script action="INSERT_OR_UPDATE"><id>anon0000000000000000000000000004</id><sys_created_by>developer</sys_created_by><sys_created_on>2026-07-13 18:23:19</sys_created_on><sys_id>anon0000000000000000000000000003</sys_id><sys_mod_count>1</sys_mod_count><sys_updated_by>developer</sys_updated_by><sys_updated_on>2026-07-13 18:31:12</sys_updated_on><table>sys_ui_action</table><use_es_latest>false</use_es_latest></sys_es_latest_script></record_update>
+
+
+```
+
+### Várt KB Cikk (Gold Article)
+```html
+<h1>Automated KB Article Generation from Stories</h1>
+<h2>Overview / Summary</h2>
+<h3>Purpose / Background / Overview</h3>
+<p>An outbound integration connects ServiceNow Stories with an external AI pipeline. When a developer completes a Story, clicking the 'Create KB Article' UI Action sends the Story context to the pipeline, which generates a formatted HTML KB article, creates it in the ServiceNow KB, and writes the article link back into the Story work_notes.</p>
+<h3>Content</h3>
+<ul>
+    <li>What the interface is: An outbound REST call from ServiceNow to an external FastAPI-based AI pipeline that generates Knowledge Base articles from Story data.</li>
+    <li>Who uses it: Developers on the Integration Team who want to document a completed Story as a KB article without manual writing.</li>
+    <li>What type of data is exchanged: The Story number (story_id) is sent out; the pipeline returns a JSON response with success flag, kb_url, and title.</li>
+    <li>High-level process flow: Story closed → developer clicks 'Create KB Article' → UI Action posts to the pipeline → pipeline generates and creates the KB article → kb_url written to Story work_notes.</li>
+    <li>Table of related KB articles: N/A
+    </li>
+</ul>
+<hr />
+<h2>Outbound Technical Implementation</h2>
+<h3>Content</h3>
+<ul>
+    <li>Script Includes and their functions: SnowKbGenerator (client-callable, builds and executes the REST call via sn_ws.RESTMessageV2; its generateKb function sends story_id with push=true and processes the JSON response; _addWorkNote appends the result link to the rm_story work_notes).</li>
+    <li>REST endpoints called: http://10.20.30.40:8000/generate-kb (POST method).</li>
+    <li>UI Action: 'Create KB Article' (createKbArticle) on the rm_story table, server-side, visible only when the Story state is Closed Complete.</li>
+    <li>Authentication: X-API-Key request header with a pre-shared API key configured in the script.</li>
+    <li>Payload sample: {"story_id": "STRY0010016", "push": true, "force_update": true}.</li>
+    <li>Timeout: the UI Action request uses a 120-second timeout to accommodate AI generation time (the Script Include variant uses 60 seconds).</li>
+    <li>Response handling by HTTP status: 200 → kb_url written to current.work_notes; 409 → duplicate KB exists, user prompted to confirm overwrite; 422 → missing mandatory data (e.g. Assignment Group), generation aborted; other codes → error written to work_notes.</li>
+    <li>Flow and its steps: 1. UI Action reads current.number → 2. POST to the pipeline with X-API-Key header → 3. Pipeline generates the HTML article and creates the KB record → 4. JSON response parsed → 5. kb_url stored in work_notes → 6. Form redirects back to the Story.</li>
+</ul>
+<hr />
+<h2>How to Use the Interface</h2>
+<h3>Content</h3>
+<ul>
+    <li>Typical usage scenarios: A Story is complete and its technical details should be published as a KB article.</li>
+    <li>Step-by-step instructions: 1. Fill in the Technical Specification (u_technical_specification) field on the Story. 2. Move the Story to Closed Complete state. 3. Click the 'Create KB Article' button on the Story form. 4. Wait for the generation (up to 120 seconds). 5. Check the work_notes for the KB article link.</li>
+    <li>Expected results: A new KB article exists in the Knowledge Base and its URL appears in the Story work_notes.</li>
+</ul>
+<hr />
+<h2>Testing Guide</h2>
+<h3>Content</h3>
+<ul>
+    <li>Test scenarios: End-to-end KB generation from a Closed Complete Story, duplicate handling, and missing-data handling.</li>
+    <li>Test data: A test Story (e.g. STRY0010016) with a filled Technical Specification.</li>
+    <li>Step-by-step testing instructions: 1. Open a Closed Complete Story. 2. Click 'Create KB Article'. 3. Verify the work_notes entry contains a valid kb_url. 4. Click the button again to verify the 409 duplicate prompt. 5. Test with a Story missing Assignment Group to verify the 422 response.</li>
+    <li>Expected results: KB article created; on repeat click the system warns about the existing article before overwriting.</li>
+    <li>Where to check logs: ServiceNow System Logs (syslog) for SnowKbGenerator messages and the external pipeline server logs.</li>
+</ul>
+<hr />
+<h2>Known Issues</h2>
+<h3>Content</h3>
+<ul>
+    <li>Symptoms: Clicking the button does not create an article, or work_notes show a failure message.</li>
+    <li>Root causes: The external pipeline is unreachable (HTTP 0), the API key is invalid, the Story misses mandatory data (HTTP 422), or a KB article already exists (HTTP 409).</li>
+    <li>Diagnostic steps: 1. Check the Story work_notes for the HTTP status code. 2. Verify the pipeline endpoint (http://10.20.30.40:8000/generate-kb) is reachable. 3. Check syslog for 'SnowKbGenerator work_note error' entries.</li>
+    <li>Resolution / Workaround: Fix the missing data (e.g. Assignment Group) and retry; for duplicates, confirm the overwrite by clicking the button again.</li>
+    <li>Prevention: Always fill the Technical Specification and Assignment Group before closing the Story.</li>
+</ul>
+<hr />
+<h2>Investigation Steps</h2>
+<h3>Content</h3>
+<ul>
+    <li>Quick, structured troubleshooting guide
+        <ul>
+            <li>When to use this guide: If KB generation fails or the work_notes entry is missing after clicking 'Create KB Article'.</li>
+            <li>Step-by-step investigation flow: 1. Check work_notes for the HTTP status code. 2. Verify the Story is in Closed Complete state (the button only appears there). 3. Test the pipeline endpoint connectivity. 4. Review syslog for Script Include errors.</li>
+            <li>Where to check logs: ServiceNow System Logs (syslog), external pipeline server logs.</li>
+            <li>Key components: 'Create KB Article' UI Action, SnowKbGenerator Script Include, pipeline REST endpoint.</li>
+            <li>Escalation guide: Escalate to the Integration Team if the endpoint is reachable but generation consistently fails with HTTP 500.</li>
+        </ul>
+    </li>
+</ul>
+```
+
+---
+
+## Példa 6: SolMan Adatinkonzisztencia
 
 ### Story
 ```json
@@ -460,7 +715,7 @@ Ez a 5 arany példapár lefedi a különböző típusú ServiceNow Story-kat és
 
 Minden példa tartalmazza a Story szövegét és a várt KB cikket (HTML formátumban), amelyek a te sablonod szerint épülnek fel. Ezeket a példapárokat a GEPA optimalizáció arany standardjaként (gold set) fogja használni a metrika és a reflection modell (Kimi K3) tanulásához.
 
-## Példa 6: SolMan Bidirectional Integration (Conigma)
+## Példa 7: SolMan Bidirectional Integration (Conigma)
 
 ### Story
 ```json
@@ -571,7 +826,7 @@ Minden példa tartalmazza a Story szövegét és a várt KB cikket (HTML formát
 <ul style="list-style-position: inside;"><li>Engage Network/Security for endpoint connectivity, firewall or mutual TLS certificate problems.</li><li>Engage the ALDI Integration team for trigger, payload, mapping or Script Include logic problems.</li><li>Provide the transaction record, timestamp, affected record number, environment and relevant system log entries with the escalation.</li></ul>
 ```
 
-## Példa 7: ALMEX SOAP Integration (Repair Process Automation)
+## Példa 8: ALMEX SOAP Integration (Repair Process Automation)
 
 ### Story
 ```json
@@ -665,7 +920,7 @@ Minden példa tartalmazza a Story szövegét és a várt KB cikket (HTML formát
 
 ---
 
-## Példa 8: Outbound Integráció (SAP S/4HANA OData)
+## Példa 9: Outbound Integráció (SAP S/4HANA OData)
 
 ### Story
 ```json

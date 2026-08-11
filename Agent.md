@@ -558,3 +558,23 @@ Whitelist az `story_text` + `related_articles_context` + általános termékek (
 1. systemd/docker restart-policy a szervernek (HTTP 0-megelőzés)
 2. `artifacts/` verziózás eldöntése (a jóváhagyott program.json + hotfix csak lokálisan létezik!)
 3. spec 011 jelöltek: komponens-hallucináció metrika + dataset update_set-bővítés
+
+## 32. Spec 011: Komponens-hallucináció metrika + Update Set dataset-lefedettség BEFEJEZVE (2026-08-11)
+
+### Mi valósult meg (T001-T008, T010)
+
+- **Metrika-vakfolt lezárva (US1):** a `rich_metric` hallucination tengelye mostantól a KB-számok MELLETT a nevesített komponensneveket is validálja (`_find_hallucinated_components` az `eval/metric.py`-ben). Jelöltek: 'idézett nevek' + CamelCase + dotted azonosítók; igazolás a story_text + related_articles_context + update_set_payloads ellen (3 lépcsős: pontos → normalizált substring → rész-humpok). A `COMPONENT_NAME_WHITELIST` a `BANNED_PHRASES` mintájára közös helyen él. FR-002: belső hiba esetén warning + semleges tengely.
+- **False positive-first hangolás:** a prototípus (30. szekció) nyers verziója 8 false positive-t adott a gold dataseten (pl. 'FrameWork', 'ChTask', 'interface.solman', 'e.g', URL/email-töredékek) — a végleges detektor 8/8 gold cikken + a hotfixelt STRY0010010-es éles cikken is 0 FP (SC-002). SC-001: a fabrikált 'ALDI: CHG Scheduled' név → hallucination 0 + a feedback nevesíti.
+- **Dataset-hézag lezárva (US2):** Példa 5 (STRY0010016, KB Generator pipeline) valódi, anonymizált Update Set XML-ekkel (`sys_script_include` SnowKbGenerator + `sys_ui_action` createKbArticle a STRY0010005 update setből; sys_id-k, IP, API key, userek anonimizálva). Split: 5 train / 4 val — az új példa szándékosan a TRAINSET-ben (a GEPA reflection csak abból tanul). A loader opcionális `### Update Set Payloads` blokkot parse-ol; a régi 8 példa visszafelé kompatibilis (üres payload). Figyelem: a SolMan példa story-száma ELEVE STRY0010005 volt → az új példa STRY0010016-ot kapott (ütközés!).
+- **SC-003 bizonyíték:** program-hívás az új példán → az `analyze_changes` LEFUT (trace: `update_set_xml` input), a `technical_summary` bekerül a generálás story_contextjébe (`runs/t007_analyze_changes_proof.json`).
+- **Új baseline-referencia (US3, 2026-08-11, `cache=False`, preflight után):** átlag **0.755**; structure 0.917 / content 0.673 / template 0.750 / hallucination **1.000** / style 0.475 → `runs/baseline.json`. A 2026-08-08/09-i számok (0.773 stb.) ELAVULTAK (a hallucination tengely scope-ja szigorodott); a régi baseline mentve: `runs/baseline_pre_spec011.json`.
+- **Tesztek: 275/275 zöld** (2026-08-11).
+
+### T009 — Mini-GEPA: NEM futott (a döntés az emberé)
+
+Az opciók indokolva a `specs/011-component-hallucination-metric/tasks.md` T009 pontjában. Az ágens javaslata: **elhalasztás** — (1) az új metrika zaj-sávja még nem kalibrált (1 mérés); (2) 1 db update_set-es példa gyenge statisztikai alap; (3) a produkciós program.json jóváhagyott állapotban van. Indokoltá válik, ha: újabb komponens-fabrikálás jön élesben, vagy +1-2 update_set-es gold példa készül.
+
+### Tanulságok
+
+- A metrika-bővítés első lépése mindig a gold dataset false positive-sweepje: a "konzervatív" prototípus is 8 FP-t adott — a hump-szintű rész-igazolás + URL/email-strip + whitelist hármasa kellett a 0 FP-hoz.
+- Dataset-példa story-szám ütközhet egy meglévővel (STRY0010005 duplikáció) — új példánál ellenőrizni kell a számokat.

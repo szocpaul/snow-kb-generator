@@ -37,8 +37,9 @@ def load_gold_dataset(path: str | Path) -> tuple[list[dspy.Example], list[dspy.E
         path: A gold_dataset.md fájl útvonala.
 
     Returns:
-        (trainset, valset) tuple — 3 trainset és 2 valset dspy.Example objektum.
-        Minden example tartalmazza a story_text (input) és html (expected output) mezőket.
+        (trainset, valset) tuple — dspy.Example objektumok (~fele-fele arányban,
+        min. 2 valset). Minden example tartalmazza a story_text, template_context,
+        update_set_payloads (input) és html (expected output) mezőket.
 
     Raises:
         FileNotFoundError: ha a fájl nem létezik.
@@ -77,21 +78,28 @@ def load_gold_dataset(path: str | Path) -> tuple[list[dspy.Example], list[dspy.E
 
         html = html_match.group(1).strip()
 
+        # Spec 011 (US2): opcionális Update Set payload blokk. Ha van, a program
+        # analyze_changes ága lefut rá; a régi 8 példa visszafelé kompatibilis
+        # (üres string → a program kihagyja az ágat).
+        payloads_match = re.search(r"### Update Set Payloads\s*```xml\s*(.+?)```", raw, re.DOTALL)
+        update_set_payloads = payloads_match.group(1).strip() if payloads_match else ""
+
         # Validáció: a story_text és html nem lehet üres
         if len(story_text) < 50:
             raise ValueError(f"A {idx+1}. példa story_text mezője túl rövid ({len(story_text)} karakter).")
         if "<h2>" not in html:
             raise ValueError(f"A {idx+1}. példa html mezője nem tartalmaz <h2> fejléceket.")
 
-        # dspy.Example létrehozása: story_text + template_context (inputok),
-        # html (expected output). Spec 009: a template_context kötelező input —
-        # a gold példákhoz az Integration Team sablont használjuk (ugyanaz,
+        # dspy.Example létrehozása: story_text + template_context + update_set_payloads
+        # (inputok), html (expected output). Spec 009: a template_context kötelező
+        # input — a gold példákhoz az Integration Team sablont használjuk (ugyanaz,
         # mint amit a pipeline a ServiceNow-ból tölt le).
         ex = dspy.Example(
             story_text=story_text,
             template_context=_load_template_context(),
+            update_set_payloads=update_set_payloads,
             html=html,
-        ).with_inputs("story_text", "template_context")
+        ).with_inputs("story_text", "template_context", "update_set_payloads")
         examples.append(ex)
 
     # Szeparált felosztás: a példák fele trainset, fele valset (min. 2 valset).

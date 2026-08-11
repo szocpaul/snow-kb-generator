@@ -246,3 +246,88 @@ class TestNAOnlySections:
         result = rich_metric(gold, pred)
         assert "N/A-only section" not in result.feedback
         assert "Unsupported section" not in result.feedback
+
+
+class TestComponentHallucination:
+    """Spec 011 (US1): a rich_metric bünteti a fabrikált komponensneveket."""
+
+    STORY = (
+        "Story: outbound Jira integration. Implemented Script Include "
+        "'JiraIntegrationUtils' for payload mapping; the endpoint is "
+        "https://aldi.atlassian.net/rest/api/2/issue. State 'Escalated' triggers it."
+    )
+
+    def _gold(self):
+        return dspy.Example(
+            story_text=self.STORY,
+            html="<h2>Overview / Summary</h2><p>Outbound integration.</p>",
+        ).with_inputs("story_text")
+
+    def test_fabricated_component_name_is_penalized(self):
+        """SC-001: fabrikált komponensnév → hallucination 0 + a feedback nevesíti."""
+        pred = dspy.Prediction(
+            html="<h2>Overview / Summary</h2><p>Outbound integration.</p>"
+            "<p>The 'ALDI: CHG Scheduled' Business Rule triggers the outbound call.</p>"
+        )
+        result = rich_metric(self._gold(), pred)
+        assert result.axes["hallucination"] == 0.0
+        assert "Hallucinated component name(s)" in result.feedback
+        assert "ALDI: CHG Scheduled" in result.feedback
+
+    def test_real_component_names_are_not_penalized(self):
+        """A story-ban szereplő nevek (idézett, CamelCase, dotted) nem büntetettek."""
+        pred = dspy.Prediction(
+            html="<h2>Overview / Summary</h2><p>Outbound integration.</p>"
+            "<p>'JiraIntegrationUtils' maps the payload from aldi.atlassian.net "
+            "when the state is 'Escalated'.</p>"
+        )
+        result = rich_metric(self._gold(), pred)
+        assert result.axes["hallucination"] == 1.0
+        assert "Hallucinated" not in result.feedback
+
+    def test_gold_articles_have_no_false_positives(self):
+        """SC-002 / FR-001: mind a 8 gold HTML átmegy a komponens-ellenőrzésen."""
+        from eval.dataset import load_gold_dataset
+        from eval.metric import _find_hallucinated_components
+
+        trainset, valset = load_gold_dataset("data/examples/gold_dataset.md")
+        assert len(trainset) + len(valset) == 9
+        for ex in trainset + valset:
+            # A related_articles_context MELLÉ az update_set_payloads is evidencia
+            # (a rich_metric is így hívja — ld. metric.py spec 011 US2 megjegyzés).
+            evidence = (getattr(ex, "related_articles_context", "") or "") + "\n" + (
+                getattr(ex, "update_set_payloads", "") or ""
+            )
+            found = _find_hallucinated_components(ex.html, ex.story_text, evidence)
+            assert not found, f"False positive a gold cikkben: {found}"
+
+    def test_whitelist_terms_are_not_flagged(self):
+        """FR-003: általános terminusok (Business Rule, Script Include, Incident,
+        ServiceNow) nem számítanak komponensnévnek."""
+        from eval.metric import _find_hallucinated_components
+
+        html = (
+            "<p>The 'Business Rule' and the 'Script Include' handle the Incident "
+            "in ServiceNow. A 'Change Request' is created.</p>"
+        )
+        found = _find_hallucinated_components(html, "Unrelated story text.", "")
+        assert found == [], f"Whitelist-elemek jelölve: {found}"
+
+    def test_axes_still_contain_hallucination(self):
+        """Az axes-ben a hallucination tengely továbbra is szerepel (FR-004)."""
+        pred = dspy.Prediction(html="<h2>Overview / Summary</h2><p>Outbound integration.</p>")
+        result = rich_metric(self._gold(), pred)
+        assert "hallucination" in result.axes
+        assert result.axes["hallucination"] == 1.0
+
+    def test_detector_is_fault_tolerant(self, monkeypatch):
+        """FR-002: belső hiba esetén a metric nem áll meg, a tengely semleges."""
+        import eval.metric as metric_mod
+
+        def _boom(*args, **kwargs):
+            raise RuntimeError("beltörés")
+
+        monkeypatch.setattr(metric_mod, "_find_hallucinated_components", _boom)
+        pred = dspy.Prediction(html="<h2>Overview / Summary</h2><p>Outbound integration.</p>")
+        result = rich_metric(self._gold(), pred)
+        assert result.axes["hallucination"] == 1.0  # semleges: nem büntet vaktában

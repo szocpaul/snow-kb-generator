@@ -148,3 +148,45 @@ class TestGoldDatasetNoFictionalReferences:
             html_no_links = re.sub(r"<a [^>]*>.*?</a>", "", example.html, flags=re.DOTALL)
             found = pattern.findall(html_no_links)
             assert not found, f"Fiktív KB szám a gold cikkben: {found}"
+
+
+class TestUpdateSetPayloads:
+    """Spec 011 (US2): az update_set_payloads mező betöltése és visszafelé kompatibilitás."""
+
+    def test_update_set_example_loads_with_payloads(self):
+        """A Példa 5 (STRY0010016) valódi Update Set XML payloadokkal töltődik be."""
+        trainset, valset = load_gold_dataset("data/examples/gold_dataset.md")
+        with_payloads = [
+            ex for ex in trainset + valset if getattr(ex, "update_set_payloads", "")
+        ]
+        assert len(with_payloads) == 1, "Pontosan 1 update_set-es példa kell"
+        ex = with_payloads[0]
+        assert "STRY0010016" in ex.story_text
+        assert "sys_script_include" in ex.update_set_payloads
+        assert "SnowKbGenerator" in ex.update_set_payloads
+        # anonymizálás ellenőrzése: nincs éles IP / API key / sys_id
+        assert "91.99" not in ex.update_set_payloads
+        assert "snow-kb-test-key" not in ex.update_set_payloads
+        import re
+        assert not re.findall(r"\b[0-9a-f]{32}\b", ex.update_set_payloads)
+
+    def test_old_examples_have_empty_payloads(self):
+        """A régi 8 példa visszafelé kompatibilis: üres update_set_payloads."""
+        trainset, valset = load_gold_dataset("data/examples/gold_dataset.md")
+        old = [ex for ex in trainset + valset if "STRY0010016" not in ex.story_text]
+        assert len(old) == 8
+        for ex in old:
+            assert ex.update_set_payloads == ""
+
+    def test_payloads_are_declared_input(self):
+        """Az update_set_payloads inputként deklarált (a program forwardja kapja)."""
+        trainset, valset = load_gold_dataset("data/examples/gold_dataset.md")
+        for ex in trainset + valset:
+            assert "update_set_payloads" in ex.inputs()
+
+    def test_update_set_example_is_in_trainset(self):
+        """SC-003: az update_set-es példa a TRAINSET-ben van (GEPA reflection-lefedettség)."""
+        trainset, valset = load_gold_dataset("data/examples/gold_dataset.md")
+        assert any("STRY0010016" in ex.story_text for ex in trainset)
+        assert all("STRY0010016" not in ex.story_text for ex in valset)
+        assert (len(trainset), len(valset)) == (5, 4)
