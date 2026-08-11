@@ -84,13 +84,35 @@ def rich_metric(gold, pred, trace=None, pred_name=None, pred_trace=None):
     if direction_violations or unsupported_sections or na_only_sections:
         template_adherence = 0.0
 
-    # 3b. Hallucination detection (spec 004): the KB appearing in the generated HTML
-    # the article numbers must be in the story_text (or a placeholder).
+    # 3b. Hallucination detection. NOTE: for historical reasons the name of the axis is
+    # "hallucination", but its scope is EXACTLY: (a) the KB article number validation
+    # (spec 004, untouched) + (b) the validation of the named component names
+    # (spec 011) — it does NOT mean a general "no hallucination" guarantee.
     story_text = getattr(gold, "story_text", "") or ""
-    # Spec 005: the actual KB search results (related_articles_context) known references
-    known_refs = story_text + "\n" + (getattr(gold, "related_articles_context", "") or "")
+    # Spec 005: the real KB search hits (related_articles_context) are known references
+    related_context = getattr(gold, "related_articles_context", "") or ""
+    known_refs = story_text + "\n" + related_context
     hallucinated = _find_hallucinated_kb_references(actual_html, known_refs)
-    hallucination_score = 0.0 if hallucinated else 1.0
+    # Spec 011 (US1): the fabricated component names. FR-002 (error tolerance): on any
+    # internal error a warning + neutral behaviour (the axis must not stop).
+    # Spec 011 (US2): the update_set_payloads is also an evidence source — the names from the code analysis
+    # (analyze_changes) are NOT hallucinations, because the program has seen them.
+    update_set_payloads = getattr(gold, "update_set_payloads", "") or ""
+    evidence_context = related_context + (
+        "\n" + update_set_payloads if update_set_payloads else ""
+    )
+    try:
+        hallucinated_components = _find_hallucinated_components(
+            actual_html, story_text, evidence_context
+        )
+    except Exception as exc:  # noqa: BLE001 — deliberately wide net (FR-002)
+        import logging
+
+        logging.getLogger(__name__).warning(
+            "component hallucination check error — skipped: %s: %s", type(exc).__name__, exc
+        )
+        hallucinated_components = []
+    hallucination_score = 0.0 if (hallucinated or hallucinated_components) else 1.0
 
     # 5. The style axis (spec 010, US2): LLM-as-judge, with error tolerance (FR-002).
     style_score, style_critique = _style_score(actual_html) if actual_html else (0.5, "")
@@ -142,6 +164,14 @@ def rich_metric(gold, pred, trace=None, pred_name=None, pred_trace=None):
             "Hallucinated reference(s): "
             + ", ".join(hallucinated)
             + ". These KB article numbers do not appear in the source Story — remove them or use the KBXXXXXXX placeholder / 'N/A'."
+        )
+
+    if hallucinated_components:
+        parts.append(
+            "Hallucinated component name(s): "
+            + ", ".join(f"'{c}'" for c in hallucinated_components)
+            + ". These component names do not appear in the source Story — remove them, "
+            "or refer to the component by its function instead of a fabricated name."
         )
 
     if style_critique:
@@ -371,6 +401,107 @@ def _find_hallucinated_kb_references(actual_html: str, story_text: str) -> list[
     actual_refs = set(pattern.findall(actual_html))
     known_refs = set(pattern.findall(story_text))
     return sorted(actual_refs - known_refs)
+
+
+# Spec 011 (US1): the general terms/product names that are NOT component names.
+# It lives in one place together with the BANNED_PHRASES pattern; the _find_hallucinated_components
+# uses this to filter the candidates (FR-003). False positive-first: we rather extend it,
+# like giving noise to the GEPA (plan Key Decision 2).
+COMPONENT_NAME_WHITELIST: list[str] = [
+    # the general ServiceNow component TYPES (in quotes they denote a type, not a name)
+    "Business Rule", "Script Include", "Client Script", "UI Action", "UI Policy",
+    "Scripted REST API", "REST Message", "Flow Designer", "Update Set",
+    "Access Control", "Data Policy", "Scheduled Job", "Email Notification",
+    # the record/table types
+    "Incident", "Change Request", "Change Task", "Problem",
+    "Service Catalog", "Catalog Item", "Knowledge Base",
+    # the product names
+    "ServiceNow",
+]
+
+# The casefolded view for the fast lookup.
+_COMPONENT_WHITELIST_CF: set[str] = {w.casefold() for w in COMPONENT_NAME_WHITELIST}
+
+
+def _candidate_parts(candidate: str) -> list[str]:
+    """Splits the candidate into evaluable parts (CamelCase humps + along the separators).
+
+    Only the parts of >= 3 characters count ("Ch", "e", "g" are too short to
+    denote an identifier — the 'e.g'/'i.e' abbreviations drop out this way as well).
+    """
+    import re
+
+    words = re.findall(r"[A-Z]+(?![a-z])|[A-Z][a-z0-9]*|[a-z0-9]+", candidate)
+    return [w.lower() for w in words if len(w) >= 3]
+
+
+def _component_verified(candidate: str, haystack: str) -> bool:
+    """True, if the candidate can be verified in the source text (false positive-first).
+
+    Three increasingly lenient tries (FR-001 / plan Key Decision 2-3):
+      1. an exact (case-sensitive) occurrence,
+      2. an alphanumerically normalized substring ('FrameWork' ~ '...FrameworkUtil'),
+      3. every part of >= 3 characters (CamelCase hump / dotted segment) individually
+         is in the normalized text — the gold articles often refer in a fragment-like way
+         hivatkoznak ('ChTask' ~ 'Change Tasks', 'interface.solman' ~ user-id).
+    """
+    import re
+
+    if candidate in haystack:
+        return True
+    norm_hay = re.sub(r"[^a-z0-9]", "", haystack.lower())
+    norm_cand = re.sub(r"[^a-z0-9]", "", candidate.lower())
+    if norm_cand and norm_cand in norm_hay:
+        return True
+    parts = _candidate_parts(candidate)
+    return bool(parts) and all(p in norm_hay for p in parts)
+
+
+def _find_hallucinated_components(
+    html: str, story_text: str, related_articles_context: str = ""
+) -> list[str]:
+    """Finds the fabricated component names in the generated HTML (spec 011, US1).
+
+    It is added next to the spec 004 KB number check: it extends the hallucination
+    detection to the named components (the blind spot of the T013 review on 2026-08-09:
+    'CHG Scheduled' a fabricated Business Rule name, with hallucination: 1.000).
+
+    The candidates (conservative extraction, plan Key Decision 3 — from the prototype in
+    the 30th section of Agent.md, tuned to be false-positive free on the 8 gold articles):
+      - the 'quoted names' (starting with a capital, between simple quotes),
+      - the dotted identifiers (a segment of at least 2 characters is needed — 'e.g' drops out),
+      - the CamelCase identifiers.
+    The URLs, the email addresses and the HTML attributes are NOT candidates (we remove them first).
+
+    A candidate is fabricated if it cannot be verified in the concatenated story_text +
+    related_articles_context (see _component_verified) AND it is not in the
+    COMPONENT_NAME_WHITELIST-en.
+    """
+    import re
+
+    text = re.sub(r"<[^>]+>", " ", html)  # drop the tags + the attribute URLs
+    text = re.sub(r"https?://\S+", " ", text)  # the visible URLs (e.g. the link text)
+    text = re.sub(r"\b\S+@\S+\b", " ", text)  # the email addresses
+
+    candidates = re.findall(r"'([A-Z][A-Za-z0-9 _.:/-]{2,50})'", text)  # the quoted names
+    candidates += [
+        d
+        for d in re.findall(r"\b([a-z]+[a-z0-9]*(?:\.[a-z0-9_]+)+)\b", text)
+        if any(len(seg) >= 2 for seg in d.split("."))  # 'e.g'/'i.e' kiesik
+    ]
+    candidates += re.findall(r"\b([A-Z][a-z]+(?:[A-Z][a-z]+)+)\b", text)  # CamelCase
+
+    haystack = story_text + "\n" + related_articles_context
+    hallucinated = []
+    for cand in candidates:
+        cand = cand.strip()
+        if not cand or cand in hallucinated:
+            continue
+        if cand.casefold() in _COMPONENT_WHITELIST_CF:
+            continue
+        if not _component_verified(cand, haystack):
+            hallucinated.append(cand)
+    return hallucinated
 
 
 # ---------------------------------------------------------------------------

@@ -37,8 +37,9 @@ def load_gold_dataset(path: str | Path) -> tuple[list[dspy.Example], list[dspy.E
         path: The path of the gold_dataset.md file.
 
     Returns:
-        (trainset, valset) tuple — 3 trainset and 2 valset dspy.Example objects.
-        Every example contains the story_text (input) and html (expected output) fields.
+        (trainset, valset) tuple — dspy.Example objects (~half-half ratio,
+        min. 2 in the valset). Every example contains the story_text, template_context,
+        update_set_payloads (input) and html (expected output) fields.
 
     Raises:
         FileNotFoundError: if the file does not exist.
@@ -77,21 +78,28 @@ def load_gold_dataset(path: str | Path) -> tuple[list[dspy.Example], list[dspy.E
 
         html = html_match.group(1).strip()
 
+        # Spec 011 (US2): optional Update Set payload block. If present, the program's
+        # analyze_changes branch runs on it; the old 8 examples stay backwards compatible
+        # (empty string → the program skips that branch).
+        payloads_match = re.search(r"### Update Set Payloads\s*```xml\s*(.+?)```", raw, re.DOTALL)
+        update_set_payloads = payloads_match.group(1).strip() if payloads_match else ""
+
         # Validation: story_text and html must not be empty
         if len(story_text) < 50:
             raise ValueError(f"Example {idx+1} has a too short story_text field ({len(story_text)} characters).")
         if "<h2>" not in html:
             raise ValueError(f"Example {idx+1} has no <h2> headings in its html field.")
 
-        # creating the dspy.Example: story_text + template_context (inputs),
-        # html (expected output). Spec 009: the template_context is a mandatory input —
-        # for the gold examples we use the Integration Team template (the same,
-        # like what the pipeline downloads from ServiceNow).
+        # Create the dspy.Example: story_text + template_context + update_set_payloads
+        # (inputs), html (expected output). Spec 009: template_context is a mandatory
+        # input — the gold examples use the Integration Team template (the same one
+        # the pipeline downloads from ServiceNow).
         ex = dspy.Example(
             story_text=story_text,
             template_context=_load_template_context(),
+            update_set_payloads=update_set_payloads,
             html=html,
-        ).with_inputs("story_text", "template_context")
+        ).with_inputs("story_text", "template_context", "update_set_payloads")
         examples.append(ex)
 
     # Separate split: half of the examples go to the trainset, half to the valset (min. 2 valset).

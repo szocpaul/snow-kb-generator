@@ -579,3 +579,23 @@ The whitelist is `story_text` + `related_articles_context` + general product ter
 1. systemd/docker restart policy for the server (to prevent HTTP 0)
 2. Decision on versioning `artifacts/` (the approved program.json + hotfix exist only locally!)
 3. spec 011 candidates: component-hallucination metric + dataset update_set expansion
+
+## 32. Spec 011: Component-hallucination metric + Update Set dataset coverage COMPLETED (2026-08-11)
+
+### What was achieved (T001-T008, T010)
+
+- **Metric blind spot closed (US1):** the `rich_metric` hallucination axis now validates named component names NEXT TO the KB numbers (`_find_hallucinated_components` in `eval/metric.py`). Markers: 'quoted names' + CamelCase + dotted identifiers; verification against story_text + related_articles_context + update_set_payloads (3 levels: exact → normalized substring → part humps). The `COMPONENT_NAME_WHITELIST` lives in a shared place, following the pattern of `BANNED_PHRASES`. FR-002: on an internal error, warning + neutral axis.
+- **False-positive-first tuning:** the raw version of the prototype (section 30) gave 8 false positives on the gold dataset (e.g. 'FrameWork', 'ChTask', 'interface.solman', 'e.g', URL/email fragments) — the final detector gives 0 FP on all 8 gold articles and also on the hotfixed STRY0010010 production article (SC-002). SC-001: the fabricated 'CHG Scheduled' name → hallucination 0 + the feedback names it.
+- **Dataset gap closed (US2):** Example 5 (STRY0010016, KB Generator pipeline) with real, anonymised Update Set XMLs (`sys_script_include` SnowKbGenerator + `sys_ui_action` createKbArticle from the STRY0010005 update set; sys_ids, IP, API key, users anonymised). Split: 5 train / 4 val — the new example is deliberately in the TRAINSET (the GEPA reflection only learns from it). The loader parses an optional `### Update Set Payloads` block; the old 8 examples stay backwards compatible (empty payload). Note: the SolMan example's story number was ALREADY STRY0010005 → the new example got STRY0010016 (no collision!).
+- **SC-003 evidence:** program call on the new example → `analyze_changes` RUNS (trace: `update_set_xml` input), the `technical_summary` ends up in the story_context of the generation (`runs/t007_analyze_changes_proof.json`).
+- **New baseline reference (US3, 2026-08-11, `cache=False`, after preflight):** average **0.755**; structure 0.917 / content 0.673 / template 0.750 / hallucination **1.000** / style 0.475 → `runs/baseline.json`. The 2026-08-08/09 numbers (0.773 etc.) are OUTDATED (the hallucination axis scope got stricter); the old baseline is saved: `runs/baseline_pre_spec011.json`.
+- **Tests: 275/275 green** (2026-08-11).
+
+### T009 — Mini-GEPA: DID NOT run (the decision is the human's)
+
+The options are justified in the `specs/011-component-hallucination-metric/tasks.md` T009 item. The agent's recommendation: **postponement** — (1) the noise band of the new metric is not calibrated yet (1 measurement); (2) 1 update_set example is a weak statistical basis; (3) the production program.json is in an approved state. It becomes justified if: more component fabrication appears in production, or 1-2 more update_set gold examples are prepared.
+
+### Lessons
+
+- The first step of every metric extension is a false-positive sweep on the gold dataset: even the "conservative" prototype gave 8 FPs — the combination of hump-level part verification + URL/email stripping + whitelist was needed to reach 0 FP.
+- The story number of a dataset example can collide with an existing one (STRY0010005 duplicate) — the numbers must be checked for a new example.
