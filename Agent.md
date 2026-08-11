@@ -578,3 +578,26 @@ Az opciók indokolva a `specs/011-component-hallucination-metric/tasks.md` T009 
 
 - A metrika-bővítés első lépése mindig a gold dataset false positive-sweepje: a "konzervatív" prototípus is 8 FP-t adott — a hump-szintű rész-igazolás + URL/email-strip + whitelist hármasa kellett a 0 FP-hoz.
 - Dataset-példa story-szám ütközhet egy meglévővel (STRY0010005 duplikáció) — új példánál ellenőrizni kell a számokat.
+
+## 32. Spec 011 implementáció + kalibráció → T009 ELHALASZTVA (2026-08-11)
+
+### Spec 011 implementálva (dedikált autonóm agent: spec011-runner, ~35 perc!)
+- T001-T004: `_find_hallucinated_components()` + whitelist + metric-integráció + tesztek — a metrika mostantól a fabrikált komponensneveket is 0-zza (a KB-szám-check érintetlen)
+- T005-T007: update_set-es gold példa (STRY0010010-ből, ServiceNow-ból lekérve) → a dataset 4/4 → **5 train / 4 val**; az `analyze_changes` mostantól ténylegesen fut az eval-ekben
+- T008: új baseline az új metrikával: **0.755** (referencia, 2026-08-11)
+- Tesztek: 275/275 zöld (+10 új); commit `ac88f03`
+
+### Kalibráció (calib-runner agent): a metrika-zaj felmérése
+Három azonos baseline-mérés: 0.755 / 0.796 / 0.741 → összesített zaj ≈ ±0.03.
+Tengely-szórások: hallucination 0.000 (STABIL — a komponens-detektálás nem villog ✅), template 0.000, structure 0.042, content 0.070, **style 0.188** (a judge-variancia a fő zajforrás ⚠️).
+
+### T009 döntés: mini-GEPA ELHALASZTVA (emberi döntés)
+Indok: a mérési zaj (±0.03 összesített, ±0.19 style) > mini-GEPA reális várható nyeresége (+0.02-0.05) → a futás kimenetele értelmezhetetlen lenne ("mérleg-analógia": ±3 kg-ot tévedő mérlegen nem mérhető 1 kg fogyás).
+
+### Backlog (spec 012-jelölt): style judge zajcsökkentés
+- 2 mintás judge-átlagolás vagy determinisztikusabb judge-hívás → a style-szórás cél: ≤ ±0.10
+- VAGY valset-bővítés (4 → 8-10 példa) → kisebb standard hiba
+- Utána a mini-GEPA újra felmerülhet (az analyze_changes már lefedett, a metrika már látja a komponens-hallucinációt)
+
+### Meta-tanulság (autonóm agentek)
+A spec011-runner + calib-runner lánc jól működött: preflight → implementáció → gate (pytest) → kalibráció külön agenttel → befejezés-üzenet a main-sessionnek (agent_message). A "GEPA TILOS / kód módosítása TILOS" klauzulák beváltak.
