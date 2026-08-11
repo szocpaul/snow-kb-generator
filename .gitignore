@@ -45,8 +45,10 @@ Thumbs.db
 *.pkl
 *.pickle
 runs/
-artifacts/
 gepa_logs/
+# The artifacts/ are VERSIONED (2026-08-11): the program.json is an approved deliverable.
+# Exception: the program_trial.json is the result of an outdated trial run, it stays local.
+artifacts/program_trial.json
 
 # ServiceNow exports
 sample_stories/*.json
