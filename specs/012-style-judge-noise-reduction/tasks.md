@@ -18,7 +18,8 @@
 ## Phase 3: Mini-GEPA Re-evaluation + Closing (US3)
 
 - [x] T008 [US3] Numeric re-evaluation in tasks.md: measured spread vs the expected mini-GEPA gain ("improvement > measured spread + margin" threshold) — the decision is the human's
-- [ ] T009 [US3] New Agent.md section + README if needed + commit, push
+  - **FINAL DECISION (human, 2026-08-11): the mini-GEPA will be run LATER — it is not needed now, the current state of the pipeline is good. The earlier (noise-based) reason for the postponement is gone with spec 012: the run can be started any time when it is needed (~5-7 hours, as an overnight run, with the autonomous runner + infra-watcher setup, following the spec 010 pattern).**
+- [x] T009 [US3] New Agent.md section + README if needed + commit, push
 
 
 ---
