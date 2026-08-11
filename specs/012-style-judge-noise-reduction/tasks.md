@@ -18,7 +18,8 @@
 ## Phase 3: Mini-GEPA újraértékelés + zárás (US3)
 
 - [x] T008 [US3] Számszerű újraértékelés a tasks.md-ben: mért szórás vs mini-GEPA várható nyereség ("javulás > mért szórás + marge" küszöb) — a döntés az emberé
-- [ ] T009 [US3] Agent.md új szekció + README ha kell + commit, push
+  - **VÉGLEGES DÖNTÉS (emberi, 2026-08-11): a mini-GEPA-t KÉSŐBB futtatjuk — most nincs rá szükség, a pipeline jelenlegi állapota jó. Az elhalasztás korábbi (zaj-alapú) oka a spec 012-tel megszűnt: a futás bármikor indítható, amikor szükség van rá (~5-7 óra, éjszakai futásként, autonóm runner + infra-watcher felállással, a spec 010-es minta szerint).**
+- [x] T009 [US3] Agent.md új szekció + README ha kell + commit, push
 
 
 ---
