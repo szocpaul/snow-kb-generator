@@ -599,3 +599,26 @@ The options are justified in the `specs/011-component-hallucination-metric/tasks
 
 - The first step of every metric extension is a false-positive sweep on the gold dataset: even the "conservative" prototype gave 8 FPs — the combination of hump-level part verification + URL/email stripping + whitelist was needed to reach 0 FP.
 - The story number of a dataset example can collide with an existing one (STRY0010005 duplicate) — the numbers must be checked for a new example.
+
+## 32. Spec 011 implementation + calibration → T009 POSTPONED (2026-08-11)
+
+### Spec 011 implemented (dedicated autonomous agent: spec011-runner, ~35 minutes!)
+- T001-T004: `_find_hallucinated_components()` + whitelist + metric integration + tests — the metric now also zeroes out fabricated component names (the KB number check is untouched)
+- T005-T007: update_set gold example (fetched from ServiceNow, from STRY0010010) → the dataset 4/4 → **5 train / 4 val**; `analyze_changes` now actually runs in the evals
+- T008: new baseline with the new metric: **0.755** (reference, 2026-08-11)
+- Tests: 275/275 green (+10 new); commit `ac88f03`
+
+### Calibration (calib-runner agent): measuring the metric noise
+Three identical baseline measurements: 0.755 / 0.796 / 0.741 → overall noise ≈ ±0.03.
+Axis deviations: hallucination 0.000 (STABLE — the component detection does not flicker ✅), template 0.000, structure 0.042, content 0.070, **style 0.188** (the judge variance is the main noise source ⚠️).
+
+### T009 decision: mini-GEPA POSTPONED (human decision)
+Reason: the measurement noise (±0.03 overall, ±0.19 style) > the realistically expected gain of mini-GEPA (+0.02-0.05) → the result of the run would be uninterpretable ("scale analogy": you cannot measure a 1 kg loss on a scale that is off by ±3 kg).
+
+### Backlog (spec 012 candidate): style judge noise reduction
+- 2-sample judge averaging or a more deterministic judge call → the style deviation target: ≤ ±0.10
+- OR valset expansion (4 → 8-10 examples) → smaller standard error
+- After that the mini-GEPA can come up again (analyze_changes is already covered, the metric already sees the component hallucination)
+
+### Meta-lesson (autonomous agents)
+The spec011-runner + calib-runner chain worked well: preflight → implementation → gate (pytest) → calibration with a separate agent → completion message to the main session (agent_message). The "GEPA FORBIDDEN / code modification FORBIDDEN" clauses paid off.
