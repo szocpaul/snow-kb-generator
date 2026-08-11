@@ -1,0 +1,17 @@
+[Unit]
+Description=snow-kb-generator FastAPI server (ServiceNow KB cikk generáló)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=ubuntu
+WorkingDirectory=/home/ubuntu/dspy_projects/snow_kb_generator
+ExecStart=/home/ubuntu/dspy_projects/.venv/bin/uvicorn snow_kb.server:app --host 0.0.0.0 --port 8000
+Restart=always
+RestartSec=5
+StandardOutput=append:/home/ubuntu/dspy_projects/snow_kb_generator/server.log
+StandardError=append:/home/ubuntu/dspy_projects/snow_kb_generator/server.log
+
+[Install]
+WantedBy=multi-user.target
