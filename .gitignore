@@ -45,8 +45,10 @@ Thumbs.db
 *.pkl
 *.pickle
 runs/
-artifacts/
 gepa_logs/
+# Az artifacts/ VERZIÓZVA (2026-08-11): a program.json jóváhagyott deliverable.
+# Kivétel: a program_trial.json elavult próba-futás eredménye, az marad lokális.
+artifacts/program_trial.json
 
 # ServiceNow exports
 sample_stories/*.json
