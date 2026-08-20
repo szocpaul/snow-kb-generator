@@ -664,3 +664,29 @@ The spec011-runner + calib-runner chain worked well: preflight → implementatio
 - Speed: fast enough according to the user (draft-mtp speculation + Vulkan: ~88 t/s decode measured)
 - Human review: **accepted** ("sufficient in both quality and speed")
 - ⇒ The production stack is now: **Qwen3.8-27B dense + base program + systemd server** — fully validated
+
+## 35. PROJECT CLOSURE (2026-08-20) — the project can be considered done
+
+### Final state
+- **Production stack:** Qwen3.8-27B dense (llama.cpp, Vulkan, draft-mtp, ~88 t/s) + **base program** (the 35B GEPA-optimized program did not transfer, set aside: `artifacts/program_35b_optimized.json`) + FastAPI systemd service (snow-kb.service, Restart=always)
+- **Measured quality (spec 012 metric, 5 train/4 val):** overall **0.859** (structure 1.000 / content 0.631 / template 1.000 / hallucination 1.000 / style 0.754); measurement noise ±0.018
+- **Production validation:** STRY0010014 → bidirectional article, 17.2k characters, 8/8 components verified, human review accepted (2026-08-20)
+- **Tests:** 282/282 green; everything committed/pushed; the `validated-2026-08-11` tag is the restore point for the 35B era
+
+### Closed specs
+- **010** human-style articles: style axis + judge + GEPA 200-call (0.773→0.873 best) + production validation (the review caught a hallucination → hotfix chain)
+- **011** component-hallucination metric + update_set dataset example (the metric blind spot fixed)
+- **012** style judge noise reduction with multi-sample (N=3): 0.188 → 0.017
+
+### Backlog (deliberately postponed — NOT incompleteness)
+1. **Mini-GEPA for the 27B** (~1-1.5 hours on the new server): only worth it if a recurring weakness pattern shows up in production articles. Starter package: `specs/012-style-judge-noise-reduction/tasks.md` T008 + the `runs/baseline_qwen38.json` reference. Note: the style judge is a self-eval, with GEPA it is easy to overfit to the judge's taste.
+2. Content axis 0.631: if it becomes disturbing, look at the metric's fact extraction first, not at GEPA.
+3. Small things: the `docs/` scaffold files are untracked; the server listens on IPv4 only (`--host 0.0.0.0`); after a restart on the Windows machine the llama-server must be started by hand.
+
+### Reusable working method
+The implementation of spec 010-012 happened with the `autonomous-spec-runner` skill (tmux + autonomous agent + gates + completion message). The skill in the repo: `.prime/agent/skills/autonomous-spec-runner/` AND globally `~/.prime/agent/skills/`. For a new spec: write the spec-kit → review → "run it with the autonomous-spec-runner workflow".
+
+### Continuing after half a year takes 2 minutes:
+1. Read this section + sections 33-34 (model swap + production test)
+2. Server: `systemctl status snow-kb.service`; Windows: the llama-server command in section 33
+3. Measurements: `../.venv/bin/python -m eval.baseline --model local --output runs/...` (interpreter: `../.venv`, there is NO own .venv!)
