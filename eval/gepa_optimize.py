@@ -44,7 +44,7 @@ def run_gepa_optimization(program, trainset, valset, max_metric_calls: int = 200
         reflection_lm=_create_reflection_lm(),
         candidate_selection_strategy="pareto",
         instruction_proposer=_create_instruction_proposer(),
-        num_threads=4,  # a llama.cpp -np 4 slotjaihoz igazítva (preflight-tal verifikálva)
+        num_threads=2,  # 2026-08-12: az új szerver --parallel 2 (korábban -np 4 volt)
         track_stats=True,
         log_dir="./gepa_logs",
         seed=0,
@@ -234,7 +234,7 @@ def configure_lm():
     api_base = "http://desktop-c5ikame-1.tailee6bc1.ts.net:8033/v1"
 
     lm = dspy.LM(
-        "openai/Qwen3.6-35B-A3B-NSC-ACE-SABER-Q4_K_M.gguf",
+        r"openai/models\Qwen3.8-27B-UD-Q4_K_M.gguf",  # 2026-08-12: modellcsere
         api_key=api_key,
         api_base=api_base,
         temperature=0.6,

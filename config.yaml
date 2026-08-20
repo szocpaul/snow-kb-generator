@@ -21,12 +21,12 @@ pipeline:
   use_pi_auth: false
   # Task modell: "local" (Qwen llama.cpp) vagy "kimi" (Kimi K3, erős, GEPA nélkül is jó)
   task_model: "local"
-  # Lokális llama.cpp endpoint (Qwen3.6-35B-A3B) Tailscale serve-en keresztül
+  # Lokális llama.cpp endpoint (Qwen3.8-27B, 2026-08-12-től) Tailscale serve-en keresztül
   api_base: "http://desktop-c5ikame-1.tailee6bc1.ts.net:8033/v1"
 
 models:
   # A generáló modell (dspy.configure globálisan erre).
-  main: "openai/Qwen3.6-35B-A3B-NSC-ACE-SABER-Q4_K_M.gguf"
+  main: 'openai/models\Qwen3.8-27B-UD-Q4_K_M.gguf'  # 2026-08-12: modellcsere
   # GEPA reflection modell — a Pi Agent Kimi előfizetés (Kimi K3).
   # Csak a GEPA optimalizációkor használjuk, a napi generáláshoz a fenti (lokális Qwen) modell fut.
   reflection: "openai/kimi-k3"

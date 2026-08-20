@@ -151,7 +151,7 @@ def configure_lm():
     api_base = "http://desktop-c5ikame-1.tailee6bc1.ts.net:8033/v1"
 
     lm = dspy.LM(
-        "openai/Qwen3.6-35B-A3B-NSC-ACE-SABER-Q4_K_M.gguf",
+        r"openai/models\Qwen3.8-27B-UD-Q4_K_M.gguf",  # 2026-08-12: modellcsere (llama.cpp amúgy is a betöltött modellt szolgálja, a név csak azonosító)
         api_key=api_key,
         api_base=api_base,
         temperature=0.6,

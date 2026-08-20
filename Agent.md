@@ -615,3 +615,22 @@ A spec011-runner + calib-runner lánc jól működött: preflight → implement�
 ### Tanulságok
 - A per-példa style szórás továbbra is 0.20-0.27, mert abban a task-generálás varianciája (temp=0.6) is benne van — az SC-002 szándékosan a tengely-átlagok szórására szól (az eredeti kalibrációval azonos módszer).
 - A 3 baseline-futás N=3 judge mellett is csak ~4 perc/db volt (a becsült 15-25 helyett) — a lokális judge olcsó.
+
+## 33. Modellcsere: Qwen3.6-35B-A3B (MoE) → Qwen3.8-27B dense (2026-08-20)
+
+### Új szerver-config (Windows-gép)
+`llama-server --device Vulkan0 -ngl 99 -m Qwen3.8-27B-UD-Q4_K_M.gguf -c 65536 --cache-type-k/v q4_0 --temp 1.0 --spec-type draft-mtp --parallel 2 --port 8080 --reasoning off`; Tailscale serve: kifelé 8033 → befelé 8080 (`tailscale serve --bg --http=8033 http://127.0.0.1:8080`). Megj.: kezdeti lassúság a hangolás alatt (dense 27B vs MoE 3.6B aktiv); végül ~88 tok/s.
+
+### Mérések (spec 012-es zaj-mentesített metrika, 5 train/4 val, cache=False)
+- **27B base program: 0.859** (structure 1.000, template 1.000, style 0.754) vs 35B base 0.751 → **+0.108**
+- **27B + 35B-re GEPA-zott program: 0.768** → a GEPA-nyereség NEM transzferálódik, sőt ront (template 0.75: direction violation visszajött; hallucination 0.75)
+- Judge-validáció az új modellel: gépies 0.050 / KB0010015 0.983 ✅ (jobb diszkrimináció, mint a 35B-nél)
+
+### Döntés (emberi): 27B + ALAPprogram az élesben
+- `artifacts/program.json` → `artifacts/program_35b_optimized.json` (verziózva megmaradt); a szerver/CLI fallback így a base programot tölti (pipeline._load_program)
+- systemd restart megtörtént, health OK, 282/282 teszt zöld
+- Config-frissítések: baseline.py + gepa_optimize.py + config.yaml modellnév; gepa num_threads 4→2 (--parallel 2)
+
+### Backlog
+1. **GEPA a 27B-hez** (később, kitalálandó): a zaj-mentesített metrikával már értelmezhető lenne; a 27B base 0.859 a kiindulás — a kérdés, hogy a GEPA hoz-e még +0.02-0.05 felettit
+2. A `runs/baseline_qwen38.json` (27B base) az új referencia-pont; ha a 27B-hez GEPA készül, ez a viszonyítási alap
