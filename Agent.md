@@ -643,3 +643,29 @@ A spec011-runner + calib-runner lánc jól működött: preflight → implement�
 - Sebesség: a felhasználó szerint kellően gyors (draft-mtp spekuláció + Vulkan: ~88 t/s decode mérve)
 - Emberi review: **elfogadva** ("minőségben és gyorsaságban kellően elegendő")
 - ⇒ Az éles stack ezzel: **Qwen3.8-27B dense + alapprogram + systemd-szerver** — teljesen validált
+
+## 35. PROJEKT-LEZÁRÁS (2026-08-20) — a projekt késznek tekinthető
+
+### Végső állapot
+- **Éles stack:** Qwen3.8-27B dense (llama.cpp, Vulkan, draft-mtp, ~88 t/s) + **alapprogram** (a 35B-re GEPA-zott program nem transzferálódott, félretéve: `artifacts/program_35b_optimized.json`) + FastAPI systemd-service (snow-kb.service, Restart=always)
+- **Mért minőség (spec 012 metrika, 5 train/4 val):** összesített **0.859** (structure 1.000 / content 0.631 / template 1.000 / hallucination 1.000 / style 0.754); mérési zaj ±0.018
+- **Éles validáció:** STRY0010014 → bidirectional cikk, 17.2k karakter, 8/8 komponens igazolt, emberi review elfogadva (2026-08-20)
+- **Tesztek:** 282/282 zöld; minden commitolva/pusholva; `validated-2026-08-11` tag a 35B-s korszak visszaállítási pontja
+
+### Lezárt specek
+- **010** human-style articles: style tengely + judge + GEPA 200-call (0.773→0.873 best) + éles validáció (a review hallucinációt fogott → hotfix-lánc)
+- **011** component-hallucination metric + update_set dataset-példa (a metrika-vakfolt javítva)
+- **012** style judge zajcsökkentés multi-sample-lal (N=3): 0.188 → 0.017
+
+### Backlog (tudatosan elhalasztva — NEM befejezetlenség)
+1. **Mini-GEPA a 27B-hez** (~1-1.5 óra az új szerveren): csak akkor érdemes, ha éles cikkekben visszatérő gyengeség-minta jelenik meg. Indítócsomag: `specs/012-style-judge-noise-reduction/tasks.md` T008 + `runs/baseline_qwen38.json` referencia. Figyelem: a style judge self-eval, GEPA-val könnyű a judge ízlésére overfitelni.
+2. Content-tengely 0.631: ha zavaróvá válik, előbb a metrika fact-extrakcióját érdemes nézni, nem a GEPA-t.
+3. Apróságok: `docs/` scaffold-fájlok untrackedek; szerver csak IPv4-en figyel (`--host 0.0.0.0`); Windows-gép restart után a llama-server kézzel indítandó.
+
+### Újrahasznosítható munkamódszer
+A spec 010-012 implementációja az `autonomous-spec-runner` skillel történt (tmux + autonóm agent + gate-ek + completion message). A skill a repóban: `.prime/agent/skills/autonomous-spec-runner/` ÉS globálisan `~/.prime/agent/skills/`. Új spechez: spec-kit írás → review → "futtasd az autonomous-spec-runner workflow-val".
+
+### Folytatás fél év múlva is 2 perc:
+1. Olvasd ezt a szekciót + a 33-34-et (modellcsere + éles teszt)
+2. Szerver: `systemctl status snow-kb.service`; Windows: llama-server parancs a 33. szekcióban
+3. Mérések: `../.venv/bin/python -m eval.baseline --model local --output runs/...` (interpreter: `../.venv`, NINCS saját .venv!)
