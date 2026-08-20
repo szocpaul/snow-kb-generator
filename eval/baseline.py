@@ -151,12 +151,13 @@ def configure_lm():
     api_base = "http://llm-server.local:8033/v1"
 
     lm = dspy.LM(
-        "openai/Qwen3.6-35B-A3B-NSC-ACE-SABER-Q4_K_M.gguf",
+        r"openai/models\Qwen3.8-27B-UD-Q4_K_M.gguf",  # 2026-08-12: model change (llama.cpp serves the loaded model anyway,
+        # the name is only an identifier)
         api_key=api_key,
         api_base=api_base,
         temperature=0.6,
         max_tokens=8000,
-        # The measurement must not come from the ~/.dspy_cache (otherwise an earlier,
+        # The measurement must not come from the ~/.dspy_cache (otherwise the result of an earlier,
         # run with a different model is replayed — see
         # the false local baseline of 0.655 from 2026-07-29).
         cache=False,

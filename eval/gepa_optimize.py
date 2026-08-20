@@ -39,12 +39,12 @@ def run_gepa_optimization(program, trainset, valset, max_metric_calls: int = 200
         metric=rich_metric,
         # Spec 010 / FR-004: an explicit time limit (instead of the auto preset). The style judge
         # doubles the cost of a metric call (generation + scoring), ~60 s per local call:
-        # 200 calls ≈ 1.5-2 hours with the llama-server -np 4 slots (2026-08-08: -np 2 → 4).
+        # 200 calls ≈ 1.5-2 hours with the 4 slots of the llama-server (2026-08-08: -np 2 → 4).
         max_metric_calls=max_metric_calls,
         reflection_lm=_create_reflection_lm(),
         candidate_selection_strategy="pareto",
         instruction_proposer=_create_instruction_proposer(),
-        num_threads=4,  # aligned with the llama.cpp -np 4 slots (verified with preflight)
+        num_threads=2,  # 2026-08-12: the new server has --parallel 2 (before it was -np 4)
         track_stats=True,
         log_dir="./gepa_logs",
         seed=0,
@@ -234,12 +234,12 @@ def configure_lm():
     api_base = "http://llm-server.local:8033/v1"
 
     lm = dspy.LM(
-        "openai/Qwen3.6-35B-A3B-NSC-ACE-SABER-Q4_K_M.gguf",
+        r"openai/models\Qwen3.8-27B-UD-Q4_K_M.gguf",  # 2026-08-12: modellcsere
         api_key=api_key,
         api_base=api_base,
         temperature=0.6,
         max_tokens=8000,
-        cache=False,  # FR-006: during GEPA do not replay earlier answers
+        cache=False,  # FR-006: during GEPA it must not replay earlier answers
     )
     dspy.configure(lm=lm, track_usage=True)
 

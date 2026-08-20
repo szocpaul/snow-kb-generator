@@ -636,3 +636,22 @@ The spec011-runner + calib-runner chain worked well: preflight → implementatio
 ### Lessons
 - The per-example style deviation is still 0.20-0.27, because it also contains the variance of the task generation (temp=0.6) — SC-002 deliberately speaks about the deviation of the axis averages (same method as the original calibration).
 - The 3 baseline runs took only ~4 min/run even with an N=3 judge (instead of the estimated 15-25) — the local judge is cheap.
+
+## 33. Model swap: Qwen3.6-35B-A3B (MoE) → Qwen3.8-27B dense (2026-08-20)
+
+### New server config (Windows machine)
+`llama-server --device Vulkan0 -ngl 99 -m Qwen3.8-27B-UD-Q4_K_M.gguf -c 65536 --cache-type-k/v q4_0 --temp 1.0 --spec-type draft-mtp --parallel 2 --port 8080 --reasoning off`; Tailscale serve: outbound 8033 → inbound 8080 (`tailscale serve --bg --http=8033 http://127.0.0.1:8080`). Note: initial slowness during the tuning (dense 27B vs MoE with 3.6B active); eventually ~88 tok/s.
+
+### Measurements (spec 012 noise-reduced metric, 5 train/4 val, cache=False)
+- **27B base program: 0.859** (structure 1.000, template 1.000, style 0.754) vs 35B base 0.751 → **+0.108**
+- **27B + the 35B GEPA-optimized program: 0.768** → the GEPA gain does NOT transfer, it even hurts (template 0.75: the direction violation came back; hallucination 0.75)
+- Judge validation with the new model: machine 0.050 / STYLE-REF 0.983 ✅ (better discrimination than the 35B)
+
+### Decision (human): 27B + BASE program in production
+- `artifacts/program.json` → `artifacts/program_35b_optimized.json` (kept in version control); the server/CLI fallback thus loads the base program (pipeline._load_program)
+- systemd restart done, health OK, 282/282 tests green
+- Config updates: baseline.py + gepa_optimize.py + config.yaml model name; gepa num_threads 4→2 (--parallel 2)
+
+### Backlog
+1. **GEPA for the 27B** (later, to be decided): with the noise-reduced metric it would already be interpretable; the 27B base 0.859 is the starting point — the question is whether GEPA still adds anything above +0.02-0.05
+2. `runs/baseline_qwen38.json` (27B base) is the new reference point; if GEPA is prepared for the 27B, this is the comparison base

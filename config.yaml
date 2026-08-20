@@ -21,12 +21,12 @@ pipeline:
   use_pi_auth: false
   # Task model: "local" (Qwen llama.cpp) or "kimi" (Kimi K3, strong, good even without GEPA)
   task_model: "local"
-  # Local llama.cpp endpoint (Qwen3.6-35B-A3B) via Tailscale serve
+  # The local llama.cpp endpoint (Qwen3.8-27B, since 2026-08-12) through the Tailscale serve
   api_base: "http://llm-server.local:8033/v1"
 
 models:
   # The generating model (dspy.configure globally to this).
-  main: "openai/Qwen3.6-35B-A3B-NSC-ACE-SABER-Q4_K_M.gguf"
+  main: 'openai/models\Qwen3.8-27B-UD-Q4_K_M.gguf'  # 2026-08-12: modellcsere
   # The GEPA reflection model — the Pi Agent Kimi subscription (Kimi K3).
   # We only use it for the GEPA optimization, the daily generation runs with the model above (the local Qwen).
   reflection: "openai/kimi-k3"
