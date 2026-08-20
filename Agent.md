@@ -634,3 +634,12 @@ A spec011-runner + calib-runner lánc jól működött: preflight → implement�
 ### Backlog
 1. **GEPA a 27B-hez** (később, kitalálandó): a zaj-mentesített metrikával már értelmezhető lenne; a 27B base 0.859 a kiindulás — a kérdés, hogy a GEPA hoz-e még +0.02-0.05 felettit
 2. A `runs/baseline_qwen38.json` (27B base) az új referencia-pont; ha a 27B-hez GEPA készül, ez a viszonyítási alap
+
+## 34. Éles PDI-teszt az új 27B modellel (2026-08-20)
+
+- UI Action gomb → POST /generate-kb 200 OK → STRY0010014-hez KB cikk (`f662bcda...e3ad`), update-ág
+- "Bidirectional REST Integration: ServiceNow ↔ SAP SolMan" — **17.2k karakter**, mind a 7 szekció, helyesen Inbound ÉS Outbound (bidirectional → direction handling ✅)
+- Komponens-ellenőrzés (spec 011 prototípus): **8/8 név igazolt a story-ból, 0 fabrikált**
+- Sebesség: a felhasználó szerint kellően gyors (draft-mtp spekuláció + Vulkan: ~88 t/s decode mérve)
+- Emberi review: **elfogadva** ("minőségben és gyorsaságban kellően elegendő")
+- ⇒ Az éles stack ezzel: **Qwen3.8-27B dense + alapprogram + systemd-szerver** — teljesen validált
