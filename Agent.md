@@ -669,3 +669,30 @@ A spec 010-012 implementációja az `autonomous-spec-runner` skillel történt (
 1. Olvasd ezt a szekciót + a 33-34-et (modellcsere + éles teszt)
 2. Szerver: `systemctl status snow-kb.service`; Windows: llama-server parancs a 33. szekcióban
 3. Mérések: `../.venv/bin/python -m eval.baseline --model local --output runs/...` (interpreter: `../.venv`, NINCS saját .venv!)
+
+## 36. Incidens: HTML-nesting hiba generált cikkben (2026-08-25) + backlog trigger
+
+### Mi történt
+A STRY0010004-hez generált cikk (`dd9006ef...10e6`) vége vizuálisan "elcsúszott": a Testing Guide szekcióban a modell hibás HTML-t termelt (`<li><em><ul>` — lezáratlan `<em>` + felesleges beágyazott lista), amibe a Known Issues és Investigation Steps szekciók beleestek. A tag-SZÁMOK kiegyenlítettek voltak (naiv számláló nem fogja), a beágyazási SORREND volt rossz.
+
+### Javítás és kimenet
+- Kézi HTML-javítás API-n keresztül (4 scenárió lapos listára rendezve, árva zárók törölve) → `runs/kb_last_gen_fixed.html`
+- Újragenerálás (update-ág): tiszta HTML, 0 nesting-hiba → a hiba **egyszeri modell-glitch** volt, nem reprodukálható
+- A metrika ezt a hibaosztályt NEM fogja (a tartalom jó volt, csak a tag-struktúra csúszott)
+
+### A verem-ellenőrző (újrahasználható, ~15 sor)
+```python
+stack, err = [], 0
+for m in re.finditer(r"</?(ul|ol|li|em|p|h2|h3|strong)(?:\s[^>]*)?>", html):
+    tok, name = m.group(0), m.group(1)
+    if tok.startswith("</"):
+        if stack and stack[-1] == name: stack.pop()
+        else: err += 1
+    else:
+        stack.append(name)
+# err > 0 vagy stack nem üres → nesting-hiba; H2/H3 sosem lehet <ul>/<ol>/<li>-ben
+```
+(Másolat: `runs/check_html_nesting.py`.)
+
+### BACKLOG-TRIGGER (döntés: B opció)
+**HA** egy generált cikken MÉGEGYSZER nesting-hiba jelenik meg (verem-ellenőrzés err>0), **AKKOR** azonnal nesting-validator a pipeline-ba (push-előtti ág, `KBArticle` validáció kiegészítése, ~20 sor + teszt). Addig is: minden gyanús cikket a fenti scripttel ellenőrizni. Egyetlen esetre nem építünk kódot, a második azonnali implementációt jelent.
