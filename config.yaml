@@ -1,30 +1,51 @@
+# snow-kb-generator beállítások
+# A titkok (.env.example) külön, nem verziókövetettek. Ez csak strukturált beállítások.
+
 servicenow:
-  knowledge_base_id: "a7e8a78bff0221009b20ffffffffff17"  # IT Knowledge Base (OOB, minden instancen ugyanaz)
-  default_category: General
-  story_table: rm_story
+  # Melyik KB-be írjunk. Ezt a ServiceNow UI-ban / API-ban lehet lekérni.
+  knowledge_base_id: "a7e8a78bff0221009b20ffffffffff17"  # IT Knowledge Base
+  default_category: "General"           # KB kategória neve vagy sys_id
+  story_table: "rm_story"               # instance-onként "story" vagy "rm_story"
+  # Ha a Story nem ad kategóriát, ez az alapértelmezés.
+  # language: "en"
+
 pipeline:
+  # DSPy prediktor alakok lépésenként (tervezett — lásd signatures.py):
+  #   extract: ChainOfThought (indoklás kell a kinyeréshez)
+  #   draft:   ChainOfThought
+  #   format:  Predict (transzformáció, nem kell érvelés)
   default_temperature: 0.6
   max_tokens: 16000
+  # Ha True, a Pi Agent auth.json-ből olvassa az API kulcsot (GLM előfizetés).
+  # Ha False, a szabványos dspy.LM-et használ (lokális endpoint vagy OPENAI_API_KEY).
   use_pi_auth: false
-  task_model: local
-  api_base: http://desktop-c5ikame-1.tailee6bc1.ts.net:8033/v1
+  # Task modell: "local" (Qwen llama.cpp) vagy "kimi" (Kimi K3, erős, GEPA nélkül is jó)
+  task_model: "local"
+  # Lokális llama.cpp endpoint (Qwen3.8-27B, 2026-08-12-től) Tailscale serve-en keresztül
+  api_base: "http://desktop-c5ikame-1.tailee6bc1.ts.net:8033/v1"
+
 models:
-  main: openai/models\Qwen3.8-27B-UD-Q4_K_M.gguf
-  reflection: openai/kimi-k3
+  # A generáló modell (dspy.configure globálisan erre).
+  main: 'openai/models\Qwen3.8-27B-UD-Q4_K_M.gguf'  # 2026-08-12: modellcsere
+  # GEPA reflection modell — a Pi Agent Kimi előfizetés (Kimi K3).
+  # Csak a GEPA optimalizációkor használjuk, a napi generáláshoz a fenti (lokális Qwen) modell fut.
+  reflection: "openai/kimi-k3"
   reflection_temperature: 1.0
   reflection_max_tokens: 32000
+
 gepa:
-  auto: medium
-  candidate_selection: pareto
+  auto: "medium"                        # light | medium | heavy
+  candidate_selection: "pareto"
   num_threads: 8
   seed: 0
+
 story_fields:
-- short_description
-- description
-- acceptance_criteria
-- u_technical_specification
-- work_notes
-- comments
-- state
-- assigned_to
-- assignment_group
+  - short_description
+  - description
+  - acceptance_criteria
+  - u_technical_specification
+  - work_notes
+  - comments
+  - state
+  - assigned_to
+  - assignment_group
