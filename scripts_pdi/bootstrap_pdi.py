@@ -65,9 +65,13 @@ def step1(dry: bool):
         print(f"    [dry-run] config.yaml knowledge_base_id ← {kb_id}")
     else:
         cfg_path = ROOT / "config.yaml"
-        cfg = yaml.safe_load(cfg_path.read_text())
-        cfg["servicenow"]["knowledge_base_id"] = kb_id
-        cfg_path.write_text(yaml.safe_dump(cfg, allow_unicode=True, sort_keys=False))
+        # A targeted text replacement (a yaml round-trip would lose the comments!)
+        import re as _re
+        text = cfg_path.read_text()
+        text, n = _re.subn(r'knowledge_base_id:.*', f'knowledge_base_id: "{kb_id}"', text, count=1)
+        if n == 0:
+            raise RuntimeError("the knowledge_base_id line is not found in the config.yaml!")
+        cfg_path.write_text(text)
         print(f"    config.yaml updated: knowledge_base_id = {kb_id}")
 
 
