@@ -1,30 +1,51 @@
+# the snow-kb-generator settings
+# The secrets (.env.example) are separate and not version controlled. This file only has structured settings.
+
 servicenow:
-  knowledge_base_id: "00000000000000000000000000000002"  # IT Knowledge Base (OOB, the same on every instance)
-  default_category: General
-  story_table: rm_story
+  # Which KB we write into. It can be read in the ServiceNow UI / API.
+  knowledge_base_id: "00000000000000000000000000000002"  # IT Knowledge Base
+  default_category: "General"           # the name or the sys_id of the KB category
+  story_table: "rm_story"               # "story" or "rm_story" depending on the instance
+  # If the Story does not give a category, this is the default.
+  # language: "en"
+
 pipeline:
+  # The DSPy predictor shapes per step (designed — see signatures.py):
+  #   extract: ChainOfThought (the extraction needs reasoning)
+  #   draft:   ChainOfThought
+  #   format:  Predict (a transformation, no reasoning needed)
   default_temperature: 0.6
   max_tokens: 16000
+  # If True, it reads the API key from the Pi Agent auth.json (GLM subscription).
+  # If False, it uses the standard dspy.LM (local endpoint or OPENAI_API_KEY).
   use_pi_auth: false
-  task_model: local
-  api_base: http://llm-server.local:8033/v1
+  # Task model: "local" (Qwen llama.cpp) or "kimi" (Kimi K3, strong, good even without GEPA)
+  task_model: "local"
+  # The local llama.cpp endpoint (Qwen3.8-27B, since 2026-08-12) through the Tailscale serve
+  api_base: "http://llm-server.local:8033/v1"
+
 models:
-  main: openai/models\Qwen3.8-27B-UD-Q4_K_M.gguf
-  reflection: openai/kimi-k3
+  # The generating model (dspy.configure globally to this).
+  main: 'openai/models\Qwen3.8-27B-UD-Q4_K_M.gguf'  # 2026-08-12: modellcsere
+  # The GEPA reflection model — the Pi Agent Kimi subscription (Kimi K3).
+  # We only use it for the GEPA optimization, the daily generation runs with the model above (the local Qwen).
+  reflection: "openai/kimi-k3"
   reflection_temperature: 1.0
   reflection_max_tokens: 32000
+
 gepa:
-  auto: medium
-  candidate_selection: pareto
+  auto: "medium"                        # light | medium | heavy
+  candidate_selection: "pareto"
   num_threads: 8
   seed: 0
+
 story_fields:
-- short_description
-- description
-- acceptance_criteria
-- u_technical_specification
-- work_notes
-- comments
-- state
-- assigned_to
-- assignment_group
+  - short_description
+  - description
+  - acceptance_criteria
+  - u_technical_specification
+  - work_notes
+  - comments
+  - state
+  - assigned_to
+  - assignment_group
