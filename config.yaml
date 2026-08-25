@@ -3,7 +3,7 @@
 
 servicenow:
   # Melyik KB-be írjunk. Ezt a ServiceNow UI-ban / API-ban lehet lekérni.
-  knowledge_base_id: "a7e8a78bff0221009b20ffffffffff17"  # IT Knowledge Base
+  knowledge_base_id: "a7e8a78bff0221009b20ffffffffff17"
   default_category: "General"           # KB kategória neve vagy sys_id
   story_table: "rm_story"               # instance-onként "story" vagy "rm_story"
   # Ha a Story nem ad kategóriát, ez az alapértelmezés.

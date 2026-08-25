@@ -60,7 +60,11 @@ def step1(dry: bool):
     # preferált: az első KB (PDI-n jellemzően egy van)
     if not kbs:
         raise RuntimeError("Nincs Knowledge Base az instancen!")
-    kb_id = kbs[0]["sys_id"]
+    # Preferált: az OOB "IT" Knowledge Base (a régi konfig is ezt használta);
+    # NEM az első API-találat (az lehet demo KB, pl. "KCS Knowledge Base").
+    preferred = next((k for k in kbs if k.get("title") == "IT"), kbs[0])
+    kb_id = preferred["sys_id"]
+    print(f"    választott KB: {preferred['title']}")
     if dry:
         print(f"    [dry-run] config.yaml knowledge_base_id ← {kb_id}")
     else:
