@@ -130,10 +130,11 @@ def step4(dry: bool):
 
     tpl = api_get1("kb_knowledge", "kb_knowledge_base=" + kb["sys_id"] + "^short_descriptionLIKEStructure",
                    "sys_id,short_description")
-    template_html = (ROOT / "data" / "examples" / "kb0010015_style_reference.html").read_text()         if (ROOT / "data" / "examples" / "kb0010015_style_reference.html").exists() else ""
+    # STRUKTURÁLIS template kell (NEM a stílus-referencia!) — a pipeline ezt tölti template_contextnek
+    template_html = (ROOT / "data" / "examples" / "integration_team_template.html").read_text()         if (ROOT / "data" / "examples" / "integration_team_template.html").exists() else ""
     if not tpl and not dry:
         tpl = api("POST", "kb_knowledge", json={
-            "short_description": "Structure Template — Integration KB (snow_kb_generator)",
+            "short_description": "Integration KB — Structure Template (snow_kb_generator)",  # a pipeline "CONTAINS Structure" (szóközzel) query-je miatt NEM kezdődhet Structure-rel!
             "kb_knowledge_base": kb["sys_id"], "text": template_html, "workflow_state": "published",
         })
         print(f"    sablon-cikk létrehozva: {tpl['sys_id']}")
@@ -180,6 +181,11 @@ def step6(dry: bool):
             if k in ("number", "short_description", "description", "acceptance_criteria",
                      "u_technical_specification", "work_notes", "comments")}
     body["state"] = "3"  # Closed Complete — a gomb csak lezárt story-n látszik
+    # assignment_group kötelező a pipeline-nak (template-felismerés) — a dump régi
+    # sys_id-ja értelmetlen az új instancen, ezért a helyi Service Desk-et állítjuk.
+    grp = api_get1("sys_user_group", "name=Service Desk", "sys_id")
+    if grp:
+        body["assignment_group"] = grp["sys_id"]
     if dry:
         print(f"    [dry-run] létrehoznám: {story['number']}")
     else:
