@@ -60,7 +60,11 @@ def step1(dry: bool):
     # preferred: the first KB (on a PDI there is usually one)
     if not kbs:
         raise RuntimeError("There is no Knowledge Base on the instance!")
-    kb_id = kbs[0]["sys_id"]
+    # Preferred: the OOB "IT" Knowledge Base (the old config used this as well);
+    # NOT the first API hit (that can be a demo KB, e.g. "KCS Knowledge Base").
+    preferred = next((k for k in kbs if k.get("title") == "IT"), kbs[0])
+    kb_id = preferred["sys_id"]
+    print(f"    selected KB: {preferred['title']}")
     if dry:
         print(f"    [dry-run] config.yaml knowledge_base_id ← {kb_id}")
     else:

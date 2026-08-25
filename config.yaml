@@ -3,7 +3,7 @@
 
 servicenow:
   # Which KB we write into. It can be read in the ServiceNow UI / API.
-  knowledge_base_id: "00000000000000000000000000000002"  # IT Knowledge Base
+  knowledge_base_id: "00000000000000000000000000000002"
   default_category: "General"           # the name or the sys_id of the KB category
   story_table: "rm_story"               # "story" or "rm_story" depending on the instance
   # If the Story does not give a category, this is the default.
