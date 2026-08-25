@@ -690,3 +690,30 @@ The implementation of spec 010-012 happened with the `autonomous-spec-runner` sk
 1. Read this section + sections 33-34 (model swap + production test)
 2. Server: `systemctl status snow-kb.service`; Windows: the llama-server command in section 33
 3. Measurements: `../.venv/bin/python -m eval.baseline --model local --output runs/...` (interpreter: `../.venv`, there is NO own .venv!)
+
+## 36. Incident: HTML nesting error in a generated article (2026-08-25) + backlog trigger
+
+### What happened
+The end of the article generated for STRY0010004 (`efbdcd4e...10e6`) visually "slipped": in the Testing Guide section the model produced broken HTML (`<li><em><ul>` — unclosed `<em>` + unnecessary nested list), into which the Known Issues and Investigation Steps sections fell. The tag COUNTS were balanced (a naive counter will not catch it), the nesting ORDER was wrong.
+
+### Fix and output
+- Manual HTML fix via the API (4 scenarios flattened into a plain list, orphan closing tags removed) → `runs/kb_last_gen_fixed.html`
+- Regeneration (update path): clean HTML, 0 nesting errors → the error was a **one-off model glitch**, not reproducible
+- The metric does NOT catch this error class (the content was good, only the tag structure slipped)
+
+### The stack checker (reusable, ~15 lines)
+```python
+stack, err = [], 0
+for m in re.finditer(r"</?(ul|ol|li|em|p|h2|h3|strong)(?:\s[^>]*)?>", html):
+    tok, name = m.group(0), m.group(1)
+    if tok.startswith("</"):
+        if stack and stack[-1] == name: stack.pop()
+        else: err += 1
+    else:
+        stack.append(name)
+# err > 0 or stack not empty → nesting error; H2/H3 can never be inside <ul>/<ol>/<li>
+```
+(Copy: `runs/check_html_nesting.py`.)
+
+### BACKLOG TRIGGER (decision: option B)
+**IF** a nesting error appears AGAIN on a generated article (stack check err>0), **THEN** immediately put a nesting validator into the pipeline (pre-push branch, extending the `KBArticle` validation, ~20 lines + test). Even until then: check every suspicious article with the script above. We do not build code for a single case, the second one means immediate implementation.
