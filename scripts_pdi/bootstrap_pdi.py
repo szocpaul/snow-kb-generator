@@ -130,10 +130,11 @@ def step4(dry: bool):
 
     tpl = api_get1("kb_knowledge", "kb_knowledge_base=" + kb["sys_id"] + "^short_descriptionLIKEStructure",
                    "sys_id,short_description")
-    template_html = (ROOT / "data" / "examples" / "style_reference.html").read_text()         if (ROOT / "data" / "examples" / "style_reference.html").exists() else ""
+    # a STRUCTURAL template is needed (NOT the style reference!) — the pipeline loads this as the template_context
+    template_html = (ROOT / "data" / "examples" / "integration_team_template.html").read_text()         if (ROOT / "data" / "examples" / "integration_team_template.html").exists() else ""
     if not tpl and not dry:
         tpl = api("POST", "kb_knowledge", json={
-            "short_description": "Structure Template — Integration KB (snow_kb_generator)",
+            "short_description": "Integration KB — Structure Template (snow_kb_generator)",  # because of the pipeline's "CONTAINS Structure" (with a space) query it must NOT start with Structure!
             "kb_knowledge_base": kb["sys_id"], "text": template_html, "workflow_state": "published",
         })
         print(f"    template article created: {tpl['sys_id']}")
@@ -180,6 +181,11 @@ def step6(dry: bool):
             if k in ("number", "short_description", "description", "acceptance_criteria",
                      "u_technical_specification", "work_notes", "comments")}
     body["state"] = "3"  # Closed Complete — the button is only visible on a closed story
+    # the assignment_group is mandatory for the pipeline (template recognition) — the old
+    # sys_id of the dump is meaningless on the new instance, so we set the local Service Desk.
+    grp = api_get1("sys_user_group", "name=Service Desk", "sys_id")
+    if grp:
+        body["assignment_group"] = grp["sys_id"]
     if dry:
         print(f"    [dry-run] I would create: {story['number']}")
     else:
