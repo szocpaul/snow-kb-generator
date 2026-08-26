@@ -728,3 +728,18 @@ for m in re.finditer(r"</?(ul|ol|li|em|p|h2|h3|strong)(?:\s[^>]*)?>", html):
 - Affected files: `config.py` (default + env override), `config.yaml`, `cli.py` (--dev), tests adjusted (the old LM tests now explicitly set `task_model="local"` for the standard/pi_auth branches)
 - Tests: 286/286 green (+4 new dev-mode tests)
 - Note: the style judge follows the global LM — in Dev mode it is local, in base mode it is Kimi (few calls, not a significant quota)
+
+## 38. __main__ double-import bug + Kimi vs 27B baseline measurement (2026-08-26)
+
+### The bug (classic Python trap)
+When running `python -m eval.baseline --model kimi` the module runs as `__main__`, and the `import eval.baseline as _self` inside `main()` creates a SECOND module object — the `configure_lm = configure_kimi_lm` swap ended up there, and the running `run_baseline` used the LOCAL configure. The bug was always there (since T009b); as long as the local server was alive it stayed invisible. Fix: `sys.modules[__name__].configure_lm = configure_kimi_lm` (correct in both run modes).
+**Retrospective risk:** the earlier `--model kimi` CLI measurements (e.g. the July 0.769) were potentially local because of the bug — those numbers are uncertain; the fresh (2026-08-26) measurement is the first proven Kimi baseline.
+
+### Measurement (spec 012 metric, 5 train/4 val, cache=False)
+- **Kimi K3 base: 0.869** (structure 0.923 / content 0.682 / template 1.000 / hallucination 1.000 / style 0.841)
+- Local 27B base: 0.859 → Kimi +0.011 (parity within the noise band, slight Kimi advantage)
+- Method: in both cases the judge = the generating model (stack vs stack, not an absolute measurement)
+- The Dev-mode architecture (base = Kimi, dev = local) is backed by data
+
+### Diagnosis lecture
+Behind the "local model runs instead of Kimi" symptom there were two separate causes: (1) the server process cache had the old config (a restart solved it), (2) the __main__ double-import bug in the CLI. The litellm call spy (model+api_base on every call) led to the solution.

@@ -126,9 +126,13 @@ def main(argv: list[str] | None = None) -> None:
 
     if args.model == "kimi":
         # run_baseline calls the module-global configure_lm — for Kimi we replace it.
-        import eval.baseline as _self
+        # IMPORTANT: when running `python -m eval.baseline` the module runs under the name __main__,
+        # and `import eval.baseline` would create a SECOND module object —
+        # the replacement would go there and not into the running run_baseline! Therefore sys.modules[__name__],
+        # which is the actually running module in both execution modes.
+        import sys as _sys
 
-        _self.configure_lm = configure_kimi_lm
+        _sys.modules[__name__].configure_lm = configure_kimi_lm
 
     result = run_baseline(StoryToKBArticle(), valset, output_path=args.output)
     print(f"\nBaseline ({args.model}) average score: {result.score:.3f} → {args.output}")
