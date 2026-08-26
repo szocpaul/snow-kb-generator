@@ -19,8 +19,9 @@ pipeline:
   # If True, it reads the API key from the Pi Agent auth.json (GLM subscription).
   # If False, it uses the standard dspy.LM (local endpoint or OPENAI_API_KEY).
   use_pi_auth: false
-  # Task model: "local" (Qwen llama.cpp) or "kimi" (Kimi K3, strong, good even without GEPA)
-  task_model: "local"
+  # Task model: PROD = "kimi" (Kimi K3, Kimi Code subscription) | DEV mode = "local" (local Qwen llama.cpp)
+  # Switching the dev mode on/off: the SNOW_KB_DEV_MODE=1 env variable or the CLI --dev flag
+  task_model: "kimi"
   # The local llama.cpp endpoint (Qwen3.8-27B, since 2026-08-12) through the Tailscale serve
   api_base: "http://llm-server.local:8033/v1"
 

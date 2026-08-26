@@ -200,3 +200,30 @@ class TestDefaultsAndSubmodels:
         })
         with pytest.raises(ConfigError):
             load_settings(path)
+
+
+class TestDevMode:
+    """Dev mode (SNOW_KB_DEV_MODE env / CLI --dev): the task model is the local LLM."""
+
+    def test_default_task_model_is_kimi(self, valid_yaml, set_env):
+        """The base mode is Kimi K3 (from 2026-08-25)."""
+        s = load_settings(valid_yaml)
+        assert s.pipeline.task_model == "kimi"
+
+    def test_dev_mode_env_override(self, valid_yaml, set_env, monkeypatch):
+        """SNOW_KB_DEV_MODE=1 → the task model is the local LLM."""
+        monkeypatch.setenv("SNOW_KB_DEV_MODE", "1")
+        s = load_settings(valid_yaml)
+        assert s.pipeline.task_model == "local"
+
+    def test_dev_mode_env_off(self, valid_yaml, set_env, monkeypatch):
+        """SNOW_KB_DEV_MODE=0 → it stays on kimi (the base mode)."""
+        monkeypatch.setenv("SNOW_KB_DEV_MODE", "0")
+        s = load_settings(valid_yaml)
+        assert s.pipeline.task_model == "kimi"
+
+    def test_cli_dev_flag(self):
+        """The CLI --dev flag can be parsed (the task_model override is in the main)."""
+        from snow_kb.cli import build_parser
+        assert build_parser().parse_args(["STRY0010001", "--dev"]).dev is True
+        assert build_parser().parse_args(["STRY0010001"]).dev is False

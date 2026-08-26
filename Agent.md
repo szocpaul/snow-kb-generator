@@ -717,3 +717,14 @@ for m in re.finditer(r"</?(ul|ol|li|em|p|h2|h3|strong)(?:\s[^>]*)?>", html):
 
 ### BACKLOG TRIGGER (decision: option B)
 **IF** a nesting error appears AGAIN on a generated article (stack check err>0), **THEN** immediately put a nesting validator into the pipeline (pre-push branch, extending the `KBArticle` validation, ~20 lines + test). Even until then: check every suspicious article with the script above. We do not build code for a single case, the second one means immediate implementation.
+
+## 37. Introducing Dev mode (2026-08-25)
+
+- **BASE mode (new default): Kimi K3** (`task_model: "kimi"` in the config) — the Kimi Code subscription is the daily task model; the local machine going down no longer blocks production generation.
+- **Dev mode: local Qwen3.8-27B** — switching on/off:
+  - CLI: `--dev` flag
+  - env: `SNOW_KB_DEV_MODE=1` (load_settings overrides the task_model)
+  - on the systemd server: drop-in `Environment=SNOW_KB_DEV_MODE=1` (see deploy/README.md)
+- Affected files: `config.py` (default + env override), `config.yaml`, `cli.py` (--dev), tests adjusted (the old LM tests now explicitly set `task_model="local"` for the standard/pi_auth branches)
+- Tests: 286/286 green (+4 new dev-mode tests)
+- Note: the style judge follows the global LM — in Dev mode it is local, in base mode it is Kimi (few calls, not a significant quota)

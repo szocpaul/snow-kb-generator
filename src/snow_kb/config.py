@@ -70,7 +70,9 @@ class ServiceNowConfig(BaseModel):
 class PipelineConfig(BaseModel):
     default_temperature: float = 0.0
     max_tokens: int = 2000
-    task_model: str = "local"  # "local" (Qwen/llama.cpp) | "kimi" (Kimi K3, Pi OAuth)
+    task_model: str = "kimi"  # PROD: "kimi" (Kimi K3, Pi OAuth) | DEV mode: "local" (Qwen/llama.cpp)
+    # Switching the dev mode (local) on/off: the SNOW_KB_DEV_MODE=1 environment variable
+    # (load_settings override) OR the CLI --dev flag.
     use_pi_auth: bool = False  # If True, uses the Pi Agent auth.json (GLM/Kimi)
     api_base: str = ""         # Optional API endpoint (e.g. a GLM proxy)
 
@@ -197,6 +199,11 @@ def load_settings(
         )
     except Exception as exc:  # ValidationError
         raise ConfigError(f"Configuration validation error: {exc}") from exc
+
+    # --- Dev mode: the SNOW_KB_DEV_MODE environment variable overrides the task_model ---
+    import os as _os
+    if _os.environ.get("SNOW_KB_DEV_MODE", "").lower() in ("1", "true", "yes", "on"):
+        settings.pipeline.task_model = "local"
 
     # --- Startup consistency checks ---
     _validate_at_load(settings)

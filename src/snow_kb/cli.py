@@ -76,6 +76,11 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="More detailed logging.",
     )
+    parser.add_argument(
+        "--dev",
+        action="store_true",
+        help="Dev mode: use the LOCAL LLM (llama.cpp) instead of Kimi K3.",
+    )
     return parser
 
 
@@ -135,6 +140,11 @@ def main(argv: list[str] | None = None) -> int:
     # --- Modell override ---
     if args.model:
         settings.models.main = args.model
+
+    # --- Dev mode: switch to the local LLM ---
+    if args.dev:
+        settings.pipeline.task_model = "local"
+        logger.info("Dev mode: using the local LLM (llama.cpp).")
 
     # --- Run the pipeline ---
     try:

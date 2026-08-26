@@ -22,7 +22,7 @@ When the developers finish a ServiceNow Story (`STRY...`), a Knowledge Base (KB)
 
 - **Python 3.12**
 - **DSPy 3.3.x** — Signatures + Modules, GEPA optimization
-- **LM:** local Qwen3.6-35B-A3B (llama.cpp, task model — `task_model: "local"`) + Kimi K3 (Pi Agent subscription, GEPA reflection/proposer). Clean measurement (2026-07-29, `cache=False`): K3 0.769 vs local 0.733 — alongside the local model, the zero marginal cost decided it
+- **LM (from 2026-08-25):** BASIC mode = **Kimi K3** (Kimi Code subscription, `task_model: "kimi"`) | **Dev mode** = local Qwen3.8-27B (llama.cpp) — toggle: `SNOW_KB_DEV_MODE=1` env or CLI `--dev` flag. GEPA reflection/proposer stays Kimi K3.
 - **ServiceNow Table API** (`requests`) — Story fetch + KB creation (CRUD)
 - **FastAPI + Uvicorn** — webhook server for the ServiceNow UI Action
 - **Pydantic v2** — data model and validation
