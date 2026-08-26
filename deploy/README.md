@@ -18,3 +18,15 @@ systemctl status snow-kb.service   # állapot
 sudo systemctl restart snow-kb.service  # újraindítás (pl. deploy után)
 tail -f server.log                 # a log továbbra is a projekt server.log-jába ír
 ```
+
+## Dev mód a szerveren (lokális LLM használata Kimi helyett)
+
+```bash
+sudo systemctl edit snow-kb.service
+# illeszd be:
+# [Service]
+# Environment=SNOW_KB_DEV_MODE=1
+sudo systemctl restart snow-kb.service
+```
+
+Kikapcsolás: a drop-in törlése (`sudo systemctl revert snow-kb.service`) + restart.

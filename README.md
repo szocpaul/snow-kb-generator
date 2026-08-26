@@ -22,7 +22,7 @@ Amikor a fejlesztők befejeznek egy ServiceNow Story-t (`STRY...`), kézzel kell
 
 - **Python 3.12**
 - **DSPy 3.3.x** — Signatures + Modules, GEPA optimalizáció
-- **LM:** lokális Qwen3.6-35B-A3B (llama.cpp, task modell — `task_model: "local"`) + Kimi K3 (Pi Agent előfizetés, GEPA reflection/proposer). Tiszta mérés (2026-07-29, `cache=False`): K3 0.769 vs lokális 0.733 — a lokális mellett a nulla marginális költség döntött
+- **LM (2026-08-25-től):** ALAP mód = **Kimi K3** (Kimi Code előfizetés, `task_model: "kimi"`) | **Dev mód** = lokális Qwen3.8-27B (llama.cpp) — ki/bekapcsolás: `SNOW_KB_DEV_MODE=1` env vagy CLI `--dev` flag. GEPA reflection/proposer továbbra is Kimi K3.
 - **ServiceNow Table API** (`requests`) — Story lekérés + KB létrehozás (CRUD)
 - **FastAPI + Uvicorn** — Webhook szerver a ServiceNow UI Action-nek
 - **Pydantic v2** — adatmodell és validáció

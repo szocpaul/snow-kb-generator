@@ -70,7 +70,9 @@ class ServiceNowConfig(BaseModel):
 class PipelineConfig(BaseModel):
     default_temperature: float = 0.0
     max_tokens: int = 2000
-    task_model: str = "local"  # "local" (Qwen/llama.cpp) | "kimi" (Kimi K3, Pi OAuth)
+    task_model: str = "kimi"  # ALAP: "kimi" (Kimi K3, Pi OAuth) | DEV mód: "local" (Qwen/llama.cpp)
+    # A Dev mód (local) ki/bekapcsolása: SNOW_KB_DEV_MODE=1 környezeti változó
+    # (load_settings override) VAGY CLI --dev flag.
     use_pi_auth: bool = False  # Ha True, Pi Agent auth.json-t használ (GLM/Kimi)
     api_base: str = ""         # Opcionális API végpont (pl. GLM proxy)
 
@@ -197,6 +199,11 @@ def load_settings(
         )
     except Exception as exc:  # ValidationError
         raise ConfigError(f"Konfigurációs validációs hiba: {exc}") from exc
+
+    # --- Dev mód: SNOW_KB_DEV_MODE környezeti változó felülírja a task_modelt ---
+    import os as _os
+    if _os.environ.get("SNOW_KB_DEV_MODE", "").lower() in ("1", "true", "yes", "on"):
+        settings.pipeline.task_model = "local"
 
     # --- Induláskori konzisztencia-ellenőrzés ---
     _validate_at_load(settings)

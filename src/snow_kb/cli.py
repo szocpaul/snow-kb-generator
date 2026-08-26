@@ -76,6 +76,11 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Részletesebb logolás.",
     )
+    parser.add_argument(
+        "--dev",
+        action="store_true",
+        help="Dev mód: a LOKÁLIS LLM-et (llama.cpp) használja a Kimi K3 helyett.",
+    )
     return parser
 
 
@@ -135,6 +140,11 @@ def main(argv: list[str] | None = None) -> int:
     # --- Modell override ---
     if args.model:
         settings.models.main = args.model
+
+    # --- Dev mód: a lokális LLM-re váltás ---
+    if args.dev:
+        settings.pipeline.task_model = "local"
+        logger.info("Dev mód: lokális LLM (llama.cpp) használata.")
 
     # --- Pipeline futtatása ---
     try:

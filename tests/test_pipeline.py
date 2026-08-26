@@ -147,6 +147,7 @@ class TestConfigureLM:
                 assert call_kwargs["track_usage"] is True
 
     def test_configure_uses_settings_model(self, dry_run_settings):
+        dry_run_settings.pipeline.task_model = "local"  # a teszt a standard/pi_auth ágat vizsgálja (a kimi ág külön)
         dry_run_settings.models.main = "openai/gpt-4o-mini"
         with patch("snow_kb.pipeline.dspy.LM") as mock_lm:
             mock_lm.return_value = MagicMock()
@@ -159,6 +160,7 @@ class TestConfigureLM:
                 assert model == "openai/gpt-4o-mini"
 
     def test_pi_auth_reads_key_from_auth_file(self, dry_run_settings):
+        dry_run_settings.pipeline.task_model = "local"  # a teszt a standard/pi_auth ágat vizsgálja (a kimi ág külön)
         """Ha use_pi_auth=True, a zai-glm kulcsot olvassa a Pi auth fájlból."""
         dry_run_settings.pipeline.use_pi_auth = True
         dry_run_settings.models.main = "openai/glm-5.2"
@@ -190,6 +192,7 @@ class TestConfigureLM:
 
     def test_pi_auth_missing_file_raises(self, dry_run_settings, tmp_path):
         """Ha use_pi_auth=True de nincs auth fájl, hiba."""
+        dry_run_settings.pipeline.task_model = "local"  # a pi_auth ág teszteléséhez
         dry_run_settings.pipeline.use_pi_auth = True
         with patch("snow_kb.pipeline.Path") as mock_path:
             mock_path.home.return_value = tmp_path  # tmp_path/auth.json nem létezik

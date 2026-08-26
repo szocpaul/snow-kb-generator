@@ -19,8 +19,9 @@ pipeline:
   # Ha True, a Pi Agent auth.json-ből olvassa az API kulcsot (GLM előfizetés).
   # Ha False, a szabványos dspy.LM-et használ (lokális endpoint vagy OPENAI_API_KEY).
   use_pi_auth: false
-  # Task modell: "local" (Qwen llama.cpp) vagy "kimi" (Kimi K3, erős, GEPA nélkül is jó)
-  task_model: "local"
+  # Task modell: ALAP = "kimi" (Kimi K3, Kimi Code előfizetés) | DEV mód = "local" (lokális Qwen llama.cpp)
+  # Dev mód ki/bekapcsolása: SNOW_KB_DEV_MODE=1 env vagy CLI --dev flag
+  task_model: "kimi"
   # Lokális llama.cpp endpoint (Qwen3.8-27B, 2026-08-12-től) Tailscale serve-en keresztül
   api_base: "http://desktop-c5ikame-1.tailee6bc1.ts.net:8033/v1"
 

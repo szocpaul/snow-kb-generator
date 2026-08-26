@@ -696,3 +696,14 @@ for m in re.finditer(r"</?(ul|ol|li|em|p|h2|h3|strong)(?:\s[^>]*)?>", html):
 
 ### BACKLOG-TRIGGER (döntés: B opció)
 **HA** egy generált cikken MÉGEGYSZER nesting-hiba jelenik meg (verem-ellenőrzés err>0), **AKKOR** azonnal nesting-validator a pipeline-ba (push-előtti ág, `KBArticle` validáció kiegészítése, ~20 sor + teszt). Addig is: minden gyanús cikket a fenti scripttel ellenőrizni. Egyetlen esetre nem építünk kódot, a második azonnali implementációt jelent.
+
+## 37. Dev mód bevezetése (2026-08-25)
+
+- **ALAP mód (új alapértelmezés): Kimi K3** (`task_model: "kimi"` a configban) — a Kimi Code előfizetés a napi task modell; a lokális gép leállása már nem blokkolja az éles generálást.
+- **Dev mód: lokális Qwen3.8-27B** — ki/bekapcsolás:
+  - CLI: `--dev` flag
+  - env: `SNOW_KB_DEV_MODE=1` (a load_settings felülírja a task_modelt)
+  - systemd-szerveren: drop-in `Environment=SNOW_KB_DEV_MODE=1` (ld. deploy/README.md)
+- Érintett fájlok: `config.py` (default + env override), `config.yaml`, `cli.py` (--dev), tesztek igazítva (a régi LM-tesztek most explicit `task_model="local"`-ot állítanak a standard/pi_auth ágakhoz)
+- Tesztek: 286/286 zöld (+4 új dev-mód teszt)
+- Megj.: a style judge a globális LM-et követi — Dev módban lokális, alap módban Kimi (kevés hívás, nem jelentős kvóta)
