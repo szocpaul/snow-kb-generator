@@ -707,3 +707,18 @@ for m in re.finditer(r"</?(ul|ol|li|em|p|h2|h3|strong)(?:\s[^>]*)?>", html):
 - Érintett fájlok: `config.py` (default + env override), `config.yaml`, `cli.py` (--dev), tesztek igazítva (a régi LM-tesztek most explicit `task_model="local"`-ot állítanak a standard/pi_auth ágakhoz)
 - Tesztek: 286/286 zöld (+4 új dev-mód teszt)
 - Megj.: a style judge a globális LM-et követi — Dev módban lokális, alap módban Kimi (kevés hívás, nem jelentős kvóta)
+
+## 38. __main__ dupla-import bug + Kimi vs 27B baseline-mérés (2026-08-26)
+
+### A bug (klasszikus Python-csapda)
+`python -m eval.baseline --model kimi` futtatáskor a modul `__main__`-ként fut, és a `main()`-beli `import eval.baseline as _self` egy MÁSODIK modul-objektumot hoz létre — a `configure_lm = configure_kimi_lm` csere oda került, a futó `run_baseline` a LOKÁLIS configure-t használta. A bug mindig is ott volt (a T009b óta); amíg a lokális szerver élt, láthatatlan maradt. Javítás: `sys.modules[__name__].configure_lm = configure_kimi_lm` (mindkét futtatási módban helyes).
+**Visszatekintő kockázat:** a korábbi `--model kimi` CLI-mérések (pl. júliusi 0.769) a bug miatt potenciálisan lokálisak voltak — azok a számok bizonytalanok; a friss (2026-08-26) mérés az első igazolt Kimi-baseline.
+
+### Mérés (spec 012 metrika, 5 train/4 val, cache=False)
+- **Kimi K3 base: 0.869** (structure 0.923 / content 0.682 / template 1.000 / hallucination 1.000 / style 0.841)
+- Lokális 27B base: 0.859 → Kimi +0.011 (zaj-sávon belüli paritàs, enyhe Kimi-előny)
+- Módszertan: mindkét esetben a judge = a generáló modell (stack vs stack, nem abszolút mérés)
+- A Dev-mód architektúra (alap = Kimi, dev = lokális) adatilag alátámasztva
+
+### Diagnosztika-lecture
+A "lokális modell megy Kimi helyett" tünet mögött két külön ok is volt: (1) a szerver process-cache régi configja (restart megoldotta), (2) a __main__ dupla-import bug a CLI-ben. A litellm-hívás-spy (model+api_base minden hívásnál) vezetett a megoldáshoz.

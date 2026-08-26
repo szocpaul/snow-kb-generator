@@ -126,9 +126,13 @@ def main(argv: list[str] | None = None) -> None:
 
     if args.model == "kimi":
         # A run_baseline a modul-globális configure_lm-et hívja — Kimi-nél lecseréljük.
-        import eval.baseline as _self
+        # FONTOS: `python -m eval.baseline` futtatáskor a modul __main__ néven fut,
+        # és az `import eval.baseline` egy MÁSODIK modul-objektumot hozna létre —
+        # a csere oda kerülne, a futó run_baseline-hez nem! Ezért sys.modules[__name__],
+        # ami mindkét futtatási módban a ténylegesen futó modul.
+        import sys as _sys
 
-        _self.configure_lm = configure_kimi_lm
+        _sys.modules[__name__].configure_lm = configure_kimi_lm
 
     result = run_baseline(StoryToKBArticle(), valset, output_path=args.output)
     print(f"\nBaseline ({args.model}) átlag score: {result.score:.3f} → {args.output}")
