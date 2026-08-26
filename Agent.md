@@ -743,3 +743,18 @@ When running `python -m eval.baseline --model kimi` the module runs as `__main__
 
 ### Diagnosis lecture
 Behind the "local model runs instead of Kimi" symptom there were two separate causes: (1) the server process cache had the old config (a restart solved it), (2) the __main__ double-import bug in the CLI. The litellm call spy (model+api_base on every call) led to the solution.
+
+## 39. Production errors of the Kimi switchover and their fixes (2026-08-26)
+
+### Three separate errors, one symptom (HTTP 500 / "local runs instead of Kimi")
+1. **Server process cache**: the systemd server started BEFORE the Dev-mode config change, so because of the `_get_settings()` process-lifetime cache the old `task_model: "local"` remained → a restart is needed after every config.yaml change (documented).
+2. **`__main__` double-import bug** (Agent.md 38): the CLI `--model kimi` branch ran on the local model → `sys.modules[__name__]` fix.
+3. **The `pi` binary is not on the systemd PATH**: the token refresh of `_RefreshingKimiLM` (`subprocess.run(["pi", ...])`) died silently on the server (FileNotFoundError swallowed) → expired token → 401 → HTTP 500. Fix: `shutil.which("pi") or ~/.npm-global/bin/pi` absolute fallback + a warning log instead of the silent pass.
+
+### Verification (with a systemd-like minimal environment)
+- `_RefreshingKimiLM` call with a minimal PATH: ✅ (after the fix)
+- End-to-end: `POST /generate-kb {"story_id":"STRY0010010","force_update":true}` → 200 OK, article generated with Kimi K3, KB push ✅
+- Note: the duplicate handling (409) also works correctly without force_update
+
+### Lesson
+The `except: pass` around the token refresh was an invisible source of errors — the systemd-like environment test (env -i, restricted PATH) is what every server-side subprocess dependency must be checked with in the future.
