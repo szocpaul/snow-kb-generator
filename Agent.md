@@ -722,3 +722,18 @@ for m in re.finditer(r"</?(ul|ol|li|em|p|h2|h3|strong)(?:\s[^>]*)?>", html):
 
 ### Diagnosztika-lecture
 A "lokális modell megy Kimi helyett" tünet mögött két külön ok is volt: (1) a szerver process-cache régi configja (restart megoldotta), (2) a __main__ dupla-import bug a CLI-ben. A litellm-hívás-spy (model+api_base minden hívásnál) vezetett a megoldáshoz.
+
+## 39. Kimi-áttérés produkciós hibái és javítások (2026-08-26)
+
+### Három külön hiba, egy tünet (HTTP 500 / "lokális megy Kimi helyett")
+1. **Szerver process-cache**: a systemd-szerver a Dev-mód config-váltás ELŐTT indult, `_get_settings()` process-lifetime cache miatt a régi `task_model: "local"` maradt → restart szükséges minden config.yaml módosítás után (dokumentálva).
+2. **`__main__` dupla-import bug** (Agent.md 38): a CLI `--model kimi` ág lokálisra futott → `sys.modules[__name__]` fix.
+3. **A `pi` bináris nincs a systemd PATH-on**: a `_RefreshingKimiLM` token-refresh-je (`subprocess.run(["pi", ...])`) a szerveren némán elhasalt (FileNotFoundError elnyelve) → lejárt token → 401 → HTTP 500. Javítás: `shutil.which("pi") or ~/.npm-global/bin/pi` abszolút fallback + warning-log a néma pass helyett.
+
+### Verifikáció (systemd-szerű minimális környezettel)
+- `_RefreshingKimiLM` hívás minimális PATH-ban: ✅ (a fix után)
+- End-to-end: `POST /generate-kb {"story_id":"STRY0010010","force_update":true}` → 200 OK, Kimi K3-mal generált cikk, KB push ✅
+- Megj.: a duplikáció-kezelés (409) is helyesen működik force_update nélkül
+
+### Tanulság
+A `except: pass` a token-refresh körül láthatatlan hibaforrás volt — a systemd-környezeti teszt (env -i, korlátozott PATH) az, ami a jövőben minden szerver-oldali subprocess-függést ellenőrizni kell.
