@@ -758,3 +758,8 @@ Behind the "local model runs instead of Kimi" symptom there were two separate ca
 
 ### Lesson
 The `except: pass` around the token refresh was an invisible source of errors — the systemd-like environment test (env -i, restricted PATH) is what every server-side subprocess dependency must be checked with in the future.
+
+### CORRECTION to point 39 (same day, ~1 hour later)
+The "absolute path for pi" fix **never made it into the file** — the fixing cell had a parse error, so the edit did not run, and the commit only carried the log. The server therefore ran with the OLD pi-subprocess code: the first button press succeeded with a fresh token, ~20 minutes later the token expired → the pi-refresh died in systemd (as known) → another HTTP 500.
+**Final fix:** dropping the pi subprocess entirely — DIRECT OAuth refresh from Python (`POST https://auth.kimi.com/api/oauth/token`, `grant_type=refresh_token`, the client_id taken from the pi-ai source). Tested with an expired token in a systemd-like env: expired → 899 s fresh. Tests 286/286, end-to-end generation on the server: 200 OK.
+**Meta-lesson:** in the case of a cell-level parse error, the run of the WHOLE cell must be verified — the feeling of "it is saved" can occur even with a parse error, if the human does not read the output to the end.
