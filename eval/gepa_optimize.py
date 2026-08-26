@@ -175,14 +175,37 @@ class _RefreshingKimiLM(dspy.LM):
         expires_s = kimi.get("expires", 0) / 1000
         if time.time() > expires_s - 120:
             try:
-                subprocess.run(
-                    ["pi", "--provider", "kimi-coding", "--model", "k3", "-p", "OK"],
-                    capture_output=True, timeout=90,
+                # KÖZVETLEN OAuth refresh (a pi subprocess helyett — az systemd
+                # alatt PATH/node-függős miatt megbízhatatlan, ld. Agent.md 39).
+                # Endpoint + client_id: pi-ai auth/oauth/kimi-coding.js forrás.
+                import requests as _req
+                resp = _req.post(
+                    "https://auth.kimi.com/api/oauth/token",
+                    headers={"Content-Type": "application/x-www-form-urlencoded",
+                             "Accept": "application/json"},
+                    data={"client_id": "17e5f671-d194-4dfb-9706-5516cb48c098",
+                          "grant_type": "refresh_token",
+                          "refresh_token": kimi.get("refresh", "")},
+                    timeout=30,
                 )
-                auth_data = json.loads(auth_path.read_text(encoding="utf-8"))
-                kimi = auth_data.get("kimi-coding", {})
-            except Exception:
-                pass  # marad a meglévő token; a retry/retry-logika kezeli
+                resp.raise_for_status()
+                tok = resp.json()
+                new_access = tok.get("access_token") or tok.get("access")
+                if new_access:
+                    # Visszaírjuk az auth.json-be (a pi és a többi fogyasztó is ezt olvassa)
+                    auth_data["kimi-coding"]["access"] = new_access
+                    if tok.get("refresh_token"):
+                        auth_data["kimi-coding"]["refresh"] = tok["refresh_token"]
+                    if tok.get("expires_in"):
+                        auth_data["kimi-coding"]["expires"] = int((time.time() + tok["expires_in"]) * 1000)
+                    auth_path.write_text(json.dumps(auth_data, ensure_ascii=False), encoding="utf-8")
+                    auth_data = json.loads(auth_path.read_text(encoding="utf-8"))
+                    kimi = auth_data.get("kimi-coding", {})
+            except Exception as exc:
+                # NE nyeljük el némán — a systemd-környezetben ez volt a
+                # láthatatlan hibaforrás (Agent.md 39).
+                import logging
+                logging.getLogger(__name__).warning("Kimi token-refresh sikertelen: %s", exc)
 
         fresh = kimi.get("access")
         if fresh:

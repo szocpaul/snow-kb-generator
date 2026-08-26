@@ -737,3 +737,8 @@ A "lokális modell megy Kimi helyett" tünet mögött két külön ok is volt: (
 
 ### Tanulság
 A `except: pass` a token-refresh körül láthatatlan hibaforrás volt — a systemd-környezeti teszt (env -i, korlátozott PATH) az, ami a jövőben minden szerver-oldali subprocess-függést ellenőrizni kell.
+
+### KORREKCIÓ a 39-es ponthoz (ugyanaznap, ~1 órával később)
+A "pi abszolút útvonal" javítás **sosem került a fájlba** — a javító cella parse-error miatt a szerkesztés nem futott le, a commit csak a naplót vitte. A szerver ezért a RÉGI pi-subprocess kóddal futott: az első gombnyomás friss tokennel sikerült, ~20 perccel később a token lejárt → a pi-refresh systemd-ben (ismert módon) elhasalt → újabb HTTP 500.
+**Végleges javítás:** a pi subprocess teljes kivétele — KÖZVETLEN OAuth refresh Pythonból (`POST https://auth.kimi.com/api/oauth/token`, `grant_type=refresh_token`, a pi-ai forrásból vett client_id). Tesztelve lejárt tokennel, systemd-szerű env-ben: lejárt → 899 mp friss. Tesztek 286/286, end-to-end generálás a szerveren: 200 OK.
+**Meta-tanulság:** cell-szintű parse-error esetén az EGÉSZ cella lefutását ellenőrizni kell — a "mentve" érzés parse-error mellett is meg lehet, ha az ember a kimenetet nem olvassa végig.
