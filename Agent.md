@@ -763,3 +763,16 @@ The `except: pass` around the token refresh was an invisible source of errors �
 The "absolute path for pi" fix **never made it into the file** — the fixing cell had a parse error, so the edit did not run, and the commit only carried the log. The server therefore ran with the OLD pi-subprocess code: the first button press succeeded with a fresh token, ~20 minutes later the token expired → the pi-refresh died in systemd (as known) → another HTTP 500.
 **Final fix:** dropping the pi subprocess entirely — DIRECT OAuth refresh from Python (`POST https://auth.kimi.com/api/oauth/token`, `grant_type=refresh_token`, the client_id taken from the pi-ai source). Tested with an expired token in a systemd-like env: expired → 899 s fresh. Tests 286/286, end-to-end generation on the server: 200 OK.
 **Meta-lesson:** in the case of a cell-level parse error, the run of the WHOLE cell must be verified — the feeling of "it is saved" can occur even with a parse error, if the human does not read the output to the end.
+
+## 40. dspy.settings thread error on the server (2026-08-27)
+
+### Error
+Second (and later) button press: HTTP 500, `RuntimeError: dspy.settings can only be changed by the thread that initially configured it`. The global `dspy.configure()` of DSPy 3.x can only be called from the thread that configured it first — but the FastAPI thread pool gives a different thread per request.
+
+### Fix (refactor)
+- `configure_lm()` → **`build_lm(settings)`** (it only builds the LM, it does not configure globally) + a backwards compatible `configure_lm()` wrapper for the CLI/tests/eval
+- The `generate_kb_article` request path now uses **`dspy.context(lm=lm)`** (contextvars-based, thread-safe) around the program call — there is no more global configure on the server
+- Verification: 286/286 tests + TWO consecutive `/generate-kb` calls also 200 OK (before, the 2nd was always 500)
+
+### Lesson
+On DSPy servers (FastAPI/uvicorn) the global `dspy.configure` is NOT request-safe — for per-request configuration `dspy.context` is the right tool. (The eval scripts are single-threaded, there the global configure is still fine.)

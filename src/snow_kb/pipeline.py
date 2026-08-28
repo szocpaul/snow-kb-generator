@@ -153,20 +153,20 @@ def assemble_story_text(story: StoryData, settings: Settings | None = None) -> s
 
 
 # ---------------------------------------------------------------------------
-# LM configuration (according to dspy-fundamentals / dspy-advanced-workflow)
+# LM configuration (per dspy-fundamentals / dspy-advanced-workflow)
 # ---------------------------------------------------------------------------
 
-def configure_lm(settings: Settings) -> None:
-    """Configures the DSPy LM globally from the settings.
+def build_lm(settings: Settings) -> "dspy.LM":
+    """Builds (but does NOT configure globally) the DSPy LM from the settings.
 
-    According to the skill: dspy.configure(lm=..., track_usage=True) — globally,
-    override only in justified cases per module. The track_usage for the cost/latency
-    is needed for observability.
+    Because of the thread pool of the FastAPI server, the global dspy.configure() per request
+    RuntimeError-t dob ("dspy.settings can only be changed by the thread that
+    initially configured it") — therefore the request path uses the thread-safe
+    alternative dspy.context(lm=...) (see generate_kb_article).
 
     Ha settings.pipeline.task_model == "kimi", a Kimi K3 a task modell
-    (auto-refreshing OAuth token, strong baseline: 0.655 without GEPA).
-    If settings.pipeline.use_pi_auth is True, it uses the dspy_lm_auth.LM class
-    (Pi Agent GLM subscription for authentication). Otherwise the standard dspy.LM.
+    (auto-refreshing OAuth token). If use_pi_auth is True, it reads the Pi auth file.
+    Otherwise the standard dspy.LM.
     """
     if settings.pipeline.task_model == "kimi":
         # Kimi K3 task model (Kimi-direct architecture): a strong model, GEPA is
@@ -232,7 +232,15 @@ def configure_lm(settings: Settings) -> None:
             lm_kwargs["api_key"] = "not-needed"  # For local endpoints
         lm = dspy.LM(settings.models.main, **lm_kwargs)
 
-    dspy.configure(lm=lm, track_usage=True)
+    return lm
+
+
+def configure_lm(settings: Settings) -> None:
+    """Configures the DSPy LM globally (single-threaded environment: CLI, tests, eval).
+
+    On the server/request path do NOT use this — there you need build_lm + dspy.context.
+    """
+    dspy.configure(lm=build_lm(settings), track_usage=True)
 
 
 # ---------------------------------------------------------------------------
@@ -456,19 +464,22 @@ def generate_kb_article(
     if settings.dry_run:
         article = _mock_article_from_story(story, settings)
     else:
-        # 5. LM configuration + running the program
-        configure_lm(settings)
+        # 5. Building the LM + running the program in a THREAD-SAFE context
+        # (because of the FastAPI thread pool the global dspy.configure would raise
+        # here — dspy.context is the contextvars-based, thread-safe alternative)
+        lm = build_lm(settings)
         if program is None:
             program = _load_program(program_path)
 
-        pred = program(
-            story_text=story_text,
-            update_set_payloads=update_set_payloads,
-            template_context=template_context,
-            related_articles_context=related_articles_context,
-            category=settings.snow.default_category,
-            knowledge_base_id=settings.snow.knowledge_base_id,
-        )
+        with dspy.context(lm=lm):
+            pred = program(
+                story_text=story_text,
+                update_set_payloads=update_set_payloads,
+                template_context=template_context,
+                related_articles_context=related_articles_context,
+                category=settings.snow.default_category,
+                knowledge_base_id=settings.snow.knowledge_base_id,
+            )
         article: KBArticle = pred.article
         article.source_story = story_identifier  # prevents duplication
         # Format normalization: <code> → <strong> (the grey background is forbidden)
