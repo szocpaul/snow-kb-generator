@@ -742,3 +742,16 @@ A `except: pass` a token-refresh körül láthatatlan hibaforrás volt — a sys
 A "pi abszolút útvonal" javítás **sosem került a fájlba** — a javító cella parse-error miatt a szerkesztés nem futott le, a commit csak a naplót vitte. A szerver ezért a RÉGI pi-subprocess kóddal futott: az első gombnyomás friss tokennel sikerült, ~20 perccel később a token lejárt → a pi-refresh systemd-ben (ismert módon) elhasalt → újabb HTTP 500.
 **Végleges javítás:** a pi subprocess teljes kivétele — KÖZVETLEN OAuth refresh Pythonból (`POST https://auth.kimi.com/api/oauth/token`, `grant_type=refresh_token`, a pi-ai forrásból vett client_id). Tesztelve lejárt tokennel, systemd-szerű env-ben: lejárt → 899 mp friss. Tesztek 286/286, end-to-end generálás a szerveren: 200 OK.
 **Meta-tanulság:** cell-szintű parse-error esetén az EGÉSZ cella lefutását ellenőrizni kell — a "mentve" érzés parse-error mellett is meg lehet, ha az ember a kimenetet nem olvassa végig.
+
+## 40. dspy.settings thread-hiba a szerveren (2026-08-27)
+
+### Hiba
+Második (és későbbi) gombnyomás: HTTP 500, `RuntimeError: dspy.settings can only be changed by the thread that initially configured it`. A DSPy 3.x globális `dspy.configure()`-a csak abból a szálból hívható, amelyik először konfigurált — a FastAPI thread-poolja viszont kérésenként más szálat ad.
+
+### Javítás (refactor)
+- `configure_lm()` → **`build_lm(settings)`** (csak felépíti az LM-et, nem konfigurál globálisan) + visszafelé kompatibilis `configure_lm()` wrapper a CLI/tesztek/eval számára
+- A `generate_kb_article` kérés-útvonal mostantól **`dspy.context(lm=lm)`** (contextvars-alapú, szálbiztos) a program-hívás körül — nincs több globális configure a szerveren
+- Verifikáció: 286/286 teszt + KÉT egymás utáni `/generate-kb` hívás is 200 OK (korábban a 2. mindig 500 volt)
+
+### Tanulság
+DSPy-szervereken (FastAPI/uvicorn) a globális `dspy.configure` NEM kérés-biztonságos — kérésenkénti konfigurációhoz `dspy.context` a helyes eszköz. (Az eval-scriptek egyszálasak, ott a globális configure továbbra is rendben.)

@@ -156,17 +156,17 @@ def assemble_story_text(story: StoryData, settings: Settings | None = None) -> s
 # LM konfigurálás (dspy-fundamentals / dspy-advanced-workflow szerint)
 # ---------------------------------------------------------------------------
 
-def configure_lm(settings: Settings) -> None:
-    """Globálisan konfigurálja a DSPy LM-et a settings-ből.
+def build_lm(settings: Settings) -> "dspy.LM":
+    """Felépíti (de NEM konfigurálja globálisan) a DSPy LM-et a settings-ből.
 
-    A skill szerint: dspy.configure(lm=..., track_usage=True) — globálisan,
-    modulonként csak indokolt esetben override. A track_usage a cost/latency
-    megfigyelhetőségséhez kell.
+    A FastAPI-szerver thread-poolja miatt a globális dspy.configure() kérésenként
+    RuntimeError-t dob ("dspy.settings can only be changed by the thread that
+    initially configured it") — ezért a kérés-útvonal a dspy.context(lm=...)
+    thread-biztos alternatívát használja (ld. generate_kb_article).
 
     Ha settings.pipeline.task_model == "kimi", a Kimi K3 a task modell
-    (auto-refreshing OAuth token, erős baseline: 0.655 GEPA nélkül).
-    Ha settings.pipeline.use_pi_auth True, a dspy_lm_auth.LM osztályt használja
-    (Pi Agent GLM előfizetés hitelesítéshez). Egyébként a szabványos dspy.LM-et.
+    (auto-refreshing OAuth token). Ha use_pi_auth True, a Pi auth fájlból olvas.
+    Egyébként a szabványos dspy.LM-et.
     """
     if settings.pipeline.task_model == "kimi":
         # Kimi K3 task modell (Kimi-direct architektúra): erős modell, nincs
@@ -232,7 +232,15 @@ def configure_lm(settings: Settings) -> None:
             lm_kwargs["api_key"] = "not-needed"  # Lokális endpointokhoz
         lm = dspy.LM(settings.models.main, **lm_kwargs)
 
-    dspy.configure(lm=lm, track_usage=True)
+    return lm
+
+
+def configure_lm(settings: Settings) -> None:
+    """Globálisan konfigurálja a DSPy LM-et (egyszálas környezet: CLI, tesztek, eval).
+
+    Szerver/kérés-útvonalon NE ezt használd — ott a build_lm + dspy.context kell.
+    """
+    dspy.configure(lm=build_lm(settings), track_usage=True)
 
 
 # ---------------------------------------------------------------------------
@@ -456,19 +464,22 @@ def generate_kb_article(
     if settings.dry_run:
         article = _mock_article_from_story(story, settings)
     else:
-        # 5. LM konfigurálása + program futtatása
-        configure_lm(settings)
+        # 5. LM felépítése + program futtatása THREAD-BIZTOS context-ben
+        # (a FastAPI thread-pool miatt a globális dspy.configure itt hibát dobna —
+        # a dspy.context contextvars-alapú, szálbiztos alternatíva)
+        lm = build_lm(settings)
         if program is None:
             program = _load_program(program_path)
 
-        pred = program(
-            story_text=story_text,
-            update_set_payloads=update_set_payloads,
-            template_context=template_context,
-            related_articles_context=related_articles_context,
-            category=settings.snow.default_category,
-            knowledge_base_id=settings.snow.knowledge_base_id,
-        )
+        with dspy.context(lm=lm):
+            pred = program(
+                story_text=story_text,
+                update_set_payloads=update_set_payloads,
+                template_context=template_context,
+                related_articles_context=related_articles_context,
+                category=settings.snow.default_category,
+                knowledge_base_id=settings.snow.knowledge_base_id,
+            )
         article: KBArticle = pred.article
         article.source_story = story_identifier  # Duplikáció megakadályozása
         # Formázási normalizálás: <code> → <strong> (szürke háttér tiltva)
