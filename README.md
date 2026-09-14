@@ -1,158 +1,132 @@
 # snow-kb-generator
 
-> DSPy pipeline that turns completed ServiceNow **Stories** into **Knowledge Base articles** — automatically, powered by **Kimi K3** (alap mód) vagy lokális **Qwen3.8-27B** (Dev mód, llama.cpp), and a ServiceNow UI Action button.
+> A DSPy pipeline that turns completed ServiceNow **Stories** into **Knowledge Base articles** — automatically, powered by **Kimi K3** (default mode) or a local **Qwen3.8-27B** (Dev mode, llama.cpp), triggered by a ServiceNow UI Action button.
 
-## Mi ez?
+*(Magyar változat: [README.hu.md](README.hu.md))*
 
-Amikor a fejlesztők befejeznek egy ServiceNow Story-t (`STRY...`), kézzel kellene Knowledge Base (KB) cikket írni a megoldásról. Ez a project **teljesen automatizálja** ezt:
-1. A fejlesztő rákattint a **"Create KB Article"** gombra a ServiceNow felületen.
-2. A Story adatai egy FastAPI webszerverre kerülnek (VPS-en fut).
-3. Egy AI pipeline (DSPy + Kimi K3, Dev módban lokális Qwen3.8-27B) strukturált KB cikket generál.
-4. A cikk automatikusan létrejön a ServiceNow KB-ben, a linkje pedig bekerül a Story `work_notes` mezőjébe.
+## What is this?
 
-**Bemenet:** lezárt ServiceNow Story — `short_description`, `description`, `acceptance_criteria`, `u_technical_specification`, `work_notes`, `comments`, `state`.
-**Kiegészítő bemenet:** A Story nevével megegyező nevű **Update Set** modulekérés és a benne lévő módosított forráskódok (Script Include, Business Rule, UI Action XML payloadok).
-**Kimenet:** KB Article (HTML) — `title`, `summary`, `problem`, `solution` (reprodukálható lépések), `category`, `audience`.
-**Funkciók:**
-- Duplikáció megakadályozása (`u_source_story` mezővel) és Felülírás (Update) felhasználói megerősítés (confirm dialog) után.
-- Csapat-specifikus KB Template-ek (Assignment Group alapján történő felismerés és Few-Shot generálás).
-- Update Set XML/kód elemzés (RLM / ChainOfThought).
+When developers finish a ServiceNow Story (`STRY...`), someone has to manually write a Knowledge Base article about the solution. This project **fully automates** that:
 
-## Technológiai verem
+1. The developer clicks a **"Create KB Article"** button on the ServiceNow form.
+2. The Story data is sent to a FastAPI server (running on a VPS, systemd-managed).
+3. A DSPy pipeline (Kimi K3, or local Qwen3.8-27B in Dev mode) generates a structured KB article.
+4. The article is automatically created in the ServiceNow KB, and its link is written back to the Story's `work_notes`.
 
-- **Python 3.12**
-- **DSPy 3.3.x** — Signatures + Modules, GEPA optimalizáció
-- **LM (2026-08-25-től):** ALAP mód = **Kimi K3** (Kimi Code előfizetés, `task_model: "kimi"`) | **Dev mód** = lokális Qwen3.8-27B (llama.cpp) — ki/bekapcsolás: `SNOW_KB_DEV_MODE=1` env vagy CLI `--dev` flag. GEPA reflection/proposer továbbra is Kimi K3.
-- **ServiceNow Table API** (`requests`) — Story lekérés + KB létrehozás (CRUD)
-- **FastAPI + Uvicorn** — Webhook szerver a ServiceNow UI Action-nek
-- **Pydantic v2** — adatmodell és validáció
-- **Docker** — deploy és konténerizáció
+**Input:** completed ServiceNow Story — `short_description`, `description`, `acceptance_criteria`, `u_technical_specification`, `work_notes`, `comments`, `state`.
+**Additional input:** the Update Set matching the Story name, with the modified source codes (Script Include, Business Rule, UI Action XML payloads).
+**Output:** KB Article (HTML) — `title`, `summary`, `problem`, `solution` (reproducible steps), `category`, `audience`.
 
-## Architektúra
+**Features:**
+- Duplicate prevention (`u_source_story` field) and overwrite with user confirmation
+- Team-specific KB templates (assignment-group-based detection, few-shot generation)
+- Update Set XML/code analysis (ChainOfThought)
+- Hallucination guardrails: KB-number validation, component-name detection, HTML-nesting check
+
+## Results (measured, not claimed)
+
+| Metric | Value |
+|---|---|
+| End-to-end validation | Production: ServiceNow button → generation → KB update, human review approved (2026-08-20) |
+| Overall score (5-axis rich metric) | **0.869** (Kimi K3) / **0.859** (local 27B), 9-example gold dataset |
+| Measurement noise (3 identical runs) | **±0.018** overall, ±0.017 style (after multi-sample judge, was ±0.188) |
+| Hallucination axis | 1.000 across all evals; every production article verified component-by-component |
+| Test suite | **286/286 passing** |
+
+Key engineering lessons baked in: LLM-judge variance calibration, GEPA prompt-transfer failure detection (a 35B-tuned program *degrades* on a 27B model), OAuth token auto-refresh under systemd, thread-safe DSPy configuration for web servers.
+
+## Tech stack
+
+- **Python 3.12**, **DSPy 3.3.x** (Signatures, Modules, GEPA optimization)
+- **LM (since 2026-08-25):** DEFAULT = **Kimi K3** (Kimi Code subscription, `task_model: "kimi"`) | **Dev mode** = local Qwen3.8-27B (llama.cpp) — toggle via `SNOW_KB_DEV_MODE=1` env or CLI `--dev` flag
+- **ServiceNow Table API** (`requests`) — Story fetch + KB CRUD
+- **FastAPI + Uvicorn** — webhook server for the UI Action (systemd, `Restart=always`)
+- **Pydantic v2** — data model & validation
+
+## Architecture
 
 ```
-ServiceNow (Fejlesztői UI)
+ServiceNow (Developer UI)
     │
-    │  [Create KB] UI Action gomb (Server-side script)
-    │  → RESTMessageV2 (POST)
+    │  [Create KB] UI Action (server-side script) → RESTMessageV2 (POST)
     ▼
-FastAPI szerver (VPS - Hetzner, 8000-as port)
-    │  1. ServiceNowClient.get_story() – Elkéri a Story-t
-    │  2. ServiceNowClient.get_update_set_changes() – Lekéri a módosított kódokat (XML)
-    │  3. StoryToKBArticle (DSPy + Kimi K3 / Dev módban Qwen3.8-27B) – Kódok elemzése és cikk generálása
-    │  4. ServiceNowClient.create_kb_article() – Pusholja a KB-be
+FastAPI server (VPS, port 8000, systemd)
+    │  1. ServiceNowClient.get_story()            – fetch Story
+    │  2. ServiceNowClient.get_update_set_changes() – fetch modified code (XML)
+    │  3. StoryToKBArticle (DSPy + Kimi K3 / Dev: Qwen3.8-27B) – analyze + generate
+    │  4. ServiceNowClient.create_kb_article()    – push to KB
     ▼
-Válasz a ServiceNow-nak:
-    {"kb_sys_id", "kb_url", "title"}
+Response to ServiceNow: {"kb_sys_id", "kb_url", "title"}
     │
     ▼
-UI Action frissíti a Story work_notes mezőjét a linkkel.
+UI Action writes the KB link into the Story's work_notes.
 ```
 
-## Telepítés és futtatás
+## Setup & usage
 
-### 1. Követelmények
-- Python 3.12+
-- ServiceNow instance (hozzáférés a Table API-hoz és UI Action-ökhoz)
-- Kimi Code előfizetés (ALAP mód, `task_model: "kimi"` — alapértelmezett) ÉS/VAGY futó llama.cpp szerver a Qwen3.8-27B modellel (Dev mód, Windows gép, Tailscale endpoint; `SNOW_KB_DEV_MODE=1` vagy `--dev`)
+### Requirements
+- Python 3.12+, ServiceNow instance (Table API + UI Action access)
+- Kimi Code subscription (default mode) AND/OR a running llama.cpp server with Qwen3.8-27B (Dev mode)
 
-### 2. Beállítás
+### Configuration
 ```bash
 git clone https://github.com/szocpaul/snow-kb-generator.git
 cd snow-kb-generator
-
-# Függőségek telepítése
 pip install -e ".[deploy,pi-auth]"
-
-# Konfiguráció
 cp .env.example .env
-# Szerkeszd a .env fájlt: SNOW_INSTANCE, SNOW_USERNAME, SNOW_PASSWORD, SNOW_WEBHOOK_API_KEY
-# Szerkeszd a config.yaml fájlt: models.main, knowledge_base_id, story_table
+# Edit .env: SNOW_INSTANCE, SNOW_USERNAME, SNOW_PASSWORD, SNOW_WEBHOOK_API_KEY
+# Edit config.yaml: models.main, knowledge_base_id, story_table
 ```
 
-### 3. Futtatás CLI-ből (teszteléshez)
+### CLI (testing)
 ```bash
-# Csak generálás, push nélkül (dry-run, lokális mock Story-val)
-python -m snow_kb STRY0012345 --dry-run
-
-# Éles generálás ServiceNow-ból, KB push nélkül
-python -m snow_kb STRY0010012 --no-push --json
-
-# Teljes pipeline: lekérés + generálás + push a KB-be
-python -m snow_kb STRY0010012
+python -m snow_kb STRY0012345 --dry-run          # mock story, no LM
+python -m snow_kb STRY0010012 --no-push --json   # real story, no KB push
+python -m snow_kb STRY0010012                    # full pipeline incl. push
+python -m snow_kb STRY0010012 --dev              # Dev mode: local LLM instead of Kimi
 ```
 
-### 4. Futtatás Webszerverként (ServiceNow UI Action-höz)
-
-**Dockerrel (ajánlott VPS-re):**
+### Server (production)
 ```bash
-docker-compose up -d
+sudo cp deploy/snow-kb.service /etc/systemd/system/
+sudo systemctl daemon-reload && sudo systemctl enable --now snow-kb.service
 ```
+Endpoints: `GET /health`, `POST /generate-kb` (API key required).
+ServiceNow-side setup (UI Action): see `servicenow/README.md`. New PDI bootstrap: `scripts_pdi/bootstrap_pdi.py` (creates fields, template KB, UI Action, test story).
 
-**Manuálisan:**
-```bash
-uvicorn snow_kb.server:app --host 0.0.0.0 --port 8000
-```
-
-A szerver elérhető lesz a `http://<VPS_IP>:8000` címen.
-- `GET /health` — Egészségügyi ellenőrzés
-- `POST /generate-kb` — Story-ból KB cikket generál (API kulcs szükséges)
-
-### 5. ServiceNow beállítása
-A `servicenow/` mappában található `README.md` lépésről lépésre leírja, hogyan kell beállítani az UI Action gombot és a scriptet a ServiceNow rendszerben.
-
-## Mappa-struktúra
+## Project structure
 
 ```
 snow_kb_generator/
-├── Agent.md                    # AI ágens számára: cél, elvek, státusz
-├── pyproject.toml              # Csomag definíció
-├── Dockerfile                  # Deploy konténer
-├── docker-compose.yml          # Deploy konfiguráció
-├── config.yaml                 # Modell, KB ID, táblanevek
+├── Agent.md                    # Decision log / project journal (HU)
+├── config.yaml                 # Model, KB ID, table names
 ├── src/snow_kb/
-│   ├── server.py               # FastAPI webszerver
-│   ├── pipeline.py             # Orchestrátor (fetch → generate → push)
-│   ├── servicenow_client.py    # ServiceNow Table API kliens
+│   ├── server.py               # FastAPI server
+│   ├── pipeline.py             # Orchestrator (fetch → generate → push)
+│   ├── servicenow_client.py    # ServiceNow Table API client
 │   ├── signatures.py           # DSPy Signatures (AnalyzeChanges, ExtractChange, GenerateKbFromTemplate)
-│   ├── program.py              # StoryToKBArticle(dspy.Module)
-│   └── ...                     # config, schemas, cli
-├── servicenow/                 # ServiceNow-ba másolandó UI Action script
-├── tests/                      # 286 pytest teszt (`../.venv` interpreterrel — NINCS saját .venv!)
-├── eval/                       # GEPA eval harness (dataset, rich_metric, baseline, gepa_optimize)
-├── artifacts/                  # Optimized programok (35B-re GEPA-zott: program_35b_optimized.json — élesben a BASE program fut, ld. Agent.md 33)
-├── deploy/                     # systemd unit + telepítési útmutató (a szerver restart-tűrése)
-├── scripts_pdi/                # bootstrap_pdi.py — új PDI felkészítése (mezők, template, UI Action, teszt-Story)
-├── .prime/agent/skills/        # autonomous-spec-runner skill (a long-running agent workflow)
-├── gepa_logs/                  # GEPA checkpointek
-└── data/                       # Minta Story-k és Gold példapárok
+│   └── program.py              # StoryToKBArticle(dspy.Module)
+├── eval/                       # GEPA eval harness (dataset, rich_metric, baseline, compare)
+├── specs/                      # 12 feature specs (spec-kit, spec-driven development)
+├── tests/                      # 286 pytest tests
+├── deploy/                     # systemd unit + setup guide
+├── scripts_pdi/                # bootstrap_pdi.py — new ServiceNow instance setup
+├── servicenow/                 # UI Action script to install in ServiceNow
+└── data/                       # Sample stories and gold example pairs
 ```
 
-## DSPy Workflow állapota
+## DSPy workflow status
 
-1. **Spec** — ✅ Kész
-2. **Program** — ✅ Kész (Signatures + Module + Update Set Code Analyzer)
-3. **Data** — ✅ Kész (Gold Dataset: 9 arany példapár a gold_dataset.md-ben — 5 train / 4 val; a Példa 5 Update Set XML payloadokkal is rendelkezik, spec 011)
-4. **Rich metric** — ✅ Kész (rich_metric 5 tengely: structure + content + template + hallucination + style, spec 010; a hallucination tengely spec 011 óta KB-számokat ÉS nevesített komponensneveket is validál)
-5. **Baseline** — ✅ Kész (per-axis formátum; a futásközi zaj a spec 012 multi-sample judge óta ±0.018). **Aktuális referenciák (2026-08-26, spec 012 metrika, 5 train/4 val):** lokális Qwen3.8-27B base **0.859** | **Kimi K3 base 0.869** (az első igazolt Kimi-mérés — a júliusi "kimi" számok a __main__ dupla-import bug miatt bizonytalanok, ld. Agent.md 38)
-6. **GEPA optimalizáció** — ✅ Kész (Kimi K3 reflection; spec 010 futam a 35B-re 2026-08-08: 0.773 → 0.825-0.859). **FONTOS (2026-08-20): a 35B-re optimalizált program NEM transzferálódik a 27B-re** (0.768 vs 27B base 0.859) — az éles ezért a base programot futtatja; a 35B-s artifact megőrizve. GEPA a 27B-hez: backlog, indítócsomag kész (a zaj-mentesített metrikával értelmezhető)
-7. **Export & deploy** — ✅ Kész: a FastAPI szerver **systemd-szolgáltatásként** fut (`deploy/snow-kb.service`, Restart=always, SIGKILL-tesztelve), a **base programmal** (az `artifacts/program.json` nincs jelen → automatikus fallback). **Éles end-to-end validáció**: 2026-08-09 (35B) és 2026-08-20 (27B, STRY0010014 bidirectional cikk, 8/8 komponens igazolt) — emberi review elfogadva. Új PDI-migráció: `scripts_pdi/bootstrap_pdi.py` (2026-08-20, dev437812)
+1. **Spec** — ✅ Done
+2. **Program** — ✅ Done (Signatures + Module + Update Set code analyzer)
+3. **Data** — ✅ Done (gold dataset: 9 example pairs, 5 train / 4 val, incl. Update Set payloads)
+4. **Rich metric** — ✅ Done (5 axes: structure, content, template, hallucination, style; the hallucination axis validates both KB numbers and named components)
+5. **Baseline** — ✅ Done (current references: local 27B **0.859**, Kimi K3 **0.869**)
+6. **GEPA optimization** — ✅ Done (Kimi K3 reflection; 35B run: 0.773 → 0.859 — note: the 35B-tuned program does **not** transfer to the 27B model, so production uses the base program; a 27B GEPA run is in the backlog with a ready starter package)
+7. **Export & deploy** — ✅ Done (systemd server, live end-to-end validation on two model generations)
 
-**Hallucináció-védelem (spec 004):** 3 védelmi vonal — (1) megtisztított gold dataset (`KBXXXXXXX` placeholder), (2) hallucination axis a metrikában (GEPA feedback), (3) `strip_hallucinated_references()` guardrail a pipeline-ban push előtt. Éles validáció: a generált cikkek 0 hallucinált hivatkozást tartalmaznak.
+**Spec-driven development:** the project actively uses the spec-kit methodology — 12 completed feature specs in `specs/` (duplicate prevention, team templates, GEPA quality, hallucination guardrails, direction-aware quality, human-style articles, component-hallucination metric, style-judge noise reduction, and more).
 
-**SDD (Spec-Driven Development):** A project aktívan használja a `spec-kit` módszertant.
-- 1. Kész Feature: `001-kb-duplicate-prevention` (Duplikáció megakadályozása és felülírás).
-- 2. Kész Feature: `002-team-based-templates` (Csapat-specifikus KB sablonok generálása).
-- 3. Kész Feature: `003-gepa-kb-quality` (GEPA optimalizáció a KB cikk minőségének javítására).
-- 4. Kész Feature: `004-no-hallucinated-references` (Hallucináció-mentes KB generálás: dataset sanitization + hallucination metric axis + pipeline guardrail).
-- 5. Kész Feature: `005-real-related-kb-articles` (Valódi kapcsolódó KB cikkek ServiceNow kereséssel; nincs találat → N/A).
-- 6. Kész Feature: `006-template-simplification` (Egyszerűsített sablon: nincs H1/Theme/Target Audience szekció; audience = stílusinstrukció).
-- 7. Kész Feature: `007-direction-aware-quality` (Evidence-first generálás: irány-érzékeny metric + "no evidence, no section" signature + SkilledProposer + direction guardrail).
-- 8. Kész Feature: `009-remove-legacy-draft-format` (Legacy draft/format ág kivezetve; 3 prediktor, template kötelező).
-- 9. Kész Feature: `010-human-style-articles` (Emberi hangnem: tone guidance + style judge + SkilledProposer style guidance + GEPA 200-call; T013 emberi review jóváhagyva).
-- 10. Kész Feature: `011-component-hallucination-metric` (Komponens-hallucináció detektálás a metrikában + Update Set dataset-lefedettség: a hallucination tengely nevesített komponenseket is validál; Példa 5 valódi, anonymizált Update Set XML-ekkel; baseline újramérve: 0.755).
-- 11. Kész Feature: `012-style-judge-noise-reduction` (Multi-sample style judge: a `_style_score` N=3 minta átlagát adja, részleges hibatűréssel; a style futásközi szórás 0.188 → 0.017; judge-diszkrimináció változatlan; mini-GEPA számszerűen újraértékelve — a döntés az emberé).
-
-## Licenc
+## License
 
 Private project.
