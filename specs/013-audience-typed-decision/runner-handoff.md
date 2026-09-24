@@ -1,0 +1,65 @@
+# Runner-átadás: 013-audience-typed-decision (Prime Agent / autonomous-spec-runner)
+
+**Spec**: [spec.md](spec.md) | **Plan**: [plan.md](plan.md) | **Tasks**: [tasks.md](tasks.md)
+
+Ezt a promptot a szerveren, a repó gyökeréből indított Prime Agentnek add át, MIUTÁN a
+`specs/013-audience-typed-decision/` mappa (spec.md, plan.md, tasks.md) bekerült a repóba
+és commitolva van.
+
+---
+
+## Indítóprompt (másold át változatlanul)
+
+```
+Implementáld a specs/013-audience-typed-decision specet az autonomous-spec-runner
+workflow-val.
+
+A spec-FÁJLOKBÓL dolgozz: specs/013-audience-typed-decision/spec.md, plan.md, tasks.md.
+A tasks.md checkboxai a külső memóriád — pipáld ahogy haladsz.
+
+PREFLIGHT (ha bármelyik meghiusul, NE indulj el, jelentsd mi hiányzik):
+1. TYPESAFE_API_KEY be van állítva és egy minimális system_one-hívás sikeres
+2. pip install typesafe-sdk sikeres a projekt-környezetben (nyilvános PyPI, extra index NEM kell)
+3. A gold dataset példái tartalmaznak futtatható story-inputot (nem csak gold cikket)
+4. pytest -q zöld a kiinduló állapotban
+
+GATE-ek: minden phase végén pytest -q; a T012 mérés gate-ei az SC-001..SC-004 exit-code-jai.
+Használd a projekt saját interpreterét/környezetét (ld. pyproject.toml).
+
+TILALMAK:
+- GEPA TILOS (sem baseline-újrafutás, sem optimalizálás)
+- a MANUÁLIS KAPU checkboxokat (T005, T011, T013) NE pipáld — azok emberi döntésre várnak
+- a DSPy-programhoz (program.py, program.json) és az eval-metrikához NE nyúlj
+- külső szolgáltatás elérhetetlen → állj meg és jelentsd, NE improvizálj fallbacket
+- a T012-nél a threshold-sweep exploratív — NE jelentsd a legjobb sweep-sort confirmatory
+  eredményként; a confirmatory kapu a specben kijelölt 0.7
+
+Ha elakadsz a MANUÁLIS KAPUnál, állj meg és szólj. Befejezéskor küldj összefoglalót a
+main-sessionnek (per-phase eredmények, SC-gate-ek kimenetei, commit-hash-ek), aztán
+goal.complete().
+```
+
+---
+
+## Ami a promptban NINCS, és szándékosan
+
+- **Nincs bemásolt tasklista** — a runner a tasks.md-ből dolgozik (playbook: „a prompt
+  kikopik, a spec megmarad").
+- **Nincs API-kulcs** — a preflight ellenőrzi a környezetet, a kulcs sosem kerül promptba
+  vagy fájlba.
+- **Nincs kötelező ütemezés** — a monitoring a completion-message-re támaszkodik; 15 perces
+  heartbeat csak akkor, ha a futás várhatóan hosszú (a T012 élő felvétel miatt lehet az).
+
+## Emberi teendők a futás közben (a MANUÁLIS KAPUk)
+
+| Task | Mikor | Mit kell tenned |
+|---|---|---|
+| T005 | baseline után | A 9 gold audience-címke és a baseline-eredmény review-ja |
+| T011 | US2 implementáció után | A fail-open + developer-default tradeoff jóváhagyása production-futás előtt |
+| T013 | T012 mérés után | Az SC-kapuk eredményeinek review-ja; küszöb-módosítás esetén indoklás az Agent.md-be |
+
+## Takarítás (a futás után, a playbook 9. pontja szerint)
+
+- runner leállítva, tmux/heartbeat/schedule törölve
+- Agent.md naplóbejegyzés (T014 része): tények, commit-hash-ek, döntések, tanulságok
+- backlog: a verifikációs-réteg spec újraindítási feltételének állapotjelzése
