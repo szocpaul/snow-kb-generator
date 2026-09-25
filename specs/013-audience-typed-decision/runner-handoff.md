@@ -14,10 +14,15 @@ and committed.
 Implement the specs/013-audience-typed-decision spec with the autonomous-spec-runner
 workflow-val.
 
+FIRST: check out the `013-audience-typed-decision` branch
+(git checkout 013-audience-typed-decision) — the spec files and all the work
+live on this branch. Do NOT touch main; the commits must go here.
+
 Work from the spec FILES: specs/013-audience-typed-decision/spec.md, plan.md, tasks.md.
 The tasks.md checkboxes are your external memory — pipe them as you progress.
 
 PREFLIGHT (if any of these is missing, do NOT start, report what is missing):
+0. The `013-audience-typed-decision` branch is checked out and the 4 spec files are in place
 1. TYPESAFE_API_KEY is set and a minimal system_one call succeeds
 2. pip install typesafe-sdk succeeds in the project environment (public PyPI, no extra index needed)
 3. The gold dataset examples contain a runnable story input (not just a gold article)
