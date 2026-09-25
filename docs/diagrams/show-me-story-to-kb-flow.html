@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+<meta charset="utf-8">
+<title>snow-kb-generator — folyamatábra</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+<style>
+  body { font-family: system-ui, sans-serif; background: #0d1117; color: #e6edf3; margin: 0; padding: 32px; }
+  h1 { font-size: 1.3rem; font-weight: 600; margin-bottom: 24px; }
+  .mermaid { background: #161b22; border-radius: 12px; padding: 24px; max-width: 1000px; }
+</style>
+</head>
+<body>
+<h1>snow-kb-generator: Story → KB cikk folyamat</h1>
+<div class="mermaid">
+sequenceDiagram
+    participant Dev as Fejlesztő (ServiceNow UI)
+    participant SN as UI Action (RESTMessageV2)
+    participant API as FastAPI server.py :8000
+    participant Pipe as pipeline.py
+    participant DSPy as StoryToKBArticle
+    participant LLM as Qwen3.6-35B (llama.cpp)
+
+    Dev->>SN: "Create KB Article" gomb
+    SN->>API: POST /generate-kb (story id + API key)
+    API->>Pipe: run(story_id, force_update?)
+    Pipe->>SN: get_story() + get_update_set_changes()
+    SN-->>Pipe: Story mezők + módosított kódok (XML)
+    Pipe->>DSPy: story_text, payloads, team template
+    DSPy->>LLM: 3 prediktor egymás után
+    LLM-->>DSPy: KBArticle (title + HTML)
+    DSPy-->>Pipe: KBArticle
+    Pipe->>SN: create_kb_article() (vagy duplikáció-blokk)
+    SN-->>API: sys_id
+    API-->>SN: {kb_sys_id, kb_url, title}
+    SN-->>Dev: work_notes-ba bekerül a KB link
+</div>
+<script>mermaid.initialize({ startOnLoad: true, theme: 'dark' });</script>
+</body>
+</html>

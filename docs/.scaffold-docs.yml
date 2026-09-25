@@ -1,0 +1,13 @@
+last_synced_sha: 81555d20df692864258d505dfc19d91297994eb3
+last_synced_date: 2026-07-31
+audience:
+  primary: >-
+    Future-you / project maintainer — the solo developer returning after weeks away;
+    needs to rebuild the mental model fast: pipeline shape, GEPA quality loop, spec history.
+  secondary:
+    - >-
+      Developer extending the pipeline — adds signatures, guardrails, or metric axes;
+      needs the DSPy mental model and how pieces connect, less ops detail.
+  inferred: false
+ask_audience: true
+language: en
