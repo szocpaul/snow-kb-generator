@@ -14,10 +14,15 @@ Ezt a promptot a szerveren, a repó gyökeréből indított Prime Agentnek add �
 Implementáld a specs/013-audience-typed-decision specet az autonomous-spec-runner
 workflow-val.
 
+ELŐSZÖR: checkoutold a `013-audience-typed-decision` branchet
+(git checkout 013-audience-typed-decision) — a spec-fájlok és az összes munka
+ezen a branchen él. A mainhez NE nyúlj; a commitok ide kerüljenek.
+
 A spec-FÁJLOKBÓL dolgozz: specs/013-audience-typed-decision/spec.md, plan.md, tasks.md.
 A tasks.md checkboxai a külső memóriád — pipáld ahogy haladsz.
 
 PREFLIGHT (ha bármelyik meghiusul, NE indulj el, jelentsd mi hiányzik):
+0. A `013-audience-typed-decision` branch ki van checkoutolva és a 4 spec-fájl megvan
 1. TYPESAFE_API_KEY be van állítva és egy minimális system_one-hívás sikeres
 2. pip install typesafe-sdk sikeres a projekt-környezetben (nyilvános PyPI, extra index NEM kell)
 3. A gold dataset példái tartalmaznak futtatható story-inputot (nem csak gold cikket)
