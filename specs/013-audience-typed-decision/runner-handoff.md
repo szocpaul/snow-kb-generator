@@ -11,8 +11,9 @@ and committed.
 ## Starting Prompt (copy over unchanged)
 
 ```
-Implement the specs/013-audience-typed-decision spec with the autonomous-spec-runner
-workflow-val.
+Implement the specs/013-audience-typed-decision spec. Use the
+`autonomous-spec-runner` skill (a skill installed on the server — load it
+and follow its instructions); the prompt below is layered ON TOP of the skill rules.
 
 RUN MODE: the whole job must run in DEV MODE — with the SNOW_KB_DEV_MODE=1
 environment variable (or the --dev flag), so that the task model is the local
