@@ -81,6 +81,12 @@ GenerateKbFromTemplate (unchanged, receives the audience as context)
 3. **Measurement with the jev-dspy-lab metric code** (selective risk, coverage, ECE, Brier),
    adapted at the SDK level to record/replay. (Alternative: our own mini metric — rejected, the
    calibration statistics are not trivial and the lab is MIT-licensed and battle-tested.)
+   *Addition (2026-09-26): the tool for threshold tuning is the official DSPy `ReAnchor`
+   optimizer (`dspy[typesafe]` extra, `dspy.experimental`) — calibration on the trainset without
+   LLM calls; the gate metrics still come from the jev-dspy-lab.
+   A full switch to the official `TypeSafe` LM connector is rejected in this spec: pinning the
+   `dspy.experimental` API in production carries the same risk we rejected for the fork;
+   restart condition: a stable (non-experimental) API.*
 4. **Fail-open, not fail-closed** — on a TypeSafe outage the pipeline keeps running on the
    existing path, with a warning. (Alternative: blocking — rejected, availability comes first;
    this is the tradeoff recorded in the spec's Edge Cases, a MANUAL GATE in tasks.md.)

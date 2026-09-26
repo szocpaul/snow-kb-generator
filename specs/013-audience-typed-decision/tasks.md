@@ -11,7 +11,7 @@
 
 ## Phase 1: Setup
 
-- [ ] T001 [P] adding the `typesafe-sdk` dependency to `pyproject.toml` and `requirements.txt` (the package is on the public PyPI, no extra index needed); `TYPESAFE_API_KEY` into `.env.example` and into the `Environment=` line of the systemd unit (under deploy/)
+- [ ] T001 [P] adding the `typesafe-sdk` dependency to `pyproject.toml` and `requirements.txt` (the package is on the public PyPI, no extra index needed) + the `dspy[typesafe]` extra for the `ReAnchor` optimizer (calibration, see T012); `TYPESAFE_API_KEY` into `.env.example` and into the `Environment=` line of the systemd unit (under deploy/)
 - [ ] T002 [P] Config extension in `config.yaml`: `audience_decision.enabled`, `audience_decision.model` (pinned version), `audience_decision.confidence_threshold` (starting: 0.7), `audience_decision.recording_path` — + a test for the config parsing
 
 ## Phase 2: Baseline (US1 precondition — playbook: baseline first)
@@ -34,7 +34,7 @@
 
 ## Phase 5: Measurement, calibration, closure
 
-- [ ] T012 [US1] Calibration measurement: live capture on the gold + mock sample with the pinned model, offline replay, with the jev-dspy-lab metrics (selective risk, coverage, ECE) → SC-001/SC-002 gate with exit code; SC-003 with the T006 fail-open test; SC-004 byte-identical double replay — `cache=False` / replay mode, the measurement must actually run
+- [ ] T012 [US1] Calibration measurement: live capture on the gold + mock sample with the pinned model, offline replay. **The primary calibration tool is the `ReAnchor` optimizer** (`dspy.experimental`, from the `dspy[typesafe]` extra): it tunes the `threshold` of the decision signature on the trainset without LLM calls (one run + cached probabilities). The gate is given by the jev-dspy-lab metrics (selective risk, coverage, ECE with the calibrated threshold) → SC-001/SC-002 gate with exit code; SC-003 with the T006 fail-open test; SC-004 byte-identical double replay — `cache=False` / replay mode, the measurement must actually run
 - [ ] T013 **MANUAL GATE**: review of the SC gate results; if the threshold changes, the justification goes into Agent.md — the runner must NOT tick it
 - [ ] T014 Closing: full pytest suite (286 + new tests) green, log entry in Agent.md (facts, decisions, lessons), commit + push, backlog update (the status of the restart condition of the verification layer spec)
 
