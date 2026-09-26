@@ -81,6 +81,12 @@ GenerateKbFromTemplate (változatlan, audience-t kontextusként kapja)
 3. **Mérés a jev-dspy-lab metrikakódjával** (selective risk, coverage, ECE, Brier),
    record/replay SDK-szinten adaptálva. (Alternatíva: saját mini-metrika — elvetve, a
    kalibrációs statisztika nem triviális, a lab MIT-licencű és battle-tested.)
+   *Kiegészítés (2026-09-26): a küszöb-hangolás eszköze a hivatalos DSPy `ReAnchor`
+   optimizer (`dspy[typesafe]` extra, `dspy.experimental`) — LLM-hívás nélküli
+   kalibráció a trainseten; a kapumetrikák továbbra is a jev-dspy-lab-ból jönnek.
+   A hivatalos `TypeSafe` LM-connectorra való teljes átállás elvetve ebben a spec-ben:
+   `dspy.experimental` API production-pinnelése ugyanaz a kockázat, amit a forknál
+   elutasítottunk; újraindítási feltétel: stabil (nem experimental) API.*
 4. **Fail-open, nem fail-closed** — TypeSafe-kiesésnél a pipeline a meglévő úton fut
    tovább, warninggal. (Alternatíva: blokkolás — elvetve, a rendelkezésreállás elsődleges;
    ez a spec Edge Cases-ben rögzített tradeoff, MANUÁLIS KAPU a tasks.md-ben.)

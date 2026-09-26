@@ -11,7 +11,7 @@
 
 ## Phase 1: Setup
 
-- [ ] T001 [P] `typesafe-sdk` függőség felvétele a `pyproject.toml`-ba és `requirements.txt`-be (a csomag a nyilvános PyPI-n van, extra index NEM kell); `TYPESAFE_API_KEY` a `.env.example`-ba és a systemd unit `Environment=` sorába (deploy/ alatt)
+- [ ] T001 [P] `typesafe-sdk` függőség felvétele a `pyproject.toml`-ba és `requirements.txt`-be (a csomag a nyilvános PyPI-n van, extra index NEM kell) + `dspy[typesafe]` extra a `ReAnchor` optimizerhez (kalibráció, ld. T012); `TYPESAFE_API_KEY` a `.env.example`-ba és a systemd unit `Environment=` sorába (deploy/ alatt)
 - [ ] T002 [P] Config-bővítés `config.yaml`-ban: `audience_decision.enabled`, `audience_decision.model` (pinnelt verzió), `audience_decision.confidence_threshold` (kezdő: 0.7), `audience_decision.recording_path` — + teszt a config-parsolásra
 
 ## Phase 2: Baseline (US1 előfeltétel — playbook: baseline-előbb)
@@ -34,7 +34,7 @@
 
 ## Phase 5: Mérés, kalibráció, zárás
 
-- [ ] T012 [US1] Kalibrációs mérés: élő felvétel a gold + mock mintán pinnelt modellel, offline replay, a jev-dspy-lab metrikáival (selective risk, coverage, ECE) → SC-001/SC-002 gate exit-code-dal; SC-003 a T006 fail-open teszttel; SC-004 byte-identikus kétszeri replay — `cache=False` / replay-mód, a mérés ténylegesen fusson
+- [ ] T012 [US1] Kalibrációs mérés: élő felvétel a gold + mock mintán pinnelt modellel, offline replay. **Elsődleges kalibrációs eszköz a `ReAnchor` optimizer** (`dspy.experimental`, a `dspy[typesafe]` extrából): a döntés-signature `threshold`-ját a trainseten hangolja LLM-hívás nélkül (egy lefuttatás + cache-elt valószínűségek). A kaput a jev-dspy-lab metrikái adják (selective risk, coverage, ECE a kalibrált küszöbbel) → SC-001/SC-002 gate exit-code-dal; SC-003 a T006 fail-open teszttel; SC-004 byte-identikus kétszeri replay — `cache=False` / replay-mód, a mérés ténylegesen fusson
 - [ ] T013 **MANUÁLIS KAPU**: SC-kapuk eredményének review-ja; ha a küszöb módosul, az indoklás az Agent.md-be — a runner NEM pipálhatja
 - [ ] T014 Zárás: teljes pytest-suite (286 + új tesztek) zöld, naplóbejegyzés az Agent.md-be (tények, döntések, tanulságok), commit + push, backlog-frissítés (a verifikációs-réteg spec újraindítási feltételének állapota)
 
