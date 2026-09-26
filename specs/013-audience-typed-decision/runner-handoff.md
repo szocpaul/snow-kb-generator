@@ -11,8 +11,9 @@ Ezt a promptot a szerveren, a repó gyökeréből indított Prime Agentnek add �
 ## Indítóprompt (másold át változatlanul)
 
 ```
-Implementáld a specs/013-audience-typed-decision specet az autonomous-spec-runner
-workflow-val.
+Implementáld a specs/013-audience-typed-decision specet. Használd az
+`autonomous-spec-runner` skillt (telepített skill a szerveren — töltsd be
+és kövesd az utasításait); az alábbi prompt a skill szabályaira RÁÉPÜL.
 
 FUTTATÁSI MÓD: az egész munka DEV MÓDBAN fusson — SNOW_KB_DEV_MODE=1
 környezeti változóval (vagy --dev flaggel), hogy a task-modell a lokális
