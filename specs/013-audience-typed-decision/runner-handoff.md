@@ -14,34 +14,53 @@ Ezt a promptot a szerveren, a repó gyökeréből indított Prime Agentnek add �
 Implementáld a specs/013-audience-typed-decision specet az autonomous-spec-runner
 workflow-val.
 
+FUTTATÁSI MÓD: az egész munka DEV MÓDBAN fusson — SNOW_KB_DEV_MODE=1
+környezeti változóval (vagy --dev flaggel), hogy a task-modell a lokális
+llama.cpp Qwen3.8-27B legyen a Kimi K3 helyett, Kimi-token felhasználás
+NÉLKÜL. A build_lm() így a config.yaml lokális api_base-jára csatlakozik.
+
 ELŐSZÖR: checkoutold a `013-audience-typed-decision` branchet
 (git checkout 013-audience-typed-decision) — a spec-fájlok és az összes munka
 ezen a branchen él. A mainhez NE nyúlj; a commitok ide kerüljenek.
 
-A spec-FÁJLOKBÓL dolgozz: specs/013-audience-typed-decision/spec.md, plan.md, tasks.md.
-A tasks.md checkboxai a külső memóriád — pipáld ahogy haladsz.
+A spec-FÁJLOKBÓL dolgozz: specs/013-audience-typed-decision/spec.md, plan.md,
+tasks.md. A tasks.md checkboxai a külső memóriád — pipáld ahogy haladsz.
 
 PREFLIGHT (ha bármelyik meghiusul, NE indulj el, jelentsd mi hiányzik):
-0. A `013-audience-typed-decision` branch ki van checkoutolva és a 4 spec-fájl megvan
-1. TYPESAFE_API_KEY be van állítva és egy minimális system_one-hívás sikeres
-2. pip install typesafe-sdk sikeres a projekt-környezetben (nyilvános PyPI, extra index NEM kell)
-3. A gold dataset példái tartalmaznak futtatható story-inputot (nem csak gold cikket)
-4. pytest -q zöld a kiinduló állapotban
+0.  A `013-audience-typed-decision` branch ki van checkoutolva és a 4 spec-fájl megvan
+0b. SNOW_KB_DEV_MODE=1 érvényes: settings.pipeline.task_model == "local"
+0c. A lokális LLM-endpoint elérhető a szerverről:
+    http://desktop-c5ikame-1.tailee6bc1.ts.net:8033/v1 (llama.cpp fut,
+    Qwen3.8-27B betöltve, Tailscale serve aktív) — egy minimális
+    completion-hívás sikeres
+1.  TYPESAFE_API_KEY be van állítva és egy minimális system_one-hívás sikeres
+2.  pip install typesafe-sdk és pip install "dspy[typesafe]" sikeres a
+    projekt-környezetben (nyilvános PyPI, extra index NEM kell)
+3.  A gold dataset példái tartalmaznak futtatható story-inputot (nem csak gold cikket)
+4.  pytest -q zöld a kiinduló állapotban
 
-GATE-ek: minden phase végén pytest -q; a T012 mérés gate-ei az SC-001..SC-004 exit-code-jai.
-Használd a projekt saját interpreterét/környezetét (ld. pyproject.toml).
+GATE-ek: minden phase végén pytest -q; a T012 mérés gate-ei az SC-001..SC-004
+exit-code-jai. A T012-ben a kalibráció a ReAnchor optimizerrel történik egy
+csak-evaluációs DSPy-wrapperen; a kijött threshold a config.yaml
+audience_decision.confidence_threshold mezőjébe kerül. Használd a projekt saját
+interpreterét/környezetét (ld. pyproject.toml).
 
 TILALMAK:
-- GEPA TILOS (sem baseline-újrafutás, sem optimalizálás)
-- a MANUÁLIS KAPU checkboxokat (T005, T011, T013) NE pipáld — azok emberi döntésre várnak
+- GEPA TILOS (sem baseline-újrafutás, sem optimalizálás — dev-módban amúgy sincs
+  Kimi K3 reflection-modell, ez a tilalom ezzel konzisztens)
+- a MANUÁLIS KAPU checkboxokat (T005, T011, T013) NE pipáld — azok emberi
+  döntésre várnak
 - a DSPy-programhoz (program.py, program.json) és az eval-metrikához NE nyúlj
-- külső szolgáltatás elérhetetlen → állj meg és jelentsd, NE improvizálj fallbacket
-- a T012-nél a threshold-sweep exploratív — NE jelentsd a legjobb sweep-sort confirmatory
-  eredményként; a confirmatory kapu a specben kijelölt 0.7
+- a production döntéshívást NE alakítsd át DSPy-modullá (a ReAnchor-wrapper
+  csak mérésre való, ld. T012)
+- külső szolgáltatás elérhetetlen → állj meg és jelentsd, NE improvizálj
+  fallbacket
+- a T012-nél a threshold-sweep exploratív — NE jelentsd a legjobb sweep-sort
+  confirmatory eredményként; a confirmatory kapu a specben kijelölt 0.7
 
-Ha elakadsz a MANUÁLIS KAPUnál, állj meg és szólj. Befejezéskor küldj összefoglalót a
-main-sessionnek (per-phase eredmények, SC-gate-ek kimenetei, commit-hash-ek), aztán
-goal.complete().
+Ha elakadsz a MANUÁLIS KAPUnál, állj meg és szólj. Befejezéskor küldj
+összefoglalót a main-sessionnek (per-phase eredmények, SC-gate-ek kimenetei,
+commit-hash-ek), aztán goal.complete().
 ```
 
 ---
