@@ -1,0 +1,158 @@
+[
+  {
+    "case_id": "STRY0010001",
+    "source": "gold_példa_1",
+    "expected": "developer",
+    "choice": "developer",
+    "confidence": 1.0,
+    "probabilities": {
+      "developer": 1.0,
+      "end-user": 0.0,
+      "helpdesk": 0.0
+    },
+    "model": "jev-1.13.0"
+  },
+  {
+    "case_id": "STRY0010002",
+    "source": "gold_példa_2",
+    "expected": "developer",
+    "choice": "developer",
+    "confidence": 1.0,
+    "probabilities": {
+      "developer": 1.0,
+      "end-user": 0.0,
+      "helpdesk": 0.0
+    },
+    "model": "jev-1.13.0"
+  },
+  {
+    "case_id": "STRY0010003",
+    "source": "gold_példa_3",
+    "expected": "helpdesk",
+    "choice": "developer",
+    "confidence": 0.26,
+    "probabilities": {
+      "developer": 0.51,
+      "end-user": 0.0,
+      "helpdesk": 0.49
+    },
+    "model": "jev-1.13.0"
+  },
+  {
+    "case_id": "STRY0010004",
+    "source": "gold_példa_4",
+    "expected": "helpdesk",
+    "choice": "developer",
+    "confidence": 0.6,
+    "probabilities": {
+      "developer": 0.74,
+      "end-user": 0.08,
+      "helpdesk": 0.18
+    },
+    "model": "jev-1.13.0"
+  },
+  {
+    "case_id": "STRY0010016",
+    "source": "gold_példa_5",
+    "expected": "developer",
+    "choice": "developer",
+    "confidence": 0.97,
+    "probabilities": {
+      "developer": 0.98,
+      "end-user": 0.01,
+      "helpdesk": 0.01
+    },
+    "model": "jev-1.13.0"
+  },
+  {
+    "case_id": "STRY0010005",
+    "source": "gold_példa_6",
+    "expected": "helpdesk",
+    "choice": "developer",
+    "confidence": 0.95,
+    "probabilities": {
+      "developer": 0.96,
+      "end-user": 0.0,
+      "helpdesk": 0.04
+    },
+    "model": "jev-1.13.0"
+  },
+  {
+    "case_id": "STRY0010014",
+    "source": "gold_példa_7",
+    "expected": "developer",
+    "choice": "developer",
+    "confidence": 1.0,
+    "probabilities": {
+      "developer": 1.0,
+      "end-user": 0.0,
+      "helpdesk": 0.0
+    },
+    "model": "jev-1.13.0"
+  },
+  {
+    "case_id": "STRY0010013",
+    "source": "gold_példa_8",
+    "expected": "developer",
+    "choice": "developer",
+    "confidence": 0.94,
+    "probabilities": {
+      "developer": 0.96,
+      "end-user": 0.02,
+      "helpdesk": 0.02
+    },
+    "model": "jev-1.13.0"
+  },
+  {
+    "case_id": "STRY0010015",
+    "source": "gold_példa_9",
+    "expected": "developer",
+    "choice": "developer",
+    "confidence": 0.98,
+    "probabilities": {
+      "developer": 0.99,
+      "end-user": 0.0,
+      "helpdesk": 0.01
+    },
+    "model": "jev-1.13.0"
+  },
+  {
+    "case_id": "mock_clear_developer",
+    "source": "mock",
+    "expected": "developer",
+    "choice": "developer",
+    "confidence": 1.0,
+    "probabilities": {
+      "developer": 1.0,
+      "end-user": 0.0,
+      "helpdesk": 0.0
+    },
+    "model": "jev-1.13.0"
+  },
+  {
+    "case_id": "mock_clear_helpdesk",
+    "source": "mock",
+    "expected": "helpdesk",
+    "choice": "helpdesk",
+    "confidence": 1.0,
+    "probabilities": {
+      "developer": 0.0,
+      "end-user": 0.0,
+      "helpdesk": 1.0
+    },
+    "model": "jev-1.13.0"
+  },
+  {
+    "case_id": "mock_borderline",
+    "source": "mock",
+    "expected": "helpdesk",
+    "choice": "developer",
+    "confidence": 0.48,
+    "probabilities": {
+      "developer": 0.65,
+      "end-user": 0.15,
+      "helpdesk": 0.2
+    },
+    "model": "jev-1.13.0"
+  }
+]
