@@ -91,6 +91,11 @@ class KBArticle(BaseModel):
     category: str = Field(default="General", description="KB kategória neve vagy sys_id")
     knowledge_base_id: str = Field(default="", description="Cél KB sys_id")
     source_story: str = Field(default="", description="A forrás Story száma (u_source_story)")
+    # Spec 013 US2: alacsony-confidence audience-döntés jelzése — a Story
+    # work_notes-jébe kerül a create_kb_article írási útjában.
+    audience_note: str = Field(
+        default="", description="Bizonytalan audience jelzés (work_notes-ba, ha nem üres)"
+    )
 
     @field_validator("title")
     @classmethod

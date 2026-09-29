@@ -15,8 +15,9 @@ from unittest.mock import MagicMock, patch
 import dspy
 import pytest
 
-from snow_kb.config import Settings, ServiceNowConfig
+from snow_kb.config import PipelineConfig, Settings, ServiceNowConfig
 from snow_kb.pipeline import (
+    _AudienceOverrideExtractor,
     assemble_story_text,
     configure_lm,
     generate_kb_article,
@@ -487,3 +488,158 @@ class TestTeamTemplatesPipeline:
         with pytest.raises(MissingAssignmentGroupError):
             with patch("snow_kb.pipeline.configure_lm"):
                 generate_kb_article("STRY0012345", client, settings)
+
+
+# ---------------------------------------------------------------------------
+# Spec 013: audience-döntés bekötése (T008/T010)
+# ---------------------------------------------------------------------------
+
+class TestAudienceDecisionWiring:
+    """A kalibrált audience override pipeline-szintű bekötése."""
+
+    def _make_mock_client(self, story: StoryData) -> MagicMock:
+        client = MagicMock()
+        client.get_story.return_value = story
+        client.create_kb_article.return_value = "new_kb_sys_id_123"
+        client.get_update_set_changes.return_value = ("", "")
+        client.find_existing_kb_article.return_value = None
+        client.get_team_template.return_value = "<p>Mock Template</p>"
+        return client
+
+    def _make_mock_program(self) -> MagicMock:
+        program = MagicMock()
+        program.return_value = dspy.Prediction(
+            article=KBArticle(
+                title="Resolving SSO Login Failures After Upgrade",
+                html="<h2>Solution</h2><ol><li>Patch middleware.</li></ol>",
+                category="General",
+                knowledge_base_id="",
+            )
+        )
+        return program
+
+    def _live_settings(self, tmp_path) -> Settings:
+        return Settings(
+            dry_run=False,
+            snow=ServiceNowConfig(knowledge_base_id="kb_test", default_category="IT"),
+            pipeline=PipelineConfig(task_model="local", api_base="http://localhost:1/v1"),
+        )
+
+    def test_override_and_note_reach_article(self, sample_story, tmp_path):
+        """resolve_audience override → az article megkapja az audience_note-ot (US2)."""
+        from unittest.mock import patch as _patch
+
+        client = self._make_mock_client(sample_story)
+        program = self._make_mock_program()
+        copied = self._make_mock_program()  # a pipeline deepcopy-ja a mock programról
+        program.deepcopy.return_value = copied
+        settings = self._live_settings(tmp_path)
+
+        with _patch(
+            "snow_kb.pipeline.resolve_audience",
+            return_value=("developer", "Audience döntés bizonytalan: mért confidence=0.55"),
+        ):
+            result = generate_kb_article(
+                "STRY0012345", client, settings, program=program, push=False
+            )
+        assert result.audience_note.startswith("Audience döntés bizonytalan")
+        # a deepcopy-n lett becsomagolva az extract, az eredeti érintetlen
+        assert isinstance(copied.extract, _AudienceOverrideExtractor)
+        assert not isinstance(program.extract, _AudienceOverrideExtractor)
+
+    def test_fail_open_leaves_program_untouched(self, sample_story, tmp_path):
+        """(None, "") override → a program.extract eredeti marad (FR-001)."""
+        from unittest.mock import patch as _patch
+
+        client = self._make_mock_client(sample_story)
+        program = self._make_mock_program()
+        settings = self._live_settings(tmp_path)
+        original_extract = program.extract
+
+        with _patch(
+            "snow_kb.pipeline.resolve_audience", return_value=(None, "")
+        ):
+            result = generate_kb_article(
+                "STRY0012345", client, settings, program=program, push=False
+            )
+        assert result.audience_note == ""
+        assert program.extract is original_extract
+
+    def test_disabled_by_default_no_override(self, sample_story, tmp_path, monkeypatch):
+        """Alapértelmezett config (enabled=False) → resolve_audience nem hív SDK-t."""
+        monkeypatch.delenv("TYPESAFE_API_KEY", raising=False)
+        client = self._make_mock_client(sample_story)
+        program = self._make_mock_program()
+        settings = self._live_settings(tmp_path)
+        result = generate_kb_article(
+            "STRY0012345", client, settings, program=program, push=False
+        )
+        assert result.audience_note == ""
+
+
+class TestAudienceOverrideExtractor:
+    """A _AudienceOverrideExtractor közvetlen egységtesztje."""
+
+    def test_overrides_audience_keeps_rest(self):
+        import dspy as _dspy
+
+        class _Stub:
+            def __call__(self, **kwargs):
+                return _dspy.Prediction(
+                    change_summary="s", key_steps=["a"], audience="helpdesk"
+                )
+
+        wrapped = _AudienceOverrideExtractor(_Stub(), "developer")
+        pred = wrapped(story_text="x")
+        assert pred.audience == "developer"
+        assert pred.change_summary == "s"
+        assert pred.key_steps == ["a"]
+
+
+class TestWorkNoteSignal:
+    """T010: a work_notes jelzés a servicenow_client írási útjában."""
+
+    def test_update_story_work_note_appends_extra(self, live_settings=None):
+        from snow_kb.servicenow_client import ServiceNowClient
+        from unittest.mock import MagicMock as _MM
+
+        settings = Settings(
+            dry_run=False,
+            snow=ServiceNowConfig(knowledge_base_id="kb_test"),
+            snow_instance="demo.service-now.com",
+        )
+        client = ServiceNowClient(settings)
+        captured = {}
+
+        def fake_request(method, url, **kwargs):
+            captured["payload"] = kwargs.get("json", {})
+            resp = _MM()
+            resp.json.return_value = {"result": {}}
+            return resp
+
+        client._request = fake_request
+        client._update_story_work_note("story_sys_1", "kb_sys_1", "T", extra_note="NÓTA")
+        assert "KB article created:" in captured["payload"]["work_notes"]
+        assert "NÓTA" in captured["payload"]["work_notes"]
+
+    def test_update_story_work_note_without_extra(self):
+        from snow_kb.servicenow_client import ServiceNowClient
+        from unittest.mock import MagicMock as _MM
+
+        settings = Settings(
+            dry_run=False,
+            snow=ServiceNowConfig(knowledge_base_id="kb_test"),
+            snow_instance="demo.service-now.com",
+        )
+        client = ServiceNowClient(settings)
+        captured = {}
+
+        def fake_request(method, url, **kwargs):
+            captured["payload"] = kwargs.get("json", {})
+            resp = _MM()
+            resp.json.return_value = {"result": {}}
+            return resp
+
+        client._request = fake_request
+        client._update_story_work_note("story_sys_1", "kb_sys_1", "T")
+        assert captured["payload"]["work_notes"].count("\n") == 0

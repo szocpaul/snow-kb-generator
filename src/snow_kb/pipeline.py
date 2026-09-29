@@ -20,6 +20,7 @@ from typing import Protocol
 
 import dspy
 
+from snow_kb.audience import resolve_audience
 from snow_kb.config import Settings, load_settings
 from snow_kb.errors import MissingAssignmentGroupError
 
@@ -460,6 +461,14 @@ def generate_kb_article(
         # Ne döjjön le a pipeline, ha a KB keresés sikertelen
         logger.warning("Kapcsolódó KB keresés sikertelen: %s", exc)
 
+    # 3d. Kalibrált audience-döntés (spec 013): a típusos System One-hívás a
+    # program futása ELŐTT történik, hogy a kimenet a stílust is befolyásolja.
+    # enabled=False vagy bármilyen hiba → (None, ""): a generatív út marad (FR-001/FR-004).
+    audience_override: str | None = None
+    audience_note = ""
+    if not settings.dry_run:
+        audience_override, audience_note = resolve_audience(story_text, settings)
+
     # 4. Dry-run: a program hívás kihagyása (nincs LM), mock cikk a Story-ból
     if settings.dry_run:
         article = _mock_article_from_story(story, settings)
@@ -470,6 +479,14 @@ def generate_kb_article(
         lm = build_lm(settings)
         if program is None:
             program = _load_program(program_path)
+
+        # Spec 013: a kalibrált audience felülírja az ExtractChange generatív
+        # audience kimenetét — pipeline-szintű becsomagolással, a program.py
+        # és a program.json érintetlen marad. A deepcopy miatt a hívónak átadott
+        # program-példány sem módosul.
+        if audience_override is not None:
+            program = program.deepcopy()
+            program.extract = _AudienceOverrideExtractor(program.extract, audience_override)
 
         with dspy.context(lm=lm):
             pred = program(
@@ -482,6 +499,9 @@ def generate_kb_article(
             )
         article: KBArticle = pred.article
         article.source_story = story_identifier  # Duplikáció megakadályozása
+        # Spec 013 US2: alacsony-confidence jelzés → work_notes (create_kb_article útvonal)
+        if audience_note:
+            article.audience_note = audience_note
         # Formázási normalizálás: <code> → <strong> (szürke háttér tiltva)
         article.html = normalize_code_tags(article.html)
         # Spec 007 guardrail: irány-sértő szekciók eltávolítása
@@ -519,6 +539,37 @@ def generate_kb_article(
 
 
 # ---------------------------------------------------------------------------
+# Helper: audience override az ExtractChange prediktoron (spec 013)
+# ---------------------------------------------------------------------------
+
+class _AudienceOverrideExtractor:
+    """Becsomagolja a program extract-prediktorát: a generatív audience
+    kimenetét a kalibrált (vagy threshold-default) értékkel írja felül.
+
+    A change_summary/key_steps változatlanul a generatív modelltől jönnek.
+    A dspy.Prediction attribútum-szintű felülírása miatt a program.forward
+    minden downstream felhasználása (template style + visszaadott pred)
+    az override-ot látja.
+    """
+
+    def __init__(self, inner, audience: str) -> None:
+        self._inner = inner
+        self._audience = audience
+
+    def __call__(self, *args, **kwargs):
+        pred = self._inner(*args, **kwargs)
+        pred.audience = self._audience
+        return pred
+
+    def __getattr__(self, name):
+        # A dspy belső introspekciója (named_parameters stb.) az inner felé menjen.
+        # A '_' prefixű hiányzó attribútumoknál AttributeError kell (rekurzió-guard).
+        if name.startswith("_"):
+            raise AttributeError(name)
+        return getattr(self._inner, name)
+
+
+# ---------------------------------------------------------------------------
 # Helper: article + sys_id pár (a push eredménye)
 # ---------------------------------------------------------------------------
 
@@ -533,6 +584,8 @@ class _KBArticleWithSysId(KBArticle):
             html=base.html,
             category=base.category,
             knowledge_base_id=base.knowledge_base_id,
+            source_story=base.source_story,
+            audience_note=getattr(base, "audience_note", ""),
             **kwargs,
         )
         self.sys_id = sys_id

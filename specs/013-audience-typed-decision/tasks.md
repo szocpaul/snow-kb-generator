@@ -22,14 +22,14 @@
 
 ## Phase 3: US1 – Döntés confidence-szel (teszt-előbb)
 
-- [ ] T006 [US1] Teszt: `tests/test_audience_decision.py` — mock story egyértelmű developer-esetre (magas confidence) és határesetre (alacsonyabb), mockolt SDK-válasszal; fail-open teszt szimulált SDK-kivétellel. A teszteknek FAIL-elniük kell implementáció előtt
-- [ ] T007 [US1] `src/snow_kb/audience.py` — `decide_audience(story_text) -> dict` (choice, probabilities, confidence); TypeSafe Choice-hívás a három opcióval; JSONL recording (request hash, response, latency, modellazonosító — a jev-dspy-lab formátum mintájára); hiba/timeout → fail-open a meglévő generatív útra, warning-log
-- [ ] T008 [US1] Bekötés a `pipeline.py`-ba: az audience a `decide_audience`-ből jön (config-flaggel kikapcsolható), a `change_summary`/`key_steps` változatlanul a DSPy-programból — T006 és T007 után
+- [x] T006 [US1] Teszt: `tests/test_audience_decision.py` — mock story egyértelmű developer-esetre (magas confidence) és határesetre (alacsonyabb), mockolt SDK-válasszal; fail-open teszt szimulált SDK-kivétellel. A teszteknek FAIL-elniük kell implementáció előtt
+- [x] T007 [US1] `src/snow_kb/audience.py` — `decide_audience(story_text) -> dict` (choice, probabilities, confidence); TypeSafe Choice-hívás a három opcióval; JSONL recording (request hash, response, latency, modellazonosító — a jev-dspy-lab formátum mintájára); hiba/timeout → fail-open a meglévő generatív útra, warning-log
+- [x] T008 [US1] Bekötés a `pipeline.py`-ba: az audience a `decide_audience`-ből jön (config-flaggel kikapcsolható), a `change_summary`/`key_steps` változatlanul a DSPy-programból — T006 és T007 után
 
 ## Phase 4: US2 – Alacsony confidence kezelése (teszt-előbb)
 
-- [ ] T009 [US2] Teszt: alacsony confidence → audience="developer" + work_notes-jelzés a mért értékkel; küszöb felett → nincs jelzés; pontosan a küszöbön → fallback (`<`, nem `<=`)
-- [ ] T010 [US2] Threshold-logika a `src/snow_kb/audience.py`-ban + work_notes-jelzés a `servicenow_client.py` írási útjában — T007 után
+- [x] T009 [US2] Teszt: alacsony confidence → audience="developer" + work_notes-jelzés a mért értékkel; küszöb felett → nincs jelzés; pontosan a küszöbön → fallback (`<`, nem `<=`)
+- [x] T010 [US2] Threshold-logika a `src/snow_kb/audience.py`-ban + work_notes-jelzés a `servicenow_client.py` írási útjában — T007 után
 - [ ] T011 [US2] **MANUÁLIS KAPU**: a fail-open + developer-default tradeoff jóváhagyása production-futás előtt (plan.md Key Decisions 4 és 6) — a runner NEM pipálhatja
 
 ## Phase 5: Mérés, kalibráció, zárás
