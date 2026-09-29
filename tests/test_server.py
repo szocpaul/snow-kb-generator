@@ -81,6 +81,15 @@ class TestHealth:
 # ---------------------------------------------------------------------------
 
 class TestAuthentication:
+    def test_no_server_key_fails_closed(self, client, mock_settings, monkeypatch):
+        """If there is no SNOW_WEBHOOK_API_KEY on the server (neither env nor .env), the endpoint must return 503,
+        it must NOT let the request through without auth (fail-closed)."""
+        monkeypatch.delenv("SNOW_WEBHOOK_API_KEY", raising=False)
+        monkeypatch.setattr("snow_kb.server._get_api_key", lambda: "")
+        with patch("snow_kb.server.load_settings", return_value=mock_settings):
+            resp = client.post("/generate-kb", json={"story_id": "STRY001"})
+        assert resp.status_code == 503
+
     def test_missing_api_key_rejected(self, client, mock_settings):
         with patch("snow_kb.server.load_settings", return_value=mock_settings):
             resp = client.post("/generate-kb", json={"story_id": "STRY001"})

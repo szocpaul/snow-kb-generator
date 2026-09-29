@@ -99,16 +99,36 @@ def _get_settings() -> Settings:
 
 
 def _get_api_key() -> str:
-    """Returns the webhook API key from settings."""
+    """Visszaadja a webhook API kulcsot.
+
+    The primary source is the SNOW_WEBHOOK_API_KEY environment variable; if it
+    is empty (e.g. the systemd unit does not export it), the fallback is the
+    .env file in the repository root.
+    """
     import os
 
-    return os.environ.get("SNOW_WEBHOOK_API_KEY", "")
+    key = os.environ.get("SNOW_WEBHOOK_API_KEY", "")
+    if key:
+        return key
+    from dotenv import dotenv_values
+
+    return dotenv_values(".env").get("SNOW_WEBHOOK_API_KEY", "")
 
 
 def _verify_api_key(x_api_key: str | None) -> None:
-    """Simple API key check."""
+    """API key check — fail-closed.
+
+    If NO key is configured on the server, the endpoint is not served (503)
+    instead of letting the request through without authentication.
+    """
     expected = _get_api_key()
-    if expected and x_api_key != expected:
+    if not expected:
+        logger.error("SNOW_WEBHOOK_API_KEY is not set — rejecting the request (fail-closed).")
+        raise HTTPException(
+            status_code=503,
+            detail="SNOW_WEBHOOK_API_KEY is not configured on the server.",
+        )
+    if x_api_key != expected:
         raise HTTPException(status_code=401, detail="Invalid API key.")
 
 
