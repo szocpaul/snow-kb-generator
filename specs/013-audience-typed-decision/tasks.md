@@ -16,8 +16,8 @@
 
 ## Phase 2: Baseline (US1 előfeltétel — playbook: baseline-előbb)
 
-- [ ] T003 [US1] Baseline-rögzítés: a jelenlegi (generatív) modell audience-döntései a 9 gold példán, per-példa JSON a `data/` vagy `artifacts/` alá — változatlan kóddal, rögzített körülményekkel
-- [ ] T004 [US1] Gold audience-címkék ellenőrzése: a 9 gold cikk stílusából levezethető-e a helyes audience; ha nem, kézi címkézés és a címkék commitolása a dataset mellé
+- [x] T003 [US1] Baseline-rögzítés: a jelenlegi (generatív) modell audience-döntései a 9 gold példán, per-példa JSON a `data/` vagy `artifacts/` alá — változatlan kóddal, rögzített körülményekkel
+- [x] T004 [US1] Gold audience-címkék ellenőrzése: a 9 gold cikk stílusából levezethető-e a helyes audience; ha nem, kézi címkézés és a címkék commitolása a dataset mellé
 - [ ] T005 [US1] **MANUÁLIS KAPU**: a baseline-eredmény és a címkék review-ja — a runner NEM pipálhatja
 
 ## Phase 3: US1 – Döntés confidence-szel (teszt-előbb)
