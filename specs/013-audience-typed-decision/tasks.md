@@ -22,14 +22,14 @@
 
 ## Phase 3: US1 – Decision with confidence (test first)
 
-- [ ] T006 [US1] Test: `tests/test_audience_decision.py` — mock story for an unambiguous developer case (high confidence) and for a borderline case (lower), with a mocked SDK answer; fail-open test with a simulated SDK exception. The tests must FAIL before the implementation
-- [ ] T007 [US1] `src/snow_kb/audience.py` — `decide_audience(story_text) -> dict` (choice, probabilities, confidence); TypeSafe Choice call with the three options; JSONL recording (request hash, response, latency, model identifier — following the jev-dspy-lab format); error/timeout → fail-open to the existing generative path, warning log
-- [ ] T008 [US1] Wiring into `pipeline.py`: the audience comes from `decide_audience` (can be switched off with a config flag), `change_summary`/`key_steps` remain unchanged from the DSPy program — after T006 and T007
+- [x] T006 [US1] Test: `tests/test_audience_decision.py` — mock story for an unambiguous developer case (high confidence) and for an edge case (lower confidence), with a mocked SDK response; fail-open test with a simulated SDK exception. The tests must FAIL before the implementation
+- [x] T007 [US1] `src/snow_kb/audience.py` — `decide_audience(story_text) -> dict` (choice, probabilities, confidence); TypeSafe Choice call with the three options; JSONL recording (request hash, response, latency, model identifier — following the jev-dspy-lab format); error/timeout → fail-open to the existing generative path, warning log
+- [x] T008 [US1] Wiring into `pipeline.py`: the audience comes from `decide_audience` (switchable off with a config flag), the `change_summary`/`key_steps` stay from the DSPy program as before — after T006 and T007
 
 ## Phase 4: US2 – Handling low confidence (test first)
 
-- [ ] T009 [US2] Test: low confidence → audience="developer" + work_notes note with the measured value; above the threshold → no note; exactly at the threshold → fallback (`<`, not `<=`)
-- [ ] T010 [US2] Threshold logic in `src/snow_kb/audience.py` + work_notes note in the write path of `servicenow_client.py` — after T007
+- [x] T009 [US2] Test: low confidence → audience="developer" + work_notes note with the measured value; above the threshold → no note; exactly at the threshold → fallback (`<`, not `<=`)
+- [x] T010 [US2] Threshold logic in `src/snow_kb/audience.py` + work_notes note on the write path of `servicenow_client.py` — after T007
 - [ ] T011 [US2] **MANUAL GATE**: approval of the fail-open + developer-default trade-off before the production run (plan.md Key Decisions 4 and 6) — the runner must NOT tick it
 
 ## Phase 5: Measurement, calibration, closure
