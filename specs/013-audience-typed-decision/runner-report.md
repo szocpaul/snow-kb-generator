@@ -46,8 +46,11 @@
 3. A production döntéshívás közvetlen SDK (`src/snow_kb/audience.py`); a ReAnchor-wrapper (`eval/audience_reanchor.py`) csak mérés.
 4. program.py / program.json / eval-metrika érintetlen (a wrapper a pipeline rétegben, deepcopy-n).
 
-## Commit-hash-ek (branch: 013-audience-typed-decision)
-(lásd `git log --oneline` alább a jelentés végén)
+## Commit-hash-ek (branch: 013-audience-typed-decision, pusholva)
+- `2b89ce4` T001+T002: függőségek + audience_decision config-blokk
+- `7183b68` T003+T004: baseline (9/9 developer, lokális Qwen) + gold címkék
+- `fede169` T006-T010: audience.py + pipeline-bekötés + work_notes-jelzés
+- `07ce995` T012+T014: mérés, SC-gate-ek, Agent.md §41, runner-report
 
 ## Nyitott MANUÁLIS KAPUk (NEM pipálva)
 - **T005**: baseline + címkék review-ja (`artifacts/audience_baseline.json`, `data/examples/gold_audience_labels.json`)
