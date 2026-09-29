@@ -57,3 +57,6 @@ server.log
 
 # Prime Agent session/skill fájlok — a gyökérbeli ~/.prime-t használjuk, a projectbe nem kell
 .prime/
+
+# lokális env-backupok — titkokat tartalmazhatnak, soha ne commitold
+.env.*.bak

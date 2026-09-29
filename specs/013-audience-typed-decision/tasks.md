@@ -11,8 +11,8 @@
 
 ## Phase 1: Setup
 
-- [ ] T001 [P] `typesafe-sdk` függőség felvétele a `pyproject.toml`-ba és `requirements.txt`-be (a csomag a nyilvános PyPI-n van, extra index NEM kell) + `dspy[typesafe]` extra a `ReAnchor` optimizerhez (kalibráció, ld. T012); `TYPESAFE_API_KEY` a `.env.example`-ba és a systemd unit `Environment=` sorába (deploy/ alatt)
-- [ ] T002 [P] Config-bővítés `config.yaml`-ban: `audience_decision.enabled`, `audience_decision.model` (pinnelt verzió), `audience_decision.confidence_threshold` (kezdő: 0.7), `audience_decision.recording_path` — + teszt a config-parsolásra
+- [x] T001 [P] `typesafe-sdk` függőség felvétele a `pyproject.toml`-ba és `requirements.txt`-be (a csomag a nyilvános PyPI-n van, extra index NEM kell) + `dspy[typesafe]` extra a `ReAnchor` optimizerhez (kalibráció, ld. T012); `TYPESAFE_API_KEY` a `.env.example`-ba és a systemd unit `Environment=` sorába (deploy/ alatt)
+- [x] T002 [P] Config-bővítés `config.yaml`-ban: `audience_decision.enabled`, `audience_decision.model` (pinnelt verzió), `audience_decision.confidence_threshold` (kezdő: 0.7), `audience_decision.recording_path` — + teszt a config-parsolásra
 
 ## Phase 2: Baseline (US1 előfeltétel — playbook: baseline-előbb)
 

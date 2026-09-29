@@ -227,3 +227,48 @@ class TestDevMode:
         from snow_kb.cli import build_parser
         assert build_parser().parse_args(["STRY0010001", "--dev"]).dev is True
         assert build_parser().parse_args(["STRY0010001"]).dev is False
+
+
+class TestAudienceDecisionConfig:
+    """Spec 013 T002: audience_decision config-blokk parsolása."""
+
+    def test_defaults_when_block_missing(self, valid_yaml, set_env):
+        """Hiányzó blokk → biztonságos defaultok (kikapcsolva, pinnelt modell)."""
+        s = load_settings(valid_yaml)
+        assert s.audience_decision.enabled is False
+        assert s.audience_decision.model == "jev-1.13.0"
+        assert s.audience_decision.confidence_threshold == 0.7
+        assert s.audience_decision.recording_path.endswith(".jsonl")
+
+    def test_block_parsed_from_yaml(self, make_yaml, set_env):
+        path = make_yaml({
+            "servicenow": {"knowledge_base_id": "kb_test_123"},
+            "audience_decision": {
+                "enabled": True,
+                "model": "jev-1.13.0",
+                "confidence_threshold": 0.65,
+                "recording_path": "artifacts/test_decisions.jsonl",
+            },
+        })
+        s = load_settings(path)
+        assert s.audience_decision.enabled is True
+        assert s.audience_decision.model == "jev-1.13.0"
+        assert s.audience_decision.confidence_threshold == 0.65
+        assert s.audience_decision.recording_path == "artifacts/test_decisions.jsonl"
+
+    def test_latest_alias_rejected(self, make_yaml, set_env):
+        """FR-002: lebegő alias (jev-latest) nem engedélyezett — pinnelt verzió kell."""
+        path = make_yaml({
+            "servicenow": {"knowledge_base_id": "kb_test_123"},
+            "audience_decision": {"model": "jev-latest"},
+        })
+        with pytest.raises(ConfigError):
+            load_settings(path)
+
+    def test_threshold_out_of_range_rejected(self, make_yaml, set_env):
+        path = make_yaml({
+            "servicenow": {"knowledge_base_id": "kb_test_123"},
+            "audience_decision": {"confidence_threshold": 1.5},
+        })
+        with pytest.raises(ConfigError):
+            load_settings(path)

@@ -8,6 +8,11 @@ Type=simple
 User=ubuntu
 WorkingDirectory=/home/ubuntu/dspy_projects/snow_kb_generator
 ExecStart=/home/ubuntu/dspy_projects/.venv/bin/uvicorn snow_kb.server:app --host 0.0.0.0 --port 8000
+# TypeSafe System One kulcs a kalibrált audience-döntéshez (spec 013).
+# A valódi kulcsot SOHA ne commitold — productionben az alábbi sort a
+# kiszervezett (crontab -l -en kívüli) unit-fájlba írd, vagy használj
+# EnvironmentFile=-ot egy 0600-as root-owned fájllal.
+# Environment=TYPESAFE_API_KEY=ts-...
 Restart=always
 RestartSec=5
 StandardOutput=append:/home/ubuntu/dspy_projects/snow_kb_generator/server.log
