@@ -11,8 +11,8 @@
 
 ## Phase 1: Setup
 
-- [ ] T001 [P] adding the `typesafe-sdk` dependency to `pyproject.toml` and `requirements.txt` (the package is on the public PyPI, no extra index needed) + the `dspy[typesafe]` extra for the `ReAnchor` optimizer (calibration, see T012); `TYPESAFE_API_KEY` into `.env.example` and into the `Environment=` line of the systemd unit (under deploy/)
-- [ ] T002 [P] Config extension in `config.yaml`: `audience_decision.enabled`, `audience_decision.model` (pinned version), `audience_decision.confidence_threshold` (starting: 0.7), `audience_decision.recording_path` — + a test for the config parsing
+- [x] T001 [P] Add the `typesafe-sdk` dependency to `pyproject.toml` and `requirements.txt` (the package is on the public PyPI, an extra index is NOT needed) + the `dspy[typesafe]` extra for the `ReAnchor` optimizer (calibration, see T012); `TYPESAFE_API_KEY` into `.env.example` and into the `Environment=` line of the systemd unit (under deploy/)
+- [x] T002 [P] Config extension in `config.yaml`: `audience_decision.enabled`, `audience_decision.model` (pinned version), `audience_decision.confidence_threshold` (starting value: 0.7), `audience_decision.recording_path` — + a test for the config parsing
 
 ## Phase 2: Baseline (US1 precondition — playbook: baseline first)
 

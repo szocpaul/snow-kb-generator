@@ -8,6 +8,11 @@ Type=simple
 User=snowkb
 WorkingDirectory=/opt/snow-kb-generator
 ExecStart=/opt/snow-kb-venv/bin/uvicorn snow_kb.server:app --host 0.0.0.0 --port 8000
+# TypeSafe System One key for the calibrated audience decision (spec 013).
+# NEVER commit the real key — in production, put the line below into an
+# outsourced unit file (one that is not listed by `crontab -l`), or use
+# EnvironmentFile=- with a 0600 root-owned file.
+# Environment=TYPESAFE_API_KEY=ts-...
 Restart=always
 RestartSec=5
 StandardOutput=append:/opt/snow-kb-generator/server.log

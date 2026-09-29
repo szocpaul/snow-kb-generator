@@ -34,6 +34,19 @@ models:
   reflection_temperature: 1.0
   reflection_max_tokens: 32000
 
+# Calibrated, typed audience decision (spec 013).
+# enabled=false → the generative (ExtractChange) audience path stays (the switchable fallback, FR-004).
+audience_decision:
+  enabled: true
+  # The PINNED decision model version — a floating alias (jev-latest) is FORBIDDEN for the calibration
+  # (playbook: "a model change = a new baseline measurement").
+  model: "jev-1.13.0"
+  # The confirmatory gate (spec SC-002): below this confidence
+  # the default "developer" + a work_notes signal. The T012 calibration measurement tunes it.
+  confidence_threshold: 0.7
+  # replay compatible because of it. The replay-compatible JSONL decision log (FR-003) — the data source of the calibration measurement.
+  recording_path: "artifacts/audience_decisions.jsonl"
+
 gepa:
   auto: "medium"                        # light | medium | heavy
   candidate_selection: "pareto"

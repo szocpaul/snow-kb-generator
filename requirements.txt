@@ -1,8 +1,11 @@
 # the dependencies of snow-kb-generator
 # The environment already contains these in the parent .venv, but they are documented here.
 
-# DSPy pipeline
-dspy>=3.2.0,<3.4
+# The DSPy pipeline (the [typesafe] extra is needed for the ReAnchor calibration — spec 013, T012)
+dspy[typesafe]>=3.2.0,<3.5
+
+# The calibrated, typed audience decision (spec 013)
+typesafe-sdk>=0.7.2,<1.0
 
 # The data model + the configuration
 pydantic>=2.0

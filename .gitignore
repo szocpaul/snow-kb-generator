@@ -57,3 +57,6 @@ server.log
 
 # Prime Agent session/skill files — we use the ~/.prime in the home directory, the project does not need it
 .prime/
+
+# local env backups — they can contain secrets, never commit them
+.env.*.bak
