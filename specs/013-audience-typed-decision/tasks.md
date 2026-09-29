@@ -16,8 +16,8 @@
 
 ## Phase 2: Baseline (US1 precondition — playbook: baseline first)
 
-- [ ] T003 [US1] Baseline recording: the audience decisions of the current (generative) model on the 9 gold examples, per-example JSON under `data/` or `artifacts/` — with unchanged code, under recorded conditions
-- [ ] T004 [US1] Checking the gold audience labels: can the correct audience be derived from the style of the 9 gold articles; if not, manual labeling and committing the labels next to the dataset
+- [x] T003 [US1] Baseline recording: the audience decisions of the current (generative) model on the 9 gold examples, per-example JSON under `data/` or `artifacts/` — unchanged code, recorded conditions
+- [x] T004 [US1] Verification of the gold audience labels: can the correct audience be derived from the style of the 9 gold articles; if not, manual labelling and committing the labels next to the dataset
 - [ ] T005 [US1] **MANUAL GATE**: review of the baseline result and the labels — the runner must NOT tick it
 
 ## Phase 3: US1 – Decision with confidence (test first)
