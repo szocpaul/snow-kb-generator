@@ -18,7 +18,7 @@
 
 - [x] T003 [US1] Baseline recording: the audience decisions of the current (generative) model on the 9 gold examples, per-example JSON under `data/` or `artifacts/` — unchanged code, recorded conditions
 - [x] T004 [US1] Verification of the gold audience labels: can the correct audience be derived from the style of the 9 gold articles; if not, manual labelling and committing the labels next to the dataset
-- [ ] T005 [US1] **MANUAL GATE**: review of the baseline result and the labels — the runner must NOT tick it
+- [x] T005 [US1] **MANUAL GATE**: review of the baseline result and the labels — the runner MUST NOT tick it *(APPROVED 2026-09-29: the label evidence is strong, see Agent.md §42)*
 
 ## Phase 3: US1 – Decision with confidence (test first)
 
@@ -30,12 +30,12 @@
 
 - [x] T009 [US2] Test: low confidence → audience="developer" + work_notes note with the measured value; above the threshold → no note; exactly at the threshold → fallback (`<`, not `<=`)
 - [x] T010 [US2] Threshold logic in `src/snow_kb/audience.py` + work_notes note on the write path of `servicenow_client.py` — after T007
-- [ ] T011 [US2] **MANUAL GATE**: approval of the fail-open + developer-default trade-off before the production run (plan.md Key Decisions 4 and 6) — the runner must NOT tick it
+- [x] T011 [US2] **MANUAL GATE**: approval of the fail-open + developer-default tradeoff before the production run (plan.md Key Decisions 4 and 6) — the runner MUST NOT tick it *(APPROVED 2026-09-29: during the run the mechanism behaved as specified, see Agent.md §42)*
 
 ## Phase 5: Measurement, calibration, closure
 
 - [x] T012 [US1] Calibration measurement: live recording on the gold + mock sample with a pinned model, offline replay. **The primary calibration tool is the `ReAnchor` optimizer** (`dspy.experimental`, from the `dspy[typesafe]` extra): since ReAnchor optimizes a `dspy.Predict` module (not a direct SDK call), the measurement uses an **evaluation-only DSPy wrapper** that mirrors the T007 decision call (the same three options + the `desc` question, with the TypeSafe LM, pinned version); ReAnchor tunes the `threshold` on it without LLM calls (one run + cached probabilities). The resulting threshold goes into `audience_decision.confidence_threshold` in `config.yaml`, which the T007/T010 direct SDK path reads — the production call does NOT become a DSPy module. The gate is given by the jev-dspy-lab metrics (selective risk, coverage, ECE with the calibrated threshold) → SC-001/SC-002 gate with exit code; SC-003 via the T006 fail-open test; SC-004 byte-identical double replay — `cache=False` / replay mode, the measurement must actually run
-- [ ] T013 **MANUAL GATE**: review of the SC gate results; if the threshold changes, the justification goes into Agent.md — the runner must NOT tick it
+- [x] T013 **MANUAL GATE**: review of the SC gate results; if the threshold changes, the rationale goes into the Agent.md — the runner MUST NOT tick it *(CLOSED 2026-09-29: path C — the threshold STAYS at 0.7, interim production, SC-002 restart condition = the gold dataset extended with ≥20 helpdesk examples; rationale in Agent.md §42)*
 - [x] T014 Closure: the full pytest suite (286 + new tests) green, log entry in the Agent.md (facts, decisions, lessons learned), commit + push, backlog update (the status of the verification-layer spec's restart condition)
 
 ## Dependencies

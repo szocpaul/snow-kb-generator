@@ -809,5 +809,38 @@ On DSPy servers (FastAPI/uvicorn) the global `dspy.configure` is NOT request-saf
 - T013: review of the SC-gates; if the threshold changes (e.g. 0.8), put the rationale here.
 - Backlog: TASK-1 (restart condition of the verification layer spec: NOT YET met).
 
+*(All three human gates closed on 2026-09-29 — decisions and rationale: §42.)*
+
 ### Lesson
 - The value of the calibrated decision shows at the boundaries: the 0.7 gate filters out the wrong predictions with 0.26/0.60 confidence (abstain/fallback), but the confidently wrong 0.95 case passes — this is exactly why the confirmatory gate and the human review are needed, rather than the automatic adoption of the best sweep result.
+
+
+## 42. Spec 013: closing the human gates (2026-09-29)
+
+### Decisions (T005, T011, T013 — after the runner, in human review)
+
+- **T005 APPROVED**: the evidence of the 9 gold audience labels reviewed — the 3 helpdesk labels
+  (STRY0010003/4/5) are justified (the "Investigation Steps" sections address a support reader).
+- **T011 APPROVED**: the fail-open + developer-default tradeoff allowed for production —
+  during the run the mechanism behaved per the spec (2/3 wrong predictions at the 0.7 gate
+  fell towards abstain/fallback).
+- **T013 CLOSED — path C**: the `confidence_threshold` **STAYS 0.7**. Despite SC-002 being RED
+  the system gets an interim production status, because:
+  - SC-001 GREEN: the new decision is not worse than the baseline (both 6/9);
+  - the confidence signal works: the uncertain cases fall back to the intended safe default;
+  - the sweep-based 0.8 threshold would be a value tuned on 9 examples — the playbook forbids
+    adopting an exploratory result as confirmatory (at n=9 every metric moves in 1/9
+    steps, so there is an overfitting risk despite the fold-check).
+
+### SC-002 restart condition (towards the verification layer spec / dataset expansion)
+
+- The gold dataset **must be expanded to ≥20 examples, with at least 10 helpdesk labels** (currently 3 — the
+  Jev recognised the helpdesk class in 0/3 cases; this is a coverage problem, not a calibration one).
+- The T012 measurement must be re-run on the expanded dataset (baseline-first rule: before the new measurement
+  the current state must be recorded), and only based on its result can the
+  threshold be changed or SC-002 be closed.
+
+### Lesson
+On a 9-example sample, gates like SC-002 (risk ≤0.15, ECE ≤0.10) cannot be proven
+statistically — the minimum sample size should also have been written into the spec when the gate was designed.
+Into the next calibration spec: specifying the minimum sample size for an SC-gate is mandatory.
