@@ -46,8 +46,11 @@
 3. The production decision call is a direct SDK call (`src/snow_kb/audience.py`); the ReAnchor wrapper (`eval/audience_reanchor.py`) is only for measurement.
 4. program.py / program.json / eval metric untouched (the wrapper sits in the pipeline layer, via deepcopy).
 
-## Commit-hash-ek (branch: 013-audience-typed-decision)
-(see `git log --oneline` below at the end of the report)
+## Commit hashes (branch: 013-audience-typed-decision, pushed)
+- `2b89ce4` T001+T002: dependencies + audience_decision config block
+- `7183b68` T003+T004: baseline (9/9 developer, local Qwen) + gold labels
+- `fede169` T006-T010: audience.py + pipeline integration + work_notes flagging
+- `07ce995` T012+T014: measurement, SC gates, Agent.md §41, runner report
 
 ## Open MANUAL GATEs (not ticked)
 - **T005**: review of the baseline + labels (`artifacts/audience_baseline.json`, `data/examples/gold_audience_labels.json`)
