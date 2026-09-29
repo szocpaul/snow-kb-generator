@@ -788,5 +788,38 @@ DSPy-szervereken (FastAPI/uvicorn) a globális `dspy.configure` NEM kérés-bizt
 - T013: SC-kapuk review-ja; ha a küszöb módosul (pl. 0.8), indoklás ide.
 - Backlog: TASK-1 (verifikációs-réteg spec újraindítási feltétele: MÉG NEM teljesül).
 
+*(Mindhárom emberi kapu 2026-09-29-én lezárva — döntések és indoklás: §42.)*
+
 ### Tanulság
 - A kalibrált döntés értéke a határesetekben látszik: a 0.26/0.60-confidence hibás tippeket a 0.7-es kapu kiszűri (abstain/fallback), a 0.95-ös magabiztos hiba viszont átmegy — pont ezért kell a confirmatory kapu és az emberi review, nem a sweep-legjobb automatikus átvétele.
+
+
+## 42. Spec 013: emberi kapuk lezárása (2026-09-29)
+
+### Döntések (T005, T011, T013 — a runner után, emberi review-ban)
+
+- **T005 JÓVÁHAGYVA**: a 9 gold audience-címke evidenciája átnézve — a 3 helpdesk-címke
+  (STRY0010003/4/5) megalapozott ("Investigation Steps" szekciók support-olvasóhoz szólnak).
+- **T011 JÓVÁHAGYVA**: a fail-open + developer-default tradeoff productionre engedélyezett —
+  a futás során a mechanizmus spec-szerűen viselkedett (2/3 hibás tipp a 0.7-es kapun
+  abstain/fallback irányba esett).
+- **T013 LEZÁRVA — C út**: a `confidence_threshold` **MARAD 0.7**. Az SC-002 PIROS ellenére
+  a rendszer interim production-státuszt kap, mert:
+  - SC-001 ZÖLD: az új döntés nem rosszabb a baseline-nál (mindkettő 6/9);
+  - a confidence-szignál működik: a bizonytalan esetek a tervezett biztonságos alapra esnek;
+  - a sweep-szerinti 0.8-as küszöb 9 példán hangolt érték lenne — a playbook tiltja az
+    exploratív eredmény confirmatoryként való átvételét (n=9-nél minden metrika 1/9-es
+    lépésekben mozog, a fold-check ellenére is overfitting-kockázat).
+
+### SC-002 újraindítási feltétel (a verifikációs-réteg spec / dataset-bővítés felé)
+
+- A gold dataset **≥20 példára bővítendő, min. 10 helpdesk-címkével** (jelenleg 3 — a
+  helpdesk-osztályt a Jev 0/3-ban ismerte fel, ez coverage-probléma, nem kalibrációs).
+- A bővített dataseten a T012 mérés újrafuttatandó (baseline-előbb szabály: az új mérés
+  előtt az aktuális állapot rögzítendő), és csak annak eredménye alapján módosítható a
+  threshold vagy zárható az SC-002.
+
+### Tanulság
+9 példás mintán az SC-002-szerű kapuk (risk ≤0.15, ECE ≤0.10) statisztikailag nem
+igazolhatók — a kapu tervezésekor a mintaméret-minimumot is a specbe kellett volna írni.
+A következő kalibrációs specbe: SC-kapuhoz min. mintaméret megadása kötelező.
