@@ -11,8 +11,8 @@
 
 ## Phase 1: Setup
 
-- [ ] T001 [P] Config extension in `config.yaml`: `verification_gate.enabled` (initial: false), `verification_gate.behavior` (flag/strip/block, default: `flag`), `verification_gate.model` (pinned version), `verification_gate.confidence_threshold` (initial: 0.7), `verification_gate.spotcheck_cache_path`, `verification_gate.recording_path` — + test for the config parsing
-- [ ] T002 [P] `.env.example` check: `TYPESAFE_API_KEY` is already in it (since 013); if the spot-check needs a new permission on ServiceNow, document it under deploy/
+- [x] T001 [P] Config extension in `config.yaml`: `verification_gate.enabled` (initial: false), `verification_gate.behavior` (flag/strip/block, default: `flag`), `verification_gate.model` (pinned version), `verification_gate.confidence_threshold` (initial: 0.7), `verification_gate.spotcheck_cache_path`, `verification_gate.recording_path` — + a test for the config parsing
+- [x] T002 [P] `.env.example` check: `TYPESAFE_API_KEY` is already there (since 013); if the spot-check needs a new permission on ServiceNow, document it under deploy/
 
 ## Phase 2: Baseline (US1 precondition — playbook: baseline first)
 
