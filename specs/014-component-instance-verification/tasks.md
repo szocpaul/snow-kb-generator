@@ -23,8 +23,8 @@
 
 ## Phase 3: US1 – Instance axis in the metric (test first)
 
-- [ ] T006 [US1] Test: metric instance axis — with mock spot-check answers: non-existent name → axis 0 + naming; only real names → 1.0; query error → fail-open (the axis is skipped with a warning, FR-002/FR-006); 0 false positive on the gold articles. FAIL before implementation
-- [ ] T007 [US1] `src/snow_kb/verification.py` — candidate extraction (reusing the 011 pattern), update-set whitelist building (from the `get_update_set_changes` output), per-name spot-check on the `servicenow_client` session (cached, `spotcheck_cache_path`), fail-open on every query error; wiring into `eval/metric.py` as a new axis (the story-based axis stays untouched)
+- [x] T006 [US1] Test: metric instance axis — with mock spot-check responses: non-existent name → axis 0 + naming; only real names → 1.0; query error → fail-open (the axis is skipped with a warning, FR-002/FR-006); 0 false positives on the gold articles. FAIL before the implementation
+- [x] T007 [US1] `src/snow_kb/verification.py` — candidate extraction (reusing the 011 pattern), update-set whitelist construction (from the `get_update_set_changes` output), per-name spot-check on the `servicenow_client` session (cached, `spotcheck_cache_path`), fail-open on every query error; integration into `eval/metric.py` as a new axis (the story-based axis is untouched)
 
 ## Phase 4: US2 – Production push-gate (test first)
 

@@ -27,6 +27,52 @@ BANNED_PHRASES: list[str] = [
 ]
 
 
+# ---------------------------------------------------------------------------
+# Spec 014 (US1): the instance axis — a NEW axis NEXT TO the existing ones (FR-006)
+# ---------------------------------------------------------------------------
+
+# A module-level spot-checker injected in the tests/measurement. By default
+# None → the axis is INACTIVE and the score formula is bit-identical to the behaviour
+# before spec 014 (backwards compatibility, FR-006).
+_INSTANCE_CHECKER = None
+_INSTANCE_AXIS_WEIGHT = 0.10  # if active: score = old*(1-w) + w*instance
+
+
+def configure_instance_axis(checker) -> None:
+    """Turns the instance axis on/off (None = inactive).
+
+    The measurement (spec 014 T013) and the tests inject the SpotChecker; the
+    the production eval path does not configure it by default — the axis
+    in that case it is left out, the existing axes are untouched.
+    """
+    global _INSTANCE_CHECKER
+    _INSTANCE_CHECKER = checker
+
+
+def _instance_axis(html: str, update_set_text: str) -> tuple[float, list[str], bool]:
+    """The instance axis: (score, non_existent_names, skipped).
+
+    Fail-open (FR-002): on an error or a total dropout (1.0, [], True) —
+    the axis is neutral, the pipeline/eval does not stop.
+    """
+    from snow_kb.verification import verify_component_names
+
+    try:
+        result = verify_component_names(html, update_set_text,
+                                        spot_checker=_INSTANCE_CHECKER)
+    except Exception as exc:  # noqa: BLE001 — deliberately wide net (FR-002)
+        import logging
+
+        logging.getLogger(__name__).warning(
+            "instance axis error — skipped: %s: %s", type(exc).__name__, exc
+        )
+        return 1.0, [], True
+    if result.skipped:
+        return 1.0, [], True
+    not_found = result.not_existing_names
+    return (0.0 if not_found else 1.0), not_found, False
+
+
 def rich_metric(gold, pred, trace=None, pred_name=None, pred_trace=None):
     """Evaluates the generated KB article against the gold standard.
 
@@ -117,6 +163,20 @@ def rich_metric(gold, pred, trace=None, pred_name=None, pred_trace=None):
     # 5. The style axis (spec 010, US2): LLM-as-judge, with error tolerance (FR-002).
     style_score, style_critique = _style_score(actual_html) if actual_html else (0.5, "")
 
+    # 5b. The instance axis (spec 014, US1): do the named component names exist
+    # on the instance. A NEW axis NEXT TO the story-based check (FR-006) —
+    # inactive by default (configure_instance_axis(None)); in the active state
+    # the score is the old formula times (1-w) + w*instance, so when inactive it is
+    # bit-identical to the old behaviour.
+    instance_score = None
+    instance_missing: list[str] = []
+    if _INSTANCE_CHECKER is not None and actual_html:
+        instance_score, instance_missing, instance_skipped = _instance_axis(
+            actual_html, update_set_payloads
+        )
+        if instance_skipped:
+            instance_score = None  # fail-open: the axis is skipped (neutral)
+
     # The weighted sum — spec 010: 0.25 structure + 0.25 content + 0.15 template
     # + 0.15 hallucination + 0.20 style (the old one: 0.3/0.3/0.2/0.2, without style).
     score = (
@@ -126,6 +186,8 @@ def rich_metric(gold, pred, trace=None, pred_name=None, pred_trace=None):
         + 0.15 * hallucination_score
         + 0.20 * style_score
     )
+    if instance_score is not None:
+        score = score * (1.0 - _INSTANCE_AXIS_WEIGHT) + _INSTANCE_AXIS_WEIGHT * instance_score
 
     # 4. The feedback (the critique in natural language)
     parts = []
@@ -174,6 +236,15 @@ def rich_metric(gold, pred, trace=None, pred_name=None, pred_trace=None):
             "or refer to the component by its function instead of a fabricated name."
         )
 
+    if instance_missing:
+        parts.append(
+            "Non-existent component name(s): "
+            + ", ".join(f"'{c}'" for c in instance_missing)
+            + ". These component names do not exist in the target instance's metadata "
+            "(checked via Update Set whitelist + per-name spot-check) — remove them or "
+            "correct them to the real component name."
+        )
+
     if style_critique:
         parts.append(f"Style: {style_critique}")
 
@@ -182,9 +253,9 @@ def rich_metric(gold, pred, trace=None, pred_name=None, pred_trace=None):
 
     feedback = " ".join(parts)
 
-    # T010c / FR-007: we put the axis values into the Prediction as well, so that the
-    # run_baseline can persist per-axis statistics into runs/*.json
-    # (this does not violate the GEPA contract: the score + feedback are unchanged).
+    # T010c / FR-007: we also put the axis values into the Prediction, so that the
+    # run_baseline can persist the per-axis statistics into the runs/*.json
+    # (this does not break the GEPA contract: the score + feedback are unchanged).
     return dspy.Prediction(
         score=score,
         feedback=feedback,
@@ -194,6 +265,8 @@ def rich_metric(gold, pred, trace=None, pred_name=None, pred_trace=None):
             "template": template_adherence,
             "hallucination": hallucination_score,
             "style": style_score,
+            # spec 014: the instance axis only appears in an active configuration
+            **({"instance": instance_score} if instance_score is not None else {}),
         },
     )
 
