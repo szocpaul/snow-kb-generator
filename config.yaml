@@ -55,7 +55,10 @@ audience_decision:
 # enabled=false az alapértelmezés — a gate bekapcsolása a T014 MANUÁLIS KAPU
 # döntése (a spec tilalma szerint a runner nem kapcsolja be).
 verification_gate:
-  enabled: false
+  # 2026-09-30, T014 MANUÁLIS KAPU: az ember BEKAPCSOLTA (enabled=true, behavior=flag)
+  # megfigyelési időszakra — a JSONL recording a mérési alap; strip/block csak
+  # későbbi, adat-alapú döntéssel. Döntések: Agent.md (spec 014 naplóbejegyzés).
+  enabled: true
   # A gate viselkedése nem-létező komponensnév esetén (KD1 default: flag):
   #   flag  = work_notes-jelzés a mért confidence-szel, a cikk kimegy
   #   strip = a gyanús nevek eltávolítása a cikkből (durvább beavatkozás)

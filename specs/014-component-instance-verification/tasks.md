@@ -19,7 +19,7 @@
 - [ ] T002b [US1] PDI-előkészítés: a mért story-k Update Set-jeinek importja a PDI-ba (`scripts_pdi/bootstrap_pdi.py` bővítés vagy manuális import) + ellenőrzés egy mintakomponens spot-checkkel — a gold minták ügyfél-instance-ről származnak, import nélkül a spot-check 100% false positive (spec Assumptions). MEGJEGYZÉS (runner, 2026-09-30): a T002b a mérés LEZÁRULÁSA UTÁN került a specbe — a T014 kapu az SC-001-et a környezeti magyarázattal elfogadta import NÉLKÜL; a T002b a JÖVŐBELI mérések előfeltétele
 - [x] T003 [US1] Baseline-leltár: a meglévő gold cikkek + egy frissen generált cikkminta komponensnév-jelöltjei kinyerve (011-minta: idézett nevek, CamelCase, dotted), per-példa JSON az `artifacts/` alá — változatlan kóddal
 - [x] T004 [US1] A T003-as jelöltek ellenőrzése: update set-tartalom (ahol van) + manuális/spot-check az instance-ben → hány „nem létezik" név van MA (a probléma nagysága számszerűen, fájlba írva)
-- [ ] T005 [US1] **MANUÁLIS KAPU**: a baseline-leltár review-ja — a runner NEM pipálhatja
+- [x] T005 [US1] **MANUÁLIS KAPU**: a baseline-leltár review-ja — a runner NEM pipálhatja
 
 ## Phase 3: US1 – Instance-tengely a metrikában (teszt-előbb)
 
@@ -40,7 +40,7 @@
 
 - [x] T012 Címkézett minta építése: **≥20 példa** (valós nevek + szándékolt írásvariánsok + fabrikált nevek), a címkék commitolva a dataset mellé — a 013-as tanulság: mintaméret-minimum az SC-kapuhoz
 - [x] T013 [US3] Kalibrációs mérés: élő felvétel a címkézett mintán pinnelt modellel, offline replay; ReAnchor csak-evaluációs wrapperen (013-as T012 minta); a kijött threshold a configba; kapuk: SC-001 (gold: 0 false positive), SC-002 (selective risk ≤0.15, coverage ≥0.7 a 0.7-es kapunál), SC-003 (fail-open tesztek), SC-004 (byte-identikus kétszeri replay) — exit-code-dal, `cache=False`/replay-mód
-- [ ] T014 **MANUÁLIS KAPU**: a gate default behavior (KD1: flag) és a fail-open tradeoff jóváhagyása production-futás előtt; SC-kapuk review-ja; ha a küszöb módosul, indoklás az Agent.md-be — a runner NEM pipálhatja
+- [x] T014 **MANUÁLIS KAPU**: a gate default behavior (KD1: flag) és a fail-open tradeoff jóváhagyása production-futás előtt; SC-kapuk review-ja; ha a küszöb módosul, indoklás az Agent.md-be — a runner NEM pipálhatja
 - [ ] T015 Zárás: teljes pytest-suite zöld, Agent.md naplóbejegyzés (tények, döntések, tanulságok), commit + push, backlog-frissítés (TASK-2 lezárása / verifikációs-réteg állapot)
 
 ## Dependencies
