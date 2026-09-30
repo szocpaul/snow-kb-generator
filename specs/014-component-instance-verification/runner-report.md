@@ -1,6 +1,6 @@
 # spec 014 runner report — Component Name Verification Against the Instance + Production Push Gate
 
-**Status: STOPPED at the T014 MANUAL GATE** — waiting for human approval (after T015).
+**Status: DONE — T001-T015 closed, the gate switched on in production (enabled=true, behavior=flag).**
 Date: 2026-09-30 | Branch: `014-component-instance-verification` | Run: DEV mode (SNOW_KB_DEV_MODE=1; 0 Kimi tokens for the task model — every generation ran on the local Qwen3.8-27B)
 
 ## Preflight (all GREEN, 2026-09-30 15:4x)
@@ -117,3 +117,32 @@ Wrong cases at the 0.7 gate (4 of 24): 3 spelling variants with low confidence
 - the production decision is a direct SDK call, ReAnchor is for measurement only ✅
 - verification_gate.enabled=false ✅ | Kimi tokens for the task model: 0 ✅
 - the threshold sweep is reported as exploratory, the confirmatory gate: 0.7 ✅
+
+## T014 MANUAL GATE — RESULT (human approval, 2026-09-30)
+
+All four proposals are APPROVED: (1) default behaviour = flag (KD1) ✅; (2) the fail-open
+tradeoff (FR-002) ✅; (3) SC-001 red ACCEPTED with the environmental explanation (the gold
+stories are dev-instance ones; the hostname/fragment noise is tolerated in flag-only mode) ✅;
+(4) the gate MAY BE SWITCHED ON: enabled=true + behavior=flag for an observation period ✅.
+
+## T015 — Closing
+
+- `config.yaml`: `verification_gate.enabled: true` (behavior=flag) — per the T014 decision,
+  with a justifying comment.
+- `Agent.md` §44: log entry (facts, decisions, lessons, commit hashes).
+- Backlog: **TASK-2 → Done** (final summary with the measurement evidence).
+- Checkboxes: T005 + T014 ticked (the human approved, with explicit permission).
+- **Open follow-up**: T002b (PDI preparation / update-set import) — the human added it to
+  the spec AFTER the measurement was closed (commit 2dca8cb); it is a precondition for the
+  future measurements, this run closed with the T014 acceptance without the import.
+- Rebase onto the human spec change (2dca8cb) + push: **a4dfe25**.
+- Final gate: **349 pytest green** (state after the push).
+
+## Final commit hashes (after the rebase, pushed)
+
+| Hash | Content |
+|---|---|
+| a4dfe25 | T015 closing (gate ON, Agent.md §44, TASK-2 Done) |
+| 716421a | T014 package runner report |
+| 15e81c0 | T013 measurement + SC-gates + ReAnchor |
+| (earlier ones) | see `git log origin/014-component-instance-verification` |
