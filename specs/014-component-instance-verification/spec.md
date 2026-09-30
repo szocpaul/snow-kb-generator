@@ -162,6 +162,10 @@ a kalibrált réteg a false positive-okat csökkenti az írásvariánsoknál.
 
 - Az instance-metaadatok (tábla-/mező-/scriptnevek) API-n lekérdezhetők a PDI-ról, és a
   snapshot mérete kezelhető (cache-elhetó).
+- **A cél-instance-en (PDI) a mért story-k Update Set-jei importálva vannak.** A gold
+  minták egy másik (ügyfél production) instance-ről származnak — import nélkül a
+  spot-check réteg minden nevet „nem létezőnek" jelölne, és a mérés értelmetlen
+  lenne (100% false positive). Az import a mérés és a gate működésének előfeltétele.
 - A gold cikkek komponensnevei a mérés időpontjában valódiak (ha egy régi gold név időközben
   törlődött az instance-ből, azt a címkézésnél javítjuk — a 013-as T004 minta).
 - A „homályos" esetek aránya kicsi; a döntések többsége determinisztikus.

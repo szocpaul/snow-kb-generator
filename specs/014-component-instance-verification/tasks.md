@@ -16,6 +16,7 @@
 
 ## Phase 2: Baseline (US1 előfeltétel — playbook: baseline-előbb)
 
+- [ ] T002b [US1] PDI-előkészítés: a mért story-k Update Set-jeinek importja a PDI-ba (`scripts_pdi/bootstrap_pdi.py` bővítés vagy manuális import) + ellenőrzés egy mintakomponens spot-checkkel — a gold minták ügyfél-instance-ről származnak, import nélkül a spot-check 100% false positive (spec Assumptions)
 - [ ] T003 [US1] Baseline-leltár: a meglévő gold cikkek + egy frissen generált cikkminta komponensnév-jelöltjei kinyerve (011-minta: idézett nevek, CamelCase, dotted), per-példa JSON az `artifacts/` alá — változatlan kóddal
 - [ ] T004 [US1] A T003-as jelöltek ellenőrzése: update set-tartalom (ahol van) + manuális/spot-check az instance-ben → hány „nem létezik" név van MA (a probléma nagysága számszerűen, fájlba írva)
 - [ ] T005 [US1] **MANUÁLIS KAPU**: a baseline-leltár review-ja — a runner NEM pipálhatja

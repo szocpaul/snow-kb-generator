@@ -117,11 +117,13 @@ story-alapú hallucination-tengely mellé, visszafelé kompatibilisen.
 
 ## Phases
 
-1. **Phase 0 – Baseline + snapshot**: instance-metaadat-snapshot felvétele
-   (tábla/mező/script-nevek, PDI-ről, fájlba); a meglévő gold + egy frissen
-   generált cikkminta komponensneveinek leltára a snapshot ellenében —
-   hány „nem létezik" jelölt van MA (ez a probléma nagyságának első számszerű
-   bizonyítéka).
+1. **Phase 0 – Baseline + PDI-előkészítés**: a mért story-k Update Set-jeinek
+   importja a PDI-ba (`scripts_pdi/bootstrap_pdi.py` bővítés vagy manuális import —
+   a gold minták ügyfél-instance-ről származnak, import nélkül a spot-check 100%
+   false positive-t adna, ld. spec Assumptions); ellenőrzés egy mintakomponens
+   spot-checkkel. Utána: a meglévő gold + egy frissen generált cikkminta
+   komponensneveinek leltára a whitelist + spot-check ellenében — hány „nem
+   létezik" jelölt van MA (a probléma nagyságának első számszerű bizonyítéka).
 2. **Phase 1 (US1)**: metrika instance-tengely + tesztek (mock snapshot).
 3. **Phase 2 (US2)**: `verification.py` determinisztikus mag + gate-bekötés a
    `servicenow_client._create_kb_article_live` elé + work_notes-jelzés + tesztek.

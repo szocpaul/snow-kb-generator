@@ -38,8 +38,10 @@ PREFLIGHT (ha bármelyik meghiusul, NE indulj el, jelentsd mi hiányzik):
 1.  TYPESAFE_API_KEY be van állítva és egy minimális system_one-hívás sikeres
 2.  typesafe-sdk és dspy[typesafe] telepítve a projekt-környezetben (a 013 óta
     a pyproject része — ellenőrizd, ne telepítsd újra feleslegesen)
-3.  A ServiceNow instance elérhető a szerverről (a spot-check és az update-set
-    lekérdezés miatt) — egy minimális table-API hívás sikeres
+3.  A ServiceNow instance elérhető a szerverről, ÉS a mért story-k Update Set-jei
+    importálva vannak a PDI-ba (egy mintakomponens spot-checkkel igazolva) —
+    a gold minták ügyfél-instance-ről származnak, import nélkül a spot-check
+    100% false positive-t adna (spec Assumptions)
 4.  pytest -q zöld a kiinduló állapotban (309 teszt; env-érzékeny teszt:
     SNOW_KB_DEV_MODE nélkül futtasd a suite-et, a dev-mód az LLM-es
     futtatásokhoz kell — a 013-as runner-report megjegyzése)
