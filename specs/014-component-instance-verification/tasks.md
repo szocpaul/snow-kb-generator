@@ -28,13 +28,13 @@
 
 ## Phase 4: US2 – Production push-gate (teszt-előbb)
 
-- [ ] T008 [US2] Teszt: gate a `servicenow_client._create_kb_article_live` előtt — nem-létező név → behavior szerinti viselkedés (default: work_notes-jelzés a nevekkel + confidence); valós nevek → cikk változatlan; instance elérhetetlen → fail-open, a cikk kimegy warninggal. FAIL implementáció előtt
-- [ ] T009 [US2] Gate-bekötés a `pipeline.py`-ba (a `_create_kb_article_live` hívás elé): `verify_component_names` futtatása, a behavior végrehajtása (flag: work_notes-jelzés; strip/blokk csak konfiggal), JSONL recording (013-formátum) — T007 után
+- [x] T008 [US2] Teszt: gate a `servicenow_client._create_kb_article_live` előtt — nem-létező név → behavior szerinti viselkedés (default: work_notes-jelzés a nevekkel + confidence); valós nevek → cikk változatlan; instance elérhetetlen → fail-open, a cikk kimegy warninggal. FAIL implementáció előtt
+- [x] T009 [US2] Gate-bekötés a `pipeline.py`-ba (a `_create_kb_article_live` hívás elé): `verify_component_names` futtatása, a behavior végrehajtása (flag: work_notes-jelzés; strip/blokk csak konfiggal), JSONL recording (013-formátum) — T007 után
 
 ## Phase 5: US3 – Kalibrált réteg a homályos esetekre (teszt-előbb)
 
-- [ ] T010 [US3] Teszt: homályos esetek — írásvariáns valós komponensre → „létezik (utalás)" magas confidence-szel; ismeretlen név → alacsony confidence / „nem létezik"; SDK-hiba → fail-open a determinisztikus útra. FAIL implementáció előtt
-- [ ] T011 [US3] Kalibrált döntés a `verification.py`-ban: TypeSafe Noul per homályos jelölt (pinnelt modell), threshold-logika a 013-as mintára (`<` operátor, eps), recording + fail-open — T007 után
+- [x] T010 [US3] Teszt: homályos esetek — írásvariáns valós komponensre → „létezik (utalás)" magas confidence-szel; ismeretlen név → alacsony confidence / „nem létezik"; SDK-hiba → fail-open a determinisztikus útra. FAIL implementáció előtt
+- [x] T011 [US3] Kalibrált döntés a `verification.py`-ban: TypeSafe Noul per homályos jelölt (pinnelt modell), threshold-logika a 013-as mintára (`<` operátor, eps), recording + fail-open — T007 után
 
 ## Phase 6: Mérés, kalibráció, zárás
 

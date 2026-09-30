@@ -96,6 +96,11 @@ class KBArticle(BaseModel):
     audience_note: str = Field(
         default="", description="Bizonytalan audience jelzés (work_notes-ba, ha nem üres)"
     )
+    # Spec 014 US2: a verification gate jelzése (nem-létező komponensnevek) —
+    # a Story work_notes-jébe kerül a create_kb_article írási útjában.
+    verification_note: str = Field(
+        default="", description="Nem-létező komponensnév jelzés (work_notes-ba, ha nem üres)"
+    )
 
     @field_validator("title")
     @classmethod

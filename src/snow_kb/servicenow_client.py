@@ -499,11 +499,20 @@ class ServiceNowClient:
             logger.info("KB cikk létrehozva: sys_id=%s", sys_id)
 
         # Work notes frissítése a Story-n, ha meg van adva sys_id
-        # (spec 013 US2: az alacsony-confidence audience-jelzés is itt megy ki)
+        # (spec 013 US2: az alacsony-confidence audience-jelzés is itt megy ki;
+        #  spec 014 US2: a verification gate nem-létező-név jelzése szintén)
         if story_sys_id:
+            notes = [
+                n
+                for n in (
+                    getattr(article, "audience_note", "") or "",
+                    getattr(article, "verification_note", "") or "",
+                )
+                if n
+            ]
             self._update_story_work_note(
                 story_sys_id, sys_id, article.title,
-                extra_note=getattr(article, "audience_note", "") or "",
+                extra_note="\n".join(notes),
             )
 
         return sys_id
