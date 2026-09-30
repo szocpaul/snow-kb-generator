@@ -776,3 +776,102 @@ Second (and later) button press: HTTP 500, `RuntimeError: dspy.settings can only
 
 ### Lesson
 On DSPy servers (FastAPI/uvicorn) the global `dspy.configure` is NOT request-safe — for per-request configuration `dspy.context` is the right tool. (The eval scripts are single-threaded, there the global configure is still fine.)
+
+
+## 41. Spec 013: calibrated, typed audience decision (2026-09-29)
+
+### Facts
+- Branch: `013-audience-typed-decision`. Commits: T001+T002 (2b89ce4), T003+T004 (7183b68), T006-T010 + T012 measurement infrastructure (see git log).
+- New module: `src/snow_kb/audience.py` — direct TypeSafe SDK call (Choice: helpdesk/end-user/developer), JSONL recording (jev-dspy-lab format, vendored: `src/snow_kb/vendor/jev_replay.py`), fail-open (FR-001), threshold logic (US2).
+- Integration: `pipeline.py` — `resolve_audience` BEFORE the program, `_AudienceOverrideExtractor` wrapper (program.py/program.json untouched), work_notes note in the `servicenow_client.py` write path.
+- Config: `audience_decision.*` (enabled, pinned model `jev-1.13.0`, confidence_threshold=0.7, recording_path). The `jev-latest` alias is FORBIDDEN by the validator (FR-002).
+- Tests: 309/309 GREEN (the 287 test suite + 22 new).
+- Measurement (T012): live run on 9 gold + 3 mock examples, pinned jev-1.13.0; offline replay; ReAnchor on the eval-only wrapper (`eval/audience_reanchor.py`); gate metrics from the vendored jev-dspy-lab (`eval/jev_metrics.py`, MIT).
+
+### SC-gate outputs (`eval/audience_sc_gates.py`, exit 1)
+- **SC-001 GREEN**: baseline (generative, local Qwen dev mode) 6/9 vs new 6/9 — not worse.
+- **SC-002 RED** at the confirmatory 0.7 gate: selective_risk=0.200 (>0.15), coverage=0.833 (OK), ECE=0.163 (>0.10).
+- **SC-003 GREEN** (fail-open tests), **SC-004 GREEN** (double replay byte-identical, 4491 bytes).
+
+### Anatomy of the RED gate (for a human decision, T005/T013)
+- Jev predicted `developer` for all 9 gold examples; the 3 disputed labels (STRY0010003/4/5) are `helpdesk` for me — evidence: the "Investigation Steps" section of all three articles explicitly points to support work ("When to use this guide", "Escalate to infrastructure team").
+- Of the wrong predictions, 2 come with low confidence (0.26, 0.60), but 1 is confidently wrong (0.95).
+- EXPLORATORY (NOT confirmatory): at sweep 0.8, risk=0.111 / coverage=0.75; ReAnchor helpdesk-weight=15.8 (train accuracy 0.667→0.917). So the config threshold STAYS 0.7 — changing it is a human decision (T013).
+
+### Decisions
+- Threshold operator: per the spec `<` (not `<=`), per T009 the exact boundary value tilts towards the fallback direction — the `confidence < threshold + 1e-9` form satisfies both (documented in the audience.py docstring).
+- The baseline was made in dev mode (local Qwen, without Kimi tokens) — so the SC-001 comparison is "generative-path-local vs Jev", not Kimi vs Jev.
+- The production decision call stays a direct SDK call; the ReAnchor wrapper is only for measurement.
+
+### Open human gates
+- T005: review of the gold audience labels (`data/examples/gold_audience_labels.json`).
+- T011: approval of the fail-open + developer-default tradeoff before production.
+- T013: review of the SC-gates; if the threshold changes (e.g. 0.8), put the rationale here.
+- Backlog: TASK-1 (restart condition of the verification layer spec: NOT YET met).
+
+*(All three human gates closed on 2026-09-29 — decisions and rationale: §42.)*
+
+### Lesson
+- The value of the calibrated decision shows at the boundaries: the 0.7 gate filters out the wrong predictions with 0.26/0.60 confidence (abstain/fallback), but the confidently wrong 0.95 case passes — this is exactly why the confirmatory gate and the human review are needed, rather than the automatic adoption of the best sweep result.
+
+
+## 42. Spec 013: closing the human gates (2026-09-29)
+
+### Decisions (T005, T011, T013 — after the runner, in human review)
+
+- **T005 APPROVED**: the evidence of the 9 gold audience labels reviewed — the 3 helpdesk labels
+  (STRY0010003/4/5) are justified (the "Investigation Steps" sections address a support reader).
+- **T011 APPROVED**: the fail-open + developer-default tradeoff allowed for production —
+  during the run the mechanism behaved per the spec (2/3 wrong predictions at the 0.7 gate
+  fell towards abstain/fallback).
+- **T013 CLOSED — path C**: the `confidence_threshold` **STAYS 0.7**. Despite SC-002 being RED
+  the system gets an interim production status, because:
+  - SC-001 GREEN: the new decision is not worse than the baseline (both 6/9);
+  - the confidence signal works: the uncertain cases fall back to the intended safe default;
+  - the sweep-based 0.8 threshold would be a value tuned on 9 examples — the playbook forbids
+    adopting an exploratory result as confirmatory (at n=9 every metric moves in 1/9
+    steps, so there is an overfitting risk despite the fold-check).
+
+### SC-002 restart condition (towards the verification layer spec / dataset expansion)
+
+- The gold dataset **must be expanded to ≥20 examples, with at least 10 helpdesk labels** (currently 3 — the
+  Jev recognised the helpdesk class in 0/3 cases; this is a coverage problem, not a calibration one).
+- The T012 measurement must be re-run on the expanded dataset (baseline-first rule: before the new measurement
+  the current state must be recorded), and only based on its result can the
+  threshold be changed or SC-002 be closed.
+
+### Lesson
+On a 9-example sample, gates like SC-002 (risk ≤0.15, ECE ≤0.10) cannot be proven
+statistically — the minimum sample size should also have been written into the spec when the gate was designed.
+Into the next calibration spec: specifying the minimum sample size for an SC-gate is mandatory.
+
+
+## 43. Archiving Spec 013 (2026-09-30)
+
+### Decision
+The audience-decision feature is **ARCHIVED**, `audience_decision.enabled: false` —
+the branch is merged into main in a disabled state.
+
+### Rationale
+At the end of the spec cycle it turned out: the `helpdesk/end-user/developer` decision has **no
+downstream consumer** — every KB is built with the same L2/L3 ServiceNow integration
+template, there is no content difference between L2 and L3, every article
+is a technical description. The Jev 0/3 helpdesk performance was not a calibration error,
+but a sign that the question itself was formulated badly: the audience signal
+does not exist in the raw story text, because the audience is a function of the article-writing decision,
+not of the story.
+
+### What remains (the real gain of 013)
+- The full measurement infrastructure: JSONL recording, replay, `eval/jev_metrics.py`
+  (selective risk / coverage / ECE), `eval/audience_reanchor.py` (ReAnchor
+  eval-only wrapper), SC-gates with exit codes — **reusable for any
+  future typed decision**.
+- 22 new tests (309 test suite), the fail-open behaviour of the pipeline.
+- The §41–43 lessons: minimum sample size for an SC-gate; exploratory ≠ confirmatory;
+  a decision only if there is a downstream consumer.
+
+### Lesson
+Spec 013 is not a failure: with 0 Kimi tokens, in one day, measurement showed that the
+feature is not worth taking into production. The candidate for the next typed decision (014)
+is: a question that has a real variance and a pipeline effect
+(e.g. "is a KB article worth writing for this story?" — a Noul gate before generation).

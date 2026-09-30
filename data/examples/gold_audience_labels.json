@@ -1,0 +1,60 @@
+{
+  "spec": "013-audience-typed-decision / T004",
+  "labeling_rule": "The role of the gold article decides: an 'Implement' type story → the article documents the implementation of the integration (Technical Implementation, payloads, script names) → 'developer'. A 'Fix/Resolve' type story → the article is a troubleshooting guide (Investigation Steps, Known Issues) for the support work → 'helpdesk'. The 'Who uses it' row is a secondary piece of evidence; none of the gold examples addresses a purely end-user reader.",
+  "labels": {
+    "STRY0010001": {
+      "example": 1,
+      "title": "Inbound Jira Webhook Integration",
+      "label": "developer",
+      "evidence": "Implement-story; article: Inbound Technical Implementation (JiraInboundUtils, /api/x_jira/webhook, payload-minta)."
+    },
+    "STRY0010002": {
+      "example": 2,
+      "title": "Outbound Jira REST API",
+      "label": "developer",
+      "evidence": "Implement-story; Outbound Technical Implementation + REST payloadok."
+    },
+    "STRY0010003": {
+      "example": 3,
+      "title": "LDAP Authentication Retry Fix",
+      "label": "helpdesk",
+      "evidence": "Fix-story; Investigation Steps + Known Issues; 'End users ... and IT support teams'."
+    },
+    "STRY0010004": {
+      "example": 4,
+      "title": "SAP IDOC Status 51 Error Handling",
+      "label": "helpdesk",
+      "evidence": "Fix-story; Investigation Steps; 'Finance teams and SAP administrators who process vendor invoices'."
+    },
+    "STRY0010016": {
+      "example": 5,
+      "title": "KB Generator Pipeline",
+      "label": "developer",
+      "evidence": "Implement-story; 'Developers on the Integration Team'."
+    },
+    "STRY0010005": {
+      "example": 6,
+      "title": "SolMan Change Task State Sync Fix",
+      "label": "helpdesk",
+      "evidence": "Fix-story; Investigation Steps; 'Change Managers, Change Coordinators, and IT support teams'."
+    },
+    "STRY0010014": {
+      "example": 7,
+      "title": "SolMan Bidirectional Integration (Conigma)",
+      "label": "developer",
+      "evidence": "Implement-story; IntegrationFrameworkUtil, POST /api/x_do/solman/change/task."
+    },
+    "STRY0010013": {
+      "example": 8,
+      "title": "ALMEX SOAP Integration",
+      "label": "developer",
+      "evidence": "Implement-story; Inbound Technical Implementation (VendorInterface stb.)."
+    },
+    "STRY0010015": {
+      "example": 9,
+      "title": "Outbound OData S/4HANA",
+      "label": "developer",
+      "evidence": "Implement-story; Outbound Technical Implementation; 'Change Managers and SAP project coordinators'."
+    }
+  }
+}

@@ -20,6 +20,7 @@ from typing import Protocol
 
 import dspy
 
+from snow_kb.audience import resolve_audience
 from snow_kb.config import Settings, load_settings
 from snow_kb.errors import MissingAssignmentGroupError
 
@@ -460,6 +461,14 @@ def generate_kb_article(
         # The pipeline must not crash if the KB search fails
         logger.warning("Related KB search failed: %s", exc)
 
+    # 3d. Calibrated audience decision (spec 013): the typed System One call happens
+    # BEFORE the program runs, so that the output is influenced by the style as well.
+    # enabled=False or any error → (None, ""): the generative path stays (FR-001/FR-004).
+    audience_override: str | None = None
+    audience_note = ""
+    if not settings.dry_run:
+        audience_override, audience_note = resolve_audience(story_text, settings)
+
     # 4. Dry-run: skipping the program call (no LM), mock article from the Story
     if settings.dry_run:
         article = _mock_article_from_story(story, settings)
@@ -470,6 +479,14 @@ def generate_kb_article(
         lm = build_lm(settings)
         if program is None:
             program = _load_program(program_path)
+
+        # Spec 013: the calibrated audience overwrites the generative audience output
+        # of ExtractChange — with a pipeline-level wrapper, program.py and program.json
+        # stay untouched. Thanks to the deepcopy the program instance passed to the
+        # caller is not modified either.
+        if audience_override is not None:
+            program = program.deepcopy()
+            program.extract = _AudienceOverrideExtractor(program.extract, audience_override)
 
         with dspy.context(lm=lm):
             pred = program(
@@ -482,6 +499,9 @@ def generate_kb_article(
             )
         article: KBArticle = pred.article
         article.source_story = story_identifier  # prevents duplication
+        # Spec 013 US2: the low-confidence signal → work_notes (the create_kb_article path)
+        if audience_note:
+            article.audience_note = audience_note
         # Format normalization: <code> → <strong> (the grey background is forbidden)
         article.html = normalize_code_tags(article.html)
         # Spec 007 guardrail: removing the direction-violating sections
@@ -519,6 +539,37 @@ def generate_kb_article(
 
 
 # ---------------------------------------------------------------------------
+# Helper: audience override az ExtractChange prediktoron (spec 013)
+# ---------------------------------------------------------------------------
+
+class _AudienceOverrideExtractor:
+    """Wraps the extract predictor of the program: it overwrites the generative
+    audience output with the calibrated (or threshold-default) value.
+
+    The change_summary/key_steps still come from the generative model.
+    Because the dspy.Prediction is overwritten at the attribute level, every
+    downstream use of program.forward (the template style + the returned pred)
+    sees the override.
+    """
+
+    def __init__(self, inner, audience: str) -> None:
+        self._inner = inner
+        self._audience = audience
+
+    def __call__(self, *args, **kwargs):
+        pred = self._inner(*args, **kwargs)
+        pred.audience = self._audience
+        return pred
+
+    def __getattr__(self, name):
+        # The internal introspection of dspy (named_parameters etc.) goes to the inner one.
+        # For the missing attributes with the '_' prefix an AttributeError is needed (recursion guard).
+        if name.startswith("_"):
+            raise AttributeError(name)
+        return getattr(self._inner, name)
+
+
+# ---------------------------------------------------------------------------
 # Helper: the article + sys_id pair (the result of the push)
 # ---------------------------------------------------------------------------
 
@@ -533,6 +584,8 @@ class _KBArticleWithSysId(KBArticle):
             html=base.html,
             category=base.category,
             knowledge_base_id=base.knowledge_base_id,
+            source_story=base.source_story,
+            audience_note=getattr(base, "audience_note", ""),
             **kwargs,
         )
         self.sys_id = sys_id

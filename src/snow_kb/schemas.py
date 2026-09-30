@@ -91,6 +91,11 @@ class KBArticle(BaseModel):
     category: str = Field(default="General", description="KB category name or sys_id")
     knowledge_base_id: str = Field(default="", description="Target KB sys_id")
     source_story: str = Field(default="", description="The number of the source Story (u_source_story)")
+    # Spec 013 US2: signalling a low-confidence audience decision — it ends up in
+    # the Story work_notes through the write path of create_kb_article.
+    audience_note: str = Field(
+        default="", description="Uncertain audience signal (into work_notes, if not empty)"
+    )
 
     @field_validator("title")
     @classmethod

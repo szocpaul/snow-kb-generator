@@ -77,6 +77,38 @@ class PipelineConfig(BaseModel):
     api_base: str = ""         # Optional API endpoint (e.g. a GLM proxy)
 
 
+class AudienceDecisionConfig(BaseModel):
+    """Calibrated, typed audience decision (spec 013).
+
+    When enabled=False the pipeline stays on the generative (ExtractChange)
+    audience path — this is the switchable fallback (FR-004). The model must be
+    a pinned version (FR-002), the threshold is updated from the T012
+    calibration measurement.
+    """
+
+    enabled: bool = False
+    model: str = "jev-1.13.0"          # pinned version, not a floating alias
+    confidence_threshold: float = 0.7  # confirmatory kapu (SC-002)
+    recording_path: str = "artifacts/audience_decisions.jsonl"
+
+    @field_validator("confidence_threshold")
+    @classmethod
+    def _threshold_range(cls, v: float) -> float:
+        if not 0.0 <= v <= 1.0:
+            raise ValueError("confidence_threshold must be between 0.0 and 1.0")
+        return v
+
+    @field_validator("model")
+    @classmethod
+    def _pinned_model(cls, v: str) -> str:
+        if not v or v.endswith("-latest"):
+            raise ValueError(
+                f"audience_decision.model='{v}' — a pinned version is required (e.g. 'jev-1.13.0'), "
+                "a floating alias is not allowed because of the calibration (FR-002)."
+            )
+        return v
+
+
 class ModelsConfig(BaseModel):
     main: str = "openai/gpt-4o"
     reflection: str = "openai/gpt-5"
@@ -118,6 +150,7 @@ class Settings(BaseModel):
 
     snow: ServiceNowConfig = Field(default_factory=ServiceNowConfig)
     pipeline: PipelineConfig = Field(default_factory=PipelineConfig)
+    audience_decision: AudienceDecisionConfig = Field(default_factory=AudienceDecisionConfig)
     models: ModelsConfig = Field(default_factory=ModelsConfig)
     gepa: GepaConfig = Field(default_factory=GepaConfig)
 
@@ -189,6 +222,7 @@ def load_settings(
             story_fields=yaml_data.get("story_fields", Settings().story_fields),
             snow=ServiceNowConfig(**(yaml_data.get("servicenow") or {})),
             pipeline=PipelineConfig(**(yaml_data.get("pipeline") or {})),
+            audience_decision=AudienceDecisionConfig(**(yaml_data.get("audience_decision") or {})),
             models=ModelsConfig(**(yaml_data.get("models") or {})),
             gepa=GepaConfig(**(yaml_data.get("gepa") or {})),
             snow_instance=secrets.snow_instance,

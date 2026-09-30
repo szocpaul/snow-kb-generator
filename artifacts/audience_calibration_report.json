@@ -1,0 +1,188 @@
+{
+  "confirmatory_threshold": 0.7,
+  "model": "jev-1.13.0",
+  "n_cases": 12,
+  "sc001": {
+    "baseline_matches": 6,
+    "new_matches": 6,
+    "new_not_worse": true,
+    "per_example": [
+      {
+        "baseline_audience": "developer",
+        "baseline_match": true,
+        "case_id": "STRY0010001",
+        "confidence": 1.0,
+        "expected": "developer",
+        "new_audience": "developer",
+        "new_match": true
+      },
+      {
+        "baseline_audience": "developer",
+        "baseline_match": true,
+        "case_id": "STRY0010002",
+        "confidence": 1.0,
+        "expected": "developer",
+        "new_audience": "developer",
+        "new_match": true
+      },
+      {
+        "baseline_audience": "developer",
+        "baseline_match": false,
+        "case_id": "STRY0010003",
+        "confidence": 0.26,
+        "expected": "helpdesk",
+        "new_audience": "developer",
+        "new_match": false
+      },
+      {
+        "baseline_audience": "developer",
+        "baseline_match": false,
+        "case_id": "STRY0010004",
+        "confidence": 0.6,
+        "expected": "helpdesk",
+        "new_audience": "developer",
+        "new_match": false
+      },
+      {
+        "baseline_audience": "developer",
+        "baseline_match": true,
+        "case_id": "STRY0010016",
+        "confidence": 0.97,
+        "expected": "developer",
+        "new_audience": "developer",
+        "new_match": true
+      },
+      {
+        "baseline_audience": "developer",
+        "baseline_match": false,
+        "case_id": "STRY0010005",
+        "confidence": 0.95,
+        "expected": "helpdesk",
+        "new_audience": "developer",
+        "new_match": false
+      },
+      {
+        "baseline_audience": "developer",
+        "baseline_match": true,
+        "case_id": "STRY0010014",
+        "confidence": 1.0,
+        "expected": "developer",
+        "new_audience": "developer",
+        "new_match": true
+      },
+      {
+        "baseline_audience": "developer",
+        "baseline_match": true,
+        "case_id": "STRY0010013",
+        "confidence": 0.94,
+        "expected": "developer",
+        "new_audience": "developer",
+        "new_match": true
+      },
+      {
+        "baseline_audience": "developer",
+        "baseline_match": true,
+        "case_id": "STRY0010015",
+        "confidence": 0.98,
+        "expected": "developer",
+        "new_audience": "developer",
+        "new_match": true
+      }
+    ],
+    "total_gold": 9
+  },
+  "sc002": {
+    "abstained": 2,
+    "accuracy": 0.8,
+    "answered": 10,
+    "brier": 0.30728,
+    "coverage": 0.8333333333333334,
+    "ece": 0.16300000000000012,
+    "gates": {
+      "coverage_ge_0.7": true,
+      "ece_le_0.10": false,
+      "selective_risk_le_0.15": false
+    },
+    "selective_risk": 0.2
+  },
+  "spec": "013-audience-typed-decision / T012",
+  "threshold_sweep_EXPLORATIVE": [
+    {
+      "abstained": 0,
+      "answered": 12,
+      "coverage": 1.0,
+      "selective_risk": 0.3333333333333333,
+      "threshold": 0.0
+    },
+    {
+      "abstained": 0,
+      "answered": 12,
+      "coverage": 1.0,
+      "selective_risk": 0.3333333333333333,
+      "threshold": 0.1
+    },
+    {
+      "abstained": 0,
+      "answered": 12,
+      "coverage": 1.0,
+      "selective_risk": 0.3333333333333333,
+      "threshold": 0.2
+    },
+    {
+      "abstained": 0,
+      "answered": 12,
+      "coverage": 1.0,
+      "selective_risk": 0.3333333333333333,
+      "threshold": 0.3
+    },
+    {
+      "abstained": 0,
+      "answered": 12,
+      "coverage": 1.0,
+      "selective_risk": 0.3333333333333333,
+      "threshold": 0.4
+    },
+    {
+      "abstained": 0,
+      "answered": 12,
+      "coverage": 1.0,
+      "selective_risk": 0.3333333333333333,
+      "threshold": 0.5
+    },
+    {
+      "abstained": 1,
+      "answered": 11,
+      "coverage": 0.9166666666666666,
+      "selective_risk": 0.2727272727272727,
+      "threshold": 0.6
+    },
+    {
+      "abstained": 2,
+      "answered": 10,
+      "coverage": 0.8333333333333334,
+      "selective_risk": 0.2,
+      "threshold": 0.7
+    },
+    {
+      "abstained": 3,
+      "answered": 9,
+      "coverage": 0.75,
+      "selective_risk": 0.1111111111111111,
+      "threshold": 0.8
+    },
+    {
+      "abstained": 3,
+      "answered": 9,
+      "coverage": 0.75,
+      "selective_risk": 0.1111111111111111,
+      "threshold": 0.9
+    },
+    {
+      "abstained": 7,
+      "answered": 5,
+      "coverage": 0.4166666666666667,
+      "selective_risk": 0.0,
+      "threshold": 1.0
+    }
+  ]
+}

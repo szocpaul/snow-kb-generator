@@ -499,19 +499,27 @@ class ServiceNowClient:
             logger.info("KB article created: sys_id=%s", sys_id)
 
         # Updating the work notes on the Story, if sys_id is given
+        # (spec 013 US2: the low-confidence audience flag also goes out here)
         if story_sys_id:
-            self._update_story_work_note(story_sys_id, sys_id, article.title)
+            self._update_story_work_note(
+                story_sys_id, sys_id, article.title,
+                extra_note=getattr(article, "audience_note", "") or "",
+            )
 
         return sys_id
 
-    def _update_story_work_note(self, story_sys_id: str, kb_sys_id: str, title: str) -> None:
-        """Updates the Story work_notes field with the KB article link."""
+    def _update_story_work_note(self, story_sys_id: str, kb_sys_id: str, title: str, extra_note: str = "") -> None:
+        """Updates the work_notes field of the Story with the link of the KB article (+ any signal)."""
         table = self.settings.snow.story_table
         url = f"{self.base_url}/{table}/{story_sys_id}"
         kb_url = f"https://{self.settings.snow_instance}/kb_view.do?sys_kb_id={kb_sys_id}"
-        
+
+        work_note = f"KB article created: {kb_url} ({title})"
+        if extra_note:
+            work_note += f"\n{extra_note}"
+
         payload = {
-            "work_notes": f"KB article created: {kb_url} ({title})"
+            "work_notes": work_note
         }
         
         try:
