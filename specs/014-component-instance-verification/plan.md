@@ -117,11 +117,13 @@ story-based hallucination axis, backwards compatible.
 
 ## Phases
 
-1. **Phase 0 – Baseline + snapshot**: taking an instance metadata snapshot
-   (table/field/script names, from the PDI, into the file); the existing gold + one freshly
-   inventory of the component names of a generated article sample against the snapshot —
-   how many "does not exist" candidates there are NOW (this is the first numerical
-   is the proof).
+1. **Phase 0 – Baseline + PDI preparation**: the Update Sets of the measured stories
+   imports into the PDI (`scripts_pdi/bootstrap_pdi.py` extension or manual import —
+   the gold samples come from a customer instance, without import the spot-check is 100%
+   would give a false positive, see spec Assumptions); checking one sample component
+   with a spot check. Afterwards: the existing gold + one freshly generated article sample
+   inventory of the component names against the whitelist + spot check — how many "do not
+   exists" candidate there is NOW (the first numerical proof of the size of the problem).
 2. **Phase 1 (US1)**: metric instance axis + tests (mock snapshot).
 3. **Phase 2 (US2)**: `verification.py` deterministic core + gate integration in front of the
    in front of `servicenow_client._create_kb_article_live` + work_notes flag + tests.

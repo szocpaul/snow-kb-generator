@@ -38,8 +38,10 @@ PREFLIGHT (if any of these is missing, do NOT start, report what is missing):
 1.  TYPESAFE_API_KEY is set and a minimal system_one call succeeds
 2.  typesafe-sdk and dspy[typesafe] installed in the project environment (since 013
     is part of pyproject — check it, do not reinstall needlessly)
-3.  The ServiceNow instance is reachable from the server (the spot-check and the update-set
-    because of the query) — a minimal table-API call is successful
+3.  The ServiceNow instance is reachable from the server, AND the Update Sets of the measured stories
+    are imported into the PDI (proven by a spot-check on one sample component) —
+    the gold samples come from the customer instance, without import the spot-check
+    100% false positive-t adna (spec Assumptions)
 4.  pytest -q is green in the starting state (309 tests; env-sensitive test:
     run the suite without SNOW_KB_DEV_MODE, the dev mode is the LLM-based
     is needed for the runs — a note from the 013 runner report)

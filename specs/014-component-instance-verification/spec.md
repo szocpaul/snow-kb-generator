@@ -162,6 +162,10 @@ the calibrated layer reduces the false positives for spelling variants.
 
 - The instance metadata (table/field/script names) can be queried from the PDI via API, and the
   snapshot size is manageable (cacheable).
+- **The Update Sets of the measured Stories are imported on the target instance (PDI).** The gold
+  samples come from a different (customer production) instance — without the import
+  the spot-check layer would mark every name as "does not exist", and the measurement would be
+  meaningless (100% false positive). The import is a precondition for the measurement and for the gate.
 - The component names of the gold articles are real at the time of the measurement (if an old gold name was
   deleted from the instance in the meantime, we fix it during labelling — the T004 pattern of 013).
 - The share of "ambiguous" cases is small; most decisions are deterministic.
