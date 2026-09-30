@@ -108,6 +108,41 @@ class AudienceDecisionConfig(BaseModel):
         return v
 
 
+class VerificationGateConfig(BaseModel):
+    """Komponensnév-hitelesítés az instance ellen + production push-gate (spec 014).
+
+    enabled=False esetén a pipeline érintetlen (a gate bekapcsolása a T014
+    MANUÁLIS KAPU döntése). A behavior a gate viselkedése nem-létező név
+    esetén: flag (work_notes-jelzés, KD1 default) / strip / block.
+    A model pinnelt verzió kell legyen (FR-005), a threshold a T013
+    kalibrációs mérésből frissül.
+    """
+
+    enabled: bool = False
+    behavior: Literal["flag", "strip", "block"] = "flag"
+    model: str = "jev-1.13.0"          # pinnelt verzió, nem lebegő alias
+    confidence_threshold: float = 0.7  # confirmatory kapu (SC-002)
+    spotcheck_cache_path: str = "artifacts/spotcheck_cache.json"
+    recording_path: str = "artifacts/verification_decisions.jsonl"
+
+    @field_validator("confidence_threshold")
+    @classmethod
+    def _threshold_range(cls, v: float) -> float:
+        if not 0.0 <= v <= 1.0:
+            raise ValueError("confidence_threshold 0.0 és 1.0 között kell legyen")
+        return v
+
+    @field_validator("model")
+    @classmethod
+    def _pinned_model(cls, v: str) -> str:
+        if not v or v.endswith("-latest"):
+            raise ValueError(
+                f"verification_gate.model='{v}' — pinnelt verzió kell (pl. 'jev-1.13.0'), "
+                "lebegő alias nem engedélyezett a kalibráció miatt (FR-005)."
+            )
+        return v
+
+
 class ModelsConfig(BaseModel):
     main: str = "openai/gpt-4o"
     reflection: str = "openai/gpt-5"
@@ -150,6 +185,7 @@ class Settings(BaseModel):
     snow: ServiceNowConfig = Field(default_factory=ServiceNowConfig)
     pipeline: PipelineConfig = Field(default_factory=PipelineConfig)
     audience_decision: AudienceDecisionConfig = Field(default_factory=AudienceDecisionConfig)
+    verification_gate: VerificationGateConfig = Field(default_factory=VerificationGateConfig)
     models: ModelsConfig = Field(default_factory=ModelsConfig)
     gepa: GepaConfig = Field(default_factory=GepaConfig)
 
@@ -222,6 +258,7 @@ def load_settings(
             snow=ServiceNowConfig(**(yaml_data.get("servicenow") or {})),
             pipeline=PipelineConfig(**(yaml_data.get("pipeline") or {})),
             audience_decision=AudienceDecisionConfig(**(yaml_data.get("audience_decision") or {})),
+            verification_gate=VerificationGateConfig(**(yaml_data.get("verification_gate") or {})),
             models=ModelsConfig(**(yaml_data.get("models") or {})),
             gepa=GepaConfig(**(yaml_data.get("gepa") or {})),
             snow_instance=secrets.snow_instance,

@@ -11,8 +11,8 @@
 
 ## Phase 1: Setup
 
-- [ ] T001 [P] Config-bővítés `config.yaml`-ban: `verification_gate.enabled` (kezdő: false), `verification_gate.behavior` (flag/strip/block, default: `flag`), `verification_gate.model` (pinnelt verzió), `verification_gate.confidence_threshold` (kezdő: 0.7), `verification_gate.spotcheck_cache_path`, `verification_gate.recording_path` — + teszt a config-parsolásra
-- [ ] T002 [P] `.env.example` ellenőrzés: `TYPESAFE_API_KEY` már benne van (013 óta); ha a spot-check új jogosultságot igényel a ServiceNow-nál, dokumentálni a deploy/ alatt
+- [x] T001 [P] Config-bővítés `config.yaml`-ban: `verification_gate.enabled` (kezdő: false), `verification_gate.behavior` (flag/strip/block, default: `flag`), `verification_gate.model` (pinnelt verzió), `verification_gate.confidence_threshold` (kezdő: 0.7), `verification_gate.spotcheck_cache_path`, `verification_gate.recording_path` — + teszt a config-parsolásra
+- [x] T002 [P] `.env.example` ellenőrzés: `TYPESAFE_API_KEY` már benne van (013 óta); ha a spot-check új jogosultságot igényel a ServiceNow-nál, dokumentálni a deploy/ alatt
 
 ## Phase 2: Baseline (US1 előfeltétel — playbook: baseline-előbb)
 
