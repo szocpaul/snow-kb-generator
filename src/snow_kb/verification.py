@@ -65,7 +65,7 @@ class NameVerdict:
     """Egy komponensnév validálási döntése (Key Entities: Validálási döntés)."""
 
     name: str
-    status: Literal["exists", "not_exists", "unknown"]
+    status: Literal["exists", "not_exists", "not_applicable", "unknown"]
     confidence: float          # determinisztikus réteg: 1.0
     evidence: str              # naplózott bizonyíték (tábla/mező, whitelist, stb.)
     layer: str                 # "update_set" | "spotcheck" | "calibrated"
@@ -257,18 +257,19 @@ class SpotChecker:
 # ---------------------------------------------------------------------------
 
 _REFERS_QUESTION = (
-    "A megnevezés egy valós, az adott ServiceNow instance-en LÉTEZŐ "
-    "komponensre (tábla, mező, Business Rule, Script Include stb.) utal — "
-    "esetleg írásvariánssal vagy rövidítve? "
-    "Válaszolj 'yes'-szel CSAK akkor, ha a megnevezés nyilvánvalóan egy "
-    "ServiceNow-komponens neve (akár elírva). Ha külső rendszer (pl. SAP, "
-    "SolMan, Jira szerver-oldali) objektumáról, általános szövegrészletről, "
-    "állapotról vagy hibaüzenetről van szó, a válasz 'no'."
+    "Osztályozd a megnevezést: (a) 'yes' — egy valós, az adott ServiceNow "
+    "instance-en LÉTEZŐ komponensre (tábla, mező, Business Rule, Script "
+    "Include stb.) utal, esetleg írásvariánssal vagy rövidítve; "
+    "(b) 'external' — külső (NEM ServiceNow) rendszer objektuma (pl. SAP, "
+    "SolMan, Jira szerver-oldali), általános szövegrészlet, állapot vagy "
+    "hibaüzenet — ezeket a gate NEM validálja (spec Out of Scope); "
+    "(c) 'no' — ServiceNow-komponensnek LÁTSZÓ, de fabrikált/nem létező név."
 )
 
 _REFERS_CRITERIA = {
     "yes": "a megnevezés egy valós ServiceNow-komponensre utal (írásvariáns is lehet)",
-    "no": "a megnevezés nem utal valós ServiceNow-komponensre (külső rendszer, általános szöveg, vagy fabrikált név)",
+    "external": "külső rendszer objektuma, általános szöveg, állapot vagy hibaüzenet — nem validálandó",
+    "no": "ServiceNow-komponensnek látszó, de fabrikált vagy nem létező név",
 }
 
 _REFERS_EPS = 1e-9  # a 013-as minta: '<' operátor + eps a float-határon
@@ -301,15 +302,23 @@ def _calibrated_decision(
         response = client.system_one(state=state, questions=questions, model=model)
         answer = response.answers["refers"]
         confidence = float(getattr(answer, "confidence", 0.0) or 0.0)
-        refers = getattr(answer, "choice", None) == "yes"
+        choice = getattr(answer, "choice", None)
         # Küszöb-operátor: '<' (nem '<=') — a pontos határérték a biztonságos
-        # irányba dől (spec Edge Cases; a 013-as minta).
-        if refers and not (confidence < threshold + _REFERS_EPS):
+        # irányba (jelzés) dől (spec Edge Cases; a 013-as minta).
+        confident = not (confidence < threshold + _REFERS_EPS)
+        if choice == "yes" and confident:
             return NameVerdict(name=name, status="exists", confidence=confidence,
                                evidence=f"kalibrált döntés: utalás (model={model})",
                                layer="calibrated")
+        if choice == "external" and confident:
+            # Külső rendszer objektuma / általános szöveg — a gate NEM
+            # validálja (spec Out of Scope), nincs jelzés.
+            return NameVerdict(name=name, status="not_applicable", confidence=confidence,
+                               evidence=f"kalibrált döntés: nem SNOW-komponens "
+                                        f"(model={model})",
+                               layer="calibrated")
         return NameVerdict(name=name, status="not_exists", confidence=confidence,
-                           evidence=f"kalibrált döntés: nem utalás/alacsony confidence "
+                           evidence=f"kalibrált döntés: fabrikált/alacsony confidence "
                                     f"(model={model}, threshold={threshold})",
                            layer="calibrated")
     except Exception as exc:  # noqa: BLE001 — fail-open a determinisztikus útra
