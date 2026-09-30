@@ -1,6 +1,6 @@
 # spec 014 runner-report — Komponensnév-hitelesítés az instance ellen + production push-gate
 
-**Állapot: MEGÁLLVA a T014 MANUÁLIS KAPUnál** — emberi jóváhagyásra vár (T015 utána).
+**Állapot: KÉSZ — T001-T015 lezárva, a gate productionbe kapcsolva (enabled=true, behavior=flag).**
 Dátum: 2026-09-30 | Branch: `014-component-instance-verification` | Futtatás: DEV mód (SNOW_KB_DEV_MODE=1; a task-modellre 0 Kimi-token — minden generálás a lokális Qwen3.8-27B-n futott)
 
 ## Preflight (mind ZÖLD, 2026-09-30 15:4x)
@@ -117,3 +117,32 @@ Hibás esetek a 0.7-es kapunál (4/24): 3 írásvariáns alacsony confidence-sze
 - production döntés közvetlen SDK, a ReAnchor csak mérés ✅
 - verification_gate.enabled=false ✅ | Kimi-token a task-modellre: 0 ✅
 - threshold-sweep exploratívként jelentve, confirmatory kapu: 0.7 ✅
+
+## T014 MANUÁLIS KAPU — EREDMÉNY (emberi jóváhagyás, 2026-09-30)
+
+Mind a négy javaslat JÓVÁHAGYVA: (1) default behavior = flag (KD1) ✅; (2) fail-open
+tradeoff (FR-002) ✅; (3) SC-001 piros ELFOGADVA a környezeti magyarázattal (gold
+story-k aldidev-instance-uak; a hostnév/fragment-zaj flag-only módban tolerált) ✅;
+(4) a gate BEKAPCSOLHATÓ: enabled=true + behavior=flag megfigyelési időszakra ✅.
+
+## T015 — Zárás
+
+- `config.yaml`: `verification_gate.enabled: true` (behavior=flag) — a T014 döntés
+  nyomán, indoklással kommentezve.
+- `Agent.md` §44: naplóbejegyzés (tények, döntések, tanulságok, commit-hash-ek).
+- Backlog: **TASK-2 → Done** (final summary a mérési bizonyítékokkal).
+- Checkboxok: T005 + T014 pipálva (az ember jóváhagyta, explicit engedéllyel).
+- **Nyitott follow-up**: T002b (PDI-előkészítés / update-set import) — az ember
+  a mérés lezárása UTÁN írta a specbe (commit 2dca8cb); a jövőbeli mérések
+  előfeltétele, ez a futás a T014-elfogadással zárult import nélkül.
+- Rebase az emberi spec-módosításra (2dca8cb) + push: **a4dfe25**.
+- Végső gate: **349 pytest zöld** (push utáni állapot).
+
+## Záró commit-hash-ek (rebase utáni, push-olt)
+
+| Hash | Tartalom |
+|---|---|
+| a4dfe25 | T015 zárás (gate ON, Agent.md §44, TASK-2 Done) |
+| 716421a | T014-csomag runner-report |
+| 15e81c0 | T013 mérés + SC-gates + ReAnchor |
+| (korábbiak) | ld. `git log origin/014-component-instance-verification` |
