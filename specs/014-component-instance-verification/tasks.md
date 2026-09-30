@@ -38,7 +38,7 @@
 
 ## Phase 6: Measurement, calibration, closing
 
-- [ ] T012 Building the labeled sample: **≥20 examples** (real names + intentional spelling variants + fabricated names), the labels committed next to the dataset — the lesson of 013: minimum sample size for the SC gate
+- [x] T012 Building the labelled sample: **≥20 examples** (real names + intentional spelling variants + fabricated names), the labels committed next to the dataset — the lesson of 013: the minimum sample size for the SC gate
 - [ ] T013 [US3] Calibration measurement: live capture on the labeled sample with the pinned model, offline replay; ReAnchor only on the evaluation wrapper (the 013 T012 pattern); the resulting threshold into the config; gates: SC-001 (gold: 0 false positive), SC-002 (selective risk ≤0.15, coverage ≥0.7 at the 0.7 gate), SC-003 (fail-open tests), SC-004 (byte-identical double replay) — with exit code, `cache=False`/replay mode
 - [ ] T014 **MANUAL GATE**: approval of the gate default behavior (KD1: flag) and the fail-open tradeoff before a production run; review of the SC gates; if the threshold changes, the justification goes into Agent.md — the runner CANNOT check it off
 - [ ] T015 Closing: the full pytest suite green, Agent.md log entry (facts, decisions, lessons), commit + push, backlog update (closing TASK-2 / the state of the verification layer)
