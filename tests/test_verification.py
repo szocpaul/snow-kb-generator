@@ -269,6 +269,19 @@ class TestCalibratedLayer:
                                         confidence_threshold=0.7)
         assert result.verdicts[0].status == "not_exists"
 
+    def test_external_system_name_not_flagged(self, tmp_path):
+        """Spec Out of Scope: the object of an external system does NOT get a 'does not exist'
+        signal (the calibrated layer recognizes it as 'external')."""
+        client = _FakeJevClient(choice="external", confidence=0.95)
+        html = "<p>The data goes towards the 'SolMan' system.</p>"
+        result = verify_component_names(html, "", spot_checker=self._checker(tmp_path),
+                                        decision_client=client,
+                                        decision_model="jev-1.13.0",
+                                        confidence_threshold=0.7)
+        v = result.verdicts[0]
+        assert v.status == "not_applicable"
+        assert result.not_existing_names == []
+
     def test_sdk_failure_fails_open_to_deterministic(self, tmp_path):
         """US3 scenario 3 / FR-002: an SDK error → the result of the deterministic path stays."""
         client = _FakeJevClient(fail=True)

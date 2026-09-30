@@ -65,7 +65,7 @@ class NameVerdict:
     """The validation decision for a component name (Key Entities: validation decision)."""
 
     name: str
-    status: Literal["exists", "not_exists", "unknown"]
+    status: Literal["exists", "not_exists", "not_applicable", "unknown"]
     confidence: float          # deterministic layer: 1.0
     evidence: str              # the logged evidence (table/field, whitelist, etc.)
     layer: str                 # "update_set" | "spotcheck" | "calibrated"
@@ -257,18 +257,19 @@ class SpotChecker:
 # ---------------------------------------------------------------------------
 
 _REFERS_QUESTION = (
-    "The name is a real one that EXISTS on the given ServiceNow instance "
-    "component (table, field, Business Rule, Script Include etc.) — "
-    "possibly with a spelling variant or abbreviation? "
-    "Answer 'yes' ONLY if the name obviously refers to a "
-    "name of a ServiceNow component (even if misspelled). If it is an external system (e.g. SAP, "
-    "SolMan, Jira server-side) object, a general text fragment, "
-    "is about a state or an error message, the answer is 'no'."
+    "Classify the name: (a) 'yes' — it refers to a real component that EXISTS on "
+    "the given ServiceNow instance (table, field, Business Rule, Script "
+    "Include etc.), possibly with a spelling variant or abbreviated; "
+    "(b) 'external' — an object of an external (non-ServiceNow) system (e.g. SAP, "
+    "SolMan, the Jira server side), a generic text fragment, a state or an "
+    "error message — the gate does NOT validate these (spec Out of Scope); "
+    "(c) 'no' — it LOOKS like a ServiceNow component, but it is fabricated/non-existent."
 )
 
 _REFERS_CRITERIA = {
     "yes": "the name refers to a real ServiceNow component (a spelling variant is possible)",
-    "no": "the name does not refer to a real ServiceNow component (external system, general text, or a fabricated name)",
+    "external": "an object of an external system, generic text, a state or an error message — not to be validated",
+    "no": "it looks like a ServiceNow component, but it is fabricated or does not exist",
 }
 
 _REFERS_EPS = 1e-9  # the 013 pattern: the '<' operator + eps on the float boundary
@@ -301,15 +302,23 @@ def _calibrated_decision(
         response = client.system_one(state=state, questions=questions, model=model)
         answer = response.answers["refers"]
         confidence = float(getattr(answer, "confidence", 0.0) or 0.0)
-        refers = getattr(answer, "choice", None) == "yes"
+        choice = getattr(answer, "choice", None)
         # Threshold operator: '<' (not '<=') — exactly the threshold value leans
-        # a candidate that leans in that direction (spec Edge Cases; the 013 sample).
-        if refers and not (confidence < threshold + _REFERS_EPS):
+        # to the safe direction (the signal) (spec Edge Cases; the 013 pattern).
+        confident = not (confidence < threshold + _REFERS_EPS)
+        if choice == "yes" and confident:
             return NameVerdict(name=name, status="exists", confidence=confidence,
                                evidence=f"calibrated decision: reference (model={model})",
                                layer="calibrated")
+        if choice == "external" and confident:
+            # An object of an external system / generic text — the gate does NOT
+            # validate it (spec Out of Scope), there is no signal.
+            return NameVerdict(name=name, status="not_applicable", confidence=confidence,
+                               evidence=f"calibrated decision: not a SNOW component "
+                                        f"(model={model})",
+                               layer="calibrated")
         return NameVerdict(name=name, status="not_exists", confidence=confidence,
-                           evidence=f"calibrated decision: no reference/low confidence "
+                           evidence=f"calibrated decision: fabricated/low confidence "
                                     f"(model={model}, threshold={threshold})",
                            layer="calibrated")
     except Exception as exc:  # noqa: BLE001 — fail-open to the deterministic path
