@@ -35,21 +35,30 @@ BANNED_PHRASES: list[str] = [
 # None → a tengely INAKTÍV, és a score-formula bit-azonos a spec 014 előtti
 # viselkedéssel (FR-006 visszafelé kompatibilitás).
 _INSTANCE_CHECKER = None
+_INSTANCE_DECISION_CLIENT = None
+_INSTANCE_DECISION_MODEL = ""
+_INSTANCE_THRESHOLD = 0.7
 _INSTANCE_AXIS_WEIGHT = 0.10  # ha aktív: score = régi*(1-w) + w*instance
 
 
-def configure_instance_axis(checker) -> None:
+def configure_instance_axis(checker, *, decision_client=None, decision_model: str = "",
+                            confidence_threshold: float = 0.7) -> None:
     """Be/kikapcsolja az instance-tengelyt (None = inaktív).
 
     A mérés (spec 014 T013) és a tesztek injektálják a SpotCheckert; a
     production eval-útvonal alapértelmezetten nem konfigurálja — a tengely
-    ilyenkor ki van hagyva, a meglévő tengelyek érintetlenek.
+    ilyenkor ki van hagyva, a meglévő tengelyek érintetlenek. A decision_client
+    a kalibrált réteg (US3) — None esetén csak a determinisztikus út fut.
     """
-    global _INSTANCE_CHECKER
+    global _INSTANCE_CHECKER, _INSTANCE_DECISION_CLIENT
+    global _INSTANCE_DECISION_MODEL, _INSTANCE_THRESHOLD
     _INSTANCE_CHECKER = checker
+    _INSTANCE_DECISION_CLIENT = decision_client
+    _INSTANCE_DECISION_MODEL = decision_model
+    _INSTANCE_THRESHOLD = confidence_threshold
 
 
-def _instance_axis(html: str, update_set_text: str) -> tuple[float, list[str], bool]:
+def _instance_axis(html: str, update_set_text: str, story_context: str = "") -> tuple[float, list[str], bool]:
     """Az instance-tengely: (score, nem_létező_nevek, skipped).
 
     Fail-open (FR-002): hiba vagy teljes kiesés esetén (1.0, [], True) —
@@ -58,8 +67,14 @@ def _instance_axis(html: str, update_set_text: str) -> tuple[float, list[str], b
     from snow_kb.verification import verify_component_names
 
     try:
-        result = verify_component_names(html, update_set_text,
-                                        spot_checker=_INSTANCE_CHECKER)
+        result = verify_component_names(
+            html, update_set_text,
+            spot_checker=_INSTANCE_CHECKER,
+            story_context=story_context,
+            decision_client=_INSTANCE_DECISION_CLIENT,
+            decision_model=_INSTANCE_DECISION_MODEL,
+            confidence_threshold=_INSTANCE_THRESHOLD,
+        )
     except Exception as exc:  # noqa: BLE001 — szándékosan széles háló (FR-002)
         import logging
 
@@ -172,7 +187,7 @@ def rich_metric(gold, pred, trace=None, pred_name=None, pred_trace=None):
     instance_missing: list[str] = []
     if _INSTANCE_CHECKER is not None and actual_html:
         instance_score, instance_missing, instance_skipped = _instance_axis(
-            actual_html, update_set_payloads
+            actual_html, update_set_payloads, story_text
         )
         if instance_skipped:
             instance_score = None  # fail-open: a tengely kihagyódik (semleges)
