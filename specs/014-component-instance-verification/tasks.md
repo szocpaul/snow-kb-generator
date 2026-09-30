@@ -23,8 +23,8 @@
 
 ## Phase 3: US1 – Instance-tengely a metrikában (teszt-előbb)
 
-- [ ] T006 [US1] Teszt: metrika instance-tengely — mock spot-check válaszokkal: nem-létező név → tengely 0 + nevesítés; csak valós nevek → 1.0; lekérdezési hiba → fail-open (a tengely kihagyódik warninggal, FR-002/FR-006); a gold cikkeken 0 false positive. FAIL implementáció előtt
-- [ ] T007 [US1] `src/snow_kb/verification.py` — jelölt-kinyerés (011-minta újrahasznosítva), update-set whitelist-építés (`get_update_set_changes` kimenetéből), per-név spot-check a `servicenow_client` sessionjén (cache-elve, `spotcheck_cache_path`), fail-open minden lekérdezési hibára; bekötés az `eval/metric.py`-be új tengelyként (a story-alapú tengely érintetlen)
+- [x] T006 [US1] Teszt: metrika instance-tengely — mock spot-check válaszokkal: nem-létező név → tengely 0 + nevesítés; csak valós nevek → 1.0; lekérdezési hiba → fail-open (a tengely kihagyódik warninggal, FR-002/FR-006); a gold cikkeken 0 false positive. FAIL implementáció előtt
+- [x] T007 [US1] `src/snow_kb/verification.py` — jelölt-kinyerés (011-minta újrahasznosítva), update-set whitelist-építés (`get_update_set_changes` kimenetéből), per-név spot-check a `servicenow_client` sessionjén (cache-elve, `spotcheck_cache_path`), fail-open minden lekérdezési hibára; bekötés az `eval/metric.py`-be új tengelyként (a story-alapú tengely érintetlen)
 
 ## Phase 4: US2 – Production push-gate (teszt-előbb)
 

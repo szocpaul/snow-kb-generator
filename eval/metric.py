@@ -27,6 +27,52 @@ BANNED_PHRASES: list[str] = [
 ]
 
 
+# ---------------------------------------------------------------------------
+# Spec 014 (US1): instance-tengely — ÚJ tengely a meglévők MELLÉ (FR-006)
+# ---------------------------------------------------------------------------
+
+# Modul-szintű, tesztben/mérésben injektált spot-checker. Alapértelmezetten
+# None → a tengely INAKTÍV, és a score-formula bit-azonos a spec 014 előtti
+# viselkedéssel (FR-006 visszafelé kompatibilitás).
+_INSTANCE_CHECKER = None
+_INSTANCE_AXIS_WEIGHT = 0.10  # ha aktív: score = régi*(1-w) + w*instance
+
+
+def configure_instance_axis(checker) -> None:
+    """Be/kikapcsolja az instance-tengelyt (None = inaktív).
+
+    A mérés (spec 014 T013) és a tesztek injektálják a SpotCheckert; a
+    production eval-útvonal alapértelmezetten nem konfigurálja — a tengely
+    ilyenkor ki van hagyva, a meglévő tengelyek érintetlenek.
+    """
+    global _INSTANCE_CHECKER
+    _INSTANCE_CHECKER = checker
+
+
+def _instance_axis(html: str, update_set_text: str) -> tuple[float, list[str], bool]:
+    """Az instance-tengely: (score, nem_létező_nevek, skipped).
+
+    Fail-open (FR-002): hiba vagy teljes kiesés esetén (1.0, [], True) —
+    a tengely semleges, a pipeline/eval nem áll meg.
+    """
+    from snow_kb.verification import verify_component_names
+
+    try:
+        result = verify_component_names(html, update_set_text,
+                                        spot_checker=_INSTANCE_CHECKER)
+    except Exception as exc:  # noqa: BLE001 — szándékosan széles háló (FR-002)
+        import logging
+
+        logging.getLogger(__name__).warning(
+            "instance-tengely hiba — kihagyva: %s: %s", type(exc).__name__, exc
+        )
+        return 1.0, [], True
+    if result.skipped:
+        return 1.0, [], True
+    not_found = result.not_existing_names
+    return (0.0 if not_found else 1.0), not_found, False
+
+
 def rich_metric(gold, pred, trace=None, pred_name=None, pred_trace=None):
     """Értékeli a generált KB cikket a gold standard ellen.
 
@@ -117,6 +163,20 @@ def rich_metric(gold, pred, trace=None, pred_name=None, pred_trace=None):
     # 5. Style axis (spec 010, US2): LLM-as-judge, hibatűrő (FR-002).
     style_score, style_critique = _style_score(actual_html) if actual_html else (0.5, "")
 
+    # 5b. Instance axis (spec 014, US1): a nevesített komponensnevek léteznek-e
+    # az instance-ben. ÚJ tengely a story-alapú ellenőrzés MELLÉ (FR-006) —
+    # alapértelmezetten inaktív (configure_instance_axis(None)); aktív állapotban
+    # a score a régi formula (1-w)-szerese + w*instance, tehát inaktívan
+    # bit-azonos a régi viselkedéssel.
+    instance_score = None
+    instance_missing: list[str] = []
+    if _INSTANCE_CHECKER is not None and actual_html:
+        instance_score, instance_missing, instance_skipped = _instance_axis(
+            actual_html, update_set_payloads
+        )
+        if instance_skipped:
+            instance_score = None  # fail-open: a tengely kihagyódik (semleges)
+
     # Súlyozott összesítés — spec 010: 0.25 structure + 0.25 content + 0.15 template
     # + 0.15 hallucination + 0.20 style (régi: 0.3/0.3/0.2/0.2, style nélkül).
     score = (
@@ -126,6 +186,8 @@ def rich_metric(gold, pred, trace=None, pred_name=None, pred_trace=None):
         + 0.15 * hallucination_score
         + 0.20 * style_score
     )
+    if instance_score is not None:
+        score = score * (1.0 - _INSTANCE_AXIS_WEIGHT) + _INSTANCE_AXIS_WEIGHT * instance_score
 
     # 4. Feedback (természetes nyelvű kritika)
     parts = []
@@ -174,6 +236,15 @@ def rich_metric(gold, pred, trace=None, pred_name=None, pred_trace=None):
             "or refer to the component by its function instead of a fabricated name."
         )
 
+    if instance_missing:
+        parts.append(
+            "Non-existent component name(s): "
+            + ", ".join(f"'{c}'" for c in instance_missing)
+            + ". These component names do not exist in the target instance's metadata "
+            "(checked via Update Set whitelist + per-name spot-check) — remove them or "
+            "correct them to the real component name."
+        )
+
     if style_critique:
         parts.append(f"Style: {style_critique}")
 
@@ -194,6 +265,8 @@ def rich_metric(gold, pred, trace=None, pred_name=None, pred_trace=None):
             "template": template_adherence,
             "hallucination": hallucination_score,
             "style": style_score,
+            # spec 014: az instance-tengely csak aktív konfigurációban szerepel
+            **({"instance": instance_score} if instance_score is not None else {}),
         },
     )
 
