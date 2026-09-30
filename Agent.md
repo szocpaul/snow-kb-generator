@@ -844,3 +844,34 @@ On DSPy servers (FastAPI/uvicorn) the global `dspy.configure` is NOT request-saf
 On a 9-example sample, gates like SC-002 (risk ≤0.15, ECE ≤0.10) cannot be proven
 statistically — the minimum sample size should also have been written into the spec when the gate was designed.
 Into the next calibration spec: specifying the minimum sample size for an SC-gate is mandatory.
+
+
+## 43. Archiving Spec 013 (2026-09-30)
+
+### Decision
+The audience-decision feature is **ARCHIVED**, `audience_decision.enabled: false` —
+the branch is merged into main in a disabled state.
+
+### Rationale
+At the end of the spec cycle it turned out: the `helpdesk/end-user/developer` decision has **no
+downstream consumer** — every KB is built with the same L2/L3 ServiceNow integration
+template, there is no content difference between L2 and L3, every article
+is a technical description. The Jev 0/3 helpdesk performance was not a calibration error,
+but a sign that the question itself was formulated badly: the audience signal
+does not exist in the raw story text, because the audience is a function of the article-writing decision,
+not of the story.
+
+### What remains (the real gain of 013)
+- The full measurement infrastructure: JSONL recording, replay, `eval/jev_metrics.py`
+  (selective risk / coverage / ECE), `eval/audience_reanchor.py` (ReAnchor
+  eval-only wrapper), SC-gates with exit codes — **reusable for any
+  future typed decision**.
+- 22 new tests (309 test suite), the fail-open behaviour of the pipeline.
+- The §41–43 lessons: minimum sample size for an SC-gate; exploratory ≠ confirmatory;
+  a decision only if there is a downstream consumer.
+
+### Lesson
+Spec 013 is not a failure: with 0 Kimi tokens, in one day, measurement showed that the
+feature is not worth taking into production. The candidate for the next typed decision (014)
+is: a question that has a real variance and a pipeline effect
+(e.g. "is a KB article worth writing for this story?" — a Noul gate before generation).
