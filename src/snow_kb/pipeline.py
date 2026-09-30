@@ -16,7 +16,7 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
-from typing import Protocol
+from typing import Any, Protocol
 
 import dspy
 
@@ -385,6 +385,8 @@ def generate_kb_article(
     program_path: str | None = None,
     push: bool = True,
     force_update: bool = False,
+    spot_checker: "Any | None" = None,
+    decision_client: "Any | None" = None,
 ) -> KBArticle:
     """Lefuttatja a teljes pipeline-t: Story → KB Article.
 
@@ -401,6 +403,12 @@ def generate_kb_article(
             in dry_run mode this will automatically be False.
         force_update: if True, and a KB article already exists for the Story, the pipeline
             overwrites (updates) the existing one instead of raising an error.
+        spot_checker: optional SpotChecker for the verification gate (spec 014;
+            for test/replay injection). If None, the gate uses the client session
+            builds one — or it is skipped entirely, if the gate is disabled.
+        decision_client: optional system_one-compatible client for the calibrated
+            layer (None → live TypeSafeClient from TYPESAFE_API_KEY; key
+            without fail-open to the deterministic path).
 
     Returns:
         The generated KBArticle (filled with its sys_id in case of push).
@@ -527,6 +535,20 @@ def generate_kb_article(
                 existing_sys_id=existing_sys_id,
             )
         
+        # Spec 014 (US2): component name verification gate BEFORE the KB write (FR-004).
+        # enabled=False → the call is a no-op, the article is untouched. Fail-open (FR-002):
+        # on any error the push continues along the existing path.
+        article = _apply_verification_gate(
+            article,
+            story_text=story_text,
+            update_set_text=update_set_summary + "\n" + update_set_payloads,
+            settings=settings,
+            client=client,
+            story_identifier=story_identifier,
+            spot_checker=spot_checker,
+            decision_client=decision_client,
+        )
+
         sys_id = client.create_kb_article(
             article, 
             story_sys_id=story.sys_id, 
@@ -535,6 +557,141 @@ def generate_kb_article(
         # We write the sys_id back into the article (extending it with a new field)
         return _KBArticleWithSysId(article, sys_id)
 
+    return article
+
+
+# ---------------------------------------------------------------------------
+# Helper: verification gate (spec 014, US2)
+# ---------------------------------------------------------------------------
+
+class VerificationBlocked(Exception):
+    """The verification gate blocked the push because of behavior=block (spec 014)."""
+
+
+def _apply_verification_gate(
+    article: KBArticle,
+    *,
+    story_text: str,
+    update_set_text: str,
+    settings: Settings,
+    client: "ServiceNowClientProtocol",
+    story_identifier: str,
+    spot_checker: "Any | None",
+    decision_client: "Any | None",
+) -> KBArticle:
+    """The component name verification gate BEFORE _create_kb_article_live (FR-004).
+
+    Behaviour (config.verification_gate.behavior — KD1 default: flag):
+      - flag:  the non-existent names get a work_notes note with the measured
+               with confidence (article.verification_note); the article goes out.
+      - strip: the suspicious names are removed from the html.
+      - block: VerificationBlocked exception, the push does not run.
+
+    Fail-open (FR-002): on any internal error of the gate the article
+    goes out unchanged with a warning log. The decisions are logged into a JSONL
+    (FR-003, the 013 format pattern).
+    """
+    import json as _json
+    from datetime import datetime as _dt, timezone as _tz
+    from pathlib import Path as _Path
+
+    cfg = settings.verification_gate
+    if not cfg.enabled:
+        return article
+
+    try:
+        from snow_kb.verification import SpotChecker, verify_component_names
+
+        checker = spot_checker
+        if checker is None:
+            # Production path: on the client Table API session, cached.
+            session = getattr(client, "session", None)
+            base_url = getattr(client, "base_url", "")
+            if session is None or not base_url:
+                logger.warning("Verification gate: a client nem ad sessiont — "
+                               "a gate kihagyva (fail-open).")
+                return article
+            checker = SpotChecker(cache_path=cfg.spotcheck_cache_path,
+                                  session=session, base_url=base_url)
+
+        jev_client = decision_client
+        if jev_client is None:
+            import os as _os
+
+            if _os.environ.get("TYPESAFE_API_KEY"):
+                from typesafe_sdk import TypeSafeClient
+
+                jev_client = TypeSafeClient()
+            # without a key: only the deterministic path runs (fail-open sample)
+
+        result = verify_component_names(
+            article.html,
+            update_set_text,
+            spot_checker=checker,
+            story_context=story_text,
+            decision_client=jev_client,
+            decision_model=cfg.model,
+            confidence_threshold=cfg.confidence_threshold,
+        )
+    except Exception as exc:  # noqa: BLE001 — an error of the gate must not stop the push
+        logger.warning("Verification gate error — fail-open, the article goes out: %s: %s",
+                       type(exc).__name__, exc)
+        return article
+
+    # FR-003: replay-compatible JSONL recording (a logging error must not decide either)
+    try:
+        rec_path = _Path(cfg.recording_path)
+        rec_path.parent.mkdir(parents=True, exist_ok=True)
+        row = {
+            "timestamp": _dt.now(_tz.utc).isoformat(),
+            "story": story_identifier,
+            "behavior": cfg.behavior,
+            "skipped": result.skipped,
+            "warning": result.warning,
+            "verdicts": [
+                {"name": v.name, "status": v.status, "confidence": v.confidence,
+                 "evidence": v.evidence, "layer": v.layer}
+                for v in result.verdicts
+            ],
+        }
+        with rec_path.open("a", encoding="utf-8") as handle:
+            handle.write(_json.dumps(row, sort_keys=True, ensure_ascii=False) + "\n")
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("Verification recording sikertelen (%s): %s",
+                       cfg.recording_path, exc)
+
+    if result.skipped:
+        return article  # fail-open: unreachable instance → the article goes out
+
+    flagged = result.not_existing_names
+    if not flagged:
+        return article
+
+    logger.warning("Verification gate: non-existent component names: %s (behavior=%s)",
+                   ", ".join(flagged), cfg.behavior)
+
+    if cfg.behavior == "block":
+        raise VerificationBlocked(
+            "The verification gate blocked the push — non-existent component names: "
+            + ", ".join(flagged)
+        )
+    if cfg.behavior == "strip":
+        for name in flagged:
+            article.html = article.html.replace(name, "")
+        article.verification_note = (
+            "Removed component names that do not exist in the instance: "
+            + ", ".join(flagged)
+        )
+        return article
+    # default: flag — a work_notes note with the measured confidence (KD1)
+    conf_by_name = {v.name: v.confidence for v in result.verdicts}
+    note_parts = [
+        f"{name} (confidence: {conf_by_name.get(name, 0.0):.2f})" for name in flagged
+    ]
+    article.verification_note = (
+        "Component name(s) that do not exist in the instance, in the article: "
+        + ", ".join(note_parts)
+    )
     return article
 
 
@@ -586,6 +743,7 @@ class _KBArticleWithSysId(KBArticle):
             knowledge_base_id=base.knowledge_base_id,
             source_story=base.source_story,
             audience_note=getattr(base, "audience_note", ""),
+            verification_note=getattr(base, "verification_note", ""),
             **kwargs,
         )
         self.sys_id = sys_id

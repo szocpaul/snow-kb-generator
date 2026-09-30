@@ -1,0 +1,169 @@
+{
+  "spec": "014-component-instance-verification",
+  "task": "T012",
+  "labels": {
+    "exists": "a real component on the PDI",
+    "missing_real": "it should exist according to the story, but it does not exist on the PDI (projected onto the article: non-existent)",
+    "variant": "a spelling variant of a real/missing_real name",
+    "fabricated": "fabricated, never existed",
+    "external": "an object of an external (non-ServiceNow) system — not to be validated (out of scope)"
+  },
+  "decision_mapping": {
+    "exists": "exists",
+    "missing_real": "not_exists (the job of the gate: signal it)",
+    "variant_of_existing": "exists (a reference) — if the variant_of is exists",
+    "variant_of_missing": "not_exists",
+    "fabricated": "not_exists",
+    "external": "no decision — the calibrated layer says 'not a SNOW component' (the gate does not signal it)"
+  },
+  "examples": [
+    {
+      "name": "AbstractAjaxProcessor",
+      "kind": "camelcase",
+      "label": "exists",
+      "note": "a real Script Include on the PDI"
+    },
+    {
+      "name": "AbstractAjaxListDragChecker",
+      "kind": "camelcase",
+      "label": "exists",
+      "note": "a real Script Include on the PDI"
+    },
+    {
+      "name": "AccessAnalyzeExecutor",
+      "kind": "camelcase",
+      "label": "exists",
+      "note": "a real Script Include on the PDI"
+    },
+    {
+      "name": "current.work_notes",
+      "kind": "dotted",
+      "label": "exists",
+      "note": "a real field reference (a work_notes element on the task tables)"
+    },
+    {
+      "name": "incident.priority",
+      "kind": "dotted",
+      "label": "exists",
+      "note": "a real table.field reference (the incident table on the PDI)"
+    },
+    {
+      "name": "Abort change of milestone on parent task",
+      "kind": "quoted",
+      "label": "exists",
+      "note": "a real Business Rule on the PDI"
+    },
+    {
+      "name": "JiraInboundUtils",
+      "kind": "quoted",
+      "label": "missing_real",
+      "note": "gold-1: the story refers to it as a Script Include, it does not exist on the PDI"
+    },
+    {
+      "name": "JiraIntegrationUtils",
+      "kind": "camelcase",
+      "label": "missing_real",
+      "note": "gold-2: an integration script that exists according to the story, it does not exist on the PDI"
+    },
+    {
+      "name": "JiraInboundWebhook",
+      "kind": "camelcase",
+      "label": "missing_real",
+      "note": "generated-1: the freshly generated article named it, it does not exist on the PDI"
+    },
+    {
+      "name": "S4ProjectInterface",
+      "kind": "quoted",
+      "label": "missing_real",
+      "note": "gold-9: a script name that looks like SNOW (quoted occurrence in the article), it does not exist on the PDI"
+    },
+    {
+      "name": "integration.vendor.config.matrix",
+      "kind": "dotted",
+      "label": "missing_real",
+      "note": "gold-8: a SNOW table-like name, it does not exist on the PDI"
+    },
+    {
+      "name": "Abstract Ajax Processor",
+      "kind": "quoted",
+      "label": "variant",
+      "variant_of": "AbstractAjaxProcessor",
+      "note": "a variant with spaces of the real Script Include"
+    },
+    {
+      "name": "AbstractAjaxProcesser",
+      "kind": "camelcase",
+      "label": "variant",
+      "variant_of": "AbstractAjaxProcessor",
+      "note": "a spelling-difference variant"
+    },
+    {
+      "name": "Jira Inbound Utils",
+      "kind": "quoted",
+      "label": "variant",
+      "variant_of": "JiraInboundUtils",
+      "note": "a variant with spaces — but the canonical name does not exist on the PDI either (a missing_real variant)"
+    },
+    {
+      "name": "Access Analyze Executor",
+      "kind": "quoted",
+      "label": "variant",
+      "variant_of": "AccessAnalyzeExecutor",
+      "note": "a variant with spaces"
+    },
+    {
+      "name": "SnowKbAutoHealManager",
+      "kind": "camelcase",
+      "label": "fabricated",
+      "note": "a fabricated Script Include-like name"
+    },
+    {
+      "name": "IncidentPriorityRecalculator",
+      "kind": "camelcase",
+      "label": "fabricated",
+      "note": "a fabricated, believable named script"
+    },
+    {
+      "name": "dynamic.sla.recalc",
+      "kind": "dotted",
+      "label": "fabricated",
+      "note": "a fabricated table-like dotted name"
+    },
+    {
+      "name": "ChgStateSynchronizer",
+      "kind": "camelcase",
+      "label": "fabricated",
+      "note": "fabricated"
+    },
+    {
+      "name": "Article AutoPublisher",
+      "kind": "quoted",
+      "label": "fabricated",
+      "note": "a fabricated BR-like name"
+    },
+    {
+      "name": "SolMan",
+      "kind": "camelcase",
+      "label": "external",
+      "note": "SAP Solution Manager — an external system"
+    },
+    {
+      "name": "interface.solman",
+      "kind": "dotted",
+      "label": "external",
+      "note": "the SolMan interface host"
+    },
+    {
+      "name": "GetReturns",
+      "kind": "camelcase",
+      "label": "external",
+      "note": "the SolMan side function"
+    },
+    {
+      "name": "ERP OData Outbound",
+      "kind": "quoted",
+      "label": "external",
+      "note": "the S4 OData interface — an object of an external system"
+    }
+  ]
+}

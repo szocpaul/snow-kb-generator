@@ -51,6 +51,31 @@ audience_decision:
   # replay compatible because of it. The replay-compatible JSONL decision log (FR-003) — the data source of the calibration measurement.
   recording_path: "artifacts/audience_decisions.jsonl"
 
+# The component name verification against the instance + the production push gate (spec 014).
+# enabled=false is the default — switching the gate on is the decision of the T014 MANUAL GATE
+# (per the prohibition of the spec the runner does not switch it on).
+verification_gate:
+  # 2026-09-30, T014 MANUAL GATE: the human SWITCHED IT ON (enabled=true, behavior=flag)
+  # for the observation period — the JSONL recording is the measurement base; strip/block only
+  # with a later, data-based decision. The decisions: Agent.md (the spec 014 log entry).
+  enabled: true
+  # The behaviour of the gate for a non-existent component name (KD1 default: flag):
+  #   flag  = a work_notes signal with the measured confidence, the article goes out
+  #   strip = the suspicious names are removed from the article (a rougher intervention)
+  #   block = blocking the push (fail-closed — only after a measurement)
+  behavior: "flag"
+  # The PINNED decision model version for the calibrated (ambiguous cases) layer —
+  # a floating alias is FORBIDDEN (playbook: "a model change = a new baseline measurement", FR-005).
+  model: "jev-1.13.0"
+  # Confirmatory gate (spec SC-002): below this confidence the name
+  # counts as „does not exist". The T013 calibration measurement tunes it.
+  confidence_threshold: 0.7
+  # The per name spot-check cache (JSON) — it is part of the recording, the replay is
+  # byte-identikus (SC-004).
+  spotcheck_cache_path: "artifacts/spotcheck_cache.json"
+  # replay compatible because of it. The replay-compatible JSONL decision log (FR-003) — the data source of the calibration measurement.
+  recording_path: "artifacts/verification_decisions.jsonl"
+
 gepa:
   auto: "medium"                        # light | medium | heavy
   candidate_selection: "pareto"

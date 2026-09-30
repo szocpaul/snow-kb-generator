@@ -331,3 +331,124 @@ class TestComponentHallucination:
         pred = dspy.Prediction(html="<h2>Overview / Summary</h2><p>Outbound integration.</p>")
         result = rich_metric(self._gold(), pred)
         assert result.axes["hallucination"] == 1.0  # neutral: it does not penalize blindly
+
+
+
+# ---------------------------------------------------------------------------
+# Spec 014 (US1, T006): the instance axis — a NEW axis NEXT TO the existing ones (FR-006)
+# ---------------------------------------------------------------------------
+
+class _FakeResponse:
+    def __init__(self, results):
+        self.status_code = 200
+        self._results = results
+
+    def json(self):
+        return {"result": self._results}
+
+
+class _AllKnownSession:
+    """Every name exists (the gold names are real — spec Assumptions)."""
+
+    def get(self, url, params=None, timeout=None):
+        return _FakeResponse([{"sys_id": "x"}])
+
+
+class _EmptySession:
+    """Nothing exists on the instance."""
+
+    def get(self, url, params=None, timeout=None):
+        return _FakeResponse([])
+
+
+class _DownSession:
+    def get(self, url, params=None, timeout=None):
+        raise ConnectionError("mock instance down")
+
+
+@pytest.fixture
+def instance_axis(tmp_path):
+    """Turning the instance axis on/off per test (a module-level state)."""
+    from eval import metric as metric_mod
+    from snow_kb.verification import SpotChecker
+
+    def _configure(session):
+        metric_mod.configure_instance_axis(
+            SpotChecker(cache_path=tmp_path / "spotcheck.json", session=session,
+                        base_url="https://mock/api/now/table")
+            if session is not None else None
+        )
+
+    yield _configure
+    metric_mod.configure_instance_axis(None)  # cleanup — the neutrality of the other tests
+
+
+class TestInstanceAxis:
+    """The instance axis of the metric (spec 014, FR-006: the story-based axis is untouched)."""
+
+    def _gold_pred(self):
+        html = ("<h2>Problem</h2><p>The Script Include JiraInboundUtils fails.</p>"
+                "<h2>Solution</h2><ol><li>The fix.</li></ol>")
+        gold = dspy.Example(
+            story_text="A story about the fix of the JiraInboundUtils Script Include.",
+            html=html,
+        ).with_inputs("story_text")
+        pred = dspy.Prediction(html=html)
+        return gold, pred
+
+    def test_axis_inactive_by_default(self):
+        """In the base state (without a checker) there is no instance axis — the old
+        behaviour is bit-identical (FR-006)."""
+        gold, pred = self._gold_pred()
+        result = rich_metric(gold, pred)
+        axes = result.get("axes") or {}
+        assert "instance" not in axes
+
+    def test_all_names_exist_axis_1(self, instance_axis):
+        """US1 scenario 2: only real names → the axis is 1.0."""
+        instance_axis(_AllKnownSession())
+        gold, pred = self._gold_pred()
+        result = rich_metric(gold, pred)
+        assert result.axes["instance"] == 1.0
+
+    def test_missing_name_axis_0_and_named(self, instance_axis):
+        """US1 scenario 1: a non-existent name → the axis is 0 AND it is named in the feedback."""
+        instance_axis(_EmptySession())
+        gold, pred = self._gold_pred()
+        result = rich_metric(gold, pred)
+        assert result.axes["instance"] == 0.0
+        assert "JiraInboundUtils" in result.feedback
+        # the penalty also shows up in the score (it penalizes by naming — US1)
+        from eval import metric as metric_mod
+        metric_mod.configure_instance_axis(None)
+        clean = rich_metric(gold, pred)
+        assert result.score < clean.score
+
+    def test_lookup_failure_fail_open(self, instance_axis):
+        """US1 scenario 3 / FR-002: a query error → the axis is skipped
+        (neutral), the other axes and the score are unchanged."""
+        instance_axis(_DownSession())
+        gold, pred = self._gold_pred()
+        result = rich_metric(gold, pred)
+        axes = result.axes
+        assert axes.get("instance", 1.0) == 1.0  # semleges
+        from eval import metric as metric_mod
+        metric_mod.configure_instance_axis(None)
+        clean = rich_metric(gold, pred)
+        assert result.score == clean.score
+
+    def test_gold_articles_zero_false_positive(self, instance_axis, tmp_path):
+        """SC-001 (with a mock): 0 'does not exist' labels on the gold articles if the
+        names exist according to the instance metadata."""
+        from eval.dataset import load_gold_dataset
+
+        instance_axis(_AllKnownSession())
+        trainset, valset = load_gold_dataset("data/examples/gold_dataset.md")
+        for ex in trainset + valset:
+            gold = dspy.Example(story_text=ex.story_text, html=ex.html,
+                                update_set_payloads=getattr(ex, "update_set_payloads", "") or ""
+                                ).with_inputs("story_text")
+            pred = dspy.Prediction(html=ex.html)
+            result = rich_metric(gold, pred)
+            assert result.axes.get("instance", 1.0) == 1.0, (
+                f"a false 'does not exist' label on the gold: {result.feedback[:300]}")

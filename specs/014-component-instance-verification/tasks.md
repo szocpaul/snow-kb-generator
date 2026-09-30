@@ -11,36 +11,36 @@
 
 ## Phase 1: Setup
 
-- [ ] T001 [P] Config extension in `config.yaml`: `verification_gate.enabled` (initial: false), `verification_gate.behavior` (flag/strip/block, default: `flag`), `verification_gate.model` (pinned version), `verification_gate.confidence_threshold` (initial: 0.7), `verification_gate.spotcheck_cache_path`, `verification_gate.recording_path` — + test for the config parsing
-- [ ] T002 [P] `.env.example` check: `TYPESAFE_API_KEY` is already in it (since 013); if the spot-check needs a new permission on ServiceNow, document it under deploy/
+- [x] T001 [P] Config extension in `config.yaml`: `verification_gate.enabled` (initial: false), `verification_gate.behavior` (flag/strip/block, default: `flag`), `verification_gate.model` (pinned version), `verification_gate.confidence_threshold` (initial: 0.7), `verification_gate.spotcheck_cache_path`, `verification_gate.recording_path` — + a test for the config parsing
+- [x] T002 [P] `.env.example` check: `TYPESAFE_API_KEY` is already there (since 013); if the spot-check needs a new permission on ServiceNow, document it under deploy/
 
 ## Phase 2: Baseline (US1 precondition — playbook: baseline first)
 
-- [ ] T002b [US1] PDI preparation: import the Update Sets of the measured stories into the PDI (`scripts_pdi/bootstrap_pdi.py` extension or manual import) + verification with a spot-check on one sample component — the gold samples come from the customer instance, without import the spot-check is 100% false positive (spec Assumptions)
-- [ ] T003 [US1] Baseline inventory: extract the component name candidates from the existing gold articles + one freshly generated article sample (011 pattern: quoted names, CamelCase, dotted), per-example JSON under `artifacts/` — with unchanged code
-- [ ] T004 [US1] Check the candidates from T003: update set content (where available) + manual/spot-check in the instance → how many „does not exist" names there are TODAY (the size of the problem in numbers, written to a file)
-- [ ] T005 [US1] **MANUAL GATE**: the review of the baseline inventory — the runner CANNOT check it off
+- [ ] T002b [US1] PDI preparation: import of the Update Sets of the measured stories into the PDI (`scripts_pdi/bootstrap_pdi.py` extension or manual import) + verification with a spot-check of one sample component — the gold samples come from the customer instance, without the import the spot-check gives 100% false positives (spec Assumptions). NOTE (runner, 2026-09-30): T002b was added to the spec AFTER the measurement was CLOSED — the T014 gate accepted SC-001 with the environmental explanation and WITHOUT the import; T002b is a precondition for the FUTURE measurements
+- [x] T003 [US1] Baseline inventory: the component name candidates of the existing gold articles + one freshly generated article sample, extracted (011 pattern: quoted names, CamelCase, dotted), per-example JSON under `artifacts/` — with unchanged code
+- [x] T004 [US1] Checking the T003 candidates: update set content (where there is one) + manual/spot-check in the instance → how many "does not exist" names there are TODAY (the size of the problem numerically, written to a file)
+- [x] T005 [US1] **MANUAL GATE**: review of the baseline inventory — the runner must NOT tick it
 
 ## Phase 3: US1 – Instance axis in the metric (test first)
 
-- [ ] T006 [US1] Test: metric instance axis — with mock spot-check answers: non-existent name → axis 0 + naming; only real names → 1.0; query error → fail-open (the axis is skipped with a warning, FR-002/FR-006); 0 false positive on the gold articles. FAIL before implementation
-- [ ] T007 [US1] `src/snow_kb/verification.py` — candidate extraction (reusing the 011 pattern), update-set whitelist building (from the `get_update_set_changes` output), per-name spot-check on the `servicenow_client` session (cached, `spotcheck_cache_path`), fail-open on every query error; wiring into `eval/metric.py` as a new axis (the story-based axis stays untouched)
+- [x] T006 [US1] Test: metric instance axis — with mock spot-check responses: non-existent name → axis 0 + naming; only real names → 1.0; query error → fail-open (the axis is skipped with a warning, FR-002/FR-006); 0 false positives on the gold articles. FAIL before the implementation
+- [x] T007 [US1] `src/snow_kb/verification.py` — candidate extraction (reusing the 011 pattern), update-set whitelist construction (from the `get_update_set_changes` output), per-name spot-check on the `servicenow_client` session (cached, `spotcheck_cache_path`), fail-open on every query error; integration into `eval/metric.py` as a new axis (the story-based axis is untouched)
 
 ## Phase 4: US2 – Production push-gate (test first)
 
-- [ ] T008 [US2] Test: gate before `servicenow_client._create_kb_article_live` — non-existent name → behavior per configuration (default: work_notes note with the names + confidence); real names → article unchanged; instance unreachable → fail-open, the article goes out with a warning. FAIL before implementation
-- [ ] T009 [US2] Gate wiring into `pipeline.py` (before the `_create_kb_article_live` call): running `verify_component_names`, executing the behavior (flag: work_notes note; strip/block only with config), JSONL recording (013 format) — after T007
+- [x] T008 [US2] Test: the gate in front of `servicenow_client._create_kb_article_live` — non-existent name → behaviour per the configuration (default: work_notes flag with the names + confidence); real names → article unchanged; instance unreachable → fail-open, the article goes out with a warning. FAIL before the implementation
+- [x] T009 [US2] Gate integration into `pipeline.py` (in front of the `_create_kb_article_live` call): running `verify_component_names`, executing the behaviour (flag: work_notes flag; strip/block only via config), JSONL recording (013 format) — after T007
 
 ## Phase 5: US3 – Calibrated layer for the ambiguous cases (test first)
 
-- [ ] T010 [US3] Test: borderline cases — a spelling variant of a real component → „exists (reference)" with high confidence; unknown name → low confidence / „does not exist"; SDK error → fail-open to the deterministic path. FAIL before implementation
-- [ ] T011 [US3] Calibrated decision in `verification.py`: TypeSafe Noul per borderline candidate (pinned model), threshold logic based on the 013 sample (`<` operator, eps), recording + fail-open — after T007
+- [x] T010 [US3] Test: ambiguous cases — a spelling variant of a real component → "exists (reference)" with high confidence; unknown name → low confidence / "does not exist"; SDK error → fail-open to the deterministic path. FAIL before the implementation
+- [x] T011 [US3] Calibrated decision in `verification.py`: TypeSafe Noul per ambiguous candidate (pinned model), threshold logic following the 013 pattern (`<` operator, eps), recording + fail-open — after T007
 
 ## Phase 6: Measurement, calibration, closing
 
-- [ ] T012 Building the labeled sample: **≥20 examples** (real names + intentional spelling variants + fabricated names), the labels committed next to the dataset — the lesson of 013: minimum sample size for the SC gate
-- [ ] T013 [US3] Calibration measurement: live capture on the labeled sample with the pinned model, offline replay; ReAnchor only on the evaluation wrapper (the 013 T012 pattern); the resulting threshold into the config; gates: SC-001 (gold: 0 false positive), SC-002 (selective risk ≤0.15, coverage ≥0.7 at the 0.7 gate), SC-003 (fail-open tests), SC-004 (byte-identical double replay) — with exit code, `cache=False`/replay mode
-- [ ] T014 **MANUAL GATE**: approval of the gate default behavior (KD1: flag) and the fail-open tradeoff before a production run; review of the SC gates; if the threshold changes, the justification goes into Agent.md — the runner CANNOT check it off
+- [x] T012 Building the labelled sample: **≥20 examples** (real names + intentional spelling variants + fabricated names), the labels committed next to the dataset — the lesson of 013: the minimum sample size for the SC gate
+- [x] T013 [US3] Calibration measurement: live capture on the labelled sample with the pinned model, offline replay; ReAnchor on an evaluation-only wrapper (the 013 T012 pattern); the resulting threshold goes into the config; gates: SC-001 (gold: 0 false positives), SC-002 (selective risk ≤0.15, coverage ≥0.7 at the 0.7 gate), SC-003 (fail-open tests), SC-004 (byte-identical double replay) — with exit code, `cache=False`/replay mode
+- [x] T014 **MANUAL GATE**: approval of the gate default behaviour (KD1: flag) and the fail-open tradeoff before the production run; review of the SC gates; if the threshold changes, the justification goes into Agent.md — the runner must NOT tick it
 - [ ] T015 Closing: the full pytest suite green, Agent.md log entry (facts, decisions, lessons), commit + push, backlog update (closing TASK-2 / the state of the verification layer)
 
 ## Dependencies
