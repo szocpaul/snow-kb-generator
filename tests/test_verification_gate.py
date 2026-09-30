@@ -43,8 +43,8 @@ def _make_client(story: StoryData) -> MagicMock:
 def _make_program(html: str) -> MagicMock:
     program = MagicMock()
     program.return_value = dspy.Prediction(
-        article=KBArticle(title="Fix", html=html, category="General",
-                          knowledge_base_id="kb1")
+        article=KBArticle(title="Fixing the Jira integration", html=html,
+                          category="General", knowledge_base_id="kb1")
     )
     return program
 

@@ -28,13 +28,13 @@
 
 ## Phase 4: US2 – Production push-gate (test first)
 
-- [ ] T008 [US2] Test: gate before `servicenow_client._create_kb_article_live` — non-existent name → behavior per configuration (default: work_notes note with the names + confidence); real names → article unchanged; instance unreachable → fail-open, the article goes out with a warning. FAIL before implementation
-- [ ] T009 [US2] Gate wiring into `pipeline.py` (before the `_create_kb_article_live` call): running `verify_component_names`, executing the behavior (flag: work_notes note; strip/block only with config), JSONL recording (013 format) — after T007
+- [x] T008 [US2] Test: the gate in front of `servicenow_client._create_kb_article_live` — non-existent name → behaviour per the configuration (default: work_notes flag with the names + confidence); real names → article unchanged; instance unreachable → fail-open, the article goes out with a warning. FAIL before the implementation
+- [x] T009 [US2] Gate integration into `pipeline.py` (in front of the `_create_kb_article_live` call): running `verify_component_names`, executing the behaviour (flag: work_notes flag; strip/block only via config), JSONL recording (013 format) — after T007
 
 ## Phase 5: US3 – Calibrated layer for the ambiguous cases (test first)
 
-- [ ] T010 [US3] Test: borderline cases — a spelling variant of a real component → „exists (reference)" with high confidence; unknown name → low confidence / „does not exist"; SDK error → fail-open to the deterministic path. FAIL before implementation
-- [ ] T011 [US3] Calibrated decision in `verification.py`: TypeSafe Noul per borderline candidate (pinned model), threshold logic based on the 013 sample (`<` operator, eps), recording + fail-open — after T007
+- [x] T010 [US3] Test: ambiguous cases — a spelling variant of a real component → "exists (reference)" with high confidence; unknown name → low confidence / "does not exist"; SDK error → fail-open to the deterministic path. FAIL before the implementation
+- [x] T011 [US3] Calibrated decision in `verification.py`: TypeSafe Noul per ambiguous candidate (pinned model), threshold logic following the 013 pattern (`<` operator, eps), recording + fail-open — after T007
 
 ## Phase 6: Measurement, calibration, closing
 

@@ -498,12 +498,21 @@ class ServiceNowClient:
             sys_id = body["result"]["sys_id"]
             logger.info("KB article created: sys_id=%s", sys_id)
 
-        # Updating the work notes on the Story, if sys_id is given
-        # (spec 013 US2: the low-confidence audience flag also goes out here)
+        # Updating the work_notes of the Story, if a sys_id is given
+        # (spec 013 US2: the low-confidence audience signal goes out here as well;
+        #  spec 014 US2: the verification gate's non-existent-name signal too)
         if story_sys_id:
+            notes = [
+                n
+                for n in (
+                    getattr(article, "audience_note", "") or "",
+                    getattr(article, "verification_note", "") or "",
+                )
+                if n
+            ]
             self._update_story_work_note(
                 story_sys_id, sys_id, article.title,
-                extra_note=getattr(article, "audience_note", "") or "",
+                extra_note="\n".join(notes),
             )
 
         return sys_id

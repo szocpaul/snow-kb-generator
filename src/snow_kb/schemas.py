@@ -96,6 +96,11 @@ class KBArticle(BaseModel):
     audience_note: str = Field(
         default="", description="Uncertain audience signal (into work_notes, if not empty)"
     )
+    # Spec 014 US2: signalling the verification gate (non-existent component names) —
+    # it ends up in the Story work_notes through the write path of create_kb_article.
+    verification_note: str = Field(
+        default="", description="Non-existent component name signal (into work_notes, if not empty)"
+    )
 
     @field_validator("title")
     @classmethod
