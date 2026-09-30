@@ -1,0 +1,439 @@
+{
+  "confirmatory_threshold": 0.7,
+  "incorrect_cases": [
+    {
+      "case_id": "Abstract Ajax Processor",
+      "confidence": 0.26,
+      "evidence": "kalibrált döntés: fabrikált/alacsony confidence (model=jev-1.13.0, threshold=0.7)",
+      "expected": "ok",
+      "label": "variant",
+      "layer": "calibrated",
+      "predicted": "flag",
+      "status": "not_exists"
+    },
+    {
+      "case_id": "AbstractAjaxProcesser",
+      "confidence": 0.44,
+      "evidence": "kalibrált döntés: fabrikált/alacsony confidence (model=jev-1.13.0, threshold=0.7)",
+      "expected": "ok",
+      "label": "variant",
+      "layer": "calibrated",
+      "predicted": "flag",
+      "status": "not_exists"
+    },
+    {
+      "case_id": "Access Analyze Executor",
+      "confidence": 0.73,
+      "evidence": "kalibrált döntés: fabrikált/alacsony confidence (model=jev-1.13.0, threshold=0.7)",
+      "expected": "ok",
+      "label": "variant",
+      "layer": "calibrated",
+      "predicted": "flag",
+      "status": "not_exists"
+    },
+    {
+      "case_id": "GetReturns",
+      "confidence": 0.7,
+      "evidence": "kalibrált döntés: fabrikált/alacsony confidence (model=jev-1.13.0, threshold=0.7)",
+      "expected": "ok",
+      "label": "external",
+      "layer": "calibrated",
+      "predicted": "flag",
+      "status": "not_exists"
+    }
+  ],
+  "model": "jev-1.13.0",
+  "n_cases": 24,
+  "note": "A threshold-sweep EXPLORATÍV — a confirmatory kapu a specben kijelölt 0.7 (SC-002). A legjobb sweep-sor NEM confirmatory eredmény.",
+  "per_case": [
+    {
+      "case_id": "AbstractAjaxProcessor",
+      "confidence": 1.0,
+      "evidence": "sys_script_include.name=AbstractAjaxProcessor",
+      "expected": "ok",
+      "label": "exists",
+      "layer": "spotcheck",
+      "predicted": "ok",
+      "status": "exists"
+    },
+    {
+      "case_id": "AbstractAjaxListDragChecker",
+      "confidence": 1.0,
+      "evidence": "sys_script_include.name=AbstractAjaxListDragChecker",
+      "expected": "ok",
+      "label": "exists",
+      "layer": "spotcheck",
+      "predicted": "ok",
+      "status": "exists"
+    },
+    {
+      "case_id": "AccessAnalyzeExecutor",
+      "confidence": 1.0,
+      "evidence": "sys_script_include.name=AccessAnalyzeExecutor",
+      "expected": "ok",
+      "label": "exists",
+      "layer": "spotcheck",
+      "predicted": "ok",
+      "status": "exists"
+    },
+    {
+      "case_id": "current.work_notes",
+      "confidence": 1.0,
+      "evidence": "sys_dictionary.element=work_notes",
+      "expected": "ok",
+      "label": "exists",
+      "layer": "spotcheck",
+      "predicted": "ok",
+      "status": "exists"
+    },
+    {
+      "case_id": "incident.priority",
+      "confidence": 1.0,
+      "evidence": "sys_db_object.name=incident",
+      "expected": "ok",
+      "label": "exists",
+      "layer": "spotcheck",
+      "predicted": "ok",
+      "status": "exists"
+    },
+    {
+      "case_id": "Abort change of milestone on parent task",
+      "confidence": 1.0,
+      "evidence": "sys_script.name=Abort change of milestone on parent task",
+      "expected": "ok",
+      "label": "exists",
+      "layer": "spotcheck",
+      "predicted": "ok",
+      "status": "exists"
+    },
+    {
+      "case_id": "JiraInboundUtils",
+      "confidence": 0.74,
+      "evidence": "kalibrált döntés: fabrikált/alacsony confidence (model=jev-1.13.0, threshold=0.7)",
+      "expected": "flag",
+      "label": "missing_real",
+      "layer": "calibrated",
+      "predicted": "flag",
+      "status": "not_exists"
+    },
+    {
+      "case_id": "JiraIntegrationUtils",
+      "confidence": 0.28,
+      "evidence": "kalibrált döntés: fabrikált/alacsony confidence (model=jev-1.13.0, threshold=0.7)",
+      "expected": "flag",
+      "label": "missing_real",
+      "layer": "calibrated",
+      "predicted": "flag",
+      "status": "not_exists"
+    },
+    {
+      "case_id": "JiraInboundWebhook",
+      "confidence": 0.33,
+      "evidence": "kalibrált döntés: fabrikált/alacsony confidence (model=jev-1.13.0, threshold=0.7)",
+      "expected": "flag",
+      "label": "missing_real",
+      "layer": "calibrated",
+      "predicted": "flag",
+      "status": "not_exists"
+    },
+    {
+      "case_id": "ALDIS4ProjectInterface",
+      "confidence": 0.62,
+      "evidence": "kalibrált döntés: fabrikált/alacsony confidence (model=jev-1.13.0, threshold=0.7)",
+      "expected": "flag",
+      "label": "missing_real",
+      "layer": "calibrated",
+      "predicted": "flag",
+      "status": "not_exists"
+    },
+    {
+      "case_id": "aldi.integration.almex.config.matrix",
+      "confidence": 0.73,
+      "evidence": "kalibrált döntés: fabrikált/alacsony confidence (model=jev-1.13.0, threshold=0.7)",
+      "expected": "flag",
+      "label": "missing_real",
+      "layer": "calibrated",
+      "predicted": "flag",
+      "status": "not_exists"
+    },
+    {
+      "case_id": "Abstract Ajax Processor",
+      "confidence": 0.26,
+      "evidence": "kalibrált döntés: fabrikált/alacsony confidence (model=jev-1.13.0, threshold=0.7)",
+      "expected": "ok",
+      "label": "variant",
+      "layer": "calibrated",
+      "predicted": "flag",
+      "status": "not_exists"
+    },
+    {
+      "case_id": "AbstractAjaxProcesser",
+      "confidence": 0.44,
+      "evidence": "kalibrált döntés: fabrikált/alacsony confidence (model=jev-1.13.0, threshold=0.7)",
+      "expected": "ok",
+      "label": "variant",
+      "layer": "calibrated",
+      "predicted": "flag",
+      "status": "not_exists"
+    },
+    {
+      "case_id": "Jira Inbound Utils",
+      "confidence": 0.4,
+      "evidence": "kalibrált döntés: fabrikált/alacsony confidence (model=jev-1.13.0, threshold=0.7)",
+      "expected": "flag",
+      "label": "variant",
+      "layer": "calibrated",
+      "predicted": "flag",
+      "status": "not_exists"
+    },
+    {
+      "case_id": "Access Analyze Executor",
+      "confidence": 0.73,
+      "evidence": "kalibrált döntés: fabrikált/alacsony confidence (model=jev-1.13.0, threshold=0.7)",
+      "expected": "ok",
+      "label": "variant",
+      "layer": "calibrated",
+      "predicted": "flag",
+      "status": "not_exists"
+    },
+    {
+      "case_id": "SnowKbAutoHealManager",
+      "confidence": 0.99,
+      "evidence": "kalibrált döntés: fabrikált/alacsony confidence (model=jev-1.13.0, threshold=0.7)",
+      "expected": "flag",
+      "label": "fabricated",
+      "layer": "calibrated",
+      "predicted": "flag",
+      "status": "not_exists"
+    },
+    {
+      "case_id": "IncidentPriorityRecalculator",
+      "confidence": 1.0,
+      "evidence": "kalibrált döntés: fabrikált/alacsony confidence (model=jev-1.13.0, threshold=0.7)",
+      "expected": "flag",
+      "label": "fabricated",
+      "layer": "calibrated",
+      "predicted": "flag",
+      "status": "not_exists"
+    },
+    {
+      "case_id": "dynamic.sla.recalc",
+      "confidence": 0.97,
+      "evidence": "kalibrált döntés: fabrikált/alacsony confidence (model=jev-1.13.0, threshold=0.7)",
+      "expected": "flag",
+      "label": "fabricated",
+      "layer": "calibrated",
+      "predicted": "flag",
+      "status": "not_exists"
+    },
+    {
+      "case_id": "ChgStateSynchronizer",
+      "confidence": 1.0,
+      "evidence": "kalibrált döntés: fabrikált/alacsony confidence (model=jev-1.13.0, threshold=0.7)",
+      "expected": "flag",
+      "label": "fabricated",
+      "layer": "calibrated",
+      "predicted": "flag",
+      "status": "not_exists"
+    },
+    {
+      "case_id": "ALDI KB AutoPublisher",
+      "confidence": 0.98,
+      "evidence": "kalibrált döntés: fabrikált/alacsony confidence (model=jev-1.13.0, threshold=0.7)",
+      "expected": "flag",
+      "label": "fabricated",
+      "layer": "calibrated",
+      "predicted": "flag",
+      "status": "not_exists"
+    },
+    {
+      "case_id": "SolMan",
+      "confidence": 1.0,
+      "evidence": "kalibrált döntés: nem SNOW-komponens (model=jev-1.13.0)",
+      "expected": "ok",
+      "label": "external",
+      "layer": "calibrated",
+      "predicted": "ok",
+      "status": "not_applicable"
+    },
+    {
+      "case_id": "interface.solman",
+      "confidence": 0.77,
+      "evidence": "kalibrált döntés: nem SNOW-komponens (model=jev-1.13.0)",
+      "expected": "ok",
+      "label": "external",
+      "layer": "calibrated",
+      "predicted": "ok",
+      "status": "not_applicable"
+    },
+    {
+      "case_id": "GetReturns",
+      "confidence": 0.7,
+      "evidence": "kalibrált döntés: fabrikált/alacsony confidence (model=jev-1.13.0, threshold=0.7)",
+      "expected": "ok",
+      "label": "external",
+      "layer": "calibrated",
+      "predicted": "flag",
+      "status": "not_exists"
+    },
+    {
+      "case_id": "ALDI S4 OData Outbound",
+      "confidence": 0.85,
+      "evidence": "kalibrált döntés: nem SNOW-komponens (model=jev-1.13.0)",
+      "expected": "ok",
+      "label": "external",
+      "layer": "calibrated",
+      "predicted": "ok",
+      "status": "not_applicable"
+    }
+  ],
+  "sc001": {
+    "false_positives": [
+      {
+        "example": "gold-7",
+        "feedback": "Hallucinated reference(s): KB0018578, KB0038409, KB0041535, KB0041670, KB0044855. These KB article numbers do not appear in the source Story — remove them or use the KBXXXXXXX placeholder / 'N/A'. Non-existent component name(s): 'interface.solman', 'aldi.solman', 'ChTask', 'FrameWork'. These component names do not exist in the target instance's metadata (checked via Update Set whitelist + per-name"
+      }
+    ],
+    "total_gold": 9,
+    "zero_false_positive": false
+  },
+  "sc002": {
+    "brier": 0.1378,
+    "coverage": 0.75,
+    "ece": 0.04888888888888889,
+    "gates": {
+      "coverage_ge_0.7": true,
+      "selective_risk_le_0.15": true
+    },
+    "selective_risk": 0.1111111111111111
+  },
+  "spec": "014-component-instance-verification / T013",
+  "threshold_sweep_explorative": [
+    {
+      "accuracy": 0.8333333333333334,
+      "coverage": 1.0,
+      "selective_risk": 0.16666666666666666,
+      "threshold": 0.0
+    },
+    {
+      "accuracy": 0.8333333333333334,
+      "coverage": 1.0,
+      "selective_risk": 0.16666666666666666,
+      "threshold": 0.05
+    },
+    {
+      "accuracy": 0.8333333333333334,
+      "coverage": 1.0,
+      "selective_risk": 0.16666666666666666,
+      "threshold": 0.1
+    },
+    {
+      "accuracy": 0.8333333333333334,
+      "coverage": 1.0,
+      "selective_risk": 0.16666666666666666,
+      "threshold": 0.15
+    },
+    {
+      "accuracy": 0.8333333333333334,
+      "coverage": 1.0,
+      "selective_risk": 0.16666666666666666,
+      "threshold": 0.2
+    },
+    {
+      "accuracy": 0.8333333333333334,
+      "coverage": 1.0,
+      "selective_risk": 0.16666666666666666,
+      "threshold": 0.25
+    },
+    {
+      "accuracy": 0.8636363636363636,
+      "coverage": 0.9166666666666666,
+      "selective_risk": 0.13636363636363635,
+      "threshold": 0.3
+    },
+    {
+      "accuracy": 0.8571428571428571,
+      "coverage": 0.875,
+      "selective_risk": 0.14285714285714285,
+      "threshold": 0.35
+    },
+    {
+      "accuracy": 0.8571428571428571,
+      "coverage": 0.875,
+      "selective_risk": 0.14285714285714285,
+      "threshold": 0.4
+    },
+    {
+      "accuracy": 0.8947368421052632,
+      "coverage": 0.7916666666666666,
+      "selective_risk": 0.10526315789473684,
+      "threshold": 0.45
+    },
+    {
+      "accuracy": 0.8947368421052632,
+      "coverage": 0.7916666666666666,
+      "selective_risk": 0.10526315789473684,
+      "threshold": 0.5
+    },
+    {
+      "accuracy": 0.8947368421052632,
+      "coverage": 0.7916666666666666,
+      "selective_risk": 0.10526315789473684,
+      "threshold": 0.55
+    },
+    {
+      "accuracy": 0.8947368421052632,
+      "coverage": 0.7916666666666666,
+      "selective_risk": 0.10526315789473684,
+      "threshold": 0.6
+    },
+    {
+      "accuracy": 0.8888888888888888,
+      "coverage": 0.75,
+      "selective_risk": 0.1111111111111111,
+      "threshold": 0.65
+    },
+    {
+      "accuracy": 0.8888888888888888,
+      "coverage": 0.75,
+      "selective_risk": 0.1111111111111111,
+      "threshold": 0.7
+    },
+    {
+      "accuracy": 1.0,
+      "coverage": 0.5833333333333334,
+      "selective_risk": 0.0,
+      "threshold": 0.75
+    },
+    {
+      "accuracy": 1.0,
+      "coverage": 0.5416666666666666,
+      "selective_risk": 0.0,
+      "threshold": 0.8
+    },
+    {
+      "accuracy": 1.0,
+      "coverage": 0.5416666666666666,
+      "selective_risk": 0.0,
+      "threshold": 0.85
+    },
+    {
+      "accuracy": 1.0,
+      "coverage": 0.5,
+      "selective_risk": 0.0,
+      "threshold": 0.9
+    },
+    {
+      "accuracy": 1.0,
+      "coverage": 0.5,
+      "selective_risk": 0.0,
+      "threshold": 0.95
+    },
+    {
+      "accuracy": 1.0,
+      "coverage": 0.375,
+      "selective_risk": 0.0,
+      "threshold": 1.0
+    }
+  ]
+}

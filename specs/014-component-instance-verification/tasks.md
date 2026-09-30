@@ -39,7 +39,7 @@
 ## Phase 6: Mérés, kalibráció, zárás
 
 - [x] T012 Címkézett minta építése: **≥20 példa** (valós nevek + szándékolt írásvariánsok + fabrikált nevek), a címkék commitolva a dataset mellé — a 013-as tanulság: mintaméret-minimum az SC-kapuhoz
-- [ ] T013 [US3] Kalibrációs mérés: élő felvétel a címkézett mintán pinnelt modellel, offline replay; ReAnchor csak-evaluációs wrapperen (013-as T012 minta); a kijött threshold a configba; kapuk: SC-001 (gold: 0 false positive), SC-002 (selective risk ≤0.15, coverage ≥0.7 a 0.7-es kapunál), SC-003 (fail-open tesztek), SC-004 (byte-identikus kétszeri replay) — exit-code-dal, `cache=False`/replay-mód
+- [x] T013 [US3] Kalibrációs mérés: élő felvétel a címkézett mintán pinnelt modellel, offline replay; ReAnchor csak-evaluációs wrapperen (013-as T012 minta); a kijött threshold a configba; kapuk: SC-001 (gold: 0 false positive), SC-002 (selective risk ≤0.15, coverage ≥0.7 a 0.7-es kapunál), SC-003 (fail-open tesztek), SC-004 (byte-identikus kétszeri replay) — exit-code-dal, `cache=False`/replay-mód
 - [ ] T014 **MANUÁLIS KAPU**: a gate default behavior (KD1: flag) és a fail-open tradeoff jóváhagyása production-futás előtt; SC-kapuk review-ja; ha a küszöb módosul, indoklás az Agent.md-be — a runner NEM pipálhatja
 - [ ] T015 Zárás: teljes pytest-suite zöld, Agent.md naplóbejegyzés (tények, döntések, tanulságok), commit + push, backlog-frissítés (TASK-2 lezárása / verifikációs-réteg állapot)
 
