@@ -34,6 +34,23 @@ models:
   reflection_temperature: 1.0
   reflection_max_tokens: 32000
 
+# Kalibrált, típusos audience-döntés (spec 013) — ARCHIVÁLVA 2026-09-30.
+# A döntésnek nincs downstream-fogyasztója: minden KB ugyanazzal az L2/L3
+# template-tel készül, a helpdesk/end-user/developer osztályok nincsenek
+# használva (ld. Agent.md §43). A kód és a mérőinfrastruktúra megmarad —
+# újraaktiválás csak új, mérhető döntési igénnyel.
+# enabled=false → a generatív (ExtractChange) audience-út marad (kapcsolható fallback, FR-004).
+audience_decision:
+  enabled: false
+  # PINNELT döntési modellverzió — lebegő alias (jev-latest) TILOS a kalibrációhoz
+  # (playbook: „modell-csere = baseline újramérés").
+  model: "jev-1.13.0"
+  # Confirmatory kapu (spec SC-002): ennél alacsonyabb confidence-nél
+  # default "developer" + work_notes-jelzés. A T012 kalibrációs mérés hangolja.
+  confidence_threshold: 0.7
+  # Replay-kompatibilis JSONL döntésnapló (FR-003) — a kalibrációs mérés adatforrása.
+  recording_path: "artifacts/audience_decisions.jsonl"
+
 gepa:
   auto: "medium"                        # light | medium | heavy
   candidate_selection: "pareto"

@@ -1,0 +1,46 @@
+{
+  "spec": "013-audience-typed-decision / T012 ReAnchor",
+  "model": "jev-1.13.0",
+  "n_train": 12,
+  "accuracy_before": 0.6666666666666666,
+  "accuracy_after": 0.9166666666666666,
+  "fitted_fields": {
+    "self": {
+      "audience": {
+        "weights": {
+          "helpdesk": 15.8,
+          "end-user": 1.0,
+          "developer": 1.0
+        }
+      }
+    }
+  },
+  "reanchor_report": {
+    "train_score_before": 0.6667,
+    "train_score": 0.9167,
+    "fitted": [
+      {
+        "predictor": "self",
+        "field": "audience",
+        "parameter": "weights",
+        "value": {
+          "helpdesk": 15.8,
+          "end-user": 1.0,
+          "developer": 1.0
+        },
+        "train_score": 0.9167,
+        "train_score_at_start": 0.6667,
+        "observed": {
+          "calls": 12,
+          "candidates": 15
+        },
+        "fold_check": {
+          "passed": 1,
+          "failed": 0
+        },
+        "train_score_original": 0.6667
+      }
+    ]
+  },
+  "note": "A fitted paraméterek EXPLORATÍVAK — a confirmatory kapu a specben kijelölt 0.7-es confidence-küszöb (SC-002), a config.yaml értékét a T013 emberi kapu hagyja jóvá."
+}

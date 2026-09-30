@@ -1,0 +1,71 @@
+{
+  "spec": "013-audience-typed-decision / T003",
+  "task_model": "local",
+  "api_base": "http://desktop-c5ikame-1.tailee6bc1.ts.net:8033/v1",
+  "captured_at": "2026-09-29T09:25:25Z",
+  "results": [
+    {
+      "example_index": 1,
+      "story_sha256": "9d18d2658ca18b6b4b39e1078a419696a5a58b15b32f353cf1ec16ee0581f3d6",
+      "audience": "developer",
+      "latency_ms": 8147.4,
+      "task_model": "local"
+    },
+    {
+      "example_index": 2,
+      "story_sha256": "22acf8f2f8d9c982afb8a49f913be6082a8cccef49d7629723037e15ae2ac4d3",
+      "audience": "developer",
+      "latency_ms": 7047.1,
+      "task_model": "local"
+    },
+    {
+      "example_index": 3,
+      "story_sha256": "1a90ea0794dc3b7c5cc513b4c05fdd508ee612bcc26ac549ff8531d3cc77fad1",
+      "audience": "developer",
+      "latency_ms": 5757.5,
+      "task_model": "local"
+    },
+    {
+      "example_index": 4,
+      "story_sha256": "86880283c6693134d169a8359c424537daf8a0d3cd7a5244c52206861caacede",
+      "audience": "developer",
+      "latency_ms": 7201.8,
+      "task_model": "local"
+    },
+    {
+      "example_index": 5,
+      "story_sha256": "4b1969e55421eca9e20db360e6934a8d39984a14eb1429ab5fb2d7ca0481c84b",
+      "audience": "developer",
+      "latency_ms": 11023.3,
+      "task_model": "local"
+    },
+    {
+      "example_index": 6,
+      "story_sha256": "e9a3f3661523007dd868e5be94de235572fae8271cd4b9ac6b9defcb7b0e46cd",
+      "audience": "developer",
+      "latency_ms": 7538.0,
+      "task_model": "local"
+    },
+    {
+      "example_index": 7,
+      "story_sha256": "7a1209010a5790a893442f98ca41bd1e632d9b253d0b724c119024f4a2b1b4be",
+      "audience": "developer",
+      "latency_ms": 6971.1,
+      "task_model": "local"
+    },
+    {
+      "example_index": 8,
+      "story_sha256": "1d90d1a11d4a728ea309239b3f975639e5e33351af77cbd9a70e93218dc65a27",
+      "audience": "developer",
+      "latency_ms": 9162.5,
+      "task_model": "local"
+    },
+    {
+      "example_index": 9,
+      "story_sha256": "c38e4242e03dad372ecc423fc868242cc5b243e8d47944e2aa0921ac08d373d7",
+      "audience": "developer",
+      "latency_ms": 7466.4,
+      "task_model": "local"
+    }
+  ]
+}

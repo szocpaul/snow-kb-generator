@@ -1,0 +1,23 @@
+{
+  "spec": "013 T012 mock minta (élő felvétel + replay)",
+  "stories": [
+    {
+      "id": "mock_clear_developer",
+      "expected": "developer",
+      "note": "Egyértelműen implementáció-dokumentáció (script endpoint, payload).",
+      "story_text": "# Story: STRY9000001\n## Short Description\n[Interface Mgmt]: Implement Scripted REST API endpoint for SAP IDOC ingestion\n## Description\nCreated a Scripted REST API (/api/x_sap/idoc) with a Script Include that parses the XML payload, validates Basic Auth credentials, and maps IDoc segments to the u_vendor_invoice table. Includes unit tests with Postman collections.\n## Work Notes\nDev - endpoint created, tested with Postman (200 OK)."
+    },
+    {
+      "id": "mock_clear_helpdesk",
+      "expected": "helpdesk",
+      "note": "Egyértelműen troubleshooting-útmutató support-munkához.",
+      "story_text": "# Story: STRY9000003\n## Short Description\n[Portal]: Fix intermittent password reset failures for SSO users\n## Description\nUsers reported that the self-service password reset intermittently fails with a generic error. Root cause: a misconfigured retry in the IDP connector. The article explains how support agents can recognize the issue, check the connector status, and guide users through the workaround while the fix is deployed.\n## Work Notes\nSupport - workaround validated with 3 affected users."
+    },
+    {
+      "id": "mock_borderline",
+      "expected": "helpdesk",
+      "note": "Szándékos határeset (spec US1 AS2): üzleti folyamat-leírás fejlesztői részletekkel.",
+      "story_text": "# Story: STRY9000002\n## Short Description\nUpdate the vendor invoice approval flow notification text\n## Description\nAdjusted the approval notification wording for finance users, and fixed the underlying Flow Designer action that queries the vendor table via GlideRecord. The notification template is user-facing; the flow change is technical.\n## Work Notes\nDev - GlideRecord query fixed; BA - new wording approved by Finance."
+    }
+  ]
+}

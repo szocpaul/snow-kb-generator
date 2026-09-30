@@ -99,16 +99,35 @@ def _get_settings() -> Settings:
 
 
 def _get_api_key() -> str:
-    """Visszaadja a webhook API kulcsot a settings-ből."""
+    """Visszaadja a webhook API kulcsot.
+
+    Elsődleges forrás a SNOW_WEBHOOK_API_KEY környezeti változó; ha az üres
+    (pl. a systemd unit nem exportálja), fallback a repo gyökérben lévő .env.
+    """
     import os
 
-    return os.environ.get("SNOW_WEBHOOK_API_KEY", "")
+    key = os.environ.get("SNOW_WEBHOOK_API_KEY", "")
+    if key:
+        return key
+    from dotenv import dotenv_values
+
+    return dotenv_values(".env").get("SNOW_WEBHOOK_API_KEY", "")
 
 
 def _verify_api_key(x_api_key: str | None) -> None:
-    """Egyszerű API kulcs ellenőrzés."""
+    """API kulcs ellenőrzés — fail-closed.
+
+    Ha a szerveren NINCS kulcs beállítva, a végpontot nem szolgáljuk ki
+    (503), nem pedig auth nélkül átengedjük a kérést.
+    """
     expected = _get_api_key()
-    if expected and x_api_key != expected:
+    if not expected:
+        logger.error("SNOW_WEBHOOK_API_KEY nincs beállítva — a kérést elutasítjuk (fail-closed).")
+        raise HTTPException(
+            status_code=503,
+            detail="A szerveren nincs SNOW_WEBHOOK_API_KEY konfigurálva.",
+        )
+    if x_api_key != expected:
         raise HTTPException(status_code=401, detail="Érvénytelen API kulcs.")
 
 

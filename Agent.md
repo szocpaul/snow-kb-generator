@@ -755,3 +755,102 @@ Második (és későbbi) gombnyomás: HTTP 500, `RuntimeError: dspy.settings can
 
 ### Tanulság
 DSPy-szervereken (FastAPI/uvicorn) a globális `dspy.configure` NEM kérés-biztonságos — kérésenkénti konfigurációhoz `dspy.context` a helyes eszköz. (Az eval-scriptek egyszálasak, ott a globális configure továbbra is rendben.)
+
+
+## 41. Spec 013: kalibrált, típusos audience-döntés (2026-09-29)
+
+### Tények
+- Branch: `013-audience-typed-decision`. Commitok: T001+T002 (2b89ce4), T003+T004 (7183b68), T006-T010 + T012 mérőinfrastruktúra (lásd git log).
+- Új modul: `src/snow_kb/audience.py` — közvetlen TypeSafe SDK-hívás (Choice: helpdesk/end-user/developer), JSONL recording (jev-dspy-lab formátum, vendored: `src/snow_kb/vendor/jev_replay.py`), fail-open (FR-001), threshold-logika (US2).
+- Bekötés: `pipeline.py` — `resolve_audience` a program ELŐTT, `_AudienceOverrideExtractor` wrapper (program.py/program.json érintetlen), work_notes-jelzés a `servicenow_client.py` írási útjában.
+- Config: `audience_decision.*` (enabled, pinnelt model `jev-1.13.0`, confidence_threshold=0.7, recording_path). A `jev-latest` alias validátorral TILOS (FR-002).
+- Tesztek: 309/309 zöld (a 287-es suite + 22 új).
+- Mérés (T012): élő felvétel 9 gold + 3 mock példán, pinnelt jev-1.13.0; offline replay; ReAnchor eval-only wrapperen (`eval/audience_reanchor.py`); kapumetrikák a vendored jev-dspy-lab-ból (`eval/jev_metrics.py`, MIT).
+
+### SC-gate kimenetelek (`eval/audience_sc_gates.py`, exit 1)
+- **SC-001 ZÖLD**: baseline (generatív, lokális Qwen dev-mód) 6/9 vs új 6/9 — nem rosszabb.
+- **SC-002 PIROS** a confirmatory 0.7-es kapunál: selective_risk=0.200 (>0.15), coverage=0.833 (OK), ECE=0.163 (>0.10).
+- **SC-003 ZÖLD** (fail-open tesztek), **SC-004 ZÖLD** (kétszeri replay byte-identikus, 4491 byte).
+
+### A PIROS kapu anatómiája (emberi döntésre, T005/T013)
+- A Jev mind a 9 gold példára `developer`-t tippelt; a 3 vitatott címke (STRY0010003/4/5) nálam `helpdesk` — evidencia: mindhárom cikk "Investigation Steps" szekciója explicit troubleshooting-guide support-munkához ("When to use this guide", "Escalate to infrastructure team").
+- A hibás tipek közül 2 alacsony confidence-szel jön (0.26, 0.60), 1 viszont magabiztosan rossz (0.95).
+- EXPLORATÍV (NEM confirmatory): sweep 0.8-nál risk=0.111 / coverage=0.75; ReAnchor helpdesk-weight=15.8 (train accuracy 0.667→0.917). A config threshold ezért MARAD 0.7 — módosítása T013 emberi döntés.
+
+### Döntések
+- Küszöb-operátor: spec szerint `<` (nem `<=`), T009 szerint a pontos határérték a fallback irányába dől — a `confidence < threshold + 1e-9` alak elégíti ki mindkettőt (dokumentálva audience.py docstring).
+- Baseline dev-módban készült (lokális Qwen, Kimi-token nélkül) — az SC-001 összehasonlítás így "generatív-út-lokális vs Jev", nem Kimi vs Jev.
+- A production döntéshívás közvetlen SDK marad; a ReAnchor-wrapper csak mérésre való.
+
+### Nyitott emberi kapuk
+- T005: gold audience-címkék review (`data/examples/gold_audience_labels.json`).
+- T011: fail-open + developer-default tradeoff jóváhagyása production előtt.
+- T013: SC-kapuk review-ja; ha a küszöb módosul (pl. 0.8), indoklás ide.
+- Backlog: TASK-1 (verifikációs-réteg spec újraindítási feltétele: MÉG NEM teljesül).
+
+*(Mindhárom emberi kapu 2026-09-29-én lezárva — döntések és indoklás: §42.)*
+
+### Tanulság
+- A kalibrált döntés értéke a határesetekben látszik: a 0.26/0.60-confidence hibás tippeket a 0.7-es kapu kiszűri (abstain/fallback), a 0.95-ös magabiztos hiba viszont átmegy — pont ezért kell a confirmatory kapu és az emberi review, nem a sweep-legjobb automatikus átvétele.
+
+
+## 42. Spec 013: emberi kapuk lezárása (2026-09-29)
+
+### Döntések (T005, T011, T013 — a runner után, emberi review-ban)
+
+- **T005 JÓVÁHAGYVA**: a 9 gold audience-címke evidenciája átnézve — a 3 helpdesk-címke
+  (STRY0010003/4/5) megalapozott ("Investigation Steps" szekciók support-olvasóhoz szólnak).
+- **T011 JÓVÁHAGYVA**: a fail-open + developer-default tradeoff productionre engedélyezett —
+  a futás során a mechanizmus spec-szerűen viselkedett (2/3 hibás tipp a 0.7-es kapun
+  abstain/fallback irányba esett).
+- **T013 LEZÁRVA — C út**: a `confidence_threshold` **MARAD 0.7**. Az SC-002 PIROS ellenére
+  a rendszer interim production-státuszt kap, mert:
+  - SC-001 ZÖLD: az új döntés nem rosszabb a baseline-nál (mindkettő 6/9);
+  - a confidence-szignál működik: a bizonytalan esetek a tervezett biztonságos alapra esnek;
+  - a sweep-szerinti 0.8-as küszöb 9 példán hangolt érték lenne — a playbook tiltja az
+    exploratív eredmény confirmatoryként való átvételét (n=9-nél minden metrika 1/9-es
+    lépésekben mozog, a fold-check ellenére is overfitting-kockázat).
+
+### SC-002 újraindítási feltétel (a verifikációs-réteg spec / dataset-bővítés felé)
+
+- A gold dataset **≥20 példára bővítendő, min. 10 helpdesk-címkével** (jelenleg 3 — a
+  helpdesk-osztályt a Jev 0/3-ban ismerte fel, ez coverage-probléma, nem kalibrációs).
+- A bővített dataseten a T012 mérés újrafuttatandó (baseline-előbb szabály: az új mérés
+  előtt az aktuális állapot rögzítendő), és csak annak eredménye alapján módosítható a
+  threshold vagy zárható az SC-002.
+
+### Tanulság
+9 példás mintán az SC-002-szerű kapuk (risk ≤0.15, ECE ≤0.10) statisztikailag nem
+igazolhatók — a kapu tervezésekor a mintaméret-minimumot is a specbe kellett volna írni.
+A következő kalibrációs specbe: SC-kapuhoz min. mintaméret megadása kötelező.
+
+
+## 43. Spec 013 archiválása (2026-09-30)
+
+### Döntés
+Az audience-decision feature **ARCHIVÁLVA**, `audience_decision.enabled: false` —
+a branch a mainbe merge-elve kikapcsolt állapotban.
+
+### Indoklás
+A spec-ciklus végén kiderült: a `helpdesk/end-user/developer` döntésnek **nincs
+downstream-fogyasztója** — minden KB ugyanazzal az L2/L3 ServiceNow-integrációs
+template-tel készül, az L2 és L3 között nincs tartalmi különbség, minden cikk
+technikai leírás. A Jev 0/3-as helpdesk-teljesítménye nem kalibrációs hiba volt,
+hanem annak a jele, hogy a kérdés maga rossz volt megfogalmazva: az audience-jel
+a nyers story-szövegben nem létezik, mert az audience a cikk-írási döntés
+függvénye, nem a story-é.
+
+### Mi marad meg (a 013 valódi hozadéka)
+- A teljes mérőinfrastruktúra: JSONL recording, replay, `eval/jev_metrics.py`
+  (selective risk / coverage / ECE), `eval/audience_reanchor.py` (ReAnchor
+  eval-only wrapper), SC-gate-ek exit-code-dal — **újrahasznosítható bármely
+  jövőbeli típusos döntésre**.
+- 22 új teszt (309-es suite), a pipeline fail-open viselkedése.
+- A §41–43 tanulságok: SC-kapuhoz min. mintaméret; exploratív ≠ confirmatory;
+  döntés csak akkor, ha van downstream-fogyasztó.
+
+### Tanulság
+A spec 013 nem fail: 0 Kimi-tokenból, egy nap alatt, mérve derült ki, hogy a
+feature-t nem érdemes productionbe vinni. A következő típusos döntés (014)
+jelöltje: olyan kérdés, aminek valódi varianciája és pipeline-hatása van
+(pl. „érdemes-e KB-cikk erről a story-ról?" — Noul-kapu a generálás előtt).

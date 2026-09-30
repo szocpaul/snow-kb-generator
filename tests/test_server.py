@@ -81,6 +81,15 @@ class TestHealth:
 # ---------------------------------------------------------------------------
 
 class TestAuthentication:
+    def test_no_server_key_fails_closed(self, client, mock_settings, monkeypatch):
+        """Ha a szerveren nincs SNOW_WEBHOOK_API_KEY (sem env, sem .env), a végpont 503-at adjon,
+        NE engedje át a kérést auth nélkül (fail-closed)."""
+        monkeypatch.delenv("SNOW_WEBHOOK_API_KEY", raising=False)
+        monkeypatch.setattr("snow_kb.server._get_api_key", lambda: "")
+        with patch("snow_kb.server.load_settings", return_value=mock_settings):
+            resp = client.post("/generate-kb", json={"story_id": "STRY001"})
+        assert resp.status_code == 503
+
     def test_missing_api_key_rejected(self, client, mock_settings):
         with patch("snow_kb.server.load_settings", return_value=mock_settings):
             resp = client.post("/generate-kb", json={"story_id": "STRY001"})
