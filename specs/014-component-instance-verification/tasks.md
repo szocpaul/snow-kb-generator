@@ -16,9 +16,9 @@
 
 ## Phase 2: Baseline (US1 precondition — playbook: baseline first)
 
-- [ ] T002b [US1] PDI preparation: import the Update Sets of the measured stories into the PDI (`scripts_pdi/bootstrap_pdi.py` extension or manual import) + verification with a spot-check on one sample component — the gold samples come from the customer instance, without import the spot-check is 100% false positive (spec Assumptions)
-- [ ] T003 [US1] Baseline inventory: extract the component name candidates from the existing gold articles + one freshly generated article sample (011 pattern: quoted names, CamelCase, dotted), per-example JSON under `artifacts/` — with unchanged code
-- [ ] T004 [US1] Check the candidates from T003: update set content (where available) + manual/spot-check in the instance → how many „does not exist" names there are TODAY (the size of the problem in numbers, written to a file)
+- [ ] T002b [US1] PDI preparation: import of the Update Sets of the measured stories into the PDI (`scripts_pdi/bootstrap_pdi.py` extension or manual import) + verification with a spot-check of one sample component — the gold samples come from the customer instance, without the import the spot-check gives 100% false positives (spec Assumptions). NOTE (runner, 2026-09-30): T002b was added to the spec AFTER the measurement was CLOSED — the T014 gate accepted SC-001 with the environmental explanation and WITHOUT the import; T002b is a precondition for the FUTURE measurements
+- [x] T003 [US1] Baseline inventory: the component name candidates of the existing gold articles + one freshly generated article sample, extracted (011 pattern: quoted names, CamelCase, dotted), per-example JSON under `artifacts/` — with unchanged code
+- [x] T004 [US1] Checking the T003 candidates: update set content (where there is one) + manual/spot-check in the instance → how many "does not exist" names there are TODAY (the size of the problem numerically, written to a file)
 - [ ] T005 [US1] **MANUAL GATE**: the review of the baseline inventory — the runner CANNOT check it off
 
 ## Phase 3: US1 – Instance axis in the metric (test first)
