@@ -1,0 +1,309 @@
+{
+  "spec": "014-component-instance-verification",
+  "task": "T004",
+  "generated_at": "2026-09-30T16:09:37.472929+00:00",
+  "instance": "dev432044.service-now.com",
+  "counts": {
+    "exists": 6,
+    "not_found": 26,
+    "error": 0,
+    "in_update_set": 5,
+    "whitelisted_generic": 12
+  },
+  "rows": [
+    {
+      "example": "gold-1",
+      "name": "ServiceNow",
+      "verdict": "whitelisted_generic",
+      "evidence": "011-whitelist"
+    },
+    {
+      "example": "gold-1",
+      "name": "JiraInboundUtils",
+      "verdict": "not_found",
+      "evidence": ""
+    },
+    {
+      "example": "gold-2",
+      "name": "Escalated",
+      "verdict": "not_found",
+      "evidence": ""
+    },
+    {
+      "example": "gold-2",
+      "name": "ServiceNow",
+      "verdict": "whitelisted_generic",
+      "evidence": "011-whitelist"
+    },
+    {
+      "example": "gold-2",
+      "name": "JiraIntegrationUtils",
+      "verdict": "not_found",
+      "evidence": ""
+    },
+    {
+      "example": "gold-3",
+      "name": "User Not Found",
+      "verdict": "not_found",
+      "evidence": ""
+    },
+    {
+      "example": "gold-3",
+      "name": "ServiceNow",
+      "verdict": "whitelisted_generic",
+      "evidence": "011-whitelist"
+    },
+    {
+      "example": "gold-4",
+      "name": "Tax code I2 does not exist",
+      "verdict": "not_found",
+      "evidence": ""
+    },
+    {
+      "example": "gold-4",
+      "name": "Retry",
+      "verdict": "exists",
+      "evidence": "sys_dictionary.element=Retry"
+    },
+    {
+      "example": "gold-4",
+      "name": "ServiceNow",
+      "verdict": "whitelisted_generic",
+      "evidence": "011-whitelist"
+    },
+    {
+      "example": "gold-5",
+      "name": "Create KB Article",
+      "verdict": "in_update_set",
+      "evidence": "update_set_payloads"
+    },
+    {
+      "example": "gold-5",
+      "name": "SnowKbGenerator work_note error",
+      "verdict": "in_update_set",
+      "evidence": "update_set_payloads"
+    },
+    {
+      "example": "gold-5",
+      "name": "current.work_notes",
+      "verdict": "in_update_set",
+      "evidence": "update_set_payloads"
+    },
+    {
+      "example": "gold-5",
+      "name": "current.number",
+      "verdict": "in_update_set",
+      "evidence": "update_set_payloads"
+    },
+    {
+      "example": "gold-5",
+      "name": "ServiceNow",
+      "verdict": "whitelisted_generic",
+      "evidence": "011-whitelist"
+    },
+    {
+      "example": "gold-5",
+      "name": "SnowKbGenerator",
+      "verdict": "in_update_set",
+      "evidence": "update_set_payloads"
+    },
+    {
+      "example": "gold-6",
+      "name": "Confirmed",
+      "verdict": "exists",
+      "evidence": "sys_dictionary.element=Confirmed"
+    },
+    {
+      "example": "gold-6",
+      "name": "Withdrawn",
+      "verdict": "not_found",
+      "evidence": ""
+    },
+    {
+      "example": "gold-6",
+      "name": "SolMan: Sync CD State to CTASK Closure Readiness",
+      "verdict": "not_found",
+      "evidence": ""
+    },
+    {
+      "example": "gold-6",
+      "name": "SolMan: Fix CD State Inconsistencies",
+      "verdict": "not_found",
+      "evidence": ""
+    },
+    {
+      "example": "gold-6",
+      "name": "SolMan",
+      "verdict": "not_found",
+      "evidence": ""
+    },
+    {
+      "example": "gold-6",
+      "name": "ServiceNow",
+      "verdict": "whitelisted_generic",
+      "evidence": "011-whitelist"
+    },
+    {
+      "example": "gold-7",
+      "name": "aldi.com",
+      "verdict": "not_found",
+      "evidence": ""
+    },
+    {
+      "example": "gold-7",
+      "name": "interface.solman",
+      "verdict": "not_found",
+      "evidence": ""
+    },
+    {
+      "example": "gold-7",
+      "name": "aldi.solman",
+      "verdict": "not_found",
+      "evidence": ""
+    },
+    {
+      "example": "gold-7",
+      "name": "ServiceNow",
+      "verdict": "whitelisted_generic",
+      "evidence": "011-whitelist"
+    },
+    {
+      "example": "gold-7",
+      "name": "SolMan",
+      "verdict": "not_found",
+      "evidence": ""
+    },
+    {
+      "example": "gold-7",
+      "name": "ChTask",
+      "verdict": "not_found",
+      "evidence": ""
+    },
+    {
+      "example": "gold-7",
+      "name": "FrameWork",
+      "verdict": "not_found",
+      "evidence": ""
+    },
+    {
+      "example": "gold-8",
+      "name": "aldi.integration.almex.config",
+      "verdict": "exists",
+      "evidence": "sys_dictionary.element=config"
+    },
+    {
+      "example": "gold-8",
+      "name": "aldi.almex.config.list",
+      "verdict": "exists",
+      "evidence": "sys_dictionary.element=list"
+    },
+    {
+      "example": "gold-8",
+      "name": "aldi.integration.almex.config.matrix",
+      "verdict": "not_found",
+      "evidence": ""
+    },
+    {
+      "example": "gold-8",
+      "name": "interface.almex.user",
+      "verdict": "exists",
+      "evidence": "sys_dictionary.element=user"
+    },
+    {
+      "example": "gold-8",
+      "name": "ServiceNow",
+      "verdict": "whitelisted_generic",
+      "evidence": "011-whitelist"
+    },
+    {
+      "example": "gold-8",
+      "name": "GetReturns",
+      "verdict": "not_found",
+      "evidence": ""
+    },
+    {
+      "example": "gold-8",
+      "name": "ConfirmReturns",
+      "verdict": "not_found",
+      "evidence": ""
+    },
+    {
+      "example": "gold-9",
+      "name": "Scheduled",
+      "verdict": "exists",
+      "evidence": "sys_dictionary.element=Scheduled"
+    },
+    {
+      "example": "gold-9",
+      "name": "ALDI S4 OData Outbound",
+      "verdict": "not_found",
+      "evidence": ""
+    },
+    {
+      "example": "gold-9",
+      "name": "ALDI: CHG Scheduled - Push Dates to S4",
+      "verdict": "not_found",
+      "evidence": ""
+    },
+    {
+      "example": "gold-9",
+      "name": "ALDIS4ProjectInterface",
+      "verdict": "not_found",
+      "evidence": ""
+    },
+    {
+      "example": "gold-9",
+      "name": "UpdateProjectDates",
+      "verdict": "not_found",
+      "evidence": ""
+    },
+    {
+      "example": "gold-9",
+      "name": "ServiceNow",
+      "verdict": "whitelisted_generic",
+      "evidence": "011-whitelist"
+    },
+    {
+      "example": "gold-9",
+      "name": "ProjectMilestone",
+      "verdict": "not_found",
+      "evidence": ""
+    },
+    {
+      "example": "generated-1",
+      "name": "ServiceNow",
+      "verdict": "whitelisted_generic",
+      "evidence": "011-whitelist"
+    },
+    {
+      "example": "generated-1",
+      "name": "JiraInboundWebhook",
+      "verdict": "not_found",
+      "evidence": ""
+    },
+    {
+      "example": "generated-1",
+      "name": "JiraInboundUtils",
+      "verdict": "not_found",
+      "evidence": ""
+    },
+    {
+      "example": "generated-2",
+      "name": "ServiceNow",
+      "verdict": "whitelisted_generic",
+      "evidence": "011-whitelist"
+    },
+    {
+      "example": "generated-2",
+      "name": "JiraIntegrationUtils",
+      "verdict": "not_found",
+      "evidence": ""
+    },
+    {
+      "example": "generated-3",
+      "name": "ServiceNow",
+      "verdict": "whitelisted_generic",
+      "evidence": "011-whitelist"
+    }
+  ]
+}
