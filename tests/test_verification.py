@@ -46,6 +46,25 @@ class TestExtractCandidates:
         cands = {c.name for c in extract_component_candidates(html)}
         assert "sap.aldi.com" not in cands
 
+    def test_state_terms_not_candidates(self):
+        """T005-jóváhagyott szűrés: a workflow-állapotok NEM jelöltek."""
+        html = "<p>A Change 'Escalated' állapotba került, majd 'Retry' történt.</p>"
+        cands = {c.name for c in extract_component_candidates(html)}
+        assert "Escalated" not in cands
+        assert "Retry" not in cands
+
+    def test_log_message_like_quoted_skipped(self):
+        """Naplóüzenet-szerű idézett stringek NEM jelöltek."""
+        html = "<p>A 'SnowKbGenerator work_note error' megjelent a logban.</p>"
+        cands = {c.name for c in extract_component_candidates(html)}
+        assert "SnowKbGenerator work_note error" not in cands
+
+    def test_real_br_name_with_spaces_kept(self):
+        """A valós, mondatszerű Business Rule-nevek MEGMARADNAK (recall-védelem)."""
+        html = "<p>Az 'Abort change of milestone on parent task' Business Rule.</p>"
+        cands = {c.name for c in extract_component_candidates(html)}
+        assert "Abort change of milestone on parent task" in cands
+
     def test_urls_emails_html_attrs_not_candidates(self):
         html = ('<p><a href="https://aldi.com/x">JiraUtils</a> ír a '
                 'admin@aldi.com címre.</p>')

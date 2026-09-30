@@ -37,6 +37,19 @@ logger = logging.getLogger(__name__)
 
 _WHITELIST_CF: set[str] = {w.casefold() for w in COMPONENT_NAME_WHITELIST}
 
+# Egyszavas workflow-állapot / UI-termékek: NEM komponensnevek (a T004
+# baseline tanulsága: 'Escalated', 'Retry', 'Scheduled' stb. false positive-jai).
+# A T005 emberi kapu jóváhagyta az SNOW-specifikusabb szűrést.
+_STATE_TERMS = {
+    "escalated", "withdrawn", "confirmed", "retry", "scheduled", "closed",
+    "open", "new", "resolved", "cancelled", "canceled", "pending", "draft",
+    "approved", "rejected", "deferred", "completed", "failed",
+}
+
+# Naplóüzenet-szuffixek: az ilyen idézett stringek hibaüzenetek, nem nevek
+# (T004: 'SnowKbGenerator work_note error', 'User Not Found' minták).
+_LOG_MESSAGE_SUFFIXES = (" error", " failed", " failure", " not found", " timeout")
+
 # Publikus TLD-k: az ezekre végződő dotted nevek külső hostok/domainek
 # (a T004 baseline tanulsága: aldi.com, interface.solman-stílusú false positive-ok).
 _TLD_SUFFIXES = {
@@ -105,6 +118,11 @@ def extract_component_candidates(html: str) -> list[ComponentCandidate]:
     def _add(name: str, kind: str) -> None:
         name = name.strip()
         if not name or name.casefold() in _WHITELIST_CF:
+            return
+        # Állapot-szavak és naplóüzenet-szerű idézett stringek NEM komponensnevek
+        if " " not in name and name.casefold() in _STATE_TERMS:
+            return
+        if kind == "quoted" and name.casefold().endswith(_LOG_MESSAGE_SUFFIXES):
             return
         if any(c.name == name for c in candidates):
             return
@@ -179,14 +197,29 @@ class SpotChecker:
 
     # -- belső ------------------------------------------------------------
 
+    _OBJECT_PREFIXES = ("current", "parent", "gs", "g")
+
     def _probes(self, name: str, kind: str) -> list[tuple[str, str, str]]:
-        """Lekérdezés-lista: (tábla, mező, érték) hármasok, kinyerési mód szerint."""
+        """Lekérdezés-lista: (tábla, mező, érték) hármasok, kinyerési mód szerint.
+
+        Dotted név szemantikája:
+          - objektum-prefixszel (current./parent./gs.): mezőhivatkozás → a
+            mezőnév a sys_dictionary-ben dől el;
+          - egyébként tábla[.mező] alak → a TÁBLA létezése a döntő (a generikus
+            mezőnevek — sys_id, name — túl gyakoriak a mező-fallbackhez:
+            false „exists"-t adnának fabrikált táblanevekre).
+        """
         probes: list[tuple[str, str, str]] = []
         if kind == "dotted":
-            probes.append(("sys_db_object", "name", name))
-            last = name.split(".")[-1]
-            if last and last != name:
-                probes.append(("sys_dictionary", "element", last))
+            segments = name.split(".")
+            first, last = segments[0], segments[-1]
+            if first in self._OBJECT_PREFIXES or first.startswith("g_"):
+                if last and last != name:
+                    probes.append(("sys_dictionary", "element", last))
+            else:
+                probes.append(("sys_db_object", "name", name))
+                if first != name:
+                    probes.append(("sys_db_object", "name", first))
         else:
             for table in ("sys_script_include", "sys_script", "sys_db_object"):
                 probes.append((table, "name", name))

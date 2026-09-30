@@ -125,6 +125,11 @@ def _run_cases(client, live: bool) -> list[dict]:
         )
         if result.skipped:
             raise RuntimeError(f"fail-open a mérésben ({case['case_id']}) — ez hiba")
+        if not result.verdicts:
+            raise RuntimeError(
+                f"a jelölt nem nyerhető ki a cikkből ({case['case_id']}) — "
+                "a minta html-je nem felel meg a 011-mintának"
+            )
         verdict = result.verdicts[0]
         predicted = "flag" if verdict.status == "not_exists" else "ok"
         # A kalibrált réteg confidence-a (determinisztikusnál 1.0)

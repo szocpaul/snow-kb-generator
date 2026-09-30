@@ -24,7 +24,7 @@
       "note": "valós Script Include a PDI-n"
     },
     {
-      "name": "AbstractDBObject",
+      "name": "AbstractAjaxListDragChecker",
       "kind": "camelcase",
       "label": "exists",
       "note": "valós Script Include a PDI-n"
@@ -36,16 +36,16 @@
       "note": "valós Script Include a PDI-n"
     },
     {
-      "name": "agent_assist_recommendation",
+      "name": "current.work_notes",
       "kind": "dotted",
       "label": "exists",
-      "note": "valós tábla a PDI-n (sys_db_object)"
+      "note": "valós mezőhivatkozás (work_notes elem a task-táblákon)"
     },
     {
-      "name": "ais_api_transaction_log",
+      "name": "incident.priority",
       "kind": "dotted",
       "label": "exists",
-      "note": "valós tábla a PDI-n"
+      "note": "valós tábla.mező hivatkozás (incident tábla a PDI-n)"
     },
     {
       "name": "Abort change of milestone on parent task",
@@ -73,9 +73,9 @@
     },
     {
       "name": "ALDIS4ProjectInterface",
-      "kind": "camelcase",
+      "kind": "quoted",
       "label": "missing_real",
-      "note": "gold-9: SNOW-nek tűnő scriptnév, a PDI-n nincs"
+      "note": "gold-9: SNOW-nek tűnő scriptnév (idézett megjelenés a cikkben), a PDI-n nincs"
     },
     {
       "name": "aldi.integration.almex.config.matrix",
@@ -124,10 +124,10 @@
       "note": "fabrikált, hihető nevű script"
     },
     {
-      "name": "u_dynamic_sla_recalc",
+      "name": "dynamic.sla.recalc",
       "kind": "dotted",
       "label": "fabricated",
-      "note": "fabrikált táblaszerű név"
+      "note": "fabrikált táblaszerű dotted név"
     },
     {
       "name": "ChgStateSynchronizer",

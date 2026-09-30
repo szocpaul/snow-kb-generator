@@ -1,0 +1,194 @@
+{
+  "abort change of milestone on parent task": {
+    "evidence": "sys_script.name=Abort change of milestone on parent task",
+    "status": "exists"
+  },
+  "abstract ajax processor": {
+    "evidence": "nincs találat: sys_script_include, sys_script, sys_db_object",
+    "status": "not_exists"
+  },
+  "abstractajaxlistdragchecker": {
+    "evidence": "sys_script_include.name=AbstractAjaxListDragChecker",
+    "status": "exists"
+  },
+  "abstractajaxprocesser": {
+    "evidence": "nincs találat: sys_script_include, sys_script, sys_db_object",
+    "status": "not_exists"
+  },
+  "abstractajaxprocessor": {
+    "evidence": "sys_script_include.name=AbstractAjaxProcessor",
+    "status": "exists"
+  },
+  "access analyze executor": {
+    "evidence": "nincs találat: sys_script_include, sys_script, sys_db_object",
+    "status": "not_exists"
+  },
+  "accessanalyzeexecutor": {
+    "evidence": "sys_script_include.name=AccessAnalyzeExecutor",
+    "status": "exists"
+  },
+  "aldi kb autopublisher": {
+    "evidence": "nincs találat: sys_script_include, sys_script, sys_db_object",
+    "status": "not_exists"
+  },
+  "aldi s4 odata outbound": {
+    "evidence": "nincs találat: sys_script_include, sys_script, sys_db_object",
+    "status": "not_exists"
+  },
+  "aldi.almex.config.list": {
+    "evidence": "nincs találat: sys_db_object, sys_db_object",
+    "status": "not_exists"
+  },
+  "aldi.integration.almex.config": {
+    "evidence": "nincs találat: sys_db_object, sys_db_object",
+    "status": "not_exists"
+  },
+  "aldi.integration.almex.config.matrix": {
+    "evidence": "nincs találat: sys_db_object, sys_db_object",
+    "status": "not_exists"
+  },
+  "aldi.solman": {
+    "evidence": "nincs találat: sys_db_object, sys_db_object",
+    "status": "not_exists"
+  },
+  "aldi: chg scheduled - push dates to s4": {
+    "evidence": "nincs találat: sys_script_include, sys_script, sys_db_object",
+    "status": "not_exists"
+  },
+  "aldis4projectinterface": {
+    "evidence": "nincs találat: sys_script_include, sys_script, sys_db_object",
+    "status": "not_exists"
+  },
+  "autopublisher": {
+    "evidence": "nincs találat: sys_script_include, sys_script, sys_db_object",
+    "status": "not_exists"
+  },
+  "chgstatesynchronizer": {
+    "evidence": "nincs találat: sys_script_include, sys_script, sys_db_object",
+    "status": "not_exists"
+  },
+  "chtask": {
+    "evidence": "nincs találat: sys_script_include, sys_script, sys_db_object",
+    "status": "not_exists"
+  },
+  "confirmed": {
+    "evidence": "nincs találat: sys_script_include, sys_script, sys_db_object",
+    "status": "not_exists"
+  },
+  "confirmreturns": {
+    "evidence": "nincs találat: sys_script_include, sys_script, sys_db_object",
+    "status": "not_exists"
+  },
+  "create kb article": {
+    "evidence": "nincs találat: sys_script_include, sys_script, sys_db_object",
+    "status": "not_exists"
+  },
+  "current.number": {
+    "evidence": "sys_dictionary.element=number",
+    "status": "exists"
+  },
+  "current.work_notes": {
+    "evidence": "sys_dictionary.element=work_notes",
+    "status": "exists"
+  },
+  "dynamic.sla.recalc": {
+    "evidence": "nincs találat: sys_db_object, sys_db_object",
+    "status": "not_exists"
+  },
+  "escalated": {
+    "evidence": "nincs találat: sys_script_include, sys_script, sys_db_object",
+    "status": "not_exists"
+  },
+  "framework": {
+    "evidence": "nincs találat: sys_script_include, sys_script, sys_db_object",
+    "status": "not_exists"
+  },
+  "getreturns": {
+    "evidence": "nincs találat: sys_script_include, sys_script, sys_db_object",
+    "status": "not_exists"
+  },
+  "incident.priority": {
+    "evidence": "sys_db_object.name=incident",
+    "status": "exists"
+  },
+  "incidentpriorityrecalculator": {
+    "evidence": "nincs találat: sys_script_include, sys_script, sys_db_object",
+    "status": "not_exists"
+  },
+  "interface.almex.user": {
+    "evidence": "nincs találat: sys_db_object, sys_db_object",
+    "status": "not_exists"
+  },
+  "interface.solman": {
+    "evidence": "nincs találat: sys_db_object, sys_db_object",
+    "status": "not_exists"
+  },
+  "jira inbound utils": {
+    "evidence": "nincs találat: sys_script_include, sys_script, sys_db_object",
+    "status": "not_exists"
+  },
+  "jirainboundutils": {
+    "evidence": "nincs találat: sys_script_include, sys_script, sys_db_object",
+    "status": "not_exists"
+  },
+  "jirainboundwebhook": {
+    "evidence": "nincs találat: sys_script_include, sys_script, sys_db_object",
+    "status": "not_exists"
+  },
+  "jiraintegrationutils": {
+    "evidence": "nincs találat: sys_script_include, sys_script, sys_db_object",
+    "status": "not_exists"
+  },
+  "projectmilestone": {
+    "evidence": "nincs találat: sys_script_include, sys_script, sys_db_object",
+    "status": "not_exists"
+  },
+  "retry": {
+    "evidence": "nincs találat: sys_script_include, sys_script, sys_db_object",
+    "status": "not_exists"
+  },
+  "scheduled": {
+    "evidence": "nincs találat: sys_script_include, sys_script, sys_db_object",
+    "status": "not_exists"
+  },
+  "snowkbautohealmanager": {
+    "evidence": "nincs találat: sys_script_include, sys_script, sys_db_object",
+    "status": "not_exists"
+  },
+  "snowkbgenerator": {
+    "evidence": "nincs találat: sys_script_include, sys_script, sys_db_object",
+    "status": "not_exists"
+  },
+  "snowkbgenerator work_note error": {
+    "evidence": "nincs találat: sys_script_include, sys_script, sys_db_object",
+    "status": "not_exists"
+  },
+  "solman": {
+    "evidence": "nincs találat: sys_script_include, sys_script, sys_db_object",
+    "status": "not_exists"
+  },
+  "solman: fix cd state inconsistencies": {
+    "evidence": "nincs találat: sys_script_include, sys_script, sys_db_object",
+    "status": "not_exists"
+  },
+  "solman: sync cd state to ctask closure readiness": {
+    "evidence": "nincs találat: sys_script_include, sys_script, sys_db_object",
+    "status": "not_exists"
+  },
+  "tax code i2 does not exist": {
+    "evidence": "nincs találat: sys_script_include, sys_script, sys_db_object",
+    "status": "not_exists"
+  },
+  "updateprojectdates": {
+    "evidence": "nincs találat: sys_script_include, sys_script, sys_db_object",
+    "status": "not_exists"
+  },
+  "user not found": {
+    "evidence": "nincs találat: sys_script_include, sys_script, sys_db_object",
+    "status": "not_exists"
+  },
+  "withdrawn": {
+    "evidence": "nincs találat: sys_script_include, sys_script, sys_db_object",
+    "status": "not_exists"
+  }
+}
