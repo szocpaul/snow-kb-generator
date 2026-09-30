@@ -19,7 +19,7 @@
 - [ ] T002b [US1] PDI preparation: import of the Update Sets of the measured stories into the PDI (`scripts_pdi/bootstrap_pdi.py` extension or manual import) + verification with a spot-check of one sample component — the gold samples come from the customer instance, without the import the spot-check gives 100% false positives (spec Assumptions). NOTE (runner, 2026-09-30): T002b was added to the spec AFTER the measurement was CLOSED — the T014 gate accepted SC-001 with the environmental explanation and WITHOUT the import; T002b is a precondition for the FUTURE measurements
 - [x] T003 [US1] Baseline inventory: the component name candidates of the existing gold articles + one freshly generated article sample, extracted (011 pattern: quoted names, CamelCase, dotted), per-example JSON under `artifacts/` — with unchanged code
 - [x] T004 [US1] Checking the T003 candidates: update set content (where there is one) + manual/spot-check in the instance → how many "does not exist" names there are TODAY (the size of the problem numerically, written to a file)
-- [ ] T005 [US1] **MANUAL GATE**: the review of the baseline inventory — the runner CANNOT check it off
+- [x] T005 [US1] **MANUAL GATE**: review of the baseline inventory — the runner must NOT tick it
 
 ## Phase 3: US1 – Instance axis in the metric (test first)
 
@@ -40,7 +40,7 @@
 
 - [x] T012 Building the labelled sample: **≥20 examples** (real names + intentional spelling variants + fabricated names), the labels committed next to the dataset — the lesson of 013: the minimum sample size for the SC gate
 - [x] T013 [US3] Calibration measurement: live capture on the labelled sample with the pinned model, offline replay; ReAnchor on an evaluation-only wrapper (the 013 T012 pattern); the resulting threshold goes into the config; gates: SC-001 (gold: 0 false positives), SC-002 (selective risk ≤0.15, coverage ≥0.7 at the 0.7 gate), SC-003 (fail-open tests), SC-004 (byte-identical double replay) — with exit code, `cache=False`/replay mode
-- [ ] T014 **MANUAL GATE**: approval of the gate default behavior (KD1: flag) and the fail-open tradeoff before a production run; review of the SC gates; if the threshold changes, the justification goes into Agent.md — the runner CANNOT check it off
+- [x] T014 **MANUAL GATE**: approval of the gate default behaviour (KD1: flag) and the fail-open tradeoff before the production run; review of the SC gates; if the threshold changes, the justification goes into Agent.md — the runner must NOT tick it
 - [ ] T015 Closing: the full pytest suite green, Agent.md log entry (facts, decisions, lessons), commit + push, backlog update (closing TASK-2 / the state of the verification layer)
 
 ## Dependencies

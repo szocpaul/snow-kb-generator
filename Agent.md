@@ -875,3 +875,63 @@ Spec 013 is not a failure: with 0 Kimi tokens, in one day, measurement showed th
 feature is not worth taking into production. The candidate for the next typed decision (014)
 is: a question that has a real variance and a pipeline effect
 (e.g. "is a KB article worth writing for this story?" — a Noul gate before generation).
+
+## 44. Spec 014: component name verification against the instance + production push-gate (2026-09-30)
+
+### Facts
+- **Problem proven by measurement** (T003/T004 baseline): of the 49 component name candidates in the gold + freshly generated
+  articles, **26 do not exist** in the instance, and all
+  26 also appear in the source story — the 011 story-based axis would catch none of them
+  (the blind spot is real). 2 of the 3 freshly generated articles contained such a name →
+  the hallucination is reproducible NOW (artifacts/component_baseline_report.md).
+- **Implementation** (DEV mode, 0 Kimi tokens for the task model, every generation
+  local Qwen3.8-27B): `src/snow_kb/verification.py` (011-pattern extraction +
+  T005-approved SNOW filtering, update-set whitelist, cached SpotChecker,
+  fail-open FR-002), metric **instance axis** NEXT TO the existing ones (FR-006:
+  bit-identical when inactive), push-gate BEFORE `create_kb_article` (flag/strip/block,
+  work_notes note, JSONL recording FR-003), calibrated layer (pinned jev-1.13.0,
+  3-way: yes/external/no — external systems get NO signal).
+- **SC-gates** (`python -m eval.verification_sc_gates` → exit 1):
+  SC-002 GREEN (n=24, confirmatory 0.7: selective_risk=0.111≤0.15, coverage=0.750≥0.7,
+  ECE=0.049) | SC-003 GREEN (5 fail-open tests) | SC-004 GREEN (byte-identical
+  replay) | **SC-001 RED** (gold-7: 2 SolMan hostnames + 2 CamelCase fragments
+  flagged — see acceptance below).
+- 349 tests green (the starting 309 + 40 new).
+
+### Decisions (MANUAL GATEs — with human approval)
+- **T005** (baseline review): continue YES + YES to more SNOW-specific filtering of the candidate extraction
+  (status word, log message suffix, FQDN).
+- **T014** (4 decisions): (1) default behavior = **flag** (KD1) approved;
+  (2) fail-open tradeoff (FR-002) approved; (3) **SC-001 red ACCEPTED** —
+  rationale: the gold stories belong to the ALDI **dev** instance (the gold-7
+  HTML contains a dev URL + Script Include sys_id), the measurement PDI (prod instance)
+  does not contain their components → the instance-relative "does not exist" signal
+  on this snapshot cannot be classified as a simple false positive; the remaining
+  hostname/fragment noise is tolerated in flag-only mode, no refinement is needed before
+  switching it on; (4) the gate is **ENABLED**: `verification_gate.enabled: true`
+  + `behavior: flag` for an observation period (the JSONL recording is the measurement base);
+  strip/block only after a later, data-based decision.
+- Threshold: **0.7 stays** (confirmatory gate; ReAnchor only fits option weights
+  — yes=20.5, acc 0.708→0.875 — and not the threshold; the sweep is exploratory:
+  0.75+ risk=0, but coverage 0.583 < 0.7).
+
+### Lessons
+- The spec assumption ("the gold names are real at the time of the measurement")
+  depends on the instance: the gold dataset contains real ALDI stories that live on a DIFFERENT
+  instance — on the PDI, an SC-001-style "0 false positive" gate can only be
+  interpreted with environment context. **Before the measurement, check that the gold
+  and the measured instance belong together.**
+- For 8/9 gold stories there is no update set on the PDI — the hierarchical ground truth
+  (KD3) is often only a pure spot-check; the per-name cache is therefore critical.
+- The 3-way decision of the calibrated layer (external answer) is the implementation of the spec Out of Scope:
+  the ban on validating external systems cannot be handled cleanly at the extraction
+  level, but at the decision level.
+- Goal-continuation park-loop: while waiting at a MANUAL GATE, the continuation turns
+  fire about ~1/minute — this can be triggered with an event-driven bash watcher (session-jsonl
+  `customType: agent_message`) (recorded in the global memory).
+
+### Commits (014-component-instance-verification branch)
+c8da6e0 (T001+T002), 9919aaa (T003+T004), 1e73727 (T005 interim report),
+2d3823c (T006), d01d495 (T007), 0b26e63 (T008), 186c86f (T008-T011),
+87d3057 (T012), e4e8ad6 (T012+T013 infra), ccf6fe7 (T005 review b),
+c45e95e (T013), dd36ea9 (T014 package report)

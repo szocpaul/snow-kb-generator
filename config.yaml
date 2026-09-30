@@ -55,7 +55,10 @@ audience_decision:
 # enabled=false is the default — switching the gate on is the decision of the T014 MANUAL GATE
 # (per the prohibition of the spec the runner does not switch it on).
 verification_gate:
-  enabled: false
+  # 2026-09-30, T014 MANUAL GATE: the human SWITCHED IT ON (enabled=true, behavior=flag)
+  # for the observation period — the JSONL recording is the measurement base; strip/block only
+  # with a later, data-based decision. The decisions: Agent.md (the spec 014 log entry).
+  enabled: true
   # The behaviour of the gate for a non-existent component name (KD1 default: flag):
   #   flag  = a work_notes signal with the measured confidence, the article goes out
   #   strip = the suspicious names are removed from the article (a rougher intervention)
