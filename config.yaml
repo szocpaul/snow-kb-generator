@@ -51,6 +51,31 @@ audience_decision:
   # Replay-kompatibilis JSONL döntésnapló (FR-003) — a kalibrációs mérés adatforrása.
   recording_path: "artifacts/audience_decisions.jsonl"
 
+# Komponensnév-hitelesítés az instance ellen + production push-gate (spec 014).
+# enabled=false az alapértelmezés — a gate bekapcsolása a T014 MANUÁLIS KAPU
+# döntése (a spec tilalma szerint a runner nem kapcsolja be).
+verification_gate:
+  # 2026-09-30, T014 MANUÁLIS KAPU: az ember BEKAPCSOLTA (enabled=true, behavior=flag)
+  # megfigyelési időszakra — a JSONL recording a mérési alap; strip/block csak
+  # későbbi, adat-alapú döntéssel. Döntések: Agent.md (spec 014 naplóbejegyzés).
+  enabled: true
+  # A gate viselkedése nem-létező komponensnév esetén (KD1 default: flag):
+  #   flag  = work_notes-jelzés a mért confidence-szel, a cikk kimegy
+  #   strip = a gyanús nevek eltávolítása a cikkből (durvább beavatkozás)
+  #   block = a push blokkolása (fail-closed — csak mérés után)
+  behavior: "flag"
+  # PINNELT döntési modellverzió a kalibrált (homályos esetek) réteghez —
+  # lebegő alias TILOS (playbook: „modell-csere = baseline újramérés", FR-005).
+  model: "jev-1.13.0"
+  # Confirmatory kapu (spec SC-002): ennél alacsonyabb confidence-nél a név
+  # „nem létezik"-nek számít. A T013 kalibrációs mérés hangolja.
+  confidence_threshold: 0.7
+  # Per-név spot-check cache (JSON) — a recording része, a replay ettől
+  # byte-identikus (SC-004).
+  spotcheck_cache_path: "artifacts/spotcheck_cache.json"
+  # Replay-kompatibilis JSONL döntésnapló (FR-003) — a kalibrációs mérés adatforrása.
+  recording_path: "artifacts/verification_decisions.jsonl"
+
 gepa:
   auto: "medium"                        # light | medium | heavy
   candidate_selection: "pareto"

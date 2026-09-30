@@ -1,0 +1,27 @@
+{
+  "train_score_before": 0.7083,
+  "train_score": 0.875,
+  "fitted": [
+    {
+      "predictor": "self",
+      "field": "refers",
+      "parameter": "weights",
+      "value": {
+        "yes": 20.5,
+        "external": 1.0,
+        "no": 1.0
+      },
+      "train_score": 0.875,
+      "train_score_at_start": 0.7083,
+      "observed": {
+        "calls": 24,
+        "candidates": 55
+      },
+      "fold_check": {
+        "passed": 1,
+        "failed": 0
+      },
+      "train_score_original": 0.7083
+    }
+  ]
+}

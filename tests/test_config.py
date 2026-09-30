@@ -272,3 +272,63 @@ class TestAudienceDecisionConfig:
         })
         with pytest.raises(ConfigError):
             load_settings(path)
+
+
+class TestVerificationGateConfig:
+    """Spec 014 T001: verification_gate config-blokk parsolása."""
+
+    def test_defaults_when_block_missing(self, valid_yaml, set_env):
+        """Hiányzó blokk → biztonságos defaultok (kikapcsolva, flag, pinnelt modell)."""
+        s = load_settings(valid_yaml)
+        assert s.verification_gate.enabled is False
+        assert s.verification_gate.behavior == "flag"
+        assert s.verification_gate.model == "jev-1.13.0"
+        assert s.verification_gate.confidence_threshold == 0.7
+        assert s.verification_gate.spotcheck_cache_path.endswith(".json")
+        assert s.verification_gate.recording_path.endswith(".jsonl")
+
+    def test_block_parsed_from_yaml(self, make_yaml, set_env):
+        path = make_yaml({
+            "servicenow": {"knowledge_base_id": "kb_test_123"},
+            "verification_gate": {
+                "enabled": True,
+                "behavior": "strip",
+                "model": "jev-1.13.0",
+                "confidence_threshold": 0.65,
+                "spotcheck_cache_path": "artifacts/test_spotcheck.json",
+                "recording_path": "artifacts/test_verification.jsonl",
+            },
+        })
+        s = load_settings(path)
+        assert s.verification_gate.enabled is True
+        assert s.verification_gate.behavior == "strip"
+        assert s.verification_gate.model == "jev-1.13.0"
+        assert s.verification_gate.confidence_threshold == 0.65
+        assert s.verification_gate.spotcheck_cache_path == "artifacts/test_spotcheck.json"
+        assert s.verification_gate.recording_path == "artifacts/test_verification.jsonl"
+
+    def test_invalid_behavior_rejected(self, make_yaml, set_env):
+        """A behavior csak flag/strip/block lehet."""
+        path = make_yaml({
+            "servicenow": {"knowledge_base_id": "kb_test_123"},
+            "verification_gate": {"behavior": "delete"},
+        })
+        with pytest.raises(ConfigError):
+            load_settings(path)
+
+    def test_latest_alias_rejected(self, make_yaml, set_env):
+        """FR-005: lebegő alias (jev-latest) nem engedélyezett — pinnelt verzió kell."""
+        path = make_yaml({
+            "servicenow": {"knowledge_base_id": "kb_test_123"},
+            "verification_gate": {"model": "jev-latest"},
+        })
+        with pytest.raises(ConfigError):
+            load_settings(path)
+
+    def test_threshold_out_of_range_rejected(self, make_yaml, set_env):
+        path = make_yaml({
+            "servicenow": {"knowledge_base_id": "kb_test_123"},
+            "verification_gate": {"confidence_threshold": 1.5},
+        })
+        with pytest.raises(ConfigError):
+            load_settings(path)

@@ -1,0 +1,169 @@
+{
+  "spec": "014-component-instance-verification",
+  "task": "T012",
+  "labels": {
+    "exists": "valós komponens a PDI-n",
+    "missing_real": "a story szerint léteznie kellene, de a PDI-n nincs (a cikkre vetítve: nem létező)",
+    "variant": "írásvariáns egy valós/missing_real névre",
+    "fabricated": "fabrikált, sosem létezett",
+    "external": "külső (nem-ServiceNow) rendszer objektuma — nem validálandó (out of scope)"
+  },
+  "decision_mapping": {
+    "exists": "exists",
+    "missing_real": "not_exists (a gate dolga: jelzés)",
+    "variant_of_existing": "exists (utalás) — ha a variant_of exists",
+    "variant_of_missing": "not_exists",
+    "fabricated": "not_exists",
+    "external": "nincs döntés — a kalibrált réteg 'nem SNOW-komponens' (a gate nem jelzi)"
+  },
+  "examples": [
+    {
+      "name": "AbstractAjaxProcessor",
+      "kind": "camelcase",
+      "label": "exists",
+      "note": "valós Script Include a PDI-n"
+    },
+    {
+      "name": "AbstractAjaxListDragChecker",
+      "kind": "camelcase",
+      "label": "exists",
+      "note": "valós Script Include a PDI-n"
+    },
+    {
+      "name": "AccessAnalyzeExecutor",
+      "kind": "camelcase",
+      "label": "exists",
+      "note": "valós Script Include a PDI-n"
+    },
+    {
+      "name": "current.work_notes",
+      "kind": "dotted",
+      "label": "exists",
+      "note": "valós mezőhivatkozás (work_notes elem a task-táblákon)"
+    },
+    {
+      "name": "incident.priority",
+      "kind": "dotted",
+      "label": "exists",
+      "note": "valós tábla.mező hivatkozás (incident tábla a PDI-n)"
+    },
+    {
+      "name": "Abort change of milestone on parent task",
+      "kind": "quoted",
+      "label": "exists",
+      "note": "valós Business Rule a PDI-n"
+    },
+    {
+      "name": "JiraInboundUtils",
+      "kind": "quoted",
+      "label": "missing_real",
+      "note": "gold-1: a story Script Include-ként hivatkozik, a PDI-n nincs"
+    },
+    {
+      "name": "JiraIntegrationUtils",
+      "kind": "camelcase",
+      "label": "missing_real",
+      "note": "gold-2: a story szerint létező integrációs script, a PDI-n nincs"
+    },
+    {
+      "name": "JiraInboundWebhook",
+      "kind": "camelcase",
+      "label": "missing_real",
+      "note": "generated-1: a frissen generált cikk nevezte meg, a PDI-n nincs"
+    },
+    {
+      "name": "ALDIS4ProjectInterface",
+      "kind": "quoted",
+      "label": "missing_real",
+      "note": "gold-9: SNOW-nek tűnő scriptnév (idézett megjelenés a cikkben), a PDI-n nincs"
+    },
+    {
+      "name": "aldi.integration.almex.config.matrix",
+      "kind": "dotted",
+      "label": "missing_real",
+      "note": "gold-8: SNOW táblaszerű név, a PDI-n nincs"
+    },
+    {
+      "name": "Abstract Ajax Processor",
+      "kind": "quoted",
+      "label": "variant",
+      "variant_of": "AbstractAjaxProcessor",
+      "note": "szóközös írásvariáns a valós Script Include-ra"
+    },
+    {
+      "name": "AbstractAjaxProcesser",
+      "kind": "camelcase",
+      "label": "variant",
+      "variant_of": "AbstractAjaxProcessor",
+      "note": "elütéses írásvariáns"
+    },
+    {
+      "name": "Jira Inbound Utils",
+      "kind": "quoted",
+      "label": "variant",
+      "variant_of": "JiraInboundUtils",
+      "note": "szóközös variáns — de a kanonikus név sem létezik a PDI-n (missing_real variáns)"
+    },
+    {
+      "name": "Access Analyze Executor",
+      "kind": "quoted",
+      "label": "variant",
+      "variant_of": "AccessAnalyzeExecutor",
+      "note": "szóközös írásvariáns"
+    },
+    {
+      "name": "SnowKbAutoHealManager",
+      "kind": "camelcase",
+      "label": "fabricated",
+      "note": "fabrikált Script Include-szerű név"
+    },
+    {
+      "name": "IncidentPriorityRecalculator",
+      "kind": "camelcase",
+      "label": "fabricated",
+      "note": "fabrikált, hihető nevű script"
+    },
+    {
+      "name": "dynamic.sla.recalc",
+      "kind": "dotted",
+      "label": "fabricated",
+      "note": "fabrikált táblaszerű dotted név"
+    },
+    {
+      "name": "ChgStateSynchronizer",
+      "kind": "camelcase",
+      "label": "fabricated",
+      "note": "fabrikált"
+    },
+    {
+      "name": "ALDI KB AutoPublisher",
+      "kind": "quoted",
+      "label": "fabricated",
+      "note": "fabrikált BR-szerű név"
+    },
+    {
+      "name": "SolMan",
+      "kind": "camelcase",
+      "label": "external",
+      "note": "SAP Solution Manager — külső rendszer"
+    },
+    {
+      "name": "interface.solman",
+      "kind": "dotted",
+      "label": "external",
+      "note": "SolMan interfész-host"
+    },
+    {
+      "name": "GetReturns",
+      "kind": "camelcase",
+      "label": "external",
+      "note": "SolMan-oldali funkció"
+    },
+    {
+      "name": "ALDI S4 OData Outbound",
+      "kind": "quoted",
+      "label": "external",
+      "note": "S4 OData interfész — külső rendszer objektuma"
+    }
+  ]
+}

@@ -854,3 +854,63 @@ A spec 013 nem fail: 0 Kimi-tokenból, egy nap alatt, mérve derült ki, hogy a
 feature-t nem érdemes productionbe vinni. A következő típusos döntés (014)
 jelöltje: olyan kérdés, aminek valódi varianciája és pipeline-hatása van
 (pl. „érdemes-e KB-cikk erről a story-ról?" — Noul-kapu a generálás előtt).
+
+## 44. Spec 014: komponensnév-hitelesítés az instance ellen + production push-gate (2026-09-30)
+
+### Tények
+- **Probléma igazolva mérve** (T003/T004 baseline): a gold + frissen generált
+  cikkek 49 komponensnév-jelöltjéből **26 nem létezik** az instance-ben, és mind
+  a 26 a forrás-story-ban IS szerepel — a 011-es story-alapú tengely egyiket sem
+  fogná (a vakfolt valós). A 3 frissen generált cikkből 2-ben volt ilyen név →
+  a hallucináció MA reprodukálható (artifacts/component_baseline_report.md).
+- **Implementáció** (DEV mód, 0 Kimi-token a task-modellre, minden generálás
+  lokális Qwen3.8-27B): `src/snow_kb/verification.py` (011-minta kinyerés +
+  T005-jóváhagyott SNOW-szűrés, update-set whitelist, cache-elt SpotChecker,
+  fail-open FR-002), metrika **instance-tengely** a meglévők MELLÉ (FR-006:
+  inaktívan bit-azonos), push-gate a `create_kb_article` ELŐTT (flag/strip/block,
+  work_notes-jelzés, JSONL recording FR-003), kalibrált réteg (pinnelt jev-1.13.0,
+  3-utas: yes/external/no — a külső rendszerek NEM kapnak jelzést).
+- **SC-gate-ek** (`python -m eval.verification_sc_gates` → exit 1):
+  SC-002 ZÖLD (n=24, confirmatory 0.7: selective_risk=0.111≤0.15, coverage=0.750≥0.7,
+  ECE=0.049) | SC-003 ZÖLD (5 fail-open teszt) | SC-004 ZÖLD (byte-identikus
+  replay) | **SC-001 PIROS** (gold-7: 2 SolMan-hostnév + 2 CamelCase-fragment
+  jelölve — ld. elfogadás lentebb).
+- 349 teszt zöld (a kiinduló 309 + 40 új).
+
+### Döntések (MANUÁLIS KAPUk — emberi jóváhagyással)
+- **T005** (baseline review): folytatás IGEN + a jelölt-kinyerés
+  SNOW-specifikusabb szűrése IGEN (állapot-szó, naplóüzenet-szuffix, FQDN).
+- **T014** (4 döntés): (1) default behavior = **flag** (KD1) jóváhagyva;
+  (2) fail-open tradeoff (FR-002) jóváhagyva; (3) **SC-001 piros ELFOGADVA** —
+  indoklás: a gold story-k az ALDI **aldidev** instance-hez tartoznak (a gold-7
+  HTML-jében aldidev URL + Script Include sys_id), a mérés PDI-ja (dev432044)
+  nem tartalmazza a komponenseiket → az instance-relatív „nem létezik" jelzés
+  ezen a snapshoton nem minősíthető egyszerű false positive-nak; a maradék
+  hostnév/fragment-zaj flag-only módban tolerált, finomítás nem kell a
+  bekapcsolás előtt; (4) a gate **BEKAPCSOLVA**: `verification_gate.enabled: true`
+  + `behavior: flag` megfigyelési időszakra (a JSONL recording a mérési alap);
+  strip/block csak későbbi, adat-alapú döntéssel.
+- Threshold: **0.7 marad** (confirmatory kapu; a ReAnchor csak option-súlyokat
+  fittelt — yes=20.5, acc 0.708→0.875 —, thresholdot nem; a sweep exploratív:
+  0.75+ risk=0, de coverage 0.583 < 0.7).
+
+### Tanulságok
+- A spec Assumption-je („a gold nevek a mérés időpontjában valódiak")
+  instance-függő: a gold dataset valódi ALDI story-kat tartalmaz, amik egy MÁS
+  instance-en élnek — PDI-n az SC-001-féle „0 false positive" kapu csak
+  környezeti kontextussal értelmezhető. **Mérés előtt ellenőrizni, hogy a gold
+  és a mérő-instance összetartozik-e.**
+- 8/9 gold story-hoz nincs update set a PDI-n — a hierarchikus ground truth
+  (KD3) gyakori útja a tiszta spot-check; a per-név cache ezért kritikus.
+- A kalibrált réteg 3-utas döntése (external válasz) a spec Out of Scope-jának
+  implementációja: a külső rendszerek validálásának TILALMA nem extraction-
+  szinten, hanem döntés-szinten kezelhető tisztán.
+- Goal-continuation park-loop: MANUÁLIS KAPUnál várakozva a continuation turnök
+  ~1/perc lőnek — esemény-vezérelt bash watcherrel (session-jsonl
+  `customType: agent_message`) kiváltható (a globális memóriában rögzítve).
+
+### Commitok (014-component-instance-verification branch)
+c8da6e0 (T001+T002), 9919aaa (T003+T004), 1e73727 (T005-interim riport),
+2d3823c (T006), d01d495 (T007), 0b26e63 (T008), 186c86f (T008-T011),
+87d3057 (T012), e4e8ad6 (T012+T013-infra), ccf6fe7 (T005-review b),
+c45e95e (T013), dd36ea9 (T014-csomag riport)

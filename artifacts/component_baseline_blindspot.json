@@ -1,0 +1,161 @@
+{
+  "blind_spot": [
+    {
+      "example": "gold-1",
+      "name": "JiraInboundUtils",
+      "verdict": "not_found",
+      "evidence": ""
+    },
+    {
+      "example": "gold-2",
+      "name": "Escalated",
+      "verdict": "not_found",
+      "evidence": ""
+    },
+    {
+      "example": "gold-2",
+      "name": "JiraIntegrationUtils",
+      "verdict": "not_found",
+      "evidence": ""
+    },
+    {
+      "example": "gold-3",
+      "name": "User Not Found",
+      "verdict": "not_found",
+      "evidence": ""
+    },
+    {
+      "example": "gold-4",
+      "name": "Tax code I2 does not exist",
+      "verdict": "not_found",
+      "evidence": ""
+    },
+    {
+      "example": "gold-6",
+      "name": "Withdrawn",
+      "verdict": "not_found",
+      "evidence": ""
+    },
+    {
+      "example": "gold-6",
+      "name": "SolMan: Sync CD State to CTASK Closure Readiness",
+      "verdict": "not_found",
+      "evidence": ""
+    },
+    {
+      "example": "gold-6",
+      "name": "SolMan: Fix CD State Inconsistencies",
+      "verdict": "not_found",
+      "evidence": ""
+    },
+    {
+      "example": "gold-6",
+      "name": "SolMan",
+      "verdict": "not_found",
+      "evidence": ""
+    },
+    {
+      "example": "gold-7",
+      "name": "aldi.com",
+      "verdict": "not_found",
+      "evidence": ""
+    },
+    {
+      "example": "gold-7",
+      "name": "interface.solman",
+      "verdict": "not_found",
+      "evidence": ""
+    },
+    {
+      "example": "gold-7",
+      "name": "aldi.solman",
+      "verdict": "not_found",
+      "evidence": ""
+    },
+    {
+      "example": "gold-7",
+      "name": "SolMan",
+      "verdict": "not_found",
+      "evidence": ""
+    },
+    {
+      "example": "gold-7",
+      "name": "ChTask",
+      "verdict": "not_found",
+      "evidence": ""
+    },
+    {
+      "example": "gold-7",
+      "name": "FrameWork",
+      "verdict": "not_found",
+      "evidence": ""
+    },
+    {
+      "example": "gold-8",
+      "name": "aldi.integration.almex.config.matrix",
+      "verdict": "not_found",
+      "evidence": ""
+    },
+    {
+      "example": "gold-8",
+      "name": "GetReturns",
+      "verdict": "not_found",
+      "evidence": ""
+    },
+    {
+      "example": "gold-8",
+      "name": "ConfirmReturns",
+      "verdict": "not_found",
+      "evidence": ""
+    },
+    {
+      "example": "gold-9",
+      "name": "ALDI S4 OData Outbound",
+      "verdict": "not_found",
+      "evidence": ""
+    },
+    {
+      "example": "gold-9",
+      "name": "ALDI: CHG Scheduled - Push Dates to S4",
+      "verdict": "not_found",
+      "evidence": ""
+    },
+    {
+      "example": "gold-9",
+      "name": "ALDIS4ProjectInterface",
+      "verdict": "not_found",
+      "evidence": ""
+    },
+    {
+      "example": "gold-9",
+      "name": "UpdateProjectDates",
+      "verdict": "not_found",
+      "evidence": ""
+    },
+    {
+      "example": "gold-9",
+      "name": "ProjectMilestone",
+      "verdict": "not_found",
+      "evidence": ""
+    },
+    {
+      "example": "generated-1",
+      "name": "JiraInboundWebhook",
+      "verdict": "not_found",
+      "evidence": ""
+    },
+    {
+      "example": "generated-1",
+      "name": "JiraInboundUtils",
+      "verdict": "not_found",
+      "evidence": ""
+    },
+    {
+      "example": "generated-2",
+      "name": "JiraIntegrationUtils",
+      "verdict": "not_found",
+      "evidence": ""
+    }
+  ],
+  "story_absent": []
+}

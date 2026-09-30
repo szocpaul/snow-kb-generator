@@ -1,0 +1,328 @@
+{
+  "spec": "014-component-instance-verification",
+  "task": "T003",
+  "generated_at": "2026-09-30T16:06:49.088071+00:00",
+  "dataset": "data/examples/gold_dataset.md",
+  "examples": [
+    {
+      "id": "gold-1",
+      "source": "gold",
+      "candidates": [
+        {
+          "name": "ServiceNow",
+          "kind": "camelcase",
+          "whitelisted_generic": true
+        },
+        {
+          "name": "JiraInboundUtils",
+          "kind": "camelcase",
+          "whitelisted_generic": false
+        }
+      ]
+    },
+    {
+      "id": "gold-2",
+      "source": "gold",
+      "candidates": [
+        {
+          "name": "Escalated",
+          "kind": "quoted",
+          "whitelisted_generic": false
+        },
+        {
+          "name": "ServiceNow",
+          "kind": "camelcase",
+          "whitelisted_generic": true
+        },
+        {
+          "name": "JiraIntegrationUtils",
+          "kind": "camelcase",
+          "whitelisted_generic": false
+        }
+      ]
+    },
+    {
+      "id": "gold-3",
+      "source": "gold",
+      "candidates": [
+        {
+          "name": "User Not Found",
+          "kind": "quoted",
+          "whitelisted_generic": false
+        },
+        {
+          "name": "ServiceNow",
+          "kind": "camelcase",
+          "whitelisted_generic": true
+        }
+      ]
+    },
+    {
+      "id": "gold-4",
+      "source": "gold",
+      "candidates": [
+        {
+          "name": "Tax code I2 does not exist",
+          "kind": "quoted",
+          "whitelisted_generic": false
+        },
+        {
+          "name": "Retry",
+          "kind": "quoted",
+          "whitelisted_generic": false
+        },
+        {
+          "name": "ServiceNow",
+          "kind": "camelcase",
+          "whitelisted_generic": true
+        }
+      ]
+    },
+    {
+      "id": "gold-5",
+      "source": "gold",
+      "candidates": [
+        {
+          "name": "Create KB Article",
+          "kind": "quoted",
+          "whitelisted_generic": false
+        },
+        {
+          "name": "SnowKbGenerator work_note error",
+          "kind": "quoted",
+          "whitelisted_generic": false
+        },
+        {
+          "name": "current.work_notes",
+          "kind": "dotted",
+          "whitelisted_generic": false
+        },
+        {
+          "name": "current.number",
+          "kind": "dotted",
+          "whitelisted_generic": false
+        },
+        {
+          "name": "ServiceNow",
+          "kind": "camelcase",
+          "whitelisted_generic": true
+        },
+        {
+          "name": "SnowKbGenerator",
+          "kind": "camelcase",
+          "whitelisted_generic": false
+        }
+      ]
+    },
+    {
+      "id": "gold-6",
+      "source": "gold",
+      "candidates": [
+        {
+          "name": "Confirmed",
+          "kind": "quoted",
+          "whitelisted_generic": false
+        },
+        {
+          "name": "Withdrawn",
+          "kind": "quoted",
+          "whitelisted_generic": false
+        },
+        {
+          "name": "SolMan: Sync CD State to CTASK Closure Readiness",
+          "kind": "quoted",
+          "whitelisted_generic": false
+        },
+        {
+          "name": "SolMan: Fix CD State Inconsistencies",
+          "kind": "quoted",
+          "whitelisted_generic": false
+        },
+        {
+          "name": "SolMan",
+          "kind": "camelcase",
+          "whitelisted_generic": false
+        },
+        {
+          "name": "ServiceNow",
+          "kind": "camelcase",
+          "whitelisted_generic": true
+        }
+      ]
+    },
+    {
+      "id": "gold-7",
+      "source": "gold",
+      "candidates": [
+        {
+          "name": "aldi.com",
+          "kind": "dotted",
+          "whitelisted_generic": false
+        },
+        {
+          "name": "interface.solman",
+          "kind": "dotted",
+          "whitelisted_generic": false
+        },
+        {
+          "name": "aldi.solman",
+          "kind": "dotted",
+          "whitelisted_generic": false
+        },
+        {
+          "name": "ServiceNow",
+          "kind": "camelcase",
+          "whitelisted_generic": true
+        },
+        {
+          "name": "SolMan",
+          "kind": "camelcase",
+          "whitelisted_generic": false
+        },
+        {
+          "name": "ChTask",
+          "kind": "camelcase",
+          "whitelisted_generic": false
+        },
+        {
+          "name": "FrameWork",
+          "kind": "camelcase",
+          "whitelisted_generic": false
+        }
+      ]
+    },
+    {
+      "id": "gold-8",
+      "source": "gold",
+      "candidates": [
+        {
+          "name": "aldi.integration.almex.config",
+          "kind": "dotted",
+          "whitelisted_generic": false
+        },
+        {
+          "name": "aldi.almex.config.list",
+          "kind": "dotted",
+          "whitelisted_generic": false
+        },
+        {
+          "name": "aldi.integration.almex.config.matrix",
+          "kind": "dotted",
+          "whitelisted_generic": false
+        },
+        {
+          "name": "interface.almex.user",
+          "kind": "dotted",
+          "whitelisted_generic": false
+        },
+        {
+          "name": "ServiceNow",
+          "kind": "camelcase",
+          "whitelisted_generic": true
+        },
+        {
+          "name": "GetReturns",
+          "kind": "camelcase",
+          "whitelisted_generic": false
+        },
+        {
+          "name": "ConfirmReturns",
+          "kind": "camelcase",
+          "whitelisted_generic": false
+        }
+      ]
+    },
+    {
+      "id": "gold-9",
+      "source": "gold",
+      "candidates": [
+        {
+          "name": "Scheduled",
+          "kind": "quoted",
+          "whitelisted_generic": false
+        },
+        {
+          "name": "ALDI S4 OData Outbound",
+          "kind": "quoted",
+          "whitelisted_generic": false
+        },
+        {
+          "name": "ALDI: CHG Scheduled - Push Dates to S4",
+          "kind": "quoted",
+          "whitelisted_generic": false
+        },
+        {
+          "name": "ALDIS4ProjectInterface",
+          "kind": "quoted",
+          "whitelisted_generic": false
+        },
+        {
+          "name": "UpdateProjectDates",
+          "kind": "quoted",
+          "whitelisted_generic": false
+        },
+        {
+          "name": "ServiceNow",
+          "kind": "camelcase",
+          "whitelisted_generic": true
+        },
+        {
+          "name": "ProjectMilestone",
+          "kind": "camelcase",
+          "whitelisted_generic": false
+        }
+      ]
+    },
+    {
+      "id": "generated-1",
+      "source": "generated",
+      "gold_ref": "gold-1",
+      "candidates": [
+        {
+          "name": "ServiceNow",
+          "kind": "camelcase",
+          "whitelisted_generic": true
+        },
+        {
+          "name": "JiraInboundWebhook",
+          "kind": "camelcase",
+          "whitelisted_generic": false
+        },
+        {
+          "name": "JiraInboundUtils",
+          "kind": "camelcase",
+          "whitelisted_generic": false
+        }
+      ]
+    },
+    {
+      "id": "generated-2",
+      "source": "generated",
+      "gold_ref": "gold-2",
+      "candidates": [
+        {
+          "name": "ServiceNow",
+          "kind": "camelcase",
+          "whitelisted_generic": true
+        },
+        {
+          "name": "JiraIntegrationUtils",
+          "kind": "camelcase",
+          "whitelisted_generic": false
+        }
+      ]
+    },
+    {
+      "id": "generated-3",
+      "source": "generated",
+      "gold_ref": "gold-3",
+      "candidates": [
+        {
+          "name": "ServiceNow",
+          "kind": "camelcase",
+          "whitelisted_generic": true
+        }
+      ]
+    }
+  ]
+}
