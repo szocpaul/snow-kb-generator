@@ -823,3 +823,34 @@ DSPy-szervereken (FastAPI/uvicorn) a globális `dspy.configure` NEM kérés-bizt
 9 példás mintán az SC-002-szerű kapuk (risk ≤0.15, ECE ≤0.10) statisztikailag nem
 igazolhatók — a kapu tervezésekor a mintaméret-minimumot is a specbe kellett volna írni.
 A következő kalibrációs specbe: SC-kapuhoz min. mintaméret megadása kötelező.
+
+
+## 43. Spec 013 archiválása (2026-09-30)
+
+### Döntés
+Az audience-decision feature **ARCHIVÁLVA**, `audience_decision.enabled: false` —
+a branch a mainbe merge-elve kikapcsolt állapotban.
+
+### Indoklás
+A spec-ciklus végén kiderült: a `helpdesk/end-user/developer` döntésnek **nincs
+downstream-fogyasztója** — minden KB ugyanazzal az L2/L3 ServiceNow-integrációs
+template-tel készül, az L2 és L3 között nincs tartalmi különbség, minden cikk
+technikai leírás. A Jev 0/3-as helpdesk-teljesítménye nem kalibrációs hiba volt,
+hanem annak a jele, hogy a kérdés maga rossz volt megfogalmazva: az audience-jel
+a nyers story-szövegben nem létezik, mert az audience a cikk-írási döntés
+függvénye, nem a story-é.
+
+### Mi marad meg (a 013 valódi hozadéka)
+- A teljes mérőinfrastruktúra: JSONL recording, replay, `eval/jev_metrics.py`
+  (selective risk / coverage / ECE), `eval/audience_reanchor.py` (ReAnchor
+  eval-only wrapper), SC-gate-ek exit-code-dal — **újrahasznosítható bármely
+  jövőbeli típusos döntésre**.
+- 22 új teszt (309-es suite), a pipeline fail-open viselkedése.
+- A §41–43 tanulságok: SC-kapuhoz min. mintaméret; exploratív ≠ confirmatory;
+  döntés csak akkor, ha van downstream-fogyasztó.
+
+### Tanulság
+A spec 013 nem fail: 0 Kimi-tokenból, egy nap alatt, mérve derült ki, hogy a
+feature-t nem érdemes productionbe vinni. A következő típusos döntés (014)
+jelöltje: olyan kérdés, aminek valódi varianciája és pipeline-hatása van
+(pl. „érdemes-e KB-cikk erről a story-ról?" — Noul-kapu a generálás előtt).

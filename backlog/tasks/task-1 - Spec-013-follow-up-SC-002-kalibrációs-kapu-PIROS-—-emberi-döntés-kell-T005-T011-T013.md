@@ -3,7 +3,7 @@ id: TASK-1
 title: >-
   Spec 013 follow-up: SC-002 kalibrációs kapu PIROS — emberi döntés kell
   (T005/T011/T013)
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-09-29 12:02'
 labels: []
