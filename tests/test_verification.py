@@ -46,6 +46,25 @@ class TestExtractCandidates:
         cands = {c.name for c in extract_component_candidates(html)}
         assert "sap.example-service.com" not in cands
 
+    def test_state_terms_not_candidates(self):
+        """The filtering approved by T005: the workflow states are NOT candidates."""
+        html = "<p>The Change went into the 'Escalated' state, then a 'Retry' happened.</p>"
+        cands = {c.name for c in extract_component_candidates(html)}
+        assert "Escalated" not in cands
+        assert "Retry" not in cands
+
+    def test_log_message_like_quoted_skipped(self):
+        """The log-message-like quoted strings are NOT candidates."""
+        html = "<p>A 'SnowKbGenerator work_note error' megjelent a logban.</p>"
+        cands = {c.name for c in extract_component_candidates(html)}
+        assert "SnowKbGenerator work_note error" not in cands
+
+    def test_real_br_name_with_spaces_kept(self):
+        """The real, sentence-like Business Rule names REMAIN (recall protection)."""
+        html = "<p>Az 'Abort change of milestone on parent task' Business Rule.</p>"
+        cands = {c.name for c in extract_component_candidates(html)}
+        assert "Abort change of milestone on parent task" in cands
+
     def test_urls_emails_html_attrs_not_candidates(self):
         html = ('<p><a href="https://example-service.com/x">JiraUtils</a> writes to the '
                 'admin@example-service.com address.</p>')

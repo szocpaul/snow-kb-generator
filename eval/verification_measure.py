@@ -125,6 +125,11 @@ def _run_cases(client, live: bool) -> list[dict]:
         )
         if result.skipped:
             raise RuntimeError(f"fail-open in the measurement ({case['case_id']}) — this is an error")
+        if not result.verdicts:
+            raise RuntimeError(
+                f"the candidate cannot be extracted from the article ({case['case_id']}) — "
+                "the html of the sample does not match the 011 pattern"
+            )
         verdict = result.verdicts[0]
         predicted = "flag" if verdict.status == "not_exists" else "ok"
         # The confidence of the calibrated layer (1.0 for the deterministic one)

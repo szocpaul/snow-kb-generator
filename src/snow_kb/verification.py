@@ -37,6 +37,19 @@ logger = logging.getLogger(__name__)
 
 _WHITELIST_CF: set[str] = {w.casefold() for w in COMPONENT_NAME_WHITELIST}
 
+# Single-word workflow states / UI terms: NOT component names (the T004
+# baseline lesson: false positives like 'Escalated', 'Retry', 'Scheduled').
+# The T005 human gate approved the more SNOW-specific filtering.
+_STATE_TERMS = {
+    "escalated", "withdrawn", "confirmed", "retry", "scheduled", "closed",
+    "open", "new", "resolved", "cancelled", "canceled", "pending", "draft",
+    "approved", "rejected", "deferred", "completed", "failed",
+}
+
+# Log message suffixes: such quoted strings are error messages, not names
+# (T004: samples like 'SnowKbGenerator work_note error', 'User Not Found').
+_LOG_MESSAGE_SUFFIXES = (" error", " failed", " failure", " not found", " timeout")
+
 # Public TLDs: the dotted names ending with these are external hosts/domains
 # (the T004 baseline lesson: example-service.com, interface.solman-like false positives).
 _TLD_SUFFIXES = {
@@ -105,6 +118,11 @@ def extract_component_candidates(html: str) -> list[ComponentCandidate]:
     def _add(name: str, kind: str) -> None:
         name = name.strip()
         if not name or name.casefold() in _WHITELIST_CF:
+            return
+        # State words and log-message-like quoted strings are NOT component names
+        if " " not in name and name.casefold() in _STATE_TERMS:
+            return
+        if kind == "quoted" and name.casefold().endswith(_LOG_MESSAGE_SUFFIXES):
             return
         if any(c.name == name for c in candidates):
             return
@@ -177,16 +195,31 @@ class SpotChecker:
                                self.cache_path, exc)
                 self._cache = {}
 
-    # -- internal ---------------------------------------------------------
+    # -- internal ----------------------------------------------------------
+
+    _OBJECT_PREFIXES = ("current", "parent", "gs", "g")
 
     def _probes(self, name: str, kind: str) -> list[tuple[str, str, str]]:
-        """Query list: (table, field, value) triples, by extraction mode."""
+        """The query list: (table, field, value) triples, by extraction mode.
+
+        Semantics of a dotted name:
+          - with an object prefix (current./parent./gs.): a field reference → the
+            field name is looked up in the sys_dictionary;
+          - otherwise the table[.field] shape → the EXISTENCE of the TABLE decides
+            (the generic field names — sys_id, name — are too frequent for the
+            field fallback: they would give a false "exists" for fabricated table names).
+        """
         probes: list[tuple[str, str, str]] = []
         if kind == "dotted":
-            probes.append(("sys_db_object", "name", name))
-            last = name.split(".")[-1]
-            if last and last != name:
-                probes.append(("sys_dictionary", "element", last))
+            segments = name.split(".")
+            first, last = segments[0], segments[-1]
+            if first in self._OBJECT_PREFIXES or first.startswith("g_"):
+                if last and last != name:
+                    probes.append(("sys_dictionary", "element", last))
+            else:
+                probes.append(("sys_db_object", "name", name))
+                if first != name:
+                    probes.append(("sys_db_object", "name", first))
         else:
             for table in ("sys_script_include", "sys_script", "sys_db_object"):
                 probes.append((table, "name", name))

@@ -24,7 +24,7 @@
       "note": "a real Script Include on the PDI"
     },
     {
-      "name": "AbstractDBObject",
+      "name": "AbstractAjaxListDragChecker",
       "kind": "camelcase",
       "label": "exists",
       "note": "a real Script Include on the PDI"
@@ -36,16 +36,16 @@
       "note": "a real Script Include on the PDI"
     },
     {
-      "name": "agent_assist_recommendation",
+      "name": "current.work_notes",
       "kind": "dotted",
       "label": "exists",
-      "note": "real table in the PDI (sys_db_object)"
+      "note": "a real field reference (a work_notes element on the task tables)"
     },
     {
-      "name": "ais_api_transaction_log",
+      "name": "incident.priority",
       "kind": "dotted",
       "label": "exists",
-      "note": "real table in the PDI"
+      "note": "a real table.field reference (the incident table on the PDI)"
     },
     {
       "name": "Abort change of milestone on parent task",
@@ -73,9 +73,9 @@
     },
     {
       "name": "S4ProjectInterface",
-      "kind": "camelcase",
+      "kind": "quoted",
       "label": "missing_real",
-      "note": "gold-9: script name that looks like SNOW, not present in the PDI"
+      "note": "gold-9: a script name that looks like SNOW (quoted occurrence in the article), it does not exist on the PDI"
     },
     {
       "name": "integration.vendor.config.matrix",
@@ -124,10 +124,10 @@
       "note": "a fabricated, believable named script"
     },
     {
-      "name": "u_dynamic_sla_recalc",
+      "name": "dynamic.sla.recalc",
       "kind": "dotted",
       "label": "fabricated",
-      "note": "fictional table-like name"
+      "note": "a fabricated table-like dotted name"
     },
     {
       "name": "ChgStateSynchronizer",
