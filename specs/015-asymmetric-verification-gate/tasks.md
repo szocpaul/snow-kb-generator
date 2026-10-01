@@ -29,9 +29,9 @@
 
 * [x] T006 \[US2] Teszt: az aszimmetrikus metrika viselkedése (téves „létező" = 10×, téves „nem létező" = 1× büntetés, jó döntés = 0); a riport-séma (threshold előtt/utána, költség előtt/utána, szimmetrikus összevetés). FAIL implementáció előtt
 
-* [ ] T007 \[US2] Aszimmetrikus metrika + ReAnchor-futás az egyesített mintán (`eval/verification_reanchor.py` bővítés, 014-es minta); kalibrációs riport fájlba, beleértve a „threshold marad" eset indoklását is; a production hívás továbbra is közvetlen SDK
+* [x] T007 \[US2] Aszimmetrikus metrika + ReAnchor-futás az egyesített mintán (`eval/verification_reanchor.py` bővítés, 014-es minta); kalibrációs riport fájlba, beleértve a „threshold marad" eset indoklását is; a production hívás továbbra is közvetlen SDK
 
-* [ ] T008 \[US2] Regresszió-gate (SC-003): az új (vagy maradó) threshold a meglévő 24 példás mintán újramérve, összevetve a 014-es baseline-nal → romlás esetén a riport PIROS, a config NEM módosul
+* [x] T008 \[US2] Regresszió-gate (SC-003): az új (vagy maradó) threshold a meglévő 24 példás mintán újramérve, összevetve a 014-es baseline-nal → romlás esetén a riport PIROS, a config NEM módosul
 
 * [ ] T009 [US2] **MANUÁLIS KAPU**: a kalibrációs riport review-ja; ha a threshold módosul, az indoklás az Agent.md-be — a runner NEM pipálhatja
 
@@ -43,7 +43,7 @@
 
 ## Phase 5: Zárás
 
-* [ ] T012 SC-gate-ek futtatása (SC-001 fixture-integritás, SC-002 kalibrációs riport, SC-003 regresszió, SC-004 gate-tesztek, SC-005 byte-identikus replay) — exit-code-dal, `cache=False`/replay-mód
+* [x] T012 SC-gate-ek futtatása (SC-001 fixture-integritás, SC-002 kalibrációs riport, SC-003 regresszió, SC-004 gate-tesztek, SC-005 byte-identikus replay) — exit-code-dal, `cache=False`/replay-mód
 
 * [ ] T013 Zárás: teljes pytest-suite zöld (349 + új), Agent.md naplóbejegyzés (tények, döntések, tanulságok), commit + push, backlog-frissítés
 

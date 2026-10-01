@@ -287,6 +287,19 @@ def cmd_report() -> None:
         rows_after=_rows_at_threshold(rows, candidate),
     )
 
+    # KD1 érzékenység-analízis: a legjobb sweep-threshold más súlyarányoknál
+    # (5:1, 20:1) — ha érzéketlen, a legegyszerűbb 10:1 marad; ha érzékeny,
+    # a T009 emberi kapu latolgatja az arányt.
+    sensitivity = {}
+    for ratio in (5, 10, 20):
+        costs = [(p["threshold"], p["false_pos_exists"] * ratio + p["false_neg"])
+                 for p in sweep]
+        best_cost = min(c for _, c in costs)
+        best_ts = [t for t, c in costs if c == best_cost]
+        sensitivity[f"{ratio}:1"] = {"best_thresholds": best_ts,
+                                     "best_cost": best_cost}
+    sensitive = len({v["best_thresholds"][-1] for v in sensitivity.values()}) > 1
+
     regression = _regression_block(rows, calib["threshold_after"])
     if regression["worse_than_baseline"] and calib["decision"] == "valtozik":
         # SC-003: romlás a régi mintán → a config NEM módosul, a riport PIROS
@@ -304,6 +317,8 @@ def cmd_report() -> None:
         "confirmatory_threshold": CONFIRMATORY_THRESHOLD,
         "calibration": calib,
         "regression_sc003": regression,
+        "sensitivity_ratio_analysis": sensitivity,
+        "ratio_sensitive": sensitive,
         "threshold_sweep_explorative": sweep,
         "incorrect_cases": [r for r in rows if r["predicted"] != r["expected"]],
         "per_case": rows,

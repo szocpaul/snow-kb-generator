@@ -63,7 +63,23 @@
     "evidence": "nincs találat: sys_script_include, sys_script, sys_db_object",
     "status": "not_exists"
   },
+  "change phase events before": {
+    "evidence": "sys_script.name=Change Phase Events Before",
+    "status": "exists"
+  },
+  "change-phase-events-before": {
+    "evidence": "nincs találat: sys_script_include, sys_script, sys_db_object",
+    "status": "not_exists"
+  },
   "chgstatesynchronizer": {
+    "evidence": "nincs találat: sys_script_include, sys_script, sys_db_object",
+    "status": "not_exists"
+  },
+  "choice events": {
+    "evidence": "sys_script.name=Choice Events",
+    "status": "exists"
+  },
+  "choice-events": {
     "evidence": "nincs találat: sys_script_include, sys_script, sys_db_object",
     "status": "not_exists"
   },
@@ -71,11 +87,35 @@
     "evidence": "nincs találat: sys_script_include, sys_script, sys_db_object",
     "status": "not_exists"
   },
+  "code signing util": {
+    "evidence": "nincs találat: sys_script_include, sys_script, sys_db_object",
+    "status": "not_exists"
+  },
+  "code-signing-util": {
+    "evidence": "nincs találat: sys_script_include, sys_script, sys_db_object",
+    "status": "not_exists"
+  },
+  "codesigningutil": {
+    "evidence": "sys_script_include.name=CodeSigningUtil",
+    "status": "exists"
+  },
+  "com.snc.sdlc.scrum.pp.smclass": {
+    "evidence": "nincs találat: sys_db_object, sys_db_object",
+    "status": "not_exists"
+  },
   "confirmed": {
     "evidence": "nincs találat: sys_script_include, sys_script, sys_db_object",
     "status": "not_exists"
   },
   "confirmreturns": {
+    "evidence": "nincs találat: sys_script_include, sys_script, sys_db_object",
+    "status": "not_exists"
+  },
+  "contract instance": {
+    "evidence": "sys_script.name=Contract Instance",
+    "status": "exists"
+  },
+  "contract-instance": {
     "evidence": "nincs találat: sys_script_include, sys_script, sys_db_object",
     "status": "not_exists"
   },
@@ -105,6 +145,14 @@
   },
   "getreturns": {
     "evidence": "nincs találat: sys_script_include, sys_script, sys_db_object",
+    "status": "not_exists"
+  },
+  "glide.lastplugin": {
+    "evidence": "nincs találat: sys_db_object, sys_db_object",
+    "status": "not_exists"
+  },
+  "glide.ui.session_timeout": {
+    "evidence": "nincs találat: sys_db_object, sys_db_object",
     "status": "not_exists"
   },
   "incident.priority": {
@@ -139,9 +187,37 @@
     "evidence": "nincs találat: sys_script_include, sys_script, sys_db_object",
     "status": "not_exists"
   },
+  "kbdraftauditinterceptor": {
+    "evidence": "nincs találat: sys_script_include, sys_script, sys_db_object",
+    "status": "not_exists"
+  },
+  "mosaic hermes utils": {
+    "evidence": "nincs találat: sys_script_include, sys_script, sys_db_object",
+    "status": "not_exists"
+  },
+  "mosaic-hermes-utils": {
+    "evidence": "nincs találat: sys_script_include, sys_script, sys_db_object",
+    "status": "not_exists"
+  },
+  "mosaichermesutils": {
+    "evidence": "sys_script_include.name=MosaicHermesUtils",
+    "status": "exists"
+  },
   "projectmilestone": {
     "evidence": "nincs találat: sys_script_include, sys_script, sys_db_object",
     "status": "not_exists"
+  },
+  "prototype server": {
+    "evidence": "nincs találat: sys_script_include, sys_script, sys_db_object",
+    "status": "not_exists"
+  },
+  "prototype-server": {
+    "evidence": "nincs találat: sys_script_include, sys_script, sys_db_object",
+    "status": "not_exists"
+  },
+  "prototypeserver": {
+    "evidence": "sys_script_include.name=PrototypeServer",
+    "status": "exists"
   },
   "retry": {
     "evidence": "nincs találat: sys_script_include, sys_script, sys_db_object",
@@ -149,6 +225,14 @@
   },
   "scheduled": {
     "evidence": "nincs találat: sys_script_include, sys_script, sys_db_object",
+    "status": "not_exists"
+  },
+  "snc.sdlc.scrum.pp.smclass": {
+    "evidence": "nincs találat: sys_db_object, sys_db_object",
+    "status": "not_exists"
+  },
+  "snowkb.generator.retry.interval": {
+    "evidence": "nincs találat: sys_db_object, sys_db_object",
     "status": "not_exists"
   },
   "snowkbautohealmanager": {
@@ -179,11 +263,23 @@
     "evidence": "nincs találat: sys_script_include, sys_script, sys_db_object",
     "status": "not_exists"
   },
+  "ui.session_timeout": {
+    "evidence": "nincs találat: sys_db_object, sys_db_object",
+    "status": "not_exists"
+  },
   "updateprojectdates": {
     "evidence": "nincs találat: sys_script_include, sys_script, sys_db_object",
     "status": "not_exists"
   },
   "user not found": {
+    "evidence": "nincs találat: sys_script_include, sys_script, sys_db_object",
+    "status": "not_exists"
+  },
+  "validate kb draft before push": {
+    "evidence": "nincs találat: sys_script_include, sys_script, sys_db_object",
+    "status": "not_exists"
+  },
+  "webhookretrypolicymanager": {
     "evidence": "nincs találat: sys_script_include, sys_script, sys_db_object",
     "status": "not_exists"
   },
