@@ -914,3 +914,72 @@ c8da6e0 (T001+T002), 9919aaa (T003+T004), 1e73727 (T005-interim riport),
 2d3823c (T006), d01d495 (T007), 0b26e63 (T008), 186c86f (T008-T011),
 87d3057 (T012), e4e8ad6 (T012+T013-infra), ccf6fe7 (T005-review b),
 c45e95e (T013), dd36ea9 (T014-csomag riport)
+
+## 45. Spec 015: aszimmetrikus kalibráció + gate-emelés az írást végző komponensbe (2026-10-01)
+
+### Tények
+- **PDI-natív fixture** (T001/T002): Story STRY0010004 + Update Set
+  STRY0010004 a PDI-n, 13 MÁR MEGLEVŐ komponens capture-ölve (4 Script
+  Include, 3 Business Rule, 3 System Property, 3 mező) — új komponens NEM
+  jött létre. A `sys_update_xml` közvetlen insertje ACL-tiltott → a capture a
+  platform mechanizmusa: aktuális update set átállítása (user preference) +
+  benignis mező touch + azonnali visszaállítás (a rekord-tartalom nem
+  változott; a sys_updated_on változás mellékhatás — az ember független
+  ellenőrzése igazolta, T003). SC-001: 13/13 név spot-checkkel létezik.
+- **Egyesített minta** (T005): 57 példa (24 régi + 33 fixture-származtatott;
+  FR-002 cache-alapú szűrő: a 6 régi „exists" mindegyike empírikusan
+  PDI-ellenőrzött). 4 jóváhagyott név (RAGResponseGenerator,
+  kb_knowledge.u_source_story, rm_story.story_points, rm_story.type) a gate
+  011-es konzervatív kinyerő-regexei által nem látható felületi alak → nem
+  mérhető példaként; a kinyerhető mag 9 név (≥8 magminimum ✓).
+- **Aszimmetrikus kalibráció** (T006/T007): a metrika 10:1 (téves „létező" :
+  téves „nem létező", plan KD1). A 0.7-es threshold aszimmetrikus költsége 21
+  az 57 példán (0 átsikló hallucináció, 21 felesleges jelzés); a sweep
+  (EXPLORATÍV) jelöltje 0.35 → költség 18. ReAnchor (aszimmetrikus metrika,
+  eval-only wrapper): score −0.526 → −0.281, szimmetrikus accuracy
+  0.474 → 0.719. A domináns hibaosztály: a kalibrált réteg a valós nevek
+  írásvariánsaira „no"/„external"-t mond — ezt a threshold NEM javítja.
+- **Regresszió** (T008/SC-003): a régi 24 példán 4 → 3 a 0.35-ön — nincs romlás.
+- **Gate-emelés** (T010/T011): a verification gate a
+  `servicenow_client._create_kb_article_live` BELSÉJÉBE költözött (FR-004) —
+  minden hívási út (pipeline, CLI, jövőbeli) ugyanazon a kapun megy át; a
+  pipeline-rétegű hívás TÖRÖLVE (nincs dupla döntés/recording);
+  `VerificationBlocked` az `snow_kb.errors`-be került. Fail-open és a
+  flag-only safety floor mozdulatlan (FR-005). 363 teszt zöld (349+14).
+- **SC-gate-ek** (`python -m eval.verification_sc_gates_015` → exit 0):
+  SC-001..SC-005 MIND ZÖLD (fixture-integritás 13/13; kalibrációs riport n=57
+  indokolt döntéssel + szimmetrikus összevetés; regresszió tiszta; gate-emelés
+  tesztek; kétszeri replay byte-identikus, 37007 byte).
+
+### Döntések (MANUÁLIS KAPUk — emberi jóváhagyással)
+- **T003** (fixture-dump review): mind a 13 capture-ölt név JÓVÁHAGYVA; a
+  capture touch+revert mellékhatásai független ellenőrzéssel tisztázva (nincs
+  tartalmi módosítás, nincs „[spec015-capture]" maradvány).
+- **T009** (kalibrációs riport review): a **10:1 súlyarány MEGERŐSÍTVE**, és a
+  **`confidence_threshold: 0.7 → 0.35` JÓVÁHAGYVA** (config.yaml módosult).
+  Indoklás: aszimmetrikus költség 21→18 az 57 példán; SC-003 regresszió nincs
+  (4→3); a sweep exploratív jellegű; a ratio-szenzitivitás dokumentált
+  (5:1-nél a 0.0–0.10 sáv nyerne — a 10:1-es arány az ember tudatos döntése);
+  a fail-open + flag-only safety floor mozdulatlan.
+  **KÖTELEZŐ FELTÉTEL (az ember megjegyzése): a 0.35-ös küszöb EGYETLEN
+  FP-példán nyugszik (a sweepben 0.35 a legalsó érték, ami kiszűri az 1 db
+  fabrikált átcsúszót) — ezért a threshold a KÖVETKEZŐ minta-bővítésnél
+  ÚJRAMÉRENDŐ.**
+- A deploy (a gate-emelés élesítése) emberi lépés: `sudo systemctl restart
+  snow-kb.service` (deploy/README.md megjegyzés; az in-flight kérések a régi
+  úton fejeződnek be).
+
+### Tanulságok
+- A gate-kinyerő (011-es konzervatív regexek) NEM látja az underscore-os
+  dotted nevek első szegmensét (`kb_knowledge.u_source_story`) és az
+  all-caps-prefixű CamelCase-t (`RAG...`) — a fixture-név-választásnál a
+  kinyerhetőség KÜLÖN szűrő kell, különben a jóváhagyott nevek egy része
+  mérhetetlen. (A variáns-generálásnál ugyanez: csak kinyerhető felületi
+  alakok.)
+- A `sys_update_xml` ACL-védett közvetlen insertre; a user-preference +
+  touch+revert a működő programozott capture-út. A dictionary-sorok
+  target_name-je display-label („Story.Type"), nem azonosító — a szemantikus
+  név a payload `table`/`element` attribútumaiból építendő.
+- Érzékenység-analízis a költség-arányra kötelező adat a threshold-döntéshez:
+  itt a jelölt 10:1-nél és 20:1-nél azonos (0.35), de 5:1-nél eltér — az arány
+  megerősítése nélkül a sweep-jelölt nem értelmezhető.

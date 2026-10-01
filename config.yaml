@@ -67,9 +67,13 @@ verification_gate:
   # PINNELT döntési modellverzió a kalibrált (homályos esetek) réteghez —
   # lebegő alias TILOS (playbook: „modell-csere = baseline újramérés", FR-005).
   model: "jev-1.13.0"
-  # Confirmatory kapu (spec SC-002): ennél alacsonyabb confidence-nél a név
-  # „nem létezik"-nek számít. A T013 kalibrációs mérés hangolja.
-  confidence_threshold: 0.7
+  # Confirmatory kapu: ennél alacsonyabb confidence-nél a név „nem létezik"-nek
+  # számít. 2026-10-01, spec 015 T009 MANUÁLIS KAPU: az ember JÓVÁHAGYTA a
+  # 0.7 → 0.35 módosítást (aszimmetrikus költség 21→18 az 57 példás PDI-natív
+  # mintán, 10:1 súlyarány megerősítve; SC-003: nincs romlás a régi mintán).
+  # FELTÉTEL: a 0.35 egyetlen FP-példán nyugszik → a KÖVETKEZŐ minta-bővítésnél
+  # ÚJRAMÉRENDŐ. Indoklás: Agent.md (spec 015 naplóbejegyzés).
+  confidence_threshold: 0.35
   # Per-név spot-check cache (JSON) — a recording része, a replay ettől
   # byte-identikus (SC-004).
   spotcheck_cache_path: "artifacts/spotcheck_cache.json"

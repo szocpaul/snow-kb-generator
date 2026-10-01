@@ -45,7 +45,7 @@
 
 * [x] T012 SC-gate-ek futtatása (SC-001 fixture-integritás, SC-002 kalibrációs riport, SC-003 regresszió, SC-004 gate-tesztek, SC-005 byte-identikus replay) — exit-code-dal, `cache=False`/replay-mód
 
-* [ ] T013 Zárás: teljes pytest-suite zöld (349 + új), Agent.md naplóbejegyzés (tények, döntések, tanulságok), commit + push, backlog-frissítés
+* [x] T013 Zárás: teljes pytest-suite zöld (349 + új), Agent.md naplóbejegyzés (tények, döntések, tanulságok), commit + push, backlog-frissítés
 
 ## Dependencies
 
