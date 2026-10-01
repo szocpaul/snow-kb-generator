@@ -27,6 +27,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -49,19 +50,46 @@ _FABRICATED = [
 ]
 
 
-def _variants_of(name: str, kind: str) -> list[str]:
-    """Machine-generated spelling variants (to test mechanism 2)."""
-    out = []
+def _mention_html(name: str, kind: str) -> str:
+    """The appearance of the candidate in the article (per the 011 pattern — the measure uses this too)."""
+    if kind == "quoted":
+        return f"<h2>Solution</h2><p>The '{name}' component is part of the solution.</p>"
+    return f"<h2>Solution</h2><p>The {name} component is part of the solution.</p>"
+
+
+def _extractable(name: str, kind: str) -> bool:
+    """Whether the candidate extractor of the gate (the conservative 011 regexes) sees this surface form."""
+    from snow_kb.verification import extract_component_candidates
+
+    return any(c.name == name for c in extract_component_candidates(_mention_html(name, kind)))
+
+
+def _space_variant(name: str) -> str:
+    """CamelCase → the form with spaces ('PrototypeServer' → 'Prototype Server')."""
+    return re.sub(r"(?<=[a-z0-9])(?=[A-Z])", " ", name)
+
+
+def _variants_of(name: str, kind: str) -> list[tuple[str, str]]:
+    """The machine spelling variants (to test the 2nd mechanism) — (surface form, kind).
+
+    IMPORTANT: only the surface forms VISIBLE to the gate extractor (the
+    conservative 011 regexes: quoted capitalised / dotted lowercase / CamelCase).
+    The build filters out and reports the variants that cannot be extracted.
+    """
+    out: list[tuple[str, str]] = []
     if kind == "camelcase":
-        out.append(name.lower())
-        out.append(name[:1].lower() + name[1:])
+        spaced = _space_variant(name)
+        out.append((spaced, "quoted"))                    # 'Prototype Server'
+        out.append((spaced.replace(" ", "-"), "quoted"))  # 'Prototype-Server'
     elif "." in name:
-        out.append(name.replace(".", " "))
-        out.append(name.upper())
-    else:
-        out.append(name.lower())
-        out.append(name.replace(" ", "-"))
-    return [v for v in dict.fromkeys(out) if v != name]
+        out.append((name.upper(), "quoted"))              # 'GLIDE.LASTPLUGIN'
+        out.append((name[:1].upper() + name[1:], "quoted"))  # 'Glide.lastplugin'
+    else:  # quoted (Business Rule) core
+        out.append((name.replace(" ", "-"), "quoted"))    # 'Change-Phase-Events-Before'
+        words = name.split(" ")
+        if len(words) > 1:
+            out.append((" ".join(words[:-1] + [words[-1].lower()]), "quoted"))
+    return [(v, k) for v, k in dict.fromkeys(out) if v != name]
 
 
 def build(approved_path: str | None = None) -> int:
@@ -91,46 +119,61 @@ def build(approved_path: str | None = None) -> int:
     story_ctx = dump["story"]["short_description"]
     examples: list[dict] = []
 
-    # 1. The real names
+    _KIND_MAP = {"script_include": "camelcase", "business_rule": "quoted",
+                 "system_property": "dotted", "field": "dotted"}
+
+    # 0. The extractability filter: the candidate extractor of the gate (the conservative
+    #    011 regexes) sees only the quoted capitalised / pure dotted / CamelCase forms.
+    #    What cannot be extracted is UNREACHABLE for the gate — not
+    #    a measurable example (the name approved by T003 is real nevertheless).
+    extractable_core = []
     for c in core:
-        kind = {"script_include": "camelcase", "business_rule": "quoted",
-                "system_property": "dotted", "field": "dotted"}[c["kind"]]
+        kind = _KIND_MAP[c["kind"]]
+        if _extractable(c["name"], kind):
+            extractable_core.append((c, kind))
+        else:
+            print(f"  SKIPPED (the gate extractor does not see it): {c['name']} [{c['kind']}]")
+    # The minimum also applies to the EXTRACTABLE core name set
+    if len(extractable_core) < MIN_CORE_NAMES:
+        print(f"STOP: the extractable core name set {len(extractable_core)} names "
+              f"< {MIN_CORE_NAMES} — the sample must NOT be diluted. Report it to the human.")
+        return 2
+
+    # 1. The real names
+    for c, kind in extractable_core:
         examples.append({
             "name": c["name"], "kind": kind, "label": "exists",
             "note": f"fixture (STRY0010004 update set): a real {c['xml_type']} on the PDI",
             "source": "fixture015",
         })
-    # 2. spelling variants (1-2 machine variants per component)
-    for c in core:
-        kind = {"script_include": "camelcase", "business_rule": "quoted",
-                "system_property": "dotted", "field": "dotted"}[c["kind"]]
-        for v in _variants_of(c["name"], kind)[:2]:
+    # 2. The spelling variants (at most 2 EXTRACTABLE machine variants per component)
+    for c, kind in extractable_core:
+        for v, vkind in [vk for vk in _variants_of(c["name"], kind)
+                         if _extractable(vk[0], vk[1])][:2]:
             examples.append({
-                "name": v, "kind": kind, "label": "variant", "variant_of": c["name"],
+                "name": v, "kind": vkind, "label": "variant", "variant_of": c["name"],
                 "note": f"machine spelling variant: {c['name']}",
                 "source": "fixture015",
             })
     # 3. The fabricated names
     for f in _FABRICATED:
         examples.append({**f, "label": "fabricated", "source": "fixture015"})
-    # 4. type mismatch: real name, interpreted in a table of the wrong type
-    #    (e.g. the Script Include name as a Business Rule) — the NAME exists.
-    si_names = [c for c in core if c["kind"] == "script_include"][:2]
-    br_names = [c for c in core if c["kind"] == "business_rule"][:1]
-    for c in si_names:
+    # 4. The type mismatch: a real Script Include name referred to as a Business Rule
+    #    (the quoted surface form — the NAME exists, the type reference is wrong).
+    for c, kind in [ck for ck in extractable_core if ck[1] == "camelcase"][:2]:
         examples.append({
             "name": c["name"], "kind": "quoted", "label": "exists",
             "note": f"type mismatch: a real Script Include ('{c['name']}') "
                     "referred to as a Business Rule — the name exists",
             "source": "fixture015",
         })
-    for c in br_names:
-        examples.append({
-            "name": c["name"], "kind": "camelcase", "label": "exists",
-            "note": f"type mismatch: real Business Rule ('{c['name']}') "
-                    "referenced as a Script Include — the name exists",
-            "source": "fixture015",
-        })
+
+    # 5. Self-check: EVERY generated example is extractable from its own mention html
+    not_extractable = [e["name"] for e in examples
+                       if not _extractable(e["name"], e["kind"])]
+    if not_extractable:
+        print(f"INTERNAL ERROR: a non-extractable example got into the sample: {not_extractable}")
+        return 2
 
     # 5. Merging with the existing 24 examples (FR-002: the dev-derived "exists"
     #    labels are excluded — that is what does NOT support the instance fact. The
