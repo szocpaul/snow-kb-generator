@@ -23,7 +23,7 @@
 
 ## Phase 2: US1 – Labelled sample from the fixture
 
-* [ ] T005 [US1] Sample-generating script: machine generation of real / spelling variant / fabricated / type-mismatch examples from the dumped name set (minimalist variant: a single story context, name-level sample); **minimum condition: if the approved name set is < 8 names, the task MUST STOP and report — the sample MUST NOT be diluted with correlated variants**; merging with the existing 24 examples (excluding the dev-origin „exists" labels from the PDI measurement, FR-002) → ≥30 examples in total, labels committed under `data/examples/`
+* [x] T005 [US1] Sample-derivation script: mechanical generation of the real / spelling variant / fabricated / type mismatch examples from the dumped name set (a minimal version: a single story context, a name-level sample); **minimum condition: if the approved master-name set has < 8 names, the task MUST STOP and report — the sample MUST NOT be diluted with correlated variants**; merge with the existing 24 examples (the dev-derived "exists" labels excluded from the PDI measurement, FR-002) → ≥30 examples in total, the labels committed under `data/examples/`
 
 ## Phase 3: US2 – Asymmetric calibration
 

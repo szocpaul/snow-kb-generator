@@ -1,0 +1,544 @@
+{
+  "spec": "015-asymmetric-verification-gate",
+  "task": "T005",
+  "fixture_story": "STRY0010004",
+  "labels": {
+    "exists": "a real component on the PDI",
+    "missing_real": "it should exist according to the story, but it does not exist on the PDI (projected onto the article: non-existent)",
+    "variant": "a spelling variant of a real/missing_real name",
+    "fabricated": "fabricated, never existed",
+    "external": "an object of an external (non-ServiceNow) system — not to be validated (out of scope)"
+  },
+  "decision_mapping": {
+    "exists": "exists",
+    "missing_real": "not_exists (the job of the gate: signal it)",
+    "variant_of_existing": "exists (a reference) — if the variant_of is exists",
+    "variant_of_missing": "not_exists",
+    "fabricated": "not_exists",
+    "external": "no decision — the calibrated layer says 'not a SNOW component' (the gate does not signal it)"
+  },
+  "story_context": "ServiceNow oldali webhook-fogadas es KB-draft generalas bekotese (snow-kb-generator)",
+  "examples": [
+    {
+      "name": "AbstractAjaxProcessor",
+      "kind": "camelcase",
+      "label": "exists",
+      "note": "a real Script Include on the PDI",
+      "source": "spec014"
+    },
+    {
+      "name": "AbstractAjaxListDragChecker",
+      "kind": "camelcase",
+      "label": "exists",
+      "note": "a real Script Include on the PDI",
+      "source": "spec014"
+    },
+    {
+      "name": "AccessAnalyzeExecutor",
+      "kind": "camelcase",
+      "label": "exists",
+      "note": "a real Script Include on the PDI",
+      "source": "spec014"
+    },
+    {
+      "name": "current.work_notes",
+      "kind": "dotted",
+      "label": "exists",
+      "note": "a real field reference (a work_notes element on the task tables)",
+      "source": "spec014"
+    },
+    {
+      "name": "incident.priority",
+      "kind": "dotted",
+      "label": "exists",
+      "note": "a real table.field reference (the incident table on the PDI)",
+      "source": "spec014"
+    },
+    {
+      "name": "Abort change of milestone on parent task",
+      "kind": "quoted",
+      "label": "exists",
+      "note": "a real Business Rule on the PDI",
+      "source": "spec014"
+    },
+    {
+      "name": "JiraInboundUtils",
+      "kind": "quoted",
+      "label": "missing_real",
+      "note": "gold-1: the story refers to it as a Script Include, it does not exist on the PDI",
+      "source": "spec014"
+    },
+    {
+      "name": "JiraIntegrationUtils",
+      "kind": "camelcase",
+      "label": "missing_real",
+      "note": "gold-2: an integration script that exists according to the story, it does not exist on the PDI",
+      "source": "spec014"
+    },
+    {
+      "name": "JiraInboundWebhook",
+      "kind": "camelcase",
+      "label": "missing_real",
+      "note": "generated-1: the freshly generated article named it, it does not exist on the PDI",
+      "source": "spec014"
+    },
+    {
+      "name": "S4ProjectInterface",
+      "kind": "quoted",
+      "label": "missing_real",
+      "note": "gold-9: a script name that looks like SNOW (quoted occurrence in the article), it does not exist on the PDI",
+      "source": "spec014"
+    },
+    {
+      "name": "integration.vendor.config.matrix",
+      "kind": "dotted",
+      "label": "missing_real",
+      "note": "gold-8: a SNOW table-like name, it does not exist on the PDI",
+      "source": "spec014"
+    },
+    {
+      "name": "Abstract Ajax Processor",
+      "kind": "quoted",
+      "label": "variant",
+      "variant_of": "AbstractAjaxProcessor",
+      "note": "a variant with spaces of the real Script Include",
+      "source": "spec014"
+    },
+    {
+      "name": "AbstractAjaxProcesser",
+      "kind": "camelcase",
+      "label": "variant",
+      "variant_of": "AbstractAjaxProcessor",
+      "note": "a spelling-difference variant",
+      "source": "spec014"
+    },
+    {
+      "name": "Jira Inbound Utils",
+      "kind": "quoted",
+      "label": "variant",
+      "variant_of": "JiraInboundUtils",
+      "note": "a variant with spaces — but the canonical name does not exist on the PDI either (a missing_real variant)",
+      "source": "spec014"
+    },
+    {
+      "name": "Access Analyze Executor",
+      "kind": "quoted",
+      "label": "variant",
+      "variant_of": "AccessAnalyzeExecutor",
+      "note": "a variant with spaces",
+      "source": "spec014"
+    },
+    {
+      "name": "SnowKbAutoHealManager",
+      "kind": "camelcase",
+      "label": "fabricated",
+      "note": "a fabricated Script Include-like name",
+      "source": "spec014"
+    },
+    {
+      "name": "IncidentPriorityRecalculator",
+      "kind": "camelcase",
+      "label": "fabricated",
+      "note": "a fabricated, believable named script",
+      "source": "spec014"
+    },
+    {
+      "name": "dynamic.sla.recalc",
+      "kind": "dotted",
+      "label": "fabricated",
+      "note": "a fabricated table-like dotted name",
+      "source": "spec014"
+    },
+    {
+      "name": "ChgStateSynchronizer",
+      "kind": "camelcase",
+      "label": "fabricated",
+      "note": "fabricated",
+      "source": "spec014"
+    },
+    {
+      "name": "Article AutoPublisher",
+      "kind": "quoted",
+      "label": "fabricated",
+      "note": "a fabricated BR-like name",
+      "source": "spec014"
+    },
+    {
+      "name": "SolMan",
+      "kind": "camelcase",
+      "label": "external",
+      "note": "SAP Solution Manager — an external system",
+      "source": "spec014"
+    },
+    {
+      "name": "interface.solman",
+      "kind": "dotted",
+      "label": "external",
+      "note": "the SolMan interface host",
+      "source": "spec014"
+    },
+    {
+      "name": "GetReturns",
+      "kind": "camelcase",
+      "label": "external",
+      "note": "the SolMan side function",
+      "source": "spec014"
+    },
+    {
+      "name": "ERP OData Outbound",
+      "kind": "quoted",
+      "label": "external",
+      "note": "the S4 OData interface — an object of an external system",
+      "source": "spec014"
+    },
+    {
+      "name": "PrototypeServer",
+      "kind": "camelcase",
+      "label": "exists",
+      "note": "fixture (STRY0010004 update set): a real Script Include on the PDI",
+      "source": "fixture015"
+    },
+    {
+      "name": "MosaicHermesUtils",
+      "kind": "camelcase",
+      "label": "exists",
+      "note": "fixture (STRY0010004 update set): a real Script Include on the PDI",
+      "source": "fixture015"
+    },
+    {
+      "name": "RAGResponseGenerator",
+      "kind": "camelcase",
+      "label": "exists",
+      "note": "fixture (STRY0010004 update set): a real Script Include on the PDI",
+      "source": "fixture015"
+    },
+    {
+      "name": "CodeSigningUtil",
+      "kind": "camelcase",
+      "label": "exists",
+      "note": "fixture (STRY0010004 update set): a real Script Include on the PDI",
+      "source": "fixture015"
+    },
+    {
+      "name": "Change Phase Events Before",
+      "kind": "quoted",
+      "label": "exists",
+      "note": "fixture (STRY0010004 update set): a real Business Rule on the PDI",
+      "source": "fixture015"
+    },
+    {
+      "name": "Contract Instance",
+      "kind": "quoted",
+      "label": "exists",
+      "note": "fixture (STRY0010004 update set): a real Business Rule on the PDI",
+      "source": "fixture015"
+    },
+    {
+      "name": "Choice Events",
+      "kind": "quoted",
+      "label": "exists",
+      "note": "fixture (STRY0010004 update set): a real Business Rule on the PDI",
+      "source": "fixture015"
+    },
+    {
+      "name": "com.snc.sdlc.scrum.pp.smclass",
+      "kind": "dotted",
+      "label": "exists",
+      "note": "fixture (STRY0010004 update set): a real System Property on the PDI",
+      "source": "fixture015"
+    },
+    {
+      "name": "glide.lastplugin",
+      "kind": "dotted",
+      "label": "exists",
+      "note": "fixture (STRY0010004 update set): a real System Property on the PDI",
+      "source": "fixture015"
+    },
+    {
+      "name": "glide.ui.session_timeout",
+      "kind": "dotted",
+      "label": "exists",
+      "note": "fixture (STRY0010004 update set): a real System Property on the PDI",
+      "source": "fixture015"
+    },
+    {
+      "name": "kb_knowledge.u_source_story",
+      "kind": "dotted",
+      "label": "exists",
+      "note": "fixture (STRY0010004 update set): real Dictionary on the PDI",
+      "source": "fixture015"
+    },
+    {
+      "name": "rm_story.story_points",
+      "kind": "dotted",
+      "label": "exists",
+      "note": "fixture (STRY0010004 update set): real Dictionary on the PDI",
+      "source": "fixture015"
+    },
+    {
+      "name": "rm_story.type",
+      "kind": "dotted",
+      "label": "exists",
+      "note": "fixture (STRY0010004 update set): real Dictionary on the PDI",
+      "source": "fixture015"
+    },
+    {
+      "name": "prototypeserver",
+      "kind": "camelcase",
+      "label": "variant",
+      "variant_of": "PrototypeServer",
+      "note": "machine spelling variant: PrototypeServer",
+      "source": "fixture015"
+    },
+    {
+      "name": "prototypeServer",
+      "kind": "camelcase",
+      "label": "variant",
+      "variant_of": "PrototypeServer",
+      "note": "machine spelling variant: PrototypeServer",
+      "source": "fixture015"
+    },
+    {
+      "name": "mosaichermesutils",
+      "kind": "camelcase",
+      "label": "variant",
+      "variant_of": "MosaicHermesUtils",
+      "note": "machine spelling variant: MosaicHermesUtils",
+      "source": "fixture015"
+    },
+    {
+      "name": "mosaicHermesUtils",
+      "kind": "camelcase",
+      "label": "variant",
+      "variant_of": "MosaicHermesUtils",
+      "note": "machine spelling variant: MosaicHermesUtils",
+      "source": "fixture015"
+    },
+    {
+      "name": "ragresponsegenerator",
+      "kind": "camelcase",
+      "label": "variant",
+      "variant_of": "RAGResponseGenerator",
+      "note": "machine spelling variant: RAGResponseGenerator",
+      "source": "fixture015"
+    },
+    {
+      "name": "rAGResponseGenerator",
+      "kind": "camelcase",
+      "label": "variant",
+      "variant_of": "RAGResponseGenerator",
+      "note": "machine spelling variant: RAGResponseGenerator",
+      "source": "fixture015"
+    },
+    {
+      "name": "codesigningutil",
+      "kind": "camelcase",
+      "label": "variant",
+      "variant_of": "CodeSigningUtil",
+      "note": "machine spelling variant: CodeSigningUtil",
+      "source": "fixture015"
+    },
+    {
+      "name": "codeSigningUtil",
+      "kind": "camelcase",
+      "label": "variant",
+      "variant_of": "CodeSigningUtil",
+      "note": "machine spelling variant: CodeSigningUtil",
+      "source": "fixture015"
+    },
+    {
+      "name": "change phase events before",
+      "kind": "quoted",
+      "label": "variant",
+      "variant_of": "Change Phase Events Before",
+      "note": "machine spelling variant: Change Phase Events Before",
+      "source": "fixture015"
+    },
+    {
+      "name": "Change-Phase-Events-Before",
+      "kind": "quoted",
+      "label": "variant",
+      "variant_of": "Change Phase Events Before",
+      "note": "machine spelling variant: Change Phase Events Before",
+      "source": "fixture015"
+    },
+    {
+      "name": "contract instance",
+      "kind": "quoted",
+      "label": "variant",
+      "variant_of": "Contract Instance",
+      "note": "machine spelling variant: Contract Instance",
+      "source": "fixture015"
+    },
+    {
+      "name": "Contract-Instance",
+      "kind": "quoted",
+      "label": "variant",
+      "variant_of": "Contract Instance",
+      "note": "machine spelling variant: Contract Instance",
+      "source": "fixture015"
+    },
+    {
+      "name": "choice events",
+      "kind": "quoted",
+      "label": "variant",
+      "variant_of": "Choice Events",
+      "note": "machine spelling variant: Choice Events",
+      "source": "fixture015"
+    },
+    {
+      "name": "Choice-Events",
+      "kind": "quoted",
+      "label": "variant",
+      "variant_of": "Choice Events",
+      "note": "machine spelling variant: Choice Events",
+      "source": "fixture015"
+    },
+    {
+      "name": "com snc sdlc scrum pp smclass",
+      "kind": "dotted",
+      "label": "variant",
+      "variant_of": "com.snc.sdlc.scrum.pp.smclass",
+      "note": "machine spelling variant: com.snc.sdlc.scrum.pp.smclass",
+      "source": "fixture015"
+    },
+    {
+      "name": "COM.SNC.SDLC.SCRUM.PP.SMCLASS",
+      "kind": "dotted",
+      "label": "variant",
+      "variant_of": "com.snc.sdlc.scrum.pp.smclass",
+      "note": "machine spelling variant: com.snc.sdlc.scrum.pp.smclass",
+      "source": "fixture015"
+    },
+    {
+      "name": "glide lastplugin",
+      "kind": "dotted",
+      "label": "variant",
+      "variant_of": "glide.lastplugin",
+      "note": "machine spelling variant: glide.lastplugin",
+      "source": "fixture015"
+    },
+    {
+      "name": "GLIDE.LASTPLUGIN",
+      "kind": "dotted",
+      "label": "variant",
+      "variant_of": "glide.lastplugin",
+      "note": "machine spelling variant: glide.lastplugin",
+      "source": "fixture015"
+    },
+    {
+      "name": "glide ui session_timeout",
+      "kind": "dotted",
+      "label": "variant",
+      "variant_of": "glide.ui.session_timeout",
+      "note": "machine spelling variant: glide.ui.session_timeout",
+      "source": "fixture015"
+    },
+    {
+      "name": "GLIDE.UI.SESSION_TIMEOUT",
+      "kind": "dotted",
+      "label": "variant",
+      "variant_of": "glide.ui.session_timeout",
+      "note": "machine spelling variant: glide.ui.session_timeout",
+      "source": "fixture015"
+    },
+    {
+      "name": "kb_knowledge u_source_story",
+      "kind": "dotted",
+      "label": "variant",
+      "variant_of": "kb_knowledge.u_source_story",
+      "note": "machine spelling variant: kb_knowledge.u_source_story",
+      "source": "fixture015"
+    },
+    {
+      "name": "KB_KNOWLEDGE.U_SOURCE_STORY",
+      "kind": "dotted",
+      "label": "variant",
+      "variant_of": "kb_knowledge.u_source_story",
+      "note": "machine spelling variant: kb_knowledge.u_source_story",
+      "source": "fixture015"
+    },
+    {
+      "name": "rm_story story_points",
+      "kind": "dotted",
+      "label": "variant",
+      "variant_of": "rm_story.story_points",
+      "note": "machine spelling variant: rm_story.story_points",
+      "source": "fixture015"
+    },
+    {
+      "name": "RM_STORY.STORY_POINTS",
+      "kind": "dotted",
+      "label": "variant",
+      "variant_of": "rm_story.story_points",
+      "note": "machine spelling variant: rm_story.story_points",
+      "source": "fixture015"
+    },
+    {
+      "name": "rm_story type",
+      "kind": "dotted",
+      "label": "variant",
+      "variant_of": "rm_story.type",
+      "note": "machine spelling variant: rm_story.type",
+      "source": "fixture015"
+    },
+    {
+      "name": "RM_STORY.TYPE",
+      "kind": "dotted",
+      "label": "variant",
+      "variant_of": "rm_story.type",
+      "note": "machine spelling variant: rm_story.type",
+      "source": "fixture015"
+    },
+    {
+      "name": "WebhookRetryPolicyManager",
+      "kind": "camelcase",
+      "note": "a fabricated Script Include-like name — it is not on the PDI",
+      "label": "fabricated",
+      "source": "fixture015"
+    },
+    {
+      "name": "KbDraftAuditInterceptor",
+      "kind": "camelcase",
+      "note": "a fabricated Script Include-like name — it is not on the PDI",
+      "label": "fabricated",
+      "source": "fixture015"
+    },
+    {
+      "name": "snowkb.generator.retry.interval",
+      "kind": "dotted",
+      "note": "a fabricated property-like name — it does not exist on the PDI",
+      "label": "fabricated",
+      "source": "fixture015"
+    },
+    {
+      "name": "Validate KB draft before push",
+      "kind": "quoted",
+      "note": "a fabricated Business Rule-like name — it does not exist on the PDI",
+      "label": "fabricated",
+      "source": "fixture015"
+    },
+    {
+      "name": "PrototypeServer",
+      "kind": "quoted",
+      "label": "exists",
+      "note": "type mismatch: a real Script Include ('PrototypeServer') referred to as a Business Rule — the name exists",
+      "source": "fixture015"
+    },
+    {
+      "name": "MosaicHermesUtils",
+      "kind": "quoted",
+      "label": "exists",
+      "note": "type mismatch: a real Script Include ('MosaicHermesUtils') referred to as a Business Rule — the name exists",
+      "source": "fixture015"
+    },
+    {
+      "name": "Change Phase Events Before",
+      "kind": "camelcase",
+      "label": "exists",
+      "note": "type mismatch: real Business Rule ('Change Phase Events Before') referenced as a Script Include — the name exists",
+      "source": "fixture015"
+    }
+  ],
+  "note": "The labels of the fixture examples come from the instance fact (from the captured update set content) and are derived mechanically; the sample is NOT diluted with correlated variants (the fabricated names are independent)."
+}

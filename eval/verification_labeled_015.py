@@ -112,7 +112,7 @@ def build(approved_path: str | None = None) -> int:
             })
     # 3. The fabricated names
     for f in _FABRICATED:
-        examples.append({**f, "source": "fixture015"})
+        examples.append({**f, "label": "fabricated", "source": "fixture015"})
     # 4. type mismatch: real name, interpreted in a table of the wrong type
     #    (e.g. the Script Include name as a Business Rule) — the NAME exists.
     si_names = [c for c in core if c["kind"] == "script_include"][:2]
@@ -132,19 +132,26 @@ def build(approved_path: str | None = None) -> int:
             "source": "fixture015",
         })
 
-    # 5. merging with the existing 24 examples (FR-002: dev-origin "exists" excluded)
+    # 5. Merging with the existing 24 examples (FR-002: the dev-derived "exists"
+    #    labels are excluded — that is what does NOT support the instance fact. The
+    #    instance fact here is the spot-check CACHE (the result fetched by the 014
+    #    live check): only the labels empirically "exists" in the cache may remain.
+    cache_path = Path("artifacts/verification_spotcheck_cache.json")
+    cache = json.loads(cache_path.read_text(encoding="utf-8")) if cache_path.exists() else {}
     old = json.loads(OLD_LABELED.read_text(encoding="utf-8"))
     old_examples = []
     excluded = []
     for e in old["examples"]:
-        if e["label"] == "exists" and "PDI-n" not in e.get("note", ""):
-            excluded.append(e["name"])
-            continue
+        if e["label"] == "exists":
+            entry = cache.get(e["name"].casefold(), {})
+            if entry.get("status") != "exists":
+                excluded.append(e["name"])
+                continue
         e2 = dict(e)
         e2.setdefault("source", "spec014")
         old_examples.append(e2)
     if excluded:
-        print(f"FR-002: excluded (dev-origin 'exists' label): {excluded}")
+        print(f"FR-002: excluded (the instance fact does NOT support it): {excluded}")
 
     merged = old_examples + examples
     out = {
