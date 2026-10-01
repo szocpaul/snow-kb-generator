@@ -102,3 +102,73 @@ The runner MUST NOT tick the T003 checkbox.
   on them; if they are not needed for the branch, they can be removed in a separate commit.
 - Kimi token usage: 0 (everything local/dev mode; the TypeSafe jev calls
   only ran in the smoke test, the calibration capture is due after T003).
+
+
+---
+
+# CONTINUATION after the T003 approval (2026-10-01T17:41:27)
+
+**Status: PARKED at the T009 MANUAL GATE** (human review of the calibration report).
+
+## T003 approval + cleanup proof
+
+- The human APPROVED all 13 names; an independent check proved: the
+  sys_updated_on change is a side effect of the capture (touch+revert), there is
+  NO content modification, NO '[spec015-capture]' residue.
+- The orphaned STRY0010005 + 8b6e1927 update set was already DELETED during the run
+  run (the runner's cleanup); re-checked: both are 404.
+
+## Phase 2/3/5 results (T005, T007, T008, T012)
+
+- **T005**: `data/examples/verification_labeled_015.json` — 57 examples
+  (24 old + 33 fixture-derived). The T005 MINIMUM: 9 extractable names (≥8 ✓) —
+  4 approved names (RAGResponseGenerator, kb_knowledge.u_source_story,
+  rm_story.story_points, rm_story.type) the gate's conservative 011
+  not visible to the extractor's regexes → as a non-measurable example
+  (the label is still true; this is the documented limitation of the extractor).
+  The FR-002 filter is cache-based: each of the 6 old "exists" ones is empirically
+  PDI-verified, not a single one was dropped.
+- **T007**: capture (57 cases, live jev-1.13.0 + PDI spot-check) + replay report
+  + ReAnchor (asymmetric metric, eval-only wrapper):
+  - ReAnchor: aszimmetrikus score **−0.526 → −0.281**, szimmetrikus accuracy
+    0.474 → 0.719 (EXPLORATORY fitted parameters).
+  - Sweep (EXPLORATORY): the candidate threshold **0.35** (asymmetric cost
+    21 → 18; fp_exists 0, fn 21 → 18). The dominant error class: the calibrated
+    layer says "no"/"external" for the spelling variants of the real names (this the
+    threshold does NOT fix).
+  - **Sensitivity analysis (KD1): the threshold is SENSITIVE to the ratio** —
+    At 10:1 and 20:1 the 0.35 wins, at 5:1 the 0.0-0.10 band would win.
+    This is the key data for the T009 decision.
+  - The symmetric comparison in the report (spec US2): 21 → 18.
+- **T008 / SC-003**: the old 24 examples: asymmetric cost **4 → 3** at 0.35 —
+  There is NO degradation.
+- **T012**: `eval/verification_sc_gates_015.py` — **SC-001..SC-005 ALL GREEN**:
+  - SC-001 GREEN: 13/13 fixture names exist via spot-check (live PDI)
+  - SC-002 GREEN: n=57 (≥30), the decision is justified, the symmetric comparison exists
+  - SC-003 GREEN: no degradation on the old sample
+  - SC-004 GREEN: the gate-move tests (12+9) exit=0
+  - SC-005 GREEN: double replay byte-identical (37007 bytes)
+- pytest teljes suite: **363 passed**.
+
+## MANUAL GATE — T009 (human to-do)
+
+**Review the calibration report**: `artifacts/verification_calibration_report_015.json`
+(+ `artifacts/verification_reanchor_report_015.json`).
+
+The candidate decision: `confidence_threshold: 0.7 → 0.35` (asymmetric cost
+21 → 18 on the 57 examples; on the old sample 4 → 3, no degradation). WARNING: the candidate
+EXPLORATORY sweep result, and because of the ratio sensitivity (at 5:1 the 0.0
+would win) confirming the 10:1 KD1 ratio is also part of the decision.
+
+- If you APPROVE: the runner writes the 0.35 into config.yaml + the rationale into the
+  goes into Agent.md (this is part of T013), then closing.
+- If NOT: the threshold stays 0.7, the "stays" rationale goes into the report/Agent.md.
+
+The config.yaml is NOT modified until the approval (it is 0.7 now as well). The
+runner MUST NOT tick the T009 checkbox.
+
+## Commit hashes (continuation)
+
+- `d77daa4` T005: merged sample (70→57 examples after the extractability filter)
+- `07c2b52` T005 fix: extractability filter + extractable variants
+- `64166f9` T007+T008+T012: calibration + SC gates ALL GREEN
