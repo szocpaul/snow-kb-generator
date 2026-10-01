@@ -17,7 +17,7 @@
 
 * [x] T002 \[US1] A kiválasztott komponensnevek dumpolása artifactba (név, típus, sys\_id, sys\_updated\_on) + a fixture-integritás gate: az update set MINDEN neve spot-checkkel „létezik" (SC-001, exit-code-os script)
 
-* [ ] T003 [US1] **MANUÁLIS KAPU**: a dumpolt komponens-lista emberi review-ja (furcsa/instabil nevek kiszúrása) — a runner NEM pipálhatja
+* [x] T003 [US1] **MANUÁLIS KAPU**: a dumpolt komponens-lista emberi review-ja (furcsa/instabil nevek kiszúrása) — a runner NEM pipálhatja
 
 * [x] T004 \[US1] Baseline-rögzítés: a jelenlegi threshold (0.7) ASZIMMETRIKUS költsége a meglévő 24 példás mintán, fájlba (a későbbi összevetés alapja)
 
@@ -33,7 +33,7 @@
 
 * [x] T008 \[US2] Regresszió-gate (SC-003): az új (vagy maradó) threshold a meglévő 24 példás mintán újramérve, összevetve a 014-es baseline-nal → romlás esetén a riport PIROS, a config NEM módosul
 
-* [ ] T009 [US2] **MANUÁLIS KAPU**: a kalibrációs riport review-ja; ha a threshold módosul, az indoklás az Agent.md-be — a runner NEM pipálhatja
+* [x] T009 [US2] **MANUÁLIS KAPU**: a kalibrációs riport review-ja; ha a threshold módosul, az indoklás az Agent.md-be — a runner NEM pipálhatja
 
 ## Phase 4: US3 – Gate-emelés a kliensbe (teszt-előbb)
 
