@@ -1,0 +1,122 @@
+{
+  "spec": "015-asymmetric-verification-gate",
+  "task": "T001/T002",
+  "created_at": "2026-10-01T16:56:30.311180+00:00",
+  "instance": "prod.service-now.com",
+  "story": {
+    "number": "STRY0010004",
+    "sys_id": "00000000000000000000000000000009",
+    "short_description": "ServiceNow oldali webhook-fogadas es KB-draft generalas bekotese (snow-kb-generator)"
+  },
+  "update_set": {
+    "name": "STRY0010004",
+    "sys_id": "00000000000000000000000000000004"
+  },
+  "components": [
+    {
+      "name": "PrototypeServer",
+      "kind": "script_include",
+      "table": "sys_script_include",
+      "xml_type": "Script Include",
+      "sys_id": "00000000000000000000000000000022",
+      "sys_updated_on": "2026-10-01 16:43:28"
+    },
+    {
+      "name": "MosaicHermesUtils",
+      "kind": "script_include",
+      "table": "sys_script_include",
+      "xml_type": "Script Include",
+      "sys_id": "00000000000000000000000000000001",
+      "sys_updated_on": "2026-05-28 22:39:11"
+    },
+    {
+      "name": "RAGResponseGenerator",
+      "kind": "script_include",
+      "table": "sys_script_include",
+      "xml_type": "Script Include",
+      "sys_id": "00000000000000000000000000000055",
+      "sys_updated_on": "2026-05-19 15:40:45"
+    },
+    {
+      "name": "CodeSigningUtil",
+      "kind": "script_include",
+      "table": "sys_script_include",
+      "xml_type": "Script Include",
+      "sys_id": "00000000000000000000000000000030",
+      "sys_updated_on": "2026-05-18 20:00:00"
+    },
+    {
+      "name": "Change Phase Events Before",
+      "kind": "business_rule",
+      "table": "sys_script",
+      "xml_type": "Business Rule",
+      "sys_id": "00000000000000000000000000000057",
+      "sys_updated_on": "2026-06-13 10:20:26"
+    },
+    {
+      "name": "Contract Instance",
+      "kind": "business_rule",
+      "table": "sys_script",
+      "xml_type": "Business Rule",
+      "sys_id": "00000000000000000000000000000045",
+      "sys_updated_on": "2026-06-13 10:20:26"
+    },
+    {
+      "name": "Choice Events",
+      "kind": "business_rule",
+      "table": "sys_script",
+      "xml_type": "Business Rule",
+      "sys_id": "00000000000000000000000000000003",
+      "sys_updated_on": "2026-06-13 10:20:26"
+    },
+    {
+      "name": "com.snc.sdlc.scrum.pp.smclass",
+      "kind": "system_property",
+      "table": "sys_properties",
+      "xml_type": "System Property",
+      "sys_id": "00000000000000000000000000000019",
+      "sys_updated_on": "2026-09-24 21:31:37"
+    },
+    {
+      "name": "glide.lastplugin",
+      "kind": "system_property",
+      "table": "sys_properties",
+      "xml_type": "System Property",
+      "sys_id": "00000000000000000000000000000039",
+      "sys_updated_on": "2026-09-24 21:26:28"
+    },
+    {
+      "name": "glide.ui.session_timeout",
+      "kind": "system_property",
+      "table": "sys_properties",
+      "xml_type": "System Property",
+      "sys_id": "00000000000000000000000000000026",
+      "sys_updated_on": "2026-09-24 20:18:58"
+    },
+    {
+      "name": "kb_knowledge.u_source_story",
+      "kind": "field",
+      "table": "sys_dictionary",
+      "xml_type": "Dictionary",
+      "sys_id": "00000000000000000000000000000049",
+      "sys_updated_on": "2026-10-01 16:53:57"
+    },
+    {
+      "name": "rm_story.story_points",
+      "kind": "field",
+      "table": "sys_dictionary",
+      "xml_type": "Dictionary",
+      "sys_id": "00000000000000000000000000000034",
+      "sys_updated_on": "2026-10-01 16:54:25"
+    },
+    {
+      "name": "rm_story.type",
+      "kind": "field",
+      "table": "sys_dictionary",
+      "xml_type": "Dictionary",
+      "sys_id": "00000000000000000000000000000051",
+      "sys_updated_on": "2026-10-01 16:54:13"
+    }
+  ],
+  "note": "The components are records that ALREADY EXIST on the PDI (capture, NOT creation): a capture is the platform standard mechanism (the current update set + a benign field touch + an immediate restore; the record content did not change). T003 MANUAL GATE: after the human review the sample can be extended (T005)."
+}

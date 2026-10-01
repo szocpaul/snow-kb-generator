@@ -13,9 +13,9 @@
 
 ## Phase 1: Fixture + baseline (US1, playbook: baseline first)
 
-* [ ] T001 [US1] Fixture script following the `scripts_pdi/` pattern. **The Story is about the snow\_kb\_generator project** (as an integration project: „ServiceNow-side webhook receiving and wiring up KB draft generation"). **The components are ALREADY EXISTING records on the PDI** (capture, NOT creation): the script queries the metadata tables via the table-API (sys\_script\_include / sys\_script / sys\_properties / sys\_dictionary; active=true, global scope, sys\_updated\_on preference), selects a total of **10–15 existing components** by type (from several types: Script Include, Business Rule, System Property, field — if they are on the PDI, UI Policy or ACL too), captures them into an Update Set, and rewrites the Story text to the REAL names (the logic is reversed: the story does not determine the components). Every step is logged
+* [x] T001 [US1] Fixture script following the `scripts_pdi/` pattern. **The Story is about the snow\_kb\_generator project** (as an integration project: "ServiceNow-side webhook receiving and KB draft generation integration"). **The components are records that ALREADY EXIST on the PDI** (capture, NOT creation): the script queries the metadata tables via the table-API (sys\_script\_include / sys\_script / sys\_properties / sys\_dictionary; active=true, global scope, sys\_updated\_on preference), selects a total of **10–15 existing components** per type (from several types: Script Include, Business Rule, System Property, field — and UI Policy or ACL if they exist on the PDI), captures them into an Update Set, and writes the Story text for THESE real names (the logic is inverted: the story does not define the components). Every step is logged
 
-* [ ] T002 \[US1] Dumping the selected component names into an artifact (name, type, sys\_id, sys\_updated\_on) + the fixture-integrity gate: EVERY name of the update set „exists" via spot-check (SC-001, script with exit code)
+* [x] T002 \[US1] Dumping the selected component names into an artifact (name, type, sys\_id, sys\_updated\_on) + the fixture-integrity gate: EVERY name in the update set "exists" via spot-check (SC-001, exit-code script)
 
 * [ ] T003 [US1] **MANUAL GATE**: human review of the dumped component list (removing odd/unstable names) — the runner CANNOT check it off
 
