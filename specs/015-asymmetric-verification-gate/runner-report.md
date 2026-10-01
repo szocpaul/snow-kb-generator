@@ -172,3 +172,54 @@ runner MUST NOT tick the T009 checkbox.
 - `d77daa4` T005: merged sample (70→57 examples after the extractability filter)
 - `07c2b52` T005 fix: extractability filter + extractable variants
 - `64166f9` T007+T008+T012: calibration + SC gates ALL GREEN
+
+
+---
+
+# CLOSURE (2026-10-01T17:54:16) — FINAL
+
+**Status: DONE.** The T009 MANUAL GATE was APPROVED by the human.
+
+## The T009 decision and its execution
+
+- The **10:1 weight ratio is CONFIRMED**; the `confidence_threshold` was **CHANGED
+  from 0.7 → 0.35** in config.yaml (with the human's approval).
+- **MANDATORY CONDITION (the human's comment): the 0.35 threshold rests on a SINGLE
+  false positive case (in the sweep 0.35 is the lowest value that filters out the 1
+  fabricated case that slipped through) — the threshold MUST BE RE-MEASURED at the
+  NEXT sample extension.** It is recorded in the Agent.md §45 rationale and in the
+  config.yaml comment as well.
+- Agent.md §45 log entry: facts / decisions / lessons learned.
+
+## Final audit (every point of the objective)
+
+| Requirement | Status |
+|---|---|
+| T001-T013 implemented in dev mode | ✅ (T003/T009 human gates: not ticked by the runner, approved by the human) |
+| Kimi token usage | 0 (task model: local Qwen3.8-27B; the calibration was measured with the pinned jev-1.13.0 TypeSafe calls — measurement infrastructure, not the task model) |
+| SC-001..SC-005 green with exit codes | ✅ `python -m eval.verification_sc_gates_015` → exit 0 (SC-001 13/13, SC-002 n=57 with a justified decision, SC-003 4→3 no degradation, SC-004 gate tests, SC-005 byte-identical replay) |
+| MANUAL GATEs parked for a human decision | ✅ T003, T009 — the runner ticked neither; both got a human approval |
+| Closing report in runner-report.md | ✅ this file |
+| full pytest suite | ✅ 363 passed (349 initial + 14 new) |
+| commit + push | ✅ origin/015-asymmetric-verification-gate |
+| backlog | TASK-3 (the spec 016 candidate) stays To Do — the 015 was not a backlog task |
+
+## All commits (branch: 015-asymmetric-verification-gate)
+
+- `1271cc4` T001+T002: PDI-native fixture (STRY0010004), SC-001 gate
+- `72e8ae6` T006+T004: asymmetric metric + baseline
+- `55be7a8` T010+T011: gate move into the client
+- `5644c8a` T005/T007/T008/T012 code
+- `74bf45c` runner-report (T003 parking)
+- `d77daa4` T005: merged sample
+- `07c2b52` T005 fix: extractability filter
+- `64166f9` T007+T008+T012: calibration + SC gates GREEN
+- `7a2a02e` runner-report (T009 parking)
+- `405ea5f` T013 closure: config 0.35 + Agent.md §45
+
+## Open human steps
+
+- **Deploy**: the go-live of the gate move is a HUMAN step (`sudo systemctl restart
+  snow-kb.service`) — the deploy/README.md note. The runner did NOT deploy.
+- **When expanding the sample**: the 0.35 threshold must be re-measured (T009 condition).
+- A human can tick the T003/T009 tasks.md checkboxes (the runner did not).
