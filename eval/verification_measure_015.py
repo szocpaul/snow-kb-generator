@@ -287,6 +287,19 @@ def cmd_report() -> None:
         rows_after=_rows_at_threshold(rows, candidate),
     )
 
+    # The KD1 sensitivity analysis: the best sweep threshold at other weight ratios
+    # (5:1, 20:1) — if it is insensitive, the simplest 10:1 stays; if it is sensitive,
+        # the T009 human gate weighs the ratio.
+    sensitivity = {}
+    for ratio in (5, 10, 20):
+        costs = [(p["threshold"], p["false_pos_exists"] * ratio + p["false_neg"])
+                 for p in sweep]
+        best_cost = min(c for _, c in costs)
+        best_ts = [t for t, c in costs if c == best_cost]
+        sensitivity[f"{ratio}:1"] = {"best_thresholds": best_ts,
+                                     "best_cost": best_cost}
+    sensitive = len({v["best_thresholds"][-1] for v in sensitivity.values()}) > 1
+
     regression = _regression_block(rows, calib["threshold_after"])
     if regression["worse_than_baseline"] and calib["decision"] == "valtozik":
         # SC-003: a degradation on the old sample → the config is NOT modified, the report is RED
@@ -304,14 +317,16 @@ def cmd_report() -> None:
         "confirmatory_threshold": CONFIRMATORY_THRESHOLD,
         "calibration": calib,
         "regression_sc003": regression,
+        "sensitivity_ratio_analysis": sensitivity,
+        "ratio_sensitive": sensitive,
         "threshold_sweep_explorative": sweep,
         "incorrect_cases": [r for r in rows if r["predicted"] != r["expected"]],
         "per_case": rows,
         "note": (
             "The threshold sweep is EXPLORATORY — the best sweep row is NOT a confirmatory "
-            "result. The threshold can only go into config.yaml after the approval of the T009 MANUAL GATE "
-            "and the fail-open and the flag-only base behaviour are a "
-            "manually set safety floor, the calibration does NOT move it."
+            "result. The threshold can only go into the config.yaml after the approval of the "
+            "T009 MANUAL GATE. The fail-open and the flag-only base behaviour are a "
+            "manually set safety floor, the calibration does NOT move them."
         ),
     }
     REPORT_PATH.write_text(

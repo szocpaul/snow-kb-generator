@@ -29,9 +29,9 @@
 
 * [x] T006 \[US2] Test: the behaviour of the asymmetric metric (false "exists" = 10×, false "does not exist" = 1× penalty, correct decision = 0); the report schema (threshold before/after, cost before/after, symmetric comparison). MUST FAIL before the implementation
 
-* [ ] T007 \[US2] Asymmetric metric + ReAnchor run on the merged sample (`eval/verification_reanchor.py` extension, 014 pattern); calibration report into a file, including the justification for the „threshold stays" case as well; the production call remains a direct SDK
+* [x] T007 \[US2] Asymmetric metric + ReAnchor run on the merged sample (extension of `eval/verification_reanchor.py`, the 014 pattern); the calibration report into a file, including the rationale for the "threshold stays" case as well; the production call remains a direct SDK call
 
-* [ ] T008 \[US2] Regression gate (SC-003): the new (or remaining) threshold re-measured on the existing 24-example sample and compared with the 014 baseline → if there is a regression the report is RED, the config is NOT modified
+* [x] T008 \[US2] Regression gate (SC-003): the new (or staying) threshold re-measured on the existing 24-example sample, compared with the 014 baseline → in case of degradation the report is RED, the config is NOT modified
 
 * [ ] T009 [US2] **MANUAL GATE**: the review of the calibration report; if the threshold changes, the justification goes into Agent.md — the runner CANNOT check it off
 
@@ -43,7 +43,7 @@
 
 ## Phase 5: Closure
 
-* [ ] T012 Running the SC gates (SC-001 fixture integrity, SC-002 calibration report, SC-003 regression, SC-004 gate tests, SC-005 byte-identical replay) — with exit code, `cache=False`/replay mode
+* [x] T012 Running the SC gates (SC-001 fixture integrity, SC-002 calibration report, SC-003 regression, SC-004 gate tests, SC-005 byte-identical replay) — with exit codes, `cache=False`/replay mode
 
 * [ ] T013 Closing: full pytest suite green (349 + new), Agent.md log entry (facts, decisions, lessons), commit + push, backlog update
 
