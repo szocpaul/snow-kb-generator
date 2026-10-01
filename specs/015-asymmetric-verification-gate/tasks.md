@@ -19,7 +19,7 @@
 
 * [ ] T003 [US1] **MANUAL GATE**: human review of the dumped component list (removing odd/unstable names) — the runner CANNOT check it off
 
-* [ ] T004 \[US1] Baseline capture: the ASYMMETRIC cost of the current threshold (0.7) on the existing 24-example sample, into a file (the basis for the later comparison)
+* [x] T004 \[US1] Baseline recording: the ASYMMETRIC cost of the current threshold (0.7) on the existing 24-example sample, into a file (the basis of the later comparison)
 
 ## Phase 2: US1 – Labelled sample from the fixture
 
@@ -27,7 +27,7 @@
 
 ## Phase 3: US2 – Asymmetric calibration
 
-* [ ] T006 \[US2] Test: the behavior of the asymmetric metric (false „exists" = 10×, false „does not exist" = 1× penalty, correct decision = 0); the report schema (before/after threshold, before/after cost, symmetric comparison). FAIL before implementation
+* [x] T006 \[US2] Test: the behaviour of the asymmetric metric (false "exists" = 10×, false "does not exist" = 1× penalty, correct decision = 0); the report schema (threshold before/after, cost before/after, symmetric comparison). MUST FAIL before the implementation
 
 * [ ] T007 \[US2] Asymmetric metric + ReAnchor run on the merged sample (`eval/verification_reanchor.py` extension, 014 pattern); calibration report into a file, including the justification for the „threshold stays" case as well; the production call remains a direct SDK
 
