@@ -25,6 +25,7 @@ import requests
 from requests.auth import HTTPBasicAuth
 
 from snow_kb.config import Settings
+from snow_kb.errors import VerificationBlocked
 from snow_kb.schemas import KBArticle, StoryData
 
 logger = logging.getLogger(__name__)
@@ -424,11 +425,143 @@ class ServiceNowClient:
 
         return "\n".join(lines), "\n\n".join(payloads)
 
+
+    # ------------------------------------------------------------------
+    # Verification gate (spec 015 US3: az ÍRÁST VÉGZŐ komponensben él)
+    # ------------------------------------------------------------------
+
+    def _apply_verification_gate(
+        self,
+        article: KBArticle,
+        *,
+        story_text: str = "",
+        update_set_text: str = "",
+        story_identifier: str = "",
+        spot_checker: "Any | None" = None,
+        decision_client: "Any | None" = None,
+    ) -> KBArticle:
+        """A komponensnév-hitelesítő gate a KB-írás BELSÉJÉBEN (spec 015, FR-004).
+
+        A spec 014-ben a pipeline-rétegben élt; itt az írás egyetlen belépési
+        pontja tartalmazza, így MINDEN (jelenlegi és jövőbeli) hívási út
+        ugyanazon a kapun megy keresztül — "semmi, amit a hívó ír, nem
+        kerülheti meg" (referencia-minta).
+
+        Viselkedés (config.verification_gate.behavior — default: flag):
+          - flag:  a nem-létező nevek work_notes-jelzést kapnak a mért
+                   confidence-szel (article.verification_note); a cikk kimegy.
+          - strip: a gyanús nevek kikerülnek a html-ből.
+          - block: VerificationBlocked kivétel, a push nem fut le.
+
+        Fail-open (FR-005, változatlan): a gate bármilyen belső hibája esetén a
+        cikk változatlanul kimegy warning-naplóval. A döntések JSONL-be
+        naplózódnak (FR-003, 013-as formátum-minta).
+        """
+        import json as _json
+        from datetime import datetime as _dt, timezone as _tz
+        from pathlib import Path as _Path
+
+        cfg = self.settings.verification_gate
+        if not cfg.enabled:
+            return article
+
+        try:
+            from snow_kb.verification import SpotChecker, verify_component_names
+
+            checker = spot_checker
+            if checker is None:
+                checker = SpotChecker(cache_path=cfg.spotcheck_cache_path,
+                                      session=self.session, base_url=self.base_url)
+
+            jev_client = decision_client
+            if jev_client is None:
+                import os as _os
+
+                if _os.environ.get("TYPESAFE_API_KEY"):
+                    from typesafe_sdk import TypeSafeClient
+
+                    jev_client = TypeSafeClient()
+                # kulcs nélkül: csak a determinisztikus út fut (fail-open minta)
+
+            result = verify_component_names(
+                article.html,
+                update_set_text,
+                spot_checker=checker,
+                story_context=story_text,
+                decision_client=jev_client,
+                decision_model=cfg.model,
+                confidence_threshold=cfg.confidence_threshold,
+            )
+        except Exception as exc:  # noqa: BLE001 — a gate hibája ne állítsa le a push-t
+            logger.warning("Verification gate hiba — fail-open, a cikk kimegy: %s: %s",
+                           type(exc).__name__, exc)
+            return article
+
+        # FR-003: replay-kompatibilis JSONL recording (a naplózás hibája sem dönthet)
+        try:
+            rec_path = _Path(cfg.recording_path)
+            rec_path.parent.mkdir(parents=True, exist_ok=True)
+            row = {
+                "timestamp": _dt.now(_tz.utc).isoformat(),
+                "story": story_identifier,
+                "behavior": cfg.behavior,
+                "skipped": result.skipped,
+                "warning": result.warning,
+                "verdicts": [
+                    {"name": v.name, "status": v.status, "confidence": v.confidence,
+                     "evidence": v.evidence, "layer": v.layer}
+                    for v in result.verdicts
+                ],
+            }
+            with rec_path.open("a", encoding="utf-8") as handle:
+                handle.write(_json.dumps(row, sort_keys=True, ensure_ascii=False) + "\n")
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("Verification recording sikertelen (%s): %s",
+                           cfg.recording_path, exc)
+
+        if result.skipped:
+            return article  # fail-open: elérhetetlen instance → cikk kimegy
+
+        flagged = result.not_existing_names
+        if not flagged:
+            return article
+
+        logger.warning("Verification gate: nem-létező komponensnevek: %s (behavior=%s)",
+                       ", ".join(flagged), cfg.behavior)
+
+        if cfg.behavior == "block":
+            raise VerificationBlocked(
+                "A verification gate blokkolta a push-t — nem-létező komponensnevek: "
+                + ", ".join(flagged)
+            )
+        if cfg.behavior == "strip":
+            for name in flagged:
+                article.html = article.html.replace(name, "")
+            article.verification_note = (
+                "Eltávolított, az instance-ben nem létező komponensnevek: "
+                + ", ".join(flagged)
+            )
+            return article
+        # default: flag — work_notes-jelzés a mért confidence-szel (KD1)
+        conf_by_name = {v.name: v.confidence for v in result.verdicts}
+        note_parts = [
+            f"{name} (confidence: {conf_by_name.get(name, 0.0):.2f})" for name in flagged
+        ]
+        article.verification_note = (
+            "Az instance-ben nem létező komponensnév(ek) a cikkben: "
+            + ", ".join(note_parts)
+        )
+        return article
+
     # ------------------------------------------------------------------
     # create_kb_article — KB cikk létrehozása
     # ------------------------------------------------------------------
 
-    def create_kb_article(self, article: KBArticle, story_sys_id: str = "", existing_sys_id: str = "") -> str:
+    def create_kb_article(self, article: KBArticle, story_sys_id: str = "", existing_sys_id: str = "",
+                          *, story_text: str = "", update_set_text: str = "",
+                          story_identifier: str = "",
+                          spot_checker: "Any | None" = None,
+                          decision_client: "Any | None" = None) -> str:
         """Létrehoz vagy frissít egy KB cikket a ServiceNow-ban.
 
         Args:
@@ -436,6 +569,9 @@ class ServiceNowClient:
             story_sys_id: a forrás Story sys_id-ja (a work_notes frissítéséhez).
             existing_sys_id: ha meg van adva, a meglévő cikket frissíti (PATCH)
                 ahelyett, hogy újat hozna létre (duplikáció megakadályozása).
+            story_text / update_set_text / story_identifier: a verification gate
+                kontextusa (spec 015 US3 — a gate az írási út BELSÉJÉBEN fut).
+            spot_checker / decision_client: opcionális injektálás (teszt / mérés).
 
         Returns:
             A KB cikk sys_id-ja (dry-run-ban dummy).
@@ -443,10 +579,17 @@ class ServiceNowClient:
         Raises:
             AuthError: ha a hitelesítés sikertelen.
             ServiceNowError: egyéb API hibák.
+            VerificationBlocked: ha a verification gate behavior=block miatt
+                blokkol (spec 014/015).
         """
         if self.dry_run:
             return self._create_kb_article_mock(article)
-        return self._create_kb_article_live(article, story_sys_id, existing_sys_id)
+        return self._create_kb_article_live(
+            article, story_sys_id, existing_sys_id,
+            story_text=story_text, update_set_text=update_set_text,
+            story_identifier=story_identifier,
+            spot_checker=spot_checker, decision_client=decision_client,
+        )
 
     def _create_kb_article_mock(self, article: KBArticle) -> str:
         """Dry-run: csak logol, dummy sys_id-t ad vissza."""
@@ -459,9 +602,27 @@ class ServiceNowClient:
         logger.info("  -> sys_id: %s", dummy_sys_id)
         return dummy_sys_id
 
-    def _create_kb_article_live(self, article: KBArticle, story_sys_id: str = "", existing_sys_id: str = "") -> str:
-        """Éles: ServiceNow Table API POST/PATCH hívás + work_notes frissítés."""
-        
+    def _create_kb_article_live(self, article: KBArticle, story_sys_id: str = "", existing_sys_id: str = "",
+                                *, story_text: str = "", update_set_text: str = "",
+                                story_identifier: str = "",
+                                spot_checker: "Any | None" = None,
+                                decision_client: "Any | None" = None) -> str:
+        """Éles: ServiceNow Table API POST/PATCH hívás + work_notes frissítés.
+
+        A verification gate az írás BELSÉJÉBEN fut (spec 015 US3): minden
+        hívási út — pipeline, CLI, jövőbeli — ugyanazon a kapun megy át.
+        """
+        # Spec 015 (US3/FR-004): a gate a KB-írás ELŐTT, a kliens belsejében.
+        # enabled=False → no-op; fail-open (FR-005) változatlan.
+        article = self._apply_verification_gate(
+            article,
+            story_text=story_text,
+            update_set_text=update_set_text,
+            story_identifier=story_identifier,
+            spot_checker=spot_checker,
+            decision_client=decision_client,
+        )
+
         # Ha van existing_sys_id, akkor PATCH-tel frissítjük
         if existing_sys_id:
             url = f"{self.base_url}/kb_knowledge/{existing_sys_id}"

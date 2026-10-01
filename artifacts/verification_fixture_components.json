@@ -1,0 +1,122 @@
+{
+  "spec": "015-asymmetric-verification-gate",
+  "task": "T001/T002",
+  "created_at": "2026-10-01T16:56:30.311180+00:00",
+  "instance": "dev432044.service-now.com",
+  "story": {
+    "number": "STRY0010004",
+    "sys_id": "93ad1de32faf03508426b97a6fa4e337",
+    "short_description": "ServiceNow oldali webhook-fogadas es KB-draft generalas bekotese (snow-kb-generator)"
+  },
+  "update_set": {
+    "name": "STRY0010004",
+    "sys_id": "5cbd59e32faf03508426b97a6fa4e3ef"
+  },
+  "components": [
+    {
+      "name": "PrototypeServer",
+      "kind": "script_include",
+      "table": "sys_script_include",
+      "xml_type": "Script Include",
+      "sys_id": "d22e7bdbc0a8016500a18e024bfc9aa3",
+      "sys_updated_on": "2026-10-01 16:43:28"
+    },
+    {
+      "name": "MosaicHermesUtils",
+      "kind": "script_include",
+      "table": "sys_script_include",
+      "xml_type": "Script Include",
+      "sys_id": "a6a4f5c5ff823210e1d2ffffffffffe5",
+      "sys_updated_on": "2026-05-28 22:39:11"
+    },
+    {
+      "name": "RAGResponseGenerator",
+      "kind": "script_include",
+      "table": "sys_script_include",
+      "xml_type": "Script Include",
+      "sys_id": "ee6bb091ff597610f8ecffffffffff9d",
+      "sys_updated_on": "2026-05-19 15:40:45"
+    },
+    {
+      "name": "CodeSigningUtil",
+      "kind": "script_include",
+      "table": "sys_script_include",
+      "xml_type": "Script Include",
+      "sys_id": "cf5b21b8c3602110de5da585b140dda6",
+      "sys_updated_on": "2026-05-18 20:00:00"
+    },
+    {
+      "name": "Change Phase Events Before",
+      "kind": "business_rule",
+      "table": "sys_script",
+      "xml_type": "Business Rule",
+      "sys_id": "0f242f62c611227801e9d0cc5a64348e",
+      "sys_updated_on": "2026-06-13 10:20:26"
+    },
+    {
+      "name": "Contract Instance",
+      "kind": "business_rule",
+      "table": "sys_script",
+      "xml_type": "Business Rule",
+      "sys_id": "15ae5326c611227500d1863613d89f49",
+      "sys_updated_on": "2026-06-13 10:20:26"
+    },
+    {
+      "name": "Choice Events",
+      "kind": "business_rule",
+      "table": "sys_script",
+      "xml_type": "Business Rule",
+      "sys_id": "17ec33f0c611227800e6c6d75af43a6a",
+      "sys_updated_on": "2026-06-13 10:20:26"
+    },
+    {
+      "name": "com.snc.sdlc.scrum.pp.smclass",
+      "kind": "system_property",
+      "table": "sys_properties",
+      "xml_type": "System Property",
+      "sys_id": "39e9e725873121003706db5eb2e3ec46",
+      "sys_updated_on": "2026-09-24 21:31:37"
+    },
+    {
+      "name": "glide.lastplugin",
+      "kind": "system_property",
+      "table": "sys_properties",
+      "xml_type": "System Property",
+      "sys_id": "a05d9540a52103108bb220b7a4d212ed",
+      "sys_updated_on": "2026-09-24 21:26:28"
+    },
+    {
+      "name": "glide.ui.session_timeout",
+      "kind": "system_property",
+      "table": "sys_properties",
+      "xml_type": "System Property",
+      "sys_id": "0587ed4ca5a903108bb220b7a4d212a7",
+      "sys_updated_on": "2026-09-24 20:18:58"
+    },
+    {
+      "name": "kb_knowledge.u_source_story",
+      "kind": "field",
+      "table": "sys_dictionary",
+      "xml_type": "Dictionary",
+      "sys_id": "bb8c3a6d2fe783108426b97a6fa4e3d7",
+      "sys_updated_on": "2026-10-01 16:53:57"
+    },
+    {
+      "name": "rm_story.story_points",
+      "kind": "field",
+      "table": "sys_dictionary",
+      "xml_type": "Dictionary",
+      "sys_id": "6a12169d2fa303108426b97a6fa4e3a8",
+      "sys_updated_on": "2026-10-01 16:54:25"
+    },
+    {
+      "name": "rm_story.type",
+      "kind": "field",
+      "table": "sys_dictionary",
+      "xml_type": "Dictionary",
+      "sys_id": "f8429e9d2fa303108426b97a6fa4e3de",
+      "sys_updated_on": "2026-10-01 16:54:13"
+    }
+  ],
+  "note": "A komponensek a PDI-n MAR MEGLEVO rekordok (capture, NEM letrehozas): a capture a platform standard mechanizmusa (aktualis update set + benignis mezo touch + azonnali visszaallitas; a rekord-tartalom nem valtozott). T003 MANUALIS KAPU: az ember review-ja utan epulhet a minta (T005)."
+}

@@ -51,3 +51,23 @@ profil rendelkezik vele; szűkebb ACL-ű instance-en a `personalize_dictionary`
 vagy ekvivalens jogot ellenőrizni kell). Ha a lekérdezés 403-at ad, a gate
 fail-open módon warninggal kihagyja a spot-check réteget (FR-002) — a
 pipeline nem áll le, de a védelem gyengül.
+
+## Gate-emelés a kliensbe (spec 015, US3) — deploy-megjegyzés
+
+A spec 015 óta a verification gate a `servicenow_client` írási útjának
+BELSEJÉBEN fut (`_create_kb_article_live`), nem a pipeline-rétegben. A
+viselkedés változatlan (flag/strip/block + fail-open), de mostantól MINDEN
+hívási út — pipeline, CLI, jövőbeli endpoint — ugyanazon a kapun megy át;
+a pipeline-rétegű hívás megszűnt (nincs dupla döntés / dupla recording).
+
+**In-flight kérések a restart pillanatában**: a restartkor futó kérések a régi
+(pipeline-rétegű) úton fejeződnek be — ez várható, nem hiba. A tényleges
+restart EMBERI LÉPÉS (a runner nem deployol):
+
+```
+sudo systemctl restart snow-kb.service
+```
+
+A restart után ellenőrzés: egy pipeline-futás JSONL-recordingja
+(`verification_gate.recording_path`) továbbra is PONTOSAN 1 döntéssort ír
+cikk-írásonként.

@@ -1,0 +1,48 @@
+{
+  "spec": "015-asymmetric-verification-gate / T007 ReAnchor (aszimmetrikus)",
+  "model": "jev-1.13.0",
+  "n_train": 57,
+  "asymmetric_score_before": -0.5263157894736842,
+  "asymmetric_score_after": -0.2807017543859649,
+  "symmetric_accuracy_before": 0.47368421052631576,
+  "symmetric_accuracy_after": 0.7192982456140351,
+  "fitted_fields": {
+    "self": {
+      "refers": {
+        "weights": {
+          "yes": 2.5,
+          "external": 1.0,
+          "no": 1.0
+        }
+      }
+    }
+  },
+  "reanchor_report": {
+    "train_score_before": -0.5263,
+    "train_score": -0.2807,
+    "fitted": [
+      {
+        "predictor": "self",
+        "field": "refers",
+        "parameter": "weights",
+        "value": {
+          "yes": 2.5,
+          "external": 1.0,
+          "no": 1.0
+        },
+        "train_score": -0.2807,
+        "train_score_at_start": -0.5263,
+        "observed": {
+          "calls": 57,
+          "candidates": 119
+        },
+        "fold_check": {
+          "passed": 1,
+          "failed": 1
+        },
+        "train_score_original": -0.5263
+      }
+    ]
+  },
+  "note": "A fitted paraméterek EXPLORATÍVAK — a threshold-döntés a verification_measure_015 riportjában (sweep + regresszió-gate), és CSAK a T009 MANUÁLIS KAPU jóváhagyása után kerülhet a configba."
+}

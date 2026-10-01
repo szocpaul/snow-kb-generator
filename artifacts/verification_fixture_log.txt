@@ -1,0 +1,90 @@
+Kiválasztva script_include: 4/4
+Kiválasztva business_rule: 3/3
+Kiválasztva system_property: 3/3
+Kiválasztva field: 3/3
+Kiválasztva script_include: 4/4
+Kiválasztva business_rule: 3/3
+Kiválasztva system_property: 3/3
+Kiválasztva field: 3/3
+[1/4] Komponens-kivalasztas a metaadat-tablakbol...
+Kiválasztva script_include: 4/4
+Kiválasztva business_rule: 3/3
+Kiválasztva system_property: 3/3
+Kiválasztva field: 3/3
+    script_include  PrototypeServer (sys_script_include, updated: 2026-09-26 04:21:47)
+    script_include  QueryGenGlobalTableDescriptorCache (sys_script_include, updated: 2026-06-13 10:03:53)
+    script_include  QueryGenGlobalElementDescriptor (sys_script_include, updated: 2026-06-13 10:03:53)
+    script_include  QueryGenScalarTypeResolver (sys_script_include, updated: 2026-06-13 10:03:53)
+    business_rule   Change Phase Events Before (sys_script, updated: 2026-06-13 10:20:26)
+    business_rule   Contract Instance (sys_script, updated: 2026-06-13 10:20:26)
+    business_rule   Choice Events (sys_script, updated: 2026-06-13 10:20:26)
+    system_property glide.crypto.core.config.cache (sys_properties, updated: 2026-10-01 02:52:19)
+    system_property sn_kmf.resolution_framework.enabled (sys_properties, updated: 2026-10-01 01:46:33)
+    system_property com.snc.sdlc.scrum.pp.smclass (sys_properties, updated: 2026-09-24 21:31:37)
+    field           kb_knowledge.u_source_story (sys_dictionary, updated: 2026-09-25 18:26:46)
+    field           rm_story.type (sys_dictionary, updated: 2026-09-24 20:43:29)
+    field           rm_story.story_points (sys_dictionary, updated: 2026-09-24 20:42:48)
+[2/4] Story letrehozasa (rm_story)...
+    Story: STRY0010004 (sys_id: 93ad1de32faf03508426b97a6fa4e337)
+[3/4] Update Set letrehozasa + capture-sorok (sys_update_xml)...
+    Update Set: STRY0010004 (sys_id: 5cbd59e32faf03508426b97a6fa4e3ef)
+[1/4] Komponens-kivalasztas a metaadat-tablakbol...
+Kiválasztva script_include: 4/4
+Kiválasztva business_rule: 3/3
+Kiválasztva system_property: 3/3
+Kiválasztva field: 3/3
+    script_include  PrototypeServer (sys_script_include, updated: 2026-10-01 16:41:20)
+    script_include  QueryGenGlobalTableDescriptorCache (sys_script_include, updated: 2026-06-13 10:03:53)
+    script_include  QueryGenGlobalElementDescriptor (sys_script_include, updated: 2026-06-13 10:03:53)
+    script_include  QueryGenScalarTypeResolver (sys_script_include, updated: 2026-06-13 10:03:53)
+    business_rule   Change Phase Events Before (sys_script, updated: 2026-06-13 10:20:26)
+    business_rule   Contract Instance (sys_script, updated: 2026-06-13 10:20:26)
+    business_rule   Choice Events (sys_script, updated: 2026-06-13 10:20:26)
+    system_property glide.crypto.core.config.cache (sys_properties, updated: 2026-10-01 02:52:19)
+    system_property sn_kmf.resolution_framework.enabled (sys_properties, updated: 2026-10-01 01:46:33)
+    system_property com.snc.sdlc.scrum.pp.smclass (sys_properties, updated: 2026-09-24 21:31:37)
+    field           kb_knowledge.u_source_story (sys_dictionary, updated: 2026-09-25 18:26:46)
+    field           rm_story.type (sys_dictionary, updated: 2026-09-24 20:43:29)
+    field           rm_story.story_points (sys_dictionary, updated: 2026-09-24 20:42:48)
+[2/4] Story letrehozasa (rm_story)...
+    Story: STRY0010005 (sys_id: 1a6e15272faf03508426b97a6fa4e397)
+[3/4] Update Set letrehozasa...
+    Update Set: STRY0010005 (sys_id: 8b6e19272faf03508426b97a6fa4e33d) — allapot: /home/ubuntu/dspy_projects/snow_kb_generator/artifacts/verification_fixture_state.json
+    sys_update_set preference: 5cbd59e32faf03508426b97a6fa4e3ef -> 8b6e19272faf03508426b97a6fa4e33d
+    capture: [Script Include] PrototypeServer
+    sys_update_set preference visszaallitva: 5cbd59e32faf03508426b97a6fa4e3ef
+Jeloltek script_include: 16 (kvota: 4)
+Jeloltek business_rule: 12 (kvota: 3)
+Jeloltek system_property: 12 (kvota: 3)
+Jeloltek field: 12 (kvota: 3)
+[resume] Meglevo allapot: Story=STRY0010004, Update Set=5cbd59e32faf03508426b97a6fa4e3ef
+[4/5] Capture: aktualis update set atallitasa + touch+revert jeloltenkent...
+    sys_update_set preference: 11226d84a56503108bb220b7a4d212b2 -> 5cbd59e32faf03508426b97a6fa4e3ef
+    capture mar megvan: PrototypeServer — kihagyom
+    capture: [Script Include] MosaicHermesUtils
+    capture: [Script Include] RAGResponseGenerator
+    capture: [Script Include] CodeSigningUtil
+    capture: [Business Rule] Change Phase Events Before
+    capture: [Business Rule] Contract Instance
+    capture: [Business Rule] Choice Events
+    capture SIKERTELEN (fallback a kovetkezo jeloltre): glide.crypto.core.config.cache — PATCH sys_properties/805f13032f030310efc9b97a6fa4e318 -> HTTP 403: {"error":{"message":"Operation Failed","detail":"ACL Exception Update Failed due to security constraints"},"status":"failure"}
+    capture SIKERTELEN (fallback a kovetkezo jeloltre): sn_kmf.resolution_framework.enabled — PATCH sys_properties/fe532a6243111110110905c02bb8f2d5 -> HTTP 403: {"error":{"message":"Operation Failed","detail":"ACL Exception Update Failed due to security constraints"},"status":"failure"}
+    capture: [System Property] com.snc.sdlc.scrum.pp.smclass
+    capture: [System Property] glide.lastplugin
+    capture: [System Property] glide.ui.session_timeout
+    capture NEM jelent meg az update set-ben: kb_knowledge.u_source_story — fallback
+    capture NEM jelent meg az update set-ben: rm_story.type — fallback
+    capture NEM jelent meg az update set-ben: rm_story.story_points — fallback
+    capture NEM jelent meg az update set-ben: rm_story.sprint — fallback
+    capture NEM jelent meg az update set-ben: rm_story.split_from — fallback
+    capture NEM jelent meg az update set-ben: rm_story.release — fallback
+    capture NEM jelent meg az update set-ben: rm_story.rank — fallback
+    capture NEM jelent meg az update set-ben: rm_story.product_rank — fallback
+    capture NEM jelent meg az update set-ben: rm_story.is_enabler — fallback
+    capture NEM jelent meg az update set-ben: rm_story.group_rank — fallback
+    capture NEM jelent meg az update set-ben: rm_story.epic — fallback
+    capture NEM jelent meg az update set-ben: rm_story.enhancement — fallback
+    KEVESEBB field komponens capture-olodott (0/3)
+    sys_update_set preference visszaallitva: 11226d84a56503108bb220b7a4d212b2
+[5/5] Story-leiras veglegesitese a capture-olt nevekkel + dump...
+KESZ. Story=STRY0010004, Update Set=STRY0010004, komponens=10 — a dump review-ja a T003 MANUALIS KAPU.
