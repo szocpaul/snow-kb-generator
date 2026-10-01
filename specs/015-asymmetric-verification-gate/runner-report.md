@@ -102,3 +102,73 @@ A T003 checkboxot a runner NEM pipálja.
   rajtuk; ha nem kellenek a branchre, külön commitban kiszedhetők.
 - Kimi-token felhasználás: 0 (minden helyi/dev-mód; a TypeSafe jev-hívások
   csak a smoke-ban futottak, a kalibrációs capture T003 után esedékes).
+
+
+---
+
+# FOLYTATÁS a T003 jóváhagyás után (2026-10-01T17:41:27)
+
+**Állapot: PARKOLVA a T009 MANUÁLIS KAPUnál** (a kalibrációs riport emberi review-ja).
+
+## T003 jóváhagyás + takarítás-igazolás
+
+- Az ember JÓVÁHAGYTA mind a 13 nevet; független ellenőrzése igazolta: a
+  sys_updated_on változás a capture (touch+revert) mellékhatása, tartalmi
+  módosítás NINCS, '[spec015-capture]' maradvány NINCS.
+- Az árva STRY0010005 + 8b6e1927 update set már a futás közben TÖRÖLVE lett
+  (a runner cleanup-ja); újraellenőrizve: mindkettő 404.
+
+## Phase 2/3/5 eredmények (T005, T007, T008, T012)
+
+- **T005**: `data/examples/verification_labeled_015.json` — 57 példa
+  (24 régi + 33 fixture-szarmaztatott). A T005-MAG: 9 kinyerhető név (≥8 ✓) —
+  4 jóváhagyott név (RAGResponseGenerator, kb_knowledge.u_source_story,
+  rm_story.story_points, rm_story.type) a gate 011-es konzervatív
+  kinyerő-regexei által NEM látható felületi alak → nem mérhető példaként
+  (a címke továbbra is valós; ez a kinyerő dokumentált korlátja).
+  FR-002-szűrő cache-alapú: a 6 régi "exists" mindegyike empírikusan
+  PDI-ellenőrzött, egy sem esett ki.
+- **T007**: capture (57 eset, élő jev-1.13.0 + PDI spot-check) + replay-riport
+  + ReAnchor (aszimmetrikus metrika, eval-only wrapper):
+  - ReAnchor: aszimmetrikus score **−0.526 → −0.281**, szimmetrikus accuracy
+    0.474 → 0.719 (EXPLORATÍV fitted paraméterek).
+  - Sweep (EXPLORATÍV): a jelölt threshold **0.35** (aszimmetrikus költség
+    21 → 18; fp_exists 0, fn 21 → 18). A domináns hibaosztály: a kalibrált
+    réteg a valós nevek írásvariánsaira "no"/"external"-t mond (ezt a
+    threshold NEM javítja).
+  - **Érzékenység-analízis (KD1): a threshold ÉRZÉKENY az arányra** —
+    10:1-nél és 20:1-nél a 0.35 a nyerő, 5:1-nél a 0.0-0.10 sáv nyerne.
+    Ez a T009 döntés kulcsadata.
+  - Szimmetrikus összevetés a riportban (spec US2): 21 → 18.
+- **T008 / SC-003**: régi 24 példa: aszimmetrikus költség **4 → 3** a 0.35-ön —
+  NINCS romlás.
+- **T012**: `eval/verification_sc_gates_015.py` — **SC-001..SC-005 MIND ZÖLD**:
+  - SC-001 ZÖLD: 13/13 fixture-nél spot-check létezik (élő PDI)
+  - SC-002 ZÖLD: n=57 (≥30), döntés indokolt, szimmetrikus összevetés megvan
+  - SC-003 ZÖLD: nincs romlás a régi mintán
+  - SC-004 ZÖLD: gate-emelés tesztek (12+9) exit=0
+  - SC-005 ZÖLD: kétszeri replay byte-identikus (37007 byte)
+- pytest teljes suite: **363 passed**.
+
+## MANUÁLIS KAPU — T009 (emberi teendő)
+
+**Review-zd a kalibrációs riportot**: `artifacts/verification_calibration_report_015.json`
+(+ `artifacts/verification_reanchor_report_015.json`).
+
+A jelölt döntés: `confidence_threshold: 0.7 → 0.35` (aszimmetrikus költség
+21 → 18 a 57 példán; a régi mintán 4 → 3, nincs romlás). FIGYELEM: a jelölt
+EXPLORATÍV sweep-eredmény, és az arány-érzékenység miatt (5:1-nél a 0.0
+nyerne) a 10:1-es KD1-arány megerősítése is a döntés része.
+
+- Ha JÓVÁHAGYOD: a runner a config.yaml-ba írja a 0.35-öt + az indoklás az
+  Agent.md-be kerül (ez a T013 része), majd zárás.
+- Ha NEM: a threshold marad 0.7, a "marad" indoklás kerül a riportba/Agent.md-be.
+
+A config.yaml a jóváhagyásig NEM módosul (jelenleg is 0.7). A T009 checkboxot
+a runner NEM pipálja.
+
+## Commit-hash-ek (folytatás)
+
+- `d77daa4` T005: egyesített minta (70→57 példa a kinyerhetőségi szűrő után)
+- `07c2b52` T005 javítás: kinyerhetőségi szűrő + extractable variánsok
+- `64166f9` T007+T008+T012: kalibráció + SC-gate-ek MIND ZÖLD
