@@ -1,0 +1,14 @@
+{
+  "current.number": {
+    "evidence": "sys_dictionary.element=number",
+    "status": "exists"
+  },
+  "current.work_notes": {
+    "evidence": "sys_dictionary.element=work_notes",
+    "status": "exists"
+  },
+  "snowkbgenerator": {
+    "evidence": "nincs találat: sys_script_include, sys_script, sys_db_object",
+    "status": "not_exists"
+  }
+}
