@@ -67,9 +67,13 @@ verification_gate:
   # The PINNED decision model version for the calibrated (ambiguous cases) layer —
   # a floating alias is FORBIDDEN (playbook: "a model change = a new baseline measurement", FR-005).
   model: "jev-1.13.0"
-  # Confirmatory gate (spec SC-002): below this confidence the name
-  # counts as „does not exist". The T013 calibration measurement tunes it.
-  confidence_threshold: 0.7
+  # The confirmatory gate: below this confidence the name counts as "does not exist"
+  # counts. 2026-10-01, spec 015 T009 MANUAL GATE: the human APPROVED the
+  # 0.7 → 0.35 change (the asymmetric cost 21→18 on the 57-example PDI-native
+  # sample, the 10:1 weight ratio confirmed; SC-003: no degradation on the old sample).
+  # CONDITION: the 0.35 rests on a single FP case → at the NEXT sample expansion it
+  # has to be RE-MEASURED. The justification: Agent.md (the spec 015 log entry).
+  confidence_threshold: 0.35
   # The per name spot-check cache (JSON) — it is part of the recording, the replay is
   # byte-identikus (SC-004).
   spotcheck_cache_path: "artifacts/spotcheck_cache.json"

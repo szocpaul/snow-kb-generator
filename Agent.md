@@ -935,3 +935,72 @@ c8da6e0 (T001+T002), 9919aaa (T003+T004), 1e73727 (T005 interim report),
 2d3823c (T006), d01d495 (T007), 0b26e63 (T008), 186c86f (T008-T011),
 87d3057 (T012), e4e8ad6 (T012+T013 infra), ccf6fe7 (T005 review b),
 c45e95e (T013), dd36ea9 (T014 package report)
+
+## 45. Spec 015: asymmetric calibration + gate lift into the writing component (2026-10-01)
+
+### Facts
+- **PDI-native fixture** (T001/T002): Story STRY0010004 + Update Set
+  STRY0010004 on the PDI, capturing 13 ALREADY EXISTING components (4 Script
+  Include, 3 Business Rule, 3 System Property, 3 field) — NO new component was
+  created. A direct insert into `sys_update_xml` is ACL-blocked → the capture is
+  a platform mechanism: switching the current update set (user preference) +
+  touching a benign field + immediate revert (the record content did not
+  change; the sys_updated_on change is a side effect — an independent human
+  check confirmed it, T003). SC-001: 13/13 names exist per the spot-check.
+- **Merged sample** (T005): 57 examples (24 old + 33 fixture-derived;
+  FR-002 cache-based filter: each of the 6 old "exists" cases was empirically
+  checked on the PDI). 4 approved names (RAGResponseGenerator,
+  kb_knowledge.u_source_story, rm_story.story_points, rm_story.type) are surface forms
+  not visible to the conservative 011 extraction regexes of the gate → not
+  measurable examples; the extractable core is 9 names (≥8 minimum ✓).
+- **Asymmetric calibration** (T006/T007): the metric is 10:1 (false "exists" :
+  false "does not exist", plan KD1). The asymmetric cost of the 0.7 threshold is 21
+  on the 57 examples (0 missed hallucinations, 21 unnecessary flags); the sweep
+  (EXPLORATORY) candidate is 0.35 → cost 18. ReAnchor (asymmetric metric,
+  eval-only wrapper): score −0.526 → −0.281, symmetric accuracy
+  0.474 → 0.719. The dominant error class: the calibrated layer says "no"/"external" for real names
+  in their spelling variants — the threshold does NOT fix this.
+- **Regression** (T008/SC-003): on the old 24 examples, 4 → 3 at 0.35 — no degradation.
+- **Gate lift** (T010/T011): the verification gate moved
+  INSIDE `servicenow_client._create_kb_article_live` (FR-004) —
+  every call path (pipeline, CLI, future) goes through the same gate; the
+  pipeline-level call was DELETED (no double decision/recording);
+  `VerificationBlocked` moved into `snow_kb.errors`. Fail-open and the
+  flag-only safety floor are unchanged (FR-005). 363 tests green (349+14).
+- **SC-gates** (`python -m eval.verification_sc_gates_015` → exit 0):
+  SC-001..SC-005 ALL GREEN (fixture integrity 13/13; calibration report n=57
+  with a justified decision + symmetric comparison; regression clean; gate lift
+  tests; double replay byte-identical, 37007 bytes).
+
+### Decisions (MANUAL GATEs — with human approval)
+- **T003** (fixture dump review): all 13 captured names APPROVED; the
+  side effects of the capture touch+revert clarified by an independent check (no
+  content modification, no "[spec015-capture]" residue).
+- **T009** (calibration report review): the **10:1 ratio STRENGTHENED**, and the
+  **`confidence_threshold: 0.7 → 0.35` APPROVED** (config.yaml changed).
+  Rationale: asymmetric cost 21→18 on the 57 examples; no SC-003 regression
+  (4→3); the sweep is exploratory; the ratio sensitivity documented
+  (at 5:1 the 0.0–0.10 band would win — the 10:1 ratio is a conscious human decision);
+  the fail-open + flag-only safety floor unchanged.
+  **MANDATORY CONDITION (the human comment): the 0.35 threshold rests on a SINGLE
+  false positive case (in the sweep 0.35 is the lowest value that filters out the 1
+  fabricated leak) — therefore the threshold must be RE-MEASURED at the NEXT
+  sample expansion.**
+- The deploy (going live with the gate lift) is a human step: `sudo systemctl restart
+  snow-kb.service` (deploy/README.md note; in-flight requests finish on the old
+  path).
+
+### Lessons
+- The gate extractor (011 conservative regexes) does NOT see the first segment of
+  underscore names with dots (`kb_knowledge.u_source_story`) and the
+  CamelCase with an all-caps prefix (`RAG...`) — when choosing fixture names,
+  extractability needs a SEPARATE filter, otherwise part of the approved names
+  is unmeasurable. (The same applies to variant generation: only extractable surface
+  forms.)
+- `sys_update_xml` is ACL-protected against direct insert; the user-preference +
+  touch+revert is the working programmatic capture path. The dictionary rows
+  target_name is a display label ("Story.Type"), not an identifier — the semantic
+  name must be built from the `table`/`element` attributes of the payload.
+- Sensitivity analysis of the cost ratio is mandatory input for the threshold decision:
+  here the candidate is the same at 10:1 and 20:1 (0.35), but different at 5:1 — without
+  confirming the ratio the sweep candidate is not interpretable.

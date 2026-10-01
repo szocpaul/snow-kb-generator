@@ -45,7 +45,7 @@
 
 * [x] T012 Running the SC gates (SC-001 fixture integrity, SC-002 calibration report, SC-003 regression, SC-004 gate tests, SC-005 byte-identical replay) — with exit codes, `cache=False`/replay mode
 
-* [ ] T013 Closing: full pytest suite green (349 + new), Agent.md log entry (facts, decisions, lessons), commit + push, backlog update
+* [x] T013 Closure: the full pytest suite green (349 + new), a log entry in the Agent.md (facts, decisions, lessons learned), commit + push, backlog update
 
 ## Dependencies
 
