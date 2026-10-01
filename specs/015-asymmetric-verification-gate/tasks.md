@@ -19,7 +19,7 @@
 
 * [ ] T003 [US1] **MANUÁLIS KAPU**: a dumpolt komponens-lista emberi review-ja (furcsa/instabil nevek kiszúrása) — a runner NEM pipálhatja
 
-* [ ] T004 \[US1] Baseline-rögzítés: a jelenlegi threshold (0.7) ASZIMMETRIKUS költsége a meglévő 24 példás mintán, fájlba (a későbbi összevetés alapja)
+* [x] T004 \[US1] Baseline-rögzítés: a jelenlegi threshold (0.7) ASZIMMETRIKUS költsége a meglévő 24 példás mintán, fájlba (a későbbi összevetés alapja)
 
 ## tPhase 2: US1 – Címkézett minta a fixture-ből
 
@@ -27,7 +27,7 @@
 
 ## Phase 3: US2 – Aszimmetrikus kalibráció
 
-* [ ] T006 \[US2] Teszt: az aszimmetrikus metrika viselkedése (téves „létező" = 10×, téves „nem létező" = 1× büntetés, jó döntés = 0); a riport-séma (threshold előtt/utána, költség előtt/utána, szimmetrikus összevetés). FAIL implementáció előtt
+* [x] T006 \[US2] Teszt: az aszimmetrikus metrika viselkedése (téves „létező" = 10×, téves „nem létező" = 1× büntetés, jó döntés = 0); a riport-séma (threshold előtt/utána, költség előtt/utána, szimmetrikus összevetés). FAIL implementáció előtt
 
 * [ ] T007 \[US2] Aszimmetrikus metrika + ReAnchor-futás az egyesített mintán (`eval/verification_reanchor.py` bővítés, 014-es minta); kalibrációs riport fájlba, beleértve a „threshold marad" eset indoklását is; a production hívás továbbra is közvetlen SDK
 

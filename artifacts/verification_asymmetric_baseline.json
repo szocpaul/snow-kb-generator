@@ -1,0 +1,16 @@
+{
+  "asymmetric": {
+    "false_neg": 4,
+    "false_pos_exists": 0,
+    "fn_cost": 1,
+    "fp_cost": 10,
+    "n": 24,
+    "symmetric_cost": 4.0,
+    "total_cost": 4.0
+  },
+  "n_cases": 24,
+  "note": "Baseline-elobb: a jelenlegi 0.7-es threshold aszimmetrikus koltsege a meglevo 24 peldas mintan. A T008 regresszio-gate ehhez veti az uj (vagy marado) threshold mereset (SC-003).",
+  "source": "artifacts/verification_calibration_report.json",
+  "spec": "015-asymmetric-verification-gate / T004 baseline",
+  "threshold": 0.7
+}
