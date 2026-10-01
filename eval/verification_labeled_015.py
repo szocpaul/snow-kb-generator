@@ -27,6 +27,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -49,19 +50,46 @@ _FABRICATED = [
 ]
 
 
-def _variants_of(name: str, kind: str) -> list[str]:
-    """Gépi írásvariánsok (a 2-es mechanizmus tesztelésére)."""
-    out = []
+def _mention_html(name: str, kind: str) -> str:
+    """A jelölt cikk-beli megjelenése (a 011-minta szerint — a measure is ezt használja)."""
+    if kind == "quoted":
+        return f"<h2>Megoldás</h2><p>A '{name}' komponens a megoldás része.</p>"
+    return f"<h2>Megoldás</h2><p>A {name} komponens a megoldás része.</p>"
+
+
+def _extractable(name: str, kind: str) -> bool:
+    """A gate jelölt-kinyerője (011-es konzervatív regexek) látja-e ezt a felületi alakot."""
+    from snow_kb.verification import extract_component_candidates
+
+    return any(c.name == name for c in extract_component_candidates(_mention_html(name, kind)))
+
+
+def _space_variant(name: str) -> str:
+    """CamelCase → szóközös alak ('PrototypeServer' → 'Prototype Server')."""
+    return re.sub(r"(?<=[a-z0-9])(?=[A-Z])", " ", name)
+
+
+def _variants_of(name: str, kind: str) -> list[tuple[str, str]]:
+    """Gépi írásvariánsok (a 2-es mechanizmus tesztelésére) — (felületi alak, kind).
+
+    FONTOS: csak a gate-kinyerő által LÁTHATÓ felületi alakok (a 011-es
+    konzervatív regexek: idézett nagybetűs / dotted kisbetűs / CamelCase).
+    A kinyerhetetlen variánsokat a build kiszűri és jelenti.
+    """
+    out: list[tuple[str, str]] = []
     if kind == "camelcase":
-        out.append(name.lower())
-        out.append(name[:1].lower() + name[1:])
+        spaced = _space_variant(name)
+        out.append((spaced, "quoted"))                    # 'Prototype Server'
+        out.append((spaced.replace(" ", "-"), "quoted"))  # 'Prototype-Server'
     elif "." in name:
-        out.append(name.replace(".", " "))
-        out.append(name.upper())
-    else:
-        out.append(name.lower())
-        out.append(name.replace(" ", "-"))
-    return [v for v in dict.fromkeys(out) if v != name]
+        out.append((name.upper(), "quoted"))              # 'GLIDE.LASTPLUGIN'
+        out.append((name[:1].upper() + name[1:], "quoted"))  # 'Glide.lastplugin'
+    else:  # quoted (Business Rule) core
+        out.append((name.replace(" ", "-"), "quoted"))    # 'Change-Phase-Events-Before'
+        words = name.split(" ")
+        if len(words) > 1:
+            out.append((" ".join(words[:-1] + [words[-1].lower()]), "quoted"))
+    return [(v, k) for v, k in dict.fromkeys(out) if v != name]
 
 
 def build(approved_path: str | None = None) -> int:
@@ -91,46 +119,61 @@ def build(approved_path: str | None = None) -> int:
     story_ctx = dump["story"]["short_description"]
     examples: list[dict] = []
 
-    # 1. valós nevek
+    _KIND_MAP = {"script_include": "camelcase", "business_rule": "quoted",
+                 "system_property": "dotted", "field": "dotted"}
+
+    # 0. Kinyerhetőségi szűrő: a gate jelölt-kinyerője (011-es konzervatív
+    #    regexek) csak az idézett nagybetűs / tiszta dotted / CamelCase alakokat
+    #    látja. Ami nem nyerhető ki, az a gate számára ELÉRHETETLEN — nem
+    #    mérhető példa (a T003 által jóváhagyott név attól még valós).
+    extractable_core = []
     for c in core:
-        kind = {"script_include": "camelcase", "business_rule": "quoted",
-                "system_property": "dotted", "field": "dotted"}[c["kind"]]
+        kind = _KIND_MAP[c["kind"]]
+        if _extractable(c["name"], kind):
+            extractable_core.append((c, kind))
+        else:
+            print(f"  KIHAGYVA (a gate-kinyerő nem látja): {c['name']} [{c['kind']}]")
+    # A magminimum a KINYERHETŐ magnév-halmazra is érvényes
+    if len(extractable_core) < MIN_CORE_NAMES:
+        print(f"MEGALLAS: a kinyerheto magnév-halmaz {len(extractable_core)} nev "
+              f"< {MIN_CORE_NAMES} — a minta NEM hígítható. Jelentsd az embernek.")
+        return 2
+
+    # 1. valós nevek
+    for c, kind in extractable_core:
         examples.append({
             "name": c["name"], "kind": kind, "label": "exists",
             "note": f"fixture (STRY0010004 update set): valós {c['xml_type']} a PDI-n",
             "source": "fixture015",
         })
-    # 2. írásvariánsok (komponensenként 1-2 gépi variáns)
-    for c in core:
-        kind = {"script_include": "camelcase", "business_rule": "quoted",
-                "system_property": "dotted", "field": "dotted"}[c["kind"]]
-        for v in _variants_of(c["name"], kind)[:2]:
+    # 2. írásvariánsok (komponensenként max 2 KINYERHETŐ gépi variáns)
+    for c, kind in extractable_core:
+        for v, vkind in [vk for vk in _variants_of(c["name"], kind)
+                         if _extractable(vk[0], vk[1])][:2]:
             examples.append({
-                "name": v, "kind": kind, "label": "variant", "variant_of": c["name"],
+                "name": v, "kind": vkind, "label": "variant", "variant_of": c["name"],
                 "note": f"gépi írásvariáns: {c['name']}",
                 "source": "fixture015",
             })
     # 3. fabrikált nevek
     for f in _FABRICATED:
         examples.append({**f, "label": "fabricated", "source": "fixture015"})
-    # 4. típus-eltérés: valós név, rossz típusú táblában értelmezve
-    #    (pl. a Script Include neve Business Rule-ként) — a NÉV létezik.
-    si_names = [c for c in core if c["kind"] == "script_include"][:2]
-    br_names = [c for c in core if c["kind"] == "business_rule"][:1]
-    for c in si_names:
+    # 4. típus-eltérés: valós Script Include-név Business Rule-KÉNT hivatkozva
+    #    (idézett felületi alak — a NÉV létezik, a típus-hivatkozás téves).
+    for c, kind in [ck for ck in extractable_core if ck[1] == "camelcase"][:2]:
         examples.append({
             "name": c["name"], "kind": "quoted", "label": "exists",
             "note": f"típus-eltérés: valós Script Include ('{c['name']}') "
                     "Business Rule-ként hivatkozva — a név létezik",
             "source": "fixture015",
         })
-    for c in br_names:
-        examples.append({
-            "name": c["name"], "kind": "camelcase", "label": "exists",
-            "note": f"típus-eltérés: valós Business Rule ('{c['name']}') "
-                    "Script Include-ként hivatkozva — a név létezik",
-            "source": "fixture015",
-        })
+
+    # 5. önellenőrzés: MINDEN generált példa kinyerhető a saját mention-html-jéből
+    not_extractable = [e["name"] for e in examples
+                       if not _extractable(e["name"], e["kind"])]
+    if not_extractable:
+        print(f"BELSO HIBA: kinyerhetetlen pelda kerult a mintaba: {not_extractable}")
+        return 2
 
     # 5. egyesítés a meglévő 24 példával (FR-002: az aldidev-eredetű "létezik"
     #    címkék kizárva — azaz ami NEM támasztja alá az instance-tény. Az

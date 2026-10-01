@@ -206,13 +206,6 @@
       "source": "fixture015"
     },
     {
-      "name": "RAGResponseGenerator",
-      "kind": "camelcase",
-      "label": "exists",
-      "note": "fixture (STRY0010004 update set): valós Script Include a PDI-n",
-      "source": "fixture015"
-    },
-    {
       "name": "CodeSigningUtil",
       "kind": "camelcase",
       "label": "exists",
@@ -262,96 +255,51 @@
       "source": "fixture015"
     },
     {
-      "name": "kb_knowledge.u_source_story",
-      "kind": "dotted",
-      "label": "exists",
-      "note": "fixture (STRY0010004 update set): valós Dictionary a PDI-n",
-      "source": "fixture015"
-    },
-    {
-      "name": "rm_story.story_points",
-      "kind": "dotted",
-      "label": "exists",
-      "note": "fixture (STRY0010004 update set): valós Dictionary a PDI-n",
-      "source": "fixture015"
-    },
-    {
-      "name": "rm_story.type",
-      "kind": "dotted",
-      "label": "exists",
-      "note": "fixture (STRY0010004 update set): valós Dictionary a PDI-n",
-      "source": "fixture015"
-    },
-    {
-      "name": "prototypeserver",
-      "kind": "camelcase",
-      "label": "variant",
-      "variant_of": "PrototypeServer",
-      "note": "gépi írásvariáns: PrototypeServer",
-      "source": "fixture015"
-    },
-    {
-      "name": "prototypeServer",
-      "kind": "camelcase",
-      "label": "variant",
-      "variant_of": "PrototypeServer",
-      "note": "gépi írásvariáns: PrototypeServer",
-      "source": "fixture015"
-    },
-    {
-      "name": "mosaichermesutils",
-      "kind": "camelcase",
-      "label": "variant",
-      "variant_of": "MosaicHermesUtils",
-      "note": "gépi írásvariáns: MosaicHermesUtils",
-      "source": "fixture015"
-    },
-    {
-      "name": "mosaicHermesUtils",
-      "kind": "camelcase",
-      "label": "variant",
-      "variant_of": "MosaicHermesUtils",
-      "note": "gépi írásvariáns: MosaicHermesUtils",
-      "source": "fixture015"
-    },
-    {
-      "name": "ragresponsegenerator",
-      "kind": "camelcase",
-      "label": "variant",
-      "variant_of": "RAGResponseGenerator",
-      "note": "gépi írásvariáns: RAGResponseGenerator",
-      "source": "fixture015"
-    },
-    {
-      "name": "rAGResponseGenerator",
-      "kind": "camelcase",
-      "label": "variant",
-      "variant_of": "RAGResponseGenerator",
-      "note": "gépi írásvariáns: RAGResponseGenerator",
-      "source": "fixture015"
-    },
-    {
-      "name": "codesigningutil",
-      "kind": "camelcase",
-      "label": "variant",
-      "variant_of": "CodeSigningUtil",
-      "note": "gépi írásvariáns: CodeSigningUtil",
-      "source": "fixture015"
-    },
-    {
-      "name": "codeSigningUtil",
-      "kind": "camelcase",
-      "label": "variant",
-      "variant_of": "CodeSigningUtil",
-      "note": "gépi írásvariáns: CodeSigningUtil",
-      "source": "fixture015"
-    },
-    {
-      "name": "change phase events before",
+      "name": "Prototype Server",
       "kind": "quoted",
       "label": "variant",
-      "variant_of": "Change Phase Events Before",
-      "note": "gépi írásvariáns: Change Phase Events Before",
+      "variant_of": "PrototypeServer",
+      "note": "gépi írásvariáns: PrototypeServer",
+      "source": "fixture015"
+    },
+    {
+      "name": "Prototype-Server",
+      "kind": "quoted",
+      "label": "variant",
+      "variant_of": "PrototypeServer",
+      "note": "gépi írásvariáns: PrototypeServer",
+      "source": "fixture015"
+    },
+    {
+      "name": "Mosaic Hermes Utils",
+      "kind": "quoted",
+      "label": "variant",
+      "variant_of": "MosaicHermesUtils",
+      "note": "gépi írásvariáns: MosaicHermesUtils",
+      "source": "fixture015"
+    },
+    {
+      "name": "Mosaic-Hermes-Utils",
+      "kind": "quoted",
+      "label": "variant",
+      "variant_of": "MosaicHermesUtils",
+      "note": "gépi írásvariáns: MosaicHermesUtils",
+      "source": "fixture015"
+    },
+    {
+      "name": "Code Signing Util",
+      "kind": "quoted",
+      "label": "variant",
+      "variant_of": "CodeSigningUtil",
+      "note": "gépi írásvariáns: CodeSigningUtil",
+      "source": "fixture015"
+    },
+    {
+      "name": "Code-Signing-Util",
+      "kind": "quoted",
+      "label": "variant",
+      "variant_of": "CodeSigningUtil",
+      "note": "gépi írásvariáns: CodeSigningUtil",
       "source": "fixture015"
     },
     {
@@ -363,11 +311,11 @@
       "source": "fixture015"
     },
     {
-      "name": "contract instance",
+      "name": "Change Phase Events before",
       "kind": "quoted",
       "label": "variant",
-      "variant_of": "Contract Instance",
-      "note": "gépi írásvariáns: Contract Instance",
+      "variant_of": "Change Phase Events Before",
+      "note": "gépi írásvariáns: Change Phase Events Before",
       "source": "fixture015"
     },
     {
@@ -379,11 +327,11 @@
       "source": "fixture015"
     },
     {
-      "name": "choice events",
+      "name": "Contract instance",
       "kind": "quoted",
       "label": "variant",
-      "variant_of": "Choice Events",
-      "note": "gépi írásvariáns: Choice Events",
+      "variant_of": "Contract Instance",
+      "note": "gépi írásvariáns: Contract Instance",
       "source": "fixture015"
     },
     {
@@ -395,99 +343,59 @@
       "source": "fixture015"
     },
     {
-      "name": "com snc sdlc scrum pp smclass",
-      "kind": "dotted",
+      "name": "Choice events",
+      "kind": "quoted",
       "label": "variant",
-      "variant_of": "com.snc.sdlc.scrum.pp.smclass",
-      "note": "gépi írásvariáns: com.snc.sdlc.scrum.pp.smclass",
+      "variant_of": "Choice Events",
+      "note": "gépi írásvariáns: Choice Events",
       "source": "fixture015"
     },
     {
       "name": "COM.SNC.SDLC.SCRUM.PP.SMCLASS",
-      "kind": "dotted",
+      "kind": "quoted",
       "label": "variant",
       "variant_of": "com.snc.sdlc.scrum.pp.smclass",
       "note": "gépi írásvariáns: com.snc.sdlc.scrum.pp.smclass",
       "source": "fixture015"
     },
     {
-      "name": "glide lastplugin",
-      "kind": "dotted",
+      "name": "Com.snc.sdlc.scrum.pp.smclass",
+      "kind": "quoted",
       "label": "variant",
-      "variant_of": "glide.lastplugin",
-      "note": "gépi írásvariáns: glide.lastplugin",
+      "variant_of": "com.snc.sdlc.scrum.pp.smclass",
+      "note": "gépi írásvariáns: com.snc.sdlc.scrum.pp.smclass",
       "source": "fixture015"
     },
     {
       "name": "GLIDE.LASTPLUGIN",
-      "kind": "dotted",
+      "kind": "quoted",
       "label": "variant",
       "variant_of": "glide.lastplugin",
       "note": "gépi írásvariáns: glide.lastplugin",
       "source": "fixture015"
     },
     {
-      "name": "glide ui session_timeout",
-      "kind": "dotted",
+      "name": "Glide.lastplugin",
+      "kind": "quoted",
       "label": "variant",
-      "variant_of": "glide.ui.session_timeout",
-      "note": "gépi írásvariáns: glide.ui.session_timeout",
+      "variant_of": "glide.lastplugin",
+      "note": "gépi írásvariáns: glide.lastplugin",
       "source": "fixture015"
     },
     {
       "name": "GLIDE.UI.SESSION_TIMEOUT",
-      "kind": "dotted",
+      "kind": "quoted",
       "label": "variant",
       "variant_of": "glide.ui.session_timeout",
       "note": "gépi írásvariáns: glide.ui.session_timeout",
       "source": "fixture015"
     },
     {
-      "name": "kb_knowledge u_source_story",
-      "kind": "dotted",
+      "name": "Glide.ui.session_timeout",
+      "kind": "quoted",
       "label": "variant",
-      "variant_of": "kb_knowledge.u_source_story",
-      "note": "gépi írásvariáns: kb_knowledge.u_source_story",
-      "source": "fixture015"
-    },
-    {
-      "name": "KB_KNOWLEDGE.U_SOURCE_STORY",
-      "kind": "dotted",
-      "label": "variant",
-      "variant_of": "kb_knowledge.u_source_story",
-      "note": "gépi írásvariáns: kb_knowledge.u_source_story",
-      "source": "fixture015"
-    },
-    {
-      "name": "rm_story story_points",
-      "kind": "dotted",
-      "label": "variant",
-      "variant_of": "rm_story.story_points",
-      "note": "gépi írásvariáns: rm_story.story_points",
-      "source": "fixture015"
-    },
-    {
-      "name": "RM_STORY.STORY_POINTS",
-      "kind": "dotted",
-      "label": "variant",
-      "variant_of": "rm_story.story_points",
-      "note": "gépi írásvariáns: rm_story.story_points",
-      "source": "fixture015"
-    },
-    {
-      "name": "rm_story type",
-      "kind": "dotted",
-      "label": "variant",
-      "variant_of": "rm_story.type",
-      "note": "gépi írásvariáns: rm_story.type",
-      "source": "fixture015"
-    },
-    {
-      "name": "RM_STORY.TYPE",
-      "kind": "dotted",
-      "label": "variant",
-      "variant_of": "rm_story.type",
-      "note": "gépi írásvariáns: rm_story.type",
+      "variant_of": "glide.ui.session_timeout",
+      "note": "gépi írásvariáns: glide.ui.session_timeout",
       "source": "fixture015"
     },
     {
@@ -530,13 +438,6 @@
       "kind": "quoted",
       "label": "exists",
       "note": "típus-eltérés: valós Script Include ('MosaicHermesUtils') Business Rule-ként hivatkozva — a név létezik",
-      "source": "fixture015"
-    },
-    {
-      "name": "Change Phase Events Before",
-      "kind": "camelcase",
-      "label": "exists",
-      "note": "típus-eltérés: valós Business Rule ('Change Phase Events Before') Script Include-ként hivatkozva — a név létezik",
       "source": "fixture015"
     }
   ],
