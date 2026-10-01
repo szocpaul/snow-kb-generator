@@ -172,3 +172,54 @@ a runner NEM pipálja.
 - `d77daa4` T005: egyesített minta (70→57 példa a kinyerhetőségi szűrő után)
 - `07c2b52` T005 javítás: kinyerhetőségi szűrő + extractable variánsok
 - `64166f9` T007+T008+T012: kalibráció + SC-gate-ek MIND ZÖLD
+
+
+---
+
+# ZÁRÁS (2026-10-01T17:54:16) — VÉGLEGES
+
+**Állapot: KÉSZ.** A T009 MANUÁLIS KAPU az ember által JÓVÁHAGYVA.
+
+## T009 döntés és végrehajtása
+
+- A **10:1 súlyarány MEGERŐSÍTVE**; a `confidence_threshold` **0.7 → 0.35**
+  a config.yaml-ban MÓDOSULT (az ember jóváhagyásával).
+- **KÖTELEZŐ FELTÉTEL (az ember megjegyzése): a 0.35-ös küszöb EGYETLEN
+  FP-példán nyugszik (a sweepben 0.35 a legalsó érték, ami kiszűri az 1 db
+  fabrikált átcsúszót) — a threshold a KÖVETKEZŐ minta-bővítésnél
+  ÚJRAMÉRENDŐ.** Az Agent.md §45 indoklásában és a config.yaml kommentjében
+  is rögzítve.
+- Agent.md §45 naplóbejegyzés: tények / döntések / tanulságok.
+
+## Végső audit (az objective minden pontja)
+
+| Követelmény | Állapot |
+|---|---|
+| T001-T013 implementálva dev-módban | ✅ (T003/T009 emberi kapuk: nem a runner pipálta, az ember jóváhagyta) |
+| Kimi-token felhasználás | 0 (task-modell: lokális Qwen3.8-27B; a kalibráció a pinnelt jev-1.13.0 TypeSafe-hívásokkal mért — mérőinfra, nem task-modell) |
+| SC-001..SC-005 exit-code-osan zöldek | ✅ `python -m eval.verification_sc_gates_015` → exit 0 (SC-001 13/13, SC-002 n=57 indokolt döntés, SC-003 4→3 nincs romlás, SC-004 gate-tesztek, SC-005 byte-identikus replay) |
+| MANUÁLIS KAPUk emberi döntésre parkolva | ✅ T003, T009 — a runner egyiket sem pipálta; mindkettő emberi jóváhagyást kapott |
+| Záróriport runner-report.md-ben | ✅ ez a fájl |
+| pytest teljes suite | ✅ 363 passed (349 kiinduló + 14 új) |
+| commit + push | ✅ origin/015-asymmetric-verification-gate |
+| backlog | TASK-3 (spec 016 jelölt) változatlanul To Do — a 015-ös nem backlog-task volt |
+
+## Összes commit (branch: 015-asymmetric-verification-gate)
+
+- `1271cc4` T001+T002: PDI-natív fixture (STRY0010004), SC-001 gate
+- `72e8ae6` T006+T004: aszimmetrikus metrika + baseline
+- `55be7a8` T010+T011: gate-emelés a kliensbe
+- `5644c8a` T005/T007/T008/T012 kód
+- `74bf45c` runner-report (T003 parkolás)
+- `d77daa4` T005: egyesített minta
+- `07c2b52` T005 javítás: kinyerhetőségi szűrő
+- `64166f9` T007+T008+T012: kalibráció + SC-gate-ek ZÖLD
+- `7a2a02e` runner-report (T009 parkolás)
+- `405ea5f` T013 zárás: config 0.35 + Agent.md §45
+
+## Nyitott emberi lépések
+
+- **Deploy**: a gate-emelés élesítése EMBERI lépés (`sudo systemctl restart
+  snow-kb.service`) — deploy/README.md megjegyzés. A runner NEM deployolt.
+- **Minta-bővítésnél**: a 0.35-ös threshold újramérendő (T009 feltétel).
+- A T003/T009 tasks.md-checkboxokat az ember pipálhatja (a runner nem tette).
