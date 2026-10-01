@@ -13,9 +13,9 @@
 
 ## Phase 1: Fixture + baseline (US1, playbook: baseline-előbb)
 
-* [ ] T001 [US1] Fixture-script `scripts_pdi/`-mintára. **A Story a snow\_kb\_generator projektről szól** (mint integrációs projekt: „ServiceNow oldali webhook-fogadás és KB-draft-generálás bekötése"). **A komponensek a PDI-n MÁR MEGLEVŐ rekordok** (capture, NEM létrehozás): a script a metaadat-táblákat kérdezi le a table-API-n (sys\_script\_include / sys\_script / sys\_properties / sys\_dictionary; active=true, global scope, sys\_updated\_on preferencia), típusonként kiválaszt összesen **10–15 meglévő komponenst** (több típusból: Script Include, Business Rule, System Property, mező — ha van a PDI-n, UI Policy vagy ACL is), capture-öli őket egy Update Set-be, és a Story-szöveget EZERE a valós nevekre írja meg (a logika fordított: nem a story határozza meg a komponenseket). Minden lépés naplózva
+* [x] T001 [US1] Fixture-script `scripts_pdi/`-mintára. **A Story a snow\_kb\_generator projektről szól** (mint integrációs projekt: „ServiceNow oldali webhook-fogadás és KB-draft-generálás bekötése"). **A komponensek a PDI-n MÁR MEGLEVŐ rekordok** (capture, NEM létrehozás): a script a metaadat-táblákat kérdezi le a table-API-n (sys\_script\_include / sys\_script / sys\_properties / sys\_dictionary; active=true, global scope, sys\_updated\_on preferencia), típusonként kiválaszt összesen **10–15 meglévő komponenst** (több típusból: Script Include, Business Rule, System Property, mező — ha van a PDI-n, UI Policy vagy ACL is), capture-öli őket egy Update Set-be, és a Story-szöveget EZERE a valós nevekre írja meg (a logika fordított: nem a story határozza meg a komponenseket). Minden lépés naplózva
 
-* [ ] T002 \[US1] A kiválasztott komponensnevek dumpolása artifactba (név, típus, sys\_id, sys\_updated\_on) + a fixture-integritás gate: az update set MINDEN neve spot-checkkel „létezik" (SC-001, exit-code-os script)
+* [x] T002 \[US1] A kiválasztott komponensnevek dumpolása artifactba (név, típus, sys\_id, sys\_updated\_on) + a fixture-integritás gate: az update set MINDEN neve spot-checkkel „létezik" (SC-001, exit-code-os script)
 
 * [ ] T003 [US1] **MANUÁLIS KAPU**: a dumpolt komponens-lista emberi review-ja (furcsa/instabil nevek kiszúrása) — a runner NEM pipálhatja
 
