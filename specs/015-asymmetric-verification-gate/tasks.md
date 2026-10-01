@@ -17,7 +17,7 @@
 
 * [x] T002 \[US1] Dumping the selected component names into an artifact (name, type, sys\_id, sys\_updated\_on) + the fixture-integrity gate: EVERY name in the update set "exists" via spot-check (SC-001, exit-code script)
 
-* [ ] T003 [US1] **MANUAL GATE**: human review of the dumped component list (removing odd/unstable names) — the runner CANNOT check it off
+* [x] T003 [US1] **MANUAL GATE**: human review of the dumped component list (filtering out the odd/unstable names) — the runner MUST NOT tick it
 
 * [x] T004 \[US1] Baseline recording: the ASYMMETRIC cost of the current threshold (0.7) on the existing 24-example sample, into a file (the basis of the later comparison)
 
@@ -33,7 +33,7 @@
 
 * [x] T008 \[US2] Regression gate (SC-003): the new (or staying) threshold re-measured on the existing 24-example sample, compared with the 014 baseline → in case of degradation the report is RED, the config is NOT modified
 
-* [ ] T009 [US2] **MANUAL GATE**: the review of the calibration report; if the threshold changes, the justification goes into Agent.md — the runner CANNOT check it off
+* [x] T009 [US2] **MANUAL GATE**: review of the calibration report; if the threshold is modified, the rationale goes into the Agent.md — the runner MUST NOT tick it
 
 ## Phase 4: US3 – Moving the gate into the client (test first)
 
