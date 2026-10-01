@@ -27,3 +27,11 @@ title: Architecture relationships
 | [eval/gepa_optimize.py](../eval/gepa_optimize.py) | [src/snow_kb/program.py](../src/snow_kb/program.py) | Optimizes predictor instructions | dspy.GEPA compile |
 | [eval/gepa_optimize.py](../eval/gepa_optimize.py) | [Kimi API](externals/kimi-api.md) | Reflects and proposes instructions | OpenAI-compatible HTTPS |
 | [eval/metric.py](../eval/metric.py) | [Local llama.cpp server](externals/local-llama-cpp-server.md) | Judges article style | LLM-as-judge |
+| [Calibrated audience decision (spec 013)](systems/snow-kb-generator/containers/snow-kb/components/audience.md) | [TypeSafe API](externals/typesafe-api.md) | Decides article audience | typesafe-sdk Choice over HTTPS |
+| [Component-name verification gate (spec 014)](systems/snow-kb-generator/containers/snow-kb/components/verification.md) | [TypeSafe API](externals/typesafe-api.md) | Judges ambiguous component names | typesafe-sdk Noul over HTTPS |
+| [Component-name verification gate (spec 014)](systems/snow-kb-generator/containers/snow-kb/components/verification.md) | [ServiceNow instance](externals/servicenow-instance.md) | Spot-checks component names | ServiceNow Table API |
+| [Instance spot-check baseline (spec 014 T004)](systems/snow-kb-generator/containers/eval-toolkit/components/spotcheck-baseline.md) | [ServiceNow instance](externals/servicenow-instance.md) | Spot-checks candidate names | ServiceNow Table API |
+| [Audience calibration measurement (spec 013 T012)](systems/snow-kb-generator/containers/eval-toolkit/components/audience-measure.md) | [TypeSafe API](externals/typesafe-api.md) | Captures calibration decisions | typesafe-sdk Choice over HTTPS |
+| [Verification calibration measurement (spec 014 T013)](systems/snow-kb-generator/containers/eval-toolkit/components/verification-measure.md) | [TypeSafe API](externals/typesafe-api.md) | Captures calibration decisions | typesafe-sdk Noul over HTTPS |
+| [src/snow_kb/pipeline.py](../src/snow_kb/pipeline.py) | [src/snow_kb/audience.py](../src/snow_kb/audience.py) | Overrides generative audience | Python call |
+| [src/snow_kb/pipeline.py](../src/snow_kb/pipeline.py) | [src/snow_kb/verification.py](../src/snow_kb/verification.py) | Gates article push | Python call |
