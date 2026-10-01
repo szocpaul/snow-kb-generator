@@ -51,3 +51,23 @@ profile has it; on an instance with a narrower ACL, check the
 `personalize_dictionary` permission or its equivalent). If the query returns 403,
 the gate skips the spot-check layer in fail-open mode with a warning (FR-002) —
 the pipeline does not stop, but the protection is weaker.
+
+## Raising the gate into the client (spec 015, US3) — deployment note
+
+Since spec 015 the verification gate runs INSIDE the write path of
+`servicenow_client` (`_create_kb_article_live`), not in the pipeline layer. The
+behaviour is unchanged (flag/strip/block + fail-open), but from now on EVERY
+call path — pipeline, CLI, future endpoint — goes through the same gate; the
+pipeline-level call is gone (no double decision / double recording).
+
+**In-flight requests at the moment of the restart**: requests running during the
+restart complete via the old (pipeline-level) path — this is expected, not a
+bug. The actual restart is a MANUAL STEP (the runner does not deploy):
+
+```
+sudo systemctl restart snow-kb.service
+```
+
+Check after the restart: the JSONL recording of a pipeline run
+(`verification_gate.recording_path`) still writes EXACTLY 1 decision row per
+article write.

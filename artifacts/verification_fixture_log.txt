@@ -1,0 +1,90 @@
+Selected script_include: 4/4
+Selected business_rule: 3/3
+Selected system_property: 3/3
+Selected field: 3/3
+Selected script_include: 4/4
+Selected business_rule: 3/3
+Selected system_property: 3/3
+Selected field: 3/3
+[1/4] Komponens-kivalasztas a metaadat-tablakbol...
+Selected script_include: 4/4
+Selected business_rule: 3/3
+Selected system_property: 3/3
+Selected field: 3/3
+    script_include  PrototypeServer (sys_script_include, updated: 2026-09-26 04:21:47)
+    script_include  QueryGenGlobalTableDescriptorCache (sys_script_include, updated: 2026-06-13 10:03:53)
+    script_include  QueryGenGlobalElementDescriptor (sys_script_include, updated: 2026-06-13 10:03:53)
+    script_include  QueryGenScalarTypeResolver (sys_script_include, updated: 2026-06-13 10:03:53)
+    business_rule   Change Phase Events Before (sys_script, updated: 2026-06-13 10:20:26)
+    business_rule   Contract Instance (sys_script, updated: 2026-06-13 10:20:26)
+    business_rule   Choice Events (sys_script, updated: 2026-06-13 10:20:26)
+    system_property glide.crypto.core.config.cache (sys_properties, updated: 2026-10-01 02:52:19)
+    system_property sn_kmf.resolution_framework.enabled (sys_properties, updated: 2026-10-01 01:46:33)
+    system_property com.snc.sdlc.scrum.pp.smclass (sys_properties, updated: 2026-09-24 21:31:37)
+    field           kb_knowledge.u_source_story (sys_dictionary, updated: 2026-09-25 18:26:46)
+    field           rm_story.type (sys_dictionary, updated: 2026-09-24 20:43:29)
+    field           rm_story.story_points (sys_dictionary, updated: 2026-09-24 20:42:48)
+[2/4] Story letrehozasa (rm_story)...
+    Story: STRY0010004 (sys_id: 00000000000000000000000000000009)
+[3/4] Update Set letrehozasa + capture-sorok (sys_update_xml)...
+    Update Set: STRY0010004 (sys_id: 00000000000000000000000000000004)
+[1/4] Komponens-kivalasztas a metaadat-tablakbol...
+Selected script_include: 4/4
+Selected business_rule: 3/3
+Selected system_property: 3/3
+Selected field: 3/3
+    script_include  PrototypeServer (sys_script_include, updated: 2026-10-01 16:41:20)
+    script_include  QueryGenGlobalTableDescriptorCache (sys_script_include, updated: 2026-06-13 10:03:53)
+    script_include  QueryGenGlobalElementDescriptor (sys_script_include, updated: 2026-06-13 10:03:53)
+    script_include  QueryGenScalarTypeResolver (sys_script_include, updated: 2026-06-13 10:03:53)
+    business_rule   Change Phase Events Before (sys_script, updated: 2026-06-13 10:20:26)
+    business_rule   Contract Instance (sys_script, updated: 2026-06-13 10:20:26)
+    business_rule   Choice Events (sys_script, updated: 2026-06-13 10:20:26)
+    system_property glide.crypto.core.config.cache (sys_properties, updated: 2026-10-01 02:52:19)
+    system_property sn_kmf.resolution_framework.enabled (sys_properties, updated: 2026-10-01 01:46:33)
+    system_property com.snc.sdlc.scrum.pp.smclass (sys_properties, updated: 2026-09-24 21:31:37)
+    field           kb_knowledge.u_source_story (sys_dictionary, updated: 2026-09-25 18:26:46)
+    field           rm_story.type (sys_dictionary, updated: 2026-09-24 20:43:29)
+    field           rm_story.story_points (sys_dictionary, updated: 2026-09-24 20:42:48)
+[2/4] Story letrehozasa (rm_story)...
+    Story: STRY0010005 (sys_id: 00000000000000000000000000000054)
+[3/4] Update Set letrehozasa...
+    Update Set: STRY0010005 (sys_id: 00000000000000000000000000000053) — allapot: /opt/snow-kb-generator/artifacts/verification_fixture_state.json
+    sys_update_set preference: 00000000000000000000000000000004 -> 00000000000000000000000000000053
+    capture: [Script Include] PrototypeServer
+    sys_update_set preference visszaallitva: 00000000000000000000000000000004
+Jeloltek script_include: 16 (kvota: 4)
+Jeloltek business_rule: 12 (kvota: 3)
+Jeloltek system_property: 12 (kvota: 3)
+Jeloltek field: 12 (kvota: 3)
+[resume] Meglevo allapot: Story=STRY0010004, Update Set=00000000000000000000000000000004
+[4/5] Capture: aktualis update set atallitasa + touch+revert jeloltenkent...
+    sys_update_set preference: 00000000000000000000000000000011 -> 00000000000000000000000000000004
+    capture mar megvan: PrototypeServer — kihagyom
+    capture: [Script Include] MosaicHermesUtils
+    capture: [Script Include] RAGResponseGenerator
+    capture: [Script Include] CodeSigningUtil
+    capture: [Business Rule] Change Phase Events Before
+    capture: [Business Rule] Contract Instance
+    capture: [Business Rule] Choice Events
+    capture SIKERTELEN (fallback a kovetkezo jeloltre): glide.crypto.core.config.cache — PATCH sys_properties/00000000000000000000000000000038 -> HTTP 403: {"error":{"message":"Operation Failed","detail":"ACL Exception Update Failed due to security constraints"},"status":"failure"}
+    capture SIKERTELEN (fallback a kovetkezo jeloltre): sn_kmf.resolution_framework.enabled — PATCH sys_properties/00000000000000000000000000000050 -> HTTP 403: {"error":{"message":"Operation Failed","detail":"ACL Exception Update Failed due to security constraints"},"status":"failure"}
+    capture: [System Property] com.snc.sdlc.scrum.pp.smclass
+    capture: [System Property] glide.lastplugin
+    capture: [System Property] glide.ui.session_timeout
+    the capture does NOT appear in the update set: kb_knowledge.u_source_story — fallback
+    the capture does NOT appear in the update set: rm_story.type — fallback
+    the capture does NOT appear in the update set: rm_story.story_points — fallback
+    the capture does NOT appear in the update set: rm_story.sprint — fallback
+    the capture does NOT appear in the update set: rm_story.split_from — fallback
+    the capture does NOT appear in the update set: rm_story.release — fallback
+    the capture does NOT appear in the update set: rm_story.rank — fallback
+    the capture does NOT appear in the update set: rm_story.product_rank — fallback
+    the capture does NOT appear in the update set: rm_story.is_enabler — fallback
+    the capture does NOT appear in the update set: rm_story.group_rank — fallback
+    the capture does NOT appear in the update set: rm_story.epic — fallback
+    the capture does NOT appear in the update set: rm_story.enhancement — fallback
+    FEWER field components were captured (0/3)
+    sys_update_set preference visszaallitva: 00000000000000000000000000000011
+[5/5] Story-leiras veglegesitese a capture-olt nevekkel + dump...
+DONE. Story=STRY0010004, Update Set=STRY0010004, component=10 — the dump review is the T003 MANUAL GATE.

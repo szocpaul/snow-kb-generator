@@ -25,6 +25,7 @@ import requests
 from requests.auth import HTTPBasicAuth
 
 from snow_kb.config import Settings
+from snow_kb.errors import VerificationBlocked
 from snow_kb.schemas import KBArticle, StoryData
 
 logger = logging.getLogger(__name__)
@@ -424,29 +425,170 @@ class ServiceNowClient:
 
         return "\n".join(lines), "\n\n".join(payloads)
 
+
     # ------------------------------------------------------------------
-    # create_kb_article — creation of the KB article
+    # Verification gate (spec 015 US3: it lives in the component that performs the write)
     # ------------------------------------------------------------------
 
-    def create_kb_article(self, article: KBArticle, story_sys_id: str = "", existing_sys_id: str = "") -> str:
+    def _apply_verification_gate(
+        self,
+        article: KBArticle,
+        *,
+        story_text: str = "",
+        update_set_text: str = "",
+        story_identifier: str = "",
+        spot_checker: "Any | None" = None,
+        decision_client: "Any | None" = None,
+    ) -> KBArticle:
+        """The component name verification gate INSIDE the KB write (spec 015, FR-004).
+
+        In spec 014 it lived in the pipeline layer; here the single entry point of
+        the write contains it, so EVERY (current and future) call path goes through
+        the same gate — "nothing the caller writes can bypass it" (reference pattern).
+
+        Behavior (config.verification_gate.behavior — default: flag):
+          - flag:  the non-existent names get a work_notes signal with the measured
+                   with confidence (article.verification_note); the article goes through.
+          - strip: the suspicious names are dropped from the html.
+          - block: a VerificationBlocked exception, the push does not run.
+
+        Fail-open (FR-005, unchanged): on any internal error of the gate the
+        article goes out unchanged with a warning in the log. The decisions are
+        logged to JSONL (FR-003, the 013 format pattern).
+        """
+        import json as _json
+        from datetime import datetime as _dt, timezone as _tz
+        from pathlib import Path as _Path
+
+        cfg = self.settings.verification_gate
+        if not cfg.enabled:
+            return article
+
+        try:
+            from snow_kb.verification import SpotChecker, verify_component_names
+
+            checker = spot_checker
+            if checker is None:
+                checker = SpotChecker(cache_path=cfg.spotcheck_cache_path,
+                                      session=self.session, base_url=self.base_url)
+
+            jev_client = decision_client
+            if jev_client is None:
+                import os as _os
+
+                if _os.environ.get("TYPESAFE_API_KEY"):
+                    from typesafe_sdk import TypeSafeClient
+
+                    jev_client = TypeSafeClient()
+                # without a key: only the deterministic path runs (fail-open pattern)
+
+            result = verify_component_names(
+                article.html,
+                update_set_text,
+                spot_checker=checker,
+                story_context=story_text,
+                decision_client=jev_client,
+                decision_model=cfg.model,
+                confidence_threshold=cfg.confidence_threshold,
+            )
+        except Exception as exc:  # noqa: BLE001 — an error of the gate must not stop the push
+            logger.warning("Verification gate error — fail-open, the article goes through: %s: %s",
+                           type(exc).__name__, exc)
+            return article
+
+        # FR-003: replay-compatible JSONL recording (a logging error cannot decide either)
+        try:
+            rec_path = _Path(cfg.recording_path)
+            rec_path.parent.mkdir(parents=True, exist_ok=True)
+            row = {
+                "timestamp": _dt.now(_tz.utc).isoformat(),
+                "story": story_identifier,
+                "behavior": cfg.behavior,
+                "skipped": result.skipped,
+                "warning": result.warning,
+                "verdicts": [
+                    {"name": v.name, "status": v.status, "confidence": v.confidence,
+                     "evidence": v.evidence, "layer": v.layer}
+                    for v in result.verdicts
+                ],
+            }
+            with rec_path.open("a", encoding="utf-8") as handle:
+                handle.write(_json.dumps(row, sort_keys=True, ensure_ascii=False) + "\n")
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("Verification recording sikertelen (%s): %s",
+                           cfg.recording_path, exc)
+
+        if result.skipped:
+            return article  # fail-open: unreachable instance → the article goes out
+
+        flagged = result.not_existing_names
+        if not flagged:
+            return article
+
+        logger.warning("Verification gate: non-existent component names: %s (behavior=%s)",
+                       ", ".join(flagged), cfg.behavior)
+
+        if cfg.behavior == "block":
+            raise VerificationBlocked(
+                "The verification gate blocked the push — non-existent component names: "
+                + ", ".join(flagged)
+            )
+        if cfg.behavior == "strip":
+            for name in flagged:
+                article.html = article.html.replace(name, "")
+            article.verification_note = (
+                "Removed component names that do not exist on the instance: "
+                + ", ".join(flagged)
+            )
+            return article
+        # default: flag — the work_notes signal with the measured confidence (KD1)
+        conf_by_name = {v.name: v.confidence for v in result.verdicts}
+        note_parts = [
+            f"{name} (confidence: {conf_by_name.get(name, 0.0):.2f})" for name in flagged
+        ]
+        article.verification_note = (
+            "Component name(s) that do not exist on the instance, in the article: "
+            + ", ".join(note_parts)
+        )
+        return article
+
+    # ------------------------------------------------------------------
+    # create_kb_article — creating the KB article
+    # ------------------------------------------------------------------
+
+    def create_kb_article(self, article: KBArticle, story_sys_id: str = "", existing_sys_id: str = "",
+                          *, story_text: str = "", update_set_text: str = "",
+                          story_identifier: str = "",
+                          spot_checker: "Any | None" = None,
+                          decision_client: "Any | None" = None) -> str:
         """Creates or updates a KB article in ServiceNow.
 
         Args:
             article: the KB article to publish.
-            story_sys_id: the sys_id of the source Story (for updating the work_notes).
-            existing_sys_id: if given, updates the existing article (PATCH)
-                instead of creating a new one (preventing duplication).
+            story_sys_id: the sys_id of the source Story (for the work_notes update).
+            existing_sys_id: if given, it updates the existing article (PATCH)
+                instead of creating a new one (prevents duplication).
+            story_text / update_set_text / story_identifier: a verification gate
+                context (spec 015 US3 — the gate runs INSIDE the write path).
+            spot_checker / decision_client: optional injection (test / measurement).
 
         Returns:
-            The sys_id of the KB article (dummy in dry-run).
+            The sys_id of the KB article (a dummy in dry-run).
 
         Raises:
             AuthError: if the authentication fails.
             ServiceNowError: other API errors.
+            VerificationBlocked: when the verification gate behavior=block
+                blokkol (spec 014/015).
         """
         if self.dry_run:
             return self._create_kb_article_mock(article)
-        return self._create_kb_article_live(article, story_sys_id, existing_sys_id)
+        return self._create_kb_article_live(
+            article, story_sys_id, existing_sys_id,
+            story_text=story_text, update_set_text=update_set_text,
+            story_identifier=story_identifier,
+            spot_checker=spot_checker, decision_client=decision_client,
+        )
 
     def _create_kb_article_mock(self, article: KBArticle) -> str:
         """Dry-run: it only logs and returns a dummy sys_id."""
@@ -459,9 +601,27 @@ class ServiceNowClient:
         logger.info("  -> sys_id: %s", dummy_sys_id)
         return dummy_sys_id
 
-    def _create_kb_article_live(self, article: KBArticle, story_sys_id: str = "", existing_sys_id: str = "") -> str:
-        """Live: ServiceNow Table API POST/PATCH call + work_notes update."""
-        
+    def _create_kb_article_live(self, article: KBArticle, story_sys_id: str = "", existing_sys_id: str = "",
+                                *, story_text: str = "", update_set_text: str = "",
+                                story_identifier: str = "",
+                                spot_checker: "Any | None" = None,
+                                decision_client: "Any | None" = None) -> str:
+        """Production: ServiceNow Table API POST/PATCH call + work_notes update.
+
+        The verification gate runs INSIDE the write (spec 015 US3): every call
+        path — pipeline, CLI, future ones — goes through the same gate.
+        """
+        # Spec 015 (US3/FR-004): the gate is before the KB write, inside the client.
+        # enabled=False → no-op; fail-open (FR-005) unchanged.
+        article = self._apply_verification_gate(
+            article,
+            story_text=story_text,
+            update_set_text=update_set_text,
+            story_identifier=story_identifier,
+            spot_checker=spot_checker,
+            decision_client=decision_client,
+        )
+
         # If there is an existing_sys_id, we update it with a PATCH
         if existing_sys_id:
             url = f"{self.base_url}/kb_knowledge/{existing_sys_id}"
