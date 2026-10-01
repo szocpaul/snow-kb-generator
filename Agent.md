@@ -1004,3 +1004,31 @@ c45e95e (T013), dd36ea9 (T014 package report)
 - Sensitivity analysis of the cost ratio is mandatory input for the threshold decision:
   here the candidate is the same at 10:1 and 20:1 (0.35), but different at 5:1 — without
   confirming the ratio the sweep candidate is not interpretable.
+
+
+## 46. Spec 015 deploy + first production observation (2026-10-01)
+
+### Facts
+- Deploy GREEN: HEAD 5a3e308, 363 tests, gate inside `_create_kb_article_live`,
+  smoke: exactly 1 JSONL entry (the gate move verified).
+- Config in production: `enabled: true, behavior: flag, confidence_threshold: 0.35,
+  model: jev-1.13.0`.
+- **First production FP case**: from the smoke article the extractor picked up the name
+  `SnowKbGenerator` as a component candidate; the spot-check shows it does not exist on the PDI,
+  yet the calibrated layer still called it "exists" with 0.78 → it passed the 0.35 gate
+  (flag, non-blocking).
+
+### Lesson
+- The T009 condition was proven on the first production run: the 0.35 threshold rests on a single
+  FP case → it must be RE-MEASURED at the next sample expansion.
+- **New, separate error class**: the EXTRACTOR can also be wrong — it makes a candidate from non-components (project name).
+  The `SnowKbGenerator` case is twofold: extraction false candidate +
+  calibrated false "exists". The threshold does not handle this class (the 015
+  runner report predicted this: "this is NOT fixed by the threshold").
+- Candidates for the next sample expansion: (1) non-component brand names in the
+  extractor filter (whitelist/blacklist), (2) the `SnowKbGenerator`-like case
+  into the labelled sample as "fabricated" or as a separate "not-a-component" class.
+
+### Open
+- Observation period: 1–2 weeks of JSONL analysis (signal rate at the 0.35 gate).
+- The 016 spec (context selection, backlog TASK-3) comes after the observation.
