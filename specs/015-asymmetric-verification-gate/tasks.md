@@ -37,9 +37,9 @@
 
 ## Phase 4: US3 – Moving the gate into the client (test first)
 
-* [ ] T010 [US3] Test: a direct `_create_kb_article_live` call (bypassing the pipeline) is also gated; in a normal pipeline run exactly 1 gate decision + 1 recording entry; fail-open in the client-side gate; the old pipeline call is gone (no double protection). FAIL before implementation
+* [x] T010 [US3] Test: a direct `_create_kb_article_live` call (bypassing the pipeline) is gated as well; in a normal pipeline run exactly 1 gate decision + 1 recording entry; fail-open in the in-client gate; the old pipeline call is gone (no double protection). MUST FAIL before the implementation
 
-* [ ] T011 [US3] The `_apply_verification_gate` logic moves into the `servicenow_client` write path; the pipeline-level call is deleted; deployment note in `deploy/README` (in-flight requests during the restart moment)
+* [x] T011 [US3] The `_apply_verification_gate` logic moves into the write path of `servicenow_client`; the pipeline-layer call is deleted; deployment note into `deploy/README` (the in-flight requests at the moment of the restart)
 
 ## Phase 5: Closure
 
