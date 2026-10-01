@@ -37,9 +37,9 @@
 
 ## Phase 4: US3 – Gate-emelés a kliensbe (teszt-előbb)
 
-* [ ] T010 [US3] Teszt: közvetlen `_create_kb_article_live` hívás (pipeline megkerülve) is gated; normál pipeline-futásban pontosan 1 gate-döntés + 1 recording-bejegyzés; fail-open a kliens-beli gate-ben; a régi pipeline-hívás megszűnt (nincs dupla védelem). FAIL implementáció előtt
+* [x] T010 [US3] Teszt: közvetlen `_create_kb_article_live` hívás (pipeline megkerülve) is gated; normál pipeline-futásban pontosan 1 gate-döntés + 1 recording-bejegyzés; fail-open a kliens-beli gate-ben; a régi pipeline-hívás megszűnt (nincs dupla védelem). FAIL implementáció előtt
 
-* [ ] T011 [US3] A `_apply_verification_gate` logika átköltözik a `servicenow_client` írási útjába; a pipeline-rétegű hívás törlődik; deploy-megjegyzés a `deploy/README`-be (restart-pillanatbeli in-flight kérések)
+* [x] T011 [US3] A `_apply_verification_gate` logika átköltözik a `servicenow_client` írási útjába; a pipeline-rétegű hívás törlődik; deploy-megjegyzés a `deploy/README`-be (restart-pillanatbeli in-flight kérések)
 
 ## Phase 5: Zárás
 
