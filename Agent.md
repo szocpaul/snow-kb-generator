@@ -983,3 +983,31 @@ c45e95e (T013), dd36ea9 (T014-csomag riport)
 - Érzékenység-analízis a költség-arányra kötelező adat a threshold-döntéshez:
   itt a jelölt 10:1-nél és 20:1-nél azonos (0.35), de 5:1-nél eltér — az arány
   megerősítése nélkül a sweep-jelölt nem értelmezhető.
+
+
+## 46. Spec 015 deploy + első éles megfigyelés (2026-10-01)
+
+### Tények
+- Deploy zöld: HEAD 5a3e308, 363 teszt, gate a `_create_kb_article_live` belsejében,
+  smoke: pontosan 1 JSONL-bejegyzés (a gate-áthelyezés igazolva).
+- Config élesben: `enabled: true, behavior: flag, confidence_threshold: 0.35,
+  model: jev-1.13.0`.
+- **Első éles FP-eset**: a smoke-cikkből a kinyerő a `SnowKbGenerator` nevet
+  komponens-jelöltként emelte ki; a spot-check szerint nem létezik a PDI-n,
+  a kalibrált réteg mégis 0.78-cal „exists"-nek mondta → a 0.35-ös kapun átment
+  (flag, nem blokkoló).
+
+### Tanulság
+- A T009-es feltétel az első éles futáson igazolódott: a 0.35-ös küszöb egyetlen
+  FP-példán nyugszik → a következő minta-bővítésnél ÚJRAMÉRENDŐ.
+- **Új, külön hibaosztály**: a KINYERŐ is tévedhet — nem-komponensekből (projektnév)
+  csinál jelöltet. Ez a `SnowKbGenerator`-eset kettős: kinyerési false candidate +
+  kalibrált false „exists". A threshold ezt az osztályt nem kezeli (a 015-ös
+  runner-report ezt előre jelezte: „ezt a threshold NEM javítja").
+- A következő minta-bővítés jelöltjei: (1) nem-komponens projektmárkanevek a
+  kinyerő szűrőjébe (whitelist/blacklist), (2) a `SnowKbGenerator`-féle példa
+  a címkézett mintába „fabricated"-ként vagy külön „not-a-component" osztályként.
+
+### Nyitott
+- Megfigyelési időszak: 1–2 hét JSONL-elemzés (jelzés-arány a 0.35-ös kapunál).
+- A 016-os spec (kontextus-válogatás, backlog TASK-3) a megfigyelés után.
