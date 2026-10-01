@@ -23,7 +23,7 @@
 
 ## tPhase 2: US1 – Címkézett minta a fixture-ből
 
-* [ ] T005 [US1] Minta-származtató script: valós / írásvariáns / fabrikált / típus-eltérés példák gépi generálása a dumpolt név-halmazból (minimalista változat: egyetlen story-kontextus, név-szintű minta); **magminimum-feltétel: ha a jóváhagyott magnév-halmaz < 8 név, a task ÁLLJON MEG és jelentsen — a minta NEM hígítható korrelált variánsokkal**; egyesítés a meglévő 24 példával (az aldidev-eredetű „létezik" címkék kizárva a PDI-mérésből, FR-002) → összesen ≥30 példa, címkék commitolva a `data/examples/` alá
+* [x] T005 [US1] Minta-származtató script: valós / írásvariáns / fabrikált / típus-eltérés példák gépi generálása a dumpolt név-halmazból (minimalista változat: egyetlen story-kontextus, név-szintű minta); **magminimum-feltétel: ha a jóváhagyott magnév-halmaz < 8 név, a task ÁLLJON MEG és jelentsen — a minta NEM hígítható korrelált variánsokkal**; egyesítés a meglévő 24 példával (az aldidev-eredetű „létezik" címkék kizárva a PDI-mérésből, FR-002) → összesen ≥30 példa, címkék commitolva a `data/examples/` alá
 
 ## Phase 3: US2 – Aszimmetrikus kalibráció
 

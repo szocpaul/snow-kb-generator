@@ -112,7 +112,7 @@ def build(approved_path: str | None = None) -> int:
             })
     # 3. fabrikált nevek
     for f in _FABRICATED:
-        examples.append({**f, "source": "fixture015"})
+        examples.append({**f, "label": "fabricated", "source": "fixture015"})
     # 4. típus-eltérés: valós név, rossz típusú táblában értelmezve
     #    (pl. a Script Include neve Business Rule-ként) — a NÉV létezik.
     si_names = [c for c in core if c["kind"] == "script_include"][:2]
@@ -132,19 +132,26 @@ def build(approved_path: str | None = None) -> int:
             "source": "fixture015",
         })
 
-    # 5. egyesítés a meglévő 24 példával (FR-002: aldidev-eredetű "létezik" kizárva)
+    # 5. egyesítés a meglévő 24 példával (FR-002: az aldidev-eredetű "létezik"
+    #    címkék kizárva — azaz ami NEM támasztja alá az instance-tény. Az
+    #    instance-tény itt a spot-check CACHE (a 014-es élő ellenőrzés lekottázott
+    #    eredménye): csak a cache-empírikusan "exists" címkék maradhatnak.
+    cache_path = Path("artifacts/verification_spotcheck_cache.json")
+    cache = json.loads(cache_path.read_text(encoding="utf-8")) if cache_path.exists() else {}
     old = json.loads(OLD_LABELED.read_text(encoding="utf-8"))
     old_examples = []
     excluded = []
     for e in old["examples"]:
-        if e["label"] == "exists" and "PDI-n" not in e.get("note", ""):
-            excluded.append(e["name"])
-            continue
+        if e["label"] == "exists":
+            entry = cache.get(e["name"].casefold(), {})
+            if entry.get("status") != "exists":
+                excluded.append(e["name"])
+                continue
         e2 = dict(e)
         e2.setdefault("source", "spec014")
         old_examples.append(e2)
     if excluded:
-        print(f"FR-002: kizárva (aldidev-eredetű 'létezik' címke): {excluded}")
+        print(f"FR-002: kizárva (az instance-tény NEM támasztja alá): {excluded}")
 
     merged = old_examples + examples
     out = {

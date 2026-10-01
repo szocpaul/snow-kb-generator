@@ -1,0 +1,544 @@
+{
+  "spec": "015-asymmetric-verification-gate",
+  "task": "T005",
+  "fixture_story": "STRY0010004",
+  "labels": {
+    "exists": "valós komponens a PDI-n",
+    "missing_real": "a story szerint léteznie kellene, de a PDI-n nincs (a cikkre vetítve: nem létező)",
+    "variant": "írásvariáns egy valós/missing_real névre",
+    "fabricated": "fabrikált, sosem létezett",
+    "external": "külső (nem-ServiceNow) rendszer objektuma — nem validálandó (out of scope)"
+  },
+  "decision_mapping": {
+    "exists": "exists",
+    "missing_real": "not_exists (a gate dolga: jelzés)",
+    "variant_of_existing": "exists (utalás) — ha a variant_of exists",
+    "variant_of_missing": "not_exists",
+    "fabricated": "not_exists",
+    "external": "nincs döntés — a kalibrált réteg 'nem SNOW-komponens' (a gate nem jelzi)"
+  },
+  "story_context": "ServiceNow oldali webhook-fogadas es KB-draft generalas bekotese (snow-kb-generator)",
+  "examples": [
+    {
+      "name": "AbstractAjaxProcessor",
+      "kind": "camelcase",
+      "label": "exists",
+      "note": "valós Script Include a PDI-n",
+      "source": "spec014"
+    },
+    {
+      "name": "AbstractAjaxListDragChecker",
+      "kind": "camelcase",
+      "label": "exists",
+      "note": "valós Script Include a PDI-n",
+      "source": "spec014"
+    },
+    {
+      "name": "AccessAnalyzeExecutor",
+      "kind": "camelcase",
+      "label": "exists",
+      "note": "valós Script Include a PDI-n",
+      "source": "spec014"
+    },
+    {
+      "name": "current.work_notes",
+      "kind": "dotted",
+      "label": "exists",
+      "note": "valós mezőhivatkozás (work_notes elem a task-táblákon)",
+      "source": "spec014"
+    },
+    {
+      "name": "incident.priority",
+      "kind": "dotted",
+      "label": "exists",
+      "note": "valós tábla.mező hivatkozás (incident tábla a PDI-n)",
+      "source": "spec014"
+    },
+    {
+      "name": "Abort change of milestone on parent task",
+      "kind": "quoted",
+      "label": "exists",
+      "note": "valós Business Rule a PDI-n",
+      "source": "spec014"
+    },
+    {
+      "name": "JiraInboundUtils",
+      "kind": "quoted",
+      "label": "missing_real",
+      "note": "gold-1: a story Script Include-ként hivatkozik, a PDI-n nincs",
+      "source": "spec014"
+    },
+    {
+      "name": "JiraIntegrationUtils",
+      "kind": "camelcase",
+      "label": "missing_real",
+      "note": "gold-2: a story szerint létező integrációs script, a PDI-n nincs",
+      "source": "spec014"
+    },
+    {
+      "name": "JiraInboundWebhook",
+      "kind": "camelcase",
+      "label": "missing_real",
+      "note": "generated-1: a frissen generált cikk nevezte meg, a PDI-n nincs",
+      "source": "spec014"
+    },
+    {
+      "name": "ALDIS4ProjectInterface",
+      "kind": "quoted",
+      "label": "missing_real",
+      "note": "gold-9: SNOW-nek tűnő scriptnév (idézett megjelenés a cikkben), a PDI-n nincs",
+      "source": "spec014"
+    },
+    {
+      "name": "aldi.integration.almex.config.matrix",
+      "kind": "dotted",
+      "label": "missing_real",
+      "note": "gold-8: SNOW táblaszerű név, a PDI-n nincs",
+      "source": "spec014"
+    },
+    {
+      "name": "Abstract Ajax Processor",
+      "kind": "quoted",
+      "label": "variant",
+      "variant_of": "AbstractAjaxProcessor",
+      "note": "szóközös írásvariáns a valós Script Include-ra",
+      "source": "spec014"
+    },
+    {
+      "name": "AbstractAjaxProcesser",
+      "kind": "camelcase",
+      "label": "variant",
+      "variant_of": "AbstractAjaxProcessor",
+      "note": "elütéses írásvariáns",
+      "source": "spec014"
+    },
+    {
+      "name": "Jira Inbound Utils",
+      "kind": "quoted",
+      "label": "variant",
+      "variant_of": "JiraInboundUtils",
+      "note": "szóközös variáns — de a kanonikus név sem létezik a PDI-n (missing_real variáns)",
+      "source": "spec014"
+    },
+    {
+      "name": "Access Analyze Executor",
+      "kind": "quoted",
+      "label": "variant",
+      "variant_of": "AccessAnalyzeExecutor",
+      "note": "szóközös írásvariáns",
+      "source": "spec014"
+    },
+    {
+      "name": "SnowKbAutoHealManager",
+      "kind": "camelcase",
+      "label": "fabricated",
+      "note": "fabrikált Script Include-szerű név",
+      "source": "spec014"
+    },
+    {
+      "name": "IncidentPriorityRecalculator",
+      "kind": "camelcase",
+      "label": "fabricated",
+      "note": "fabrikált, hihető nevű script",
+      "source": "spec014"
+    },
+    {
+      "name": "dynamic.sla.recalc",
+      "kind": "dotted",
+      "label": "fabricated",
+      "note": "fabrikált táblaszerű dotted név",
+      "source": "spec014"
+    },
+    {
+      "name": "ChgStateSynchronizer",
+      "kind": "camelcase",
+      "label": "fabricated",
+      "note": "fabrikált",
+      "source": "spec014"
+    },
+    {
+      "name": "ALDI KB AutoPublisher",
+      "kind": "quoted",
+      "label": "fabricated",
+      "note": "fabrikált BR-szerű név",
+      "source": "spec014"
+    },
+    {
+      "name": "SolMan",
+      "kind": "camelcase",
+      "label": "external",
+      "note": "SAP Solution Manager — külső rendszer",
+      "source": "spec014"
+    },
+    {
+      "name": "interface.solman",
+      "kind": "dotted",
+      "label": "external",
+      "note": "SolMan interfész-host",
+      "source": "spec014"
+    },
+    {
+      "name": "GetReturns",
+      "kind": "camelcase",
+      "label": "external",
+      "note": "SolMan-oldali funkció",
+      "source": "spec014"
+    },
+    {
+      "name": "ALDI S4 OData Outbound",
+      "kind": "quoted",
+      "label": "external",
+      "note": "S4 OData interfész — külső rendszer objektuma",
+      "source": "spec014"
+    },
+    {
+      "name": "PrototypeServer",
+      "kind": "camelcase",
+      "label": "exists",
+      "note": "fixture (STRY0010004 update set): valós Script Include a PDI-n",
+      "source": "fixture015"
+    },
+    {
+      "name": "MosaicHermesUtils",
+      "kind": "camelcase",
+      "label": "exists",
+      "note": "fixture (STRY0010004 update set): valós Script Include a PDI-n",
+      "source": "fixture015"
+    },
+    {
+      "name": "RAGResponseGenerator",
+      "kind": "camelcase",
+      "label": "exists",
+      "note": "fixture (STRY0010004 update set): valós Script Include a PDI-n",
+      "source": "fixture015"
+    },
+    {
+      "name": "CodeSigningUtil",
+      "kind": "camelcase",
+      "label": "exists",
+      "note": "fixture (STRY0010004 update set): valós Script Include a PDI-n",
+      "source": "fixture015"
+    },
+    {
+      "name": "Change Phase Events Before",
+      "kind": "quoted",
+      "label": "exists",
+      "note": "fixture (STRY0010004 update set): valós Business Rule a PDI-n",
+      "source": "fixture015"
+    },
+    {
+      "name": "Contract Instance",
+      "kind": "quoted",
+      "label": "exists",
+      "note": "fixture (STRY0010004 update set): valós Business Rule a PDI-n",
+      "source": "fixture015"
+    },
+    {
+      "name": "Choice Events",
+      "kind": "quoted",
+      "label": "exists",
+      "note": "fixture (STRY0010004 update set): valós Business Rule a PDI-n",
+      "source": "fixture015"
+    },
+    {
+      "name": "com.snc.sdlc.scrum.pp.smclass",
+      "kind": "dotted",
+      "label": "exists",
+      "note": "fixture (STRY0010004 update set): valós System Property a PDI-n",
+      "source": "fixture015"
+    },
+    {
+      "name": "glide.lastplugin",
+      "kind": "dotted",
+      "label": "exists",
+      "note": "fixture (STRY0010004 update set): valós System Property a PDI-n",
+      "source": "fixture015"
+    },
+    {
+      "name": "glide.ui.session_timeout",
+      "kind": "dotted",
+      "label": "exists",
+      "note": "fixture (STRY0010004 update set): valós System Property a PDI-n",
+      "source": "fixture015"
+    },
+    {
+      "name": "kb_knowledge.u_source_story",
+      "kind": "dotted",
+      "label": "exists",
+      "note": "fixture (STRY0010004 update set): valós Dictionary a PDI-n",
+      "source": "fixture015"
+    },
+    {
+      "name": "rm_story.story_points",
+      "kind": "dotted",
+      "label": "exists",
+      "note": "fixture (STRY0010004 update set): valós Dictionary a PDI-n",
+      "source": "fixture015"
+    },
+    {
+      "name": "rm_story.type",
+      "kind": "dotted",
+      "label": "exists",
+      "note": "fixture (STRY0010004 update set): valós Dictionary a PDI-n",
+      "source": "fixture015"
+    },
+    {
+      "name": "prototypeserver",
+      "kind": "camelcase",
+      "label": "variant",
+      "variant_of": "PrototypeServer",
+      "note": "gépi írásvariáns: PrototypeServer",
+      "source": "fixture015"
+    },
+    {
+      "name": "prototypeServer",
+      "kind": "camelcase",
+      "label": "variant",
+      "variant_of": "PrototypeServer",
+      "note": "gépi írásvariáns: PrototypeServer",
+      "source": "fixture015"
+    },
+    {
+      "name": "mosaichermesutils",
+      "kind": "camelcase",
+      "label": "variant",
+      "variant_of": "MosaicHermesUtils",
+      "note": "gépi írásvariáns: MosaicHermesUtils",
+      "source": "fixture015"
+    },
+    {
+      "name": "mosaicHermesUtils",
+      "kind": "camelcase",
+      "label": "variant",
+      "variant_of": "MosaicHermesUtils",
+      "note": "gépi írásvariáns: MosaicHermesUtils",
+      "source": "fixture015"
+    },
+    {
+      "name": "ragresponsegenerator",
+      "kind": "camelcase",
+      "label": "variant",
+      "variant_of": "RAGResponseGenerator",
+      "note": "gépi írásvariáns: RAGResponseGenerator",
+      "source": "fixture015"
+    },
+    {
+      "name": "rAGResponseGenerator",
+      "kind": "camelcase",
+      "label": "variant",
+      "variant_of": "RAGResponseGenerator",
+      "note": "gépi írásvariáns: RAGResponseGenerator",
+      "source": "fixture015"
+    },
+    {
+      "name": "codesigningutil",
+      "kind": "camelcase",
+      "label": "variant",
+      "variant_of": "CodeSigningUtil",
+      "note": "gépi írásvariáns: CodeSigningUtil",
+      "source": "fixture015"
+    },
+    {
+      "name": "codeSigningUtil",
+      "kind": "camelcase",
+      "label": "variant",
+      "variant_of": "CodeSigningUtil",
+      "note": "gépi írásvariáns: CodeSigningUtil",
+      "source": "fixture015"
+    },
+    {
+      "name": "change phase events before",
+      "kind": "quoted",
+      "label": "variant",
+      "variant_of": "Change Phase Events Before",
+      "note": "gépi írásvariáns: Change Phase Events Before",
+      "source": "fixture015"
+    },
+    {
+      "name": "Change-Phase-Events-Before",
+      "kind": "quoted",
+      "label": "variant",
+      "variant_of": "Change Phase Events Before",
+      "note": "gépi írásvariáns: Change Phase Events Before",
+      "source": "fixture015"
+    },
+    {
+      "name": "contract instance",
+      "kind": "quoted",
+      "label": "variant",
+      "variant_of": "Contract Instance",
+      "note": "gépi írásvariáns: Contract Instance",
+      "source": "fixture015"
+    },
+    {
+      "name": "Contract-Instance",
+      "kind": "quoted",
+      "label": "variant",
+      "variant_of": "Contract Instance",
+      "note": "gépi írásvariáns: Contract Instance",
+      "source": "fixture015"
+    },
+    {
+      "name": "choice events",
+      "kind": "quoted",
+      "label": "variant",
+      "variant_of": "Choice Events",
+      "note": "gépi írásvariáns: Choice Events",
+      "source": "fixture015"
+    },
+    {
+      "name": "Choice-Events",
+      "kind": "quoted",
+      "label": "variant",
+      "variant_of": "Choice Events",
+      "note": "gépi írásvariáns: Choice Events",
+      "source": "fixture015"
+    },
+    {
+      "name": "com snc sdlc scrum pp smclass",
+      "kind": "dotted",
+      "label": "variant",
+      "variant_of": "com.snc.sdlc.scrum.pp.smclass",
+      "note": "gépi írásvariáns: com.snc.sdlc.scrum.pp.smclass",
+      "source": "fixture015"
+    },
+    {
+      "name": "COM.SNC.SDLC.SCRUM.PP.SMCLASS",
+      "kind": "dotted",
+      "label": "variant",
+      "variant_of": "com.snc.sdlc.scrum.pp.smclass",
+      "note": "gépi írásvariáns: com.snc.sdlc.scrum.pp.smclass",
+      "source": "fixture015"
+    },
+    {
+      "name": "glide lastplugin",
+      "kind": "dotted",
+      "label": "variant",
+      "variant_of": "glide.lastplugin",
+      "note": "gépi írásvariáns: glide.lastplugin",
+      "source": "fixture015"
+    },
+    {
+      "name": "GLIDE.LASTPLUGIN",
+      "kind": "dotted",
+      "label": "variant",
+      "variant_of": "glide.lastplugin",
+      "note": "gépi írásvariáns: glide.lastplugin",
+      "source": "fixture015"
+    },
+    {
+      "name": "glide ui session_timeout",
+      "kind": "dotted",
+      "label": "variant",
+      "variant_of": "glide.ui.session_timeout",
+      "note": "gépi írásvariáns: glide.ui.session_timeout",
+      "source": "fixture015"
+    },
+    {
+      "name": "GLIDE.UI.SESSION_TIMEOUT",
+      "kind": "dotted",
+      "label": "variant",
+      "variant_of": "glide.ui.session_timeout",
+      "note": "gépi írásvariáns: glide.ui.session_timeout",
+      "source": "fixture015"
+    },
+    {
+      "name": "kb_knowledge u_source_story",
+      "kind": "dotted",
+      "label": "variant",
+      "variant_of": "kb_knowledge.u_source_story",
+      "note": "gépi írásvariáns: kb_knowledge.u_source_story",
+      "source": "fixture015"
+    },
+    {
+      "name": "KB_KNOWLEDGE.U_SOURCE_STORY",
+      "kind": "dotted",
+      "label": "variant",
+      "variant_of": "kb_knowledge.u_source_story",
+      "note": "gépi írásvariáns: kb_knowledge.u_source_story",
+      "source": "fixture015"
+    },
+    {
+      "name": "rm_story story_points",
+      "kind": "dotted",
+      "label": "variant",
+      "variant_of": "rm_story.story_points",
+      "note": "gépi írásvariáns: rm_story.story_points",
+      "source": "fixture015"
+    },
+    {
+      "name": "RM_STORY.STORY_POINTS",
+      "kind": "dotted",
+      "label": "variant",
+      "variant_of": "rm_story.story_points",
+      "note": "gépi írásvariáns: rm_story.story_points",
+      "source": "fixture015"
+    },
+    {
+      "name": "rm_story type",
+      "kind": "dotted",
+      "label": "variant",
+      "variant_of": "rm_story.type",
+      "note": "gépi írásvariáns: rm_story.type",
+      "source": "fixture015"
+    },
+    {
+      "name": "RM_STORY.TYPE",
+      "kind": "dotted",
+      "label": "variant",
+      "variant_of": "rm_story.type",
+      "note": "gépi írásvariáns: rm_story.type",
+      "source": "fixture015"
+    },
+    {
+      "name": "WebhookRetryPolicyManager",
+      "kind": "camelcase",
+      "note": "fabrikált Script Include-szerű név — nincs a PDI-n",
+      "label": "fabricated",
+      "source": "fixture015"
+    },
+    {
+      "name": "KbDraftAuditInterceptor",
+      "kind": "camelcase",
+      "note": "fabrikált Script Include-szerű név — nincs a PDI-n",
+      "label": "fabricated",
+      "source": "fixture015"
+    },
+    {
+      "name": "snowkb.generator.retry.interval",
+      "kind": "dotted",
+      "note": "fabrikált property-szerű név — nincs a PDI-n",
+      "label": "fabricated",
+      "source": "fixture015"
+    },
+    {
+      "name": "Validate KB draft before push",
+      "kind": "quoted",
+      "note": "fabrikált Business Rule-szerű név — nincs a PDI-n",
+      "label": "fabricated",
+      "source": "fixture015"
+    },
+    {
+      "name": "PrototypeServer",
+      "kind": "quoted",
+      "label": "exists",
+      "note": "típus-eltérés: valós Script Include ('PrototypeServer') Business Rule-ként hivatkozva — a név létezik",
+      "source": "fixture015"
+    },
+    {
+      "name": "MosaicHermesUtils",
+      "kind": "quoted",
+      "label": "exists",
+      "note": "típus-eltérés: valós Script Include ('MosaicHermesUtils') Business Rule-ként hivatkozva — a név létezik",
+      "source": "fixture015"
+    },
+    {
+      "name": "Change Phase Events Before",
+      "kind": "camelcase",
+      "label": "exists",
+      "note": "típus-eltérés: valós Business Rule ('Change Phase Events Before') Script Include-ként hivatkozva — a név létezik",
+      "source": "fixture015"
+    }
+  ],
+  "note": "A fixture-példák címkéi az instance-tényből (a capture-ölt update set tartalmából) gépiesen származnak; a minta NEM hígított korrelált variánsokkal (a fabrikált nevek fuggetlenek)."
+}
