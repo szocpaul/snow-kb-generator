@@ -1,0 +1,511 @@
+{
+ "capture": "calibration-probes",
+ "model": "jev-1.13.0",
+ "n_labeled": 56,
+ "rows": [
+  {
+   "example_id": "gold-1",
+   "piece_id": "story:number",
+   "source_type": "story_meta",
+   "label": "noise",
+   "label_note": "story-azonosító, a cikkíráshoz nem kell",
+   "score": 0.01,
+   "confidence": 0.99
+  },
+  {
+   "example_id": "gold-1",
+   "piece_id": "story:work_notes",
+   "source_type": "story_meta",
+   "label": "borderline",
+   "label_note": "dev-napló (endpoint, Basic Auth) — a lényeg a tech spec-ben is megvan, összefoglalható",
+   "score": 1.32,
+   "confidence": 0.35
+  },
+  {
+   "example_id": "gold-1",
+   "piece_id": "story:comments",
+   "source_type": "story_meta",
+   "label": "borderline",
+   "label_note": "QA-verifikáció az u_jira_key mappingről — egy mondatba sűríthető",
+   "score": 0.14,
+   "confidence": 0.79
+  },
+  {
+   "example_id": "gold-1",
+   "piece_id": "story:state",
+   "source_type": "story_meta",
+   "label": "noise",
+   "label_note": "workflow-állapot, adminisztratív meta",
+   "score": 0.04,
+   "confidence": 0.94
+  },
+  {
+   "example_id": "gold-1",
+   "piece_id": "story:assigned_to",
+   "source_type": "story_meta",
+   "label": "noise",
+   "label_note": "személy-meta, nem tartalom",
+   "score": 0.0,
+   "confidence": 0.99
+  },
+  {
+   "example_id": "gold-1",
+   "piece_id": "story:assignment_group",
+   "source_type": "story_meta",
+   "label": "noise",
+   "label_note": "csapat-meta, nem tartalom",
+   "score": 0.02,
+   "confidence": 0.98
+  },
+  {
+   "example_id": "gold-2",
+   "piece_id": "story:number",
+   "source_type": "story_meta",
+   "label": "noise",
+   "label_note": "story-azonosító, a cikkíráshoz nem kell",
+   "score": 0.0,
+   "confidence": 0.99
+  },
+  {
+   "example_id": "gold-2",
+   "piece_id": "story:work_notes",
+   "source_type": "story_meta",
+   "label": "borderline",
+   "label_note": "JiraIntegrationUtils említés, de a részletek a tech spec-ben — összefoglalható",
+   "score": 1.83,
+   "confidence": 0.75
+  },
+  {
+   "example_id": "gold-2",
+   "piece_id": "story:comments",
+   "source_type": "story_meta",
+   "label": "borderline",
+   "label_note": "QA payload-verifikáció — sűríthető",
+   "score": 0.35,
+   "confidence": 0.47
+  },
+  {
+   "example_id": "gold-2",
+   "piece_id": "story:state",
+   "source_type": "story_meta",
+   "label": "noise",
+   "label_note": "workflow-állapot, adminisztratív meta",
+   "score": 0.05,
+   "confidence": 0.93
+  },
+  {
+   "example_id": "gold-2",
+   "piece_id": "story:assigned_to",
+   "source_type": "story_meta",
+   "label": "noise",
+   "label_note": "személy-meta, nem tartalom",
+   "score": 0.0,
+   "confidence": 0.99
+  },
+  {
+   "example_id": "gold-2",
+   "piece_id": "story:assignment_group",
+   "source_type": "story_meta",
+   "label": "noise",
+   "label_note": "csapat-meta, nem tartalom",
+   "score": 0.02,
+   "confidence": 0.97
+  },
+  {
+   "example_id": "gold-3",
+   "piece_id": "story:number",
+   "source_type": "story_meta",
+   "label": "noise",
+   "label_note": "story-azonosító, a cikkíráshoz nem kell",
+   "score": 0.0,
+   "confidence": 0.99
+  },
+  {
+   "example_id": "gold-3",
+   "piece_id": "story:work_notes",
+   "source_type": "story_meta",
+   "label": "borderline",
+   "label_note": "LDAP_Retry_Authenticator dev-részletek — a komponensnév a tech spec-ben is megvan",
+   "score": 1.81,
+   "confidence": 0.72
+  },
+  {
+   "example_id": "gold-3",
+   "piece_id": "story:comments",
+   "source_type": "story_meta",
+   "label": "borderline",
+   "label_note": "QA-teszt (50 mock user) — sűríthető",
+   "score": 0.58,
+   "confidence": 0.36
+  },
+  {
+   "example_id": "gold-3",
+   "piece_id": "story:state",
+   "source_type": "story_meta",
+   "label": "noise",
+   "label_note": "workflow-állapot, adminisztratív meta",
+   "score": 0.04,
+   "confidence": 0.95
+  },
+  {
+   "example_id": "gold-3",
+   "piece_id": "story:assigned_to",
+   "source_type": "story_meta",
+   "label": "noise",
+   "label_note": "személy-meta, nem tartalom",
+   "score": 0.0,
+   "confidence": 0.99
+  },
+  {
+   "example_id": "gold-3",
+   "piece_id": "story:assignment_group",
+   "source_type": "story_meta",
+   "label": "noise",
+   "label_note": "csapat-meta, nem tartalom",
+   "score": 0.01,
+   "confidence": 0.98
+  },
+  {
+   "example_id": "gold-4",
+   "piece_id": "story:number",
+   "source_type": "story_meta",
+   "label": "noise",
+   "label_note": "story-azonosító, a cikkíráshoz nem kell",
+   "score": 0.0,
+   "confidence": 0.99
+  },
+  {
+   "example_id": "gold-4",
+   "piece_id": "story:work_notes",
+   "source_type": "story_meta",
+   "label": "borderline",
+   "label_note": "SAP plugin-telepítés menete — háttér, összefoglalható",
+   "score": 1.72,
+   "confidence": 0.57
+  },
+  {
+   "example_id": "gold-4",
+   "piece_id": "story:comments",
+   "source_type": "story_meta",
+   "label": "borderline",
+   "label_note": "Finance-validáció — egy mondat",
+   "score": 0.55,
+   "confidence": 0.31
+  },
+  {
+   "example_id": "gold-4",
+   "piece_id": "story:state",
+   "source_type": "story_meta",
+   "label": "noise",
+   "label_note": "workflow-állapot, adminisztratív meta",
+   "score": 0.05,
+   "confidence": 0.93
+  },
+  {
+   "example_id": "gold-4",
+   "piece_id": "story:assigned_to",
+   "source_type": "story_meta",
+   "label": "noise",
+   "label_note": "személy-meta, nem tartalom",
+   "score": 0.0,
+   "confidence": 0.99
+  },
+  {
+   "example_id": "gold-4",
+   "piece_id": "story:assignment_group",
+   "source_type": "story_meta",
+   "label": "noise",
+   "label_note": "csapat-meta, nem tartalom",
+   "score": 0.02,
+   "confidence": 0.98
+  },
+  {
+   "example_id": "gold-5",
+   "piece_id": "story:number",
+   "source_type": "story_meta",
+   "label": "noise",
+   "label_note": "story-azonosító, a cikkíráshoz nem kell",
+   "score": 0.0,
+   "confidence": 1.0
+  },
+  {
+   "example_id": "gold-5",
+   "piece_id": "story:work_notes",
+   "source_type": "story_meta",
+   "label": "borderline",
+   "label_note": "SnowKbGenerator implementációs napló — a rekord maga az update set-ben benne van",
+   "score": 1.71,
+   "confidence": 0.57
+  },
+  {
+   "example_id": "gold-5",
+   "piece_id": "story:comments",
+   "source_type": "story_meta",
+   "label": "borderline",
+   "label_note": "edge-case verifikáció (duplikáció, missing group) — sűríthető",
+   "score": 0.49,
+   "confidence": 0.27
+  },
+  {
+   "example_id": "gold-5",
+   "piece_id": "story:state",
+   "source_type": "story_meta",
+   "label": "noise",
+   "label_note": "workflow-állapot, adminisztratív meta",
+   "score": 0.05,
+   "confidence": 0.93
+  },
+  {
+   "example_id": "gold-5",
+   "piece_id": "story:assigned_to",
+   "source_type": "story_meta",
+   "label": "noise",
+   "label_note": "személy-meta, nem tartalom",
+   "score": 0.0,
+   "confidence": 0.99
+  },
+  {
+   "example_id": "gold-5",
+   "piece_id": "story:assignment_group",
+   "source_type": "story_meta",
+   "label": "noise",
+   "label_note": "csapat-meta, nem tartalom",
+   "score": 0.01,
+   "confidence": 0.98
+  },
+  {
+   "example_id": "gold-5",
+   "piece_id": "update_set:0:sys_script_include:SnowKbGenerator",
+   "source_type": "update_set_record",
+   "label": "relevant",
+   "label_note": "a Script Include, ami a változást hordozza — a cikk fő forrása",
+   "score": 1.9,
+   "confidence": 0.85
+  },
+  {
+   "example_id": "gold-5",
+   "piece_id": "update_set:1:sys_ui_action:createKbArticle",
+   "source_type": "update_set_record",
+   "label": "relevant",
+   "label_note": "a UI Action rekord — a cikk hivatkozik rá",
+   "score": 1.91,
+   "confidence": 0.87
+  },
+  {
+   "example_id": "gold-6",
+   "piece_id": "story:number",
+   "source_type": "story_meta",
+   "label": "noise",
+   "label_note": "story-azonosító, a cikkíráshoz nem kell",
+   "score": 0.0,
+   "confidence": 0.99
+  },
+  {
+   "example_id": "gold-6",
+   "piece_id": "story:work_notes",
+   "source_type": "story_meta",
+   "label": "borderline",
+   "label_note": "Business Rule review-napló — a BR neve a tech spec-ben is megvan",
+   "score": 1.94,
+   "confidence": 0.91
+  },
+  {
+   "example_id": "gold-6",
+   "piece_id": "story:comments",
+   "source_type": "story_meta",
+   "label": "noise",
+   "label_note": "tiszta QA-adminisztráció (staging/regression OK), tartalom nélkül",
+   "score": 0.51,
+   "confidence": 0.26
+  },
+  {
+   "example_id": "gold-6",
+   "piece_id": "story:state",
+   "source_type": "story_meta",
+   "label": "noise",
+   "label_note": "workflow-állapot, adminisztratív meta",
+   "score": 0.04,
+   "confidence": 0.93
+  },
+  {
+   "example_id": "gold-6",
+   "piece_id": "story:assigned_to",
+   "source_type": "story_meta",
+   "label": "noise",
+   "label_note": "személy-meta, nem tartalom",
+   "score": 0.0,
+   "confidence": 0.99
+  },
+  {
+   "example_id": "gold-6",
+   "piece_id": "story:assignment_group",
+   "source_type": "story_meta",
+   "label": "noise",
+   "label_note": "csapat-meta, nem tartalom",
+   "score": 0.02,
+   "confidence": 0.98
+  },
+  {
+   "example_id": "gold-7",
+   "piece_id": "story:number",
+   "source_type": "story_meta",
+   "label": "noise",
+   "label_note": "story-azonosító, a cikkíráshoz nem kell",
+   "score": 0.0,
+   "confidence": 0.99
+  },
+  {
+   "example_id": "gold-7",
+   "piece_id": "story:work_notes",
+   "source_type": "story_meta",
+   "label": "borderline",
+   "label_note": "ALDISolManChangeInterface mapping-napló — a részletek a tech spec-ben",
+   "score": 1.91,
+   "confidence": 0.87
+  },
+  {
+   "example_id": "gold-7",
+   "piece_id": "story:comments",
+   "source_type": "story_meta",
+   "label": "borderline",
+   "label_note": "log-áttekintés az ALDIIntegrationFrameworkUtil-lel — komponensnév, sűríthető",
+   "score": 0.87,
+   "confidence": 0.56
+  },
+  {
+   "example_id": "gold-7",
+   "piece_id": "story:state",
+   "source_type": "story_meta",
+   "label": "noise",
+   "label_note": "workflow-állapot, adminisztratív meta",
+   "score": 0.05,
+   "confidence": 0.93
+  },
+  {
+   "example_id": "gold-7",
+   "piece_id": "story:assigned_to",
+   "source_type": "story_meta",
+   "label": "noise",
+   "label_note": "személy-meta, nem tartalom",
+   "score": 0.0,
+   "confidence": 1.0
+  },
+  {
+   "example_id": "gold-7",
+   "piece_id": "story:assignment_group",
+   "source_type": "story_meta",
+   "label": "noise",
+   "label_note": "csapat-meta, nem tartalom",
+   "score": 0.01,
+   "confidence": 0.98
+  },
+  {
+   "example_id": "gold-8",
+   "piece_id": "story:number",
+   "source_type": "story_meta",
+   "label": "noise",
+   "label_note": "story-azonosító, a cikkíráshoz nem kell",
+   "score": 0.0,
+   "confidence": 0.99
+  },
+  {
+   "example_id": "gold-8",
+   "piece_id": "story:work_notes",
+   "source_type": "story_meta",
+   "label": "noise",
+   "label_note": "egyetlen boilerplate mondat (completed and verified), nulla tartalom",
+   "score": 0.45,
+   "confidence": 0.33
+  },
+  {
+   "example_id": "gold-8",
+   "piece_id": "story:comments",
+   "source_type": "story_meta",
+   "label": "noise",
+   "label_note": "tiszta jóváhagyási adminisztráció",
+   "score": 0.18,
+   "confidence": 0.73
+  },
+  {
+   "example_id": "gold-8",
+   "piece_id": "story:state",
+   "source_type": "story_meta",
+   "label": "noise",
+   "label_note": "workflow-állapot, adminisztratív meta",
+   "score": 0.05,
+   "confidence": 0.93
+  },
+  {
+   "example_id": "gold-8",
+   "piece_id": "story:assigned_to",
+   "source_type": "story_meta",
+   "label": "noise",
+   "label_note": "személy-meta, nem tartalom",
+   "score": 0.0,
+   "confidence": 0.99
+  },
+  {
+   "example_id": "gold-8",
+   "piece_id": "story:assignment_group",
+   "source_type": "story_meta",
+   "label": "noise",
+   "label_note": "csapat-meta, nem tartalom",
+   "score": 0.01,
+   "confidence": 0.98
+  },
+  {
+   "example_id": "gold-9",
+   "piece_id": "story:number",
+   "source_type": "story_meta",
+   "label": "noise",
+   "label_note": "story-azonosító, a cikkíráshoz nem kell",
+   "score": 0.0,
+   "confidence": 0.99
+  },
+  {
+   "example_id": "gold-9",
+   "piece_id": "story:work_notes",
+   "source_type": "story_meta",
+   "label": "borderline",
+   "label_note": "API_PROJECT_MAINTAIN / ALDIS4ProjectInterface napló — a nevek a tech spec-ben is megvannak",
+   "score": 1.9,
+   "confidence": 0.85
+  },
+  {
+   "example_id": "gold-9",
+   "piece_id": "story:comments",
+   "source_type": "story_meta",
+   "label": "relevant",
+   "label_note": "konkrét üzemeltetési tény: 100 calls/min throttling limit + retry-viselkedés — ez a tech spec-ben NINCS benne",
+   "score": 0.91,
+   "confidence": 0.63
+  },
+  {
+   "example_id": "gold-9",
+   "piece_id": "story:state",
+   "source_type": "story_meta",
+   "label": "noise",
+   "label_note": "workflow-állapot, adminisztratív meta",
+   "score": 0.04,
+   "confidence": 0.94
+  },
+  {
+   "example_id": "gold-9",
+   "piece_id": "story:assigned_to",
+   "source_type": "story_meta",
+   "label": "noise",
+   "label_note": "személy-meta, nem tartalom",
+   "score": 0.0,
+   "confidence": 0.99
+  },
+  {
+   "example_id": "gold-9",
+   "piece_id": "story:assignment_group",
+   "source_type": "story_meta",
+   "label": "noise",
+   "label_note": "csapat-meta, nem tartalom",
+   "score": 0.01,
+   "confidence": 0.98
+  }
+ ]
+}

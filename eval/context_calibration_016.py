@@ -43,6 +43,21 @@ CURRENT_SUMMARIZE_BELOW = 0.60
 CURRENT_MIN_CONFIDENCE = 0.6  # safety floor — NEM kalibrálható
 
 BASE_RATIO = 5   # kiinduló aszimmetrikus arány (plan KD4)
+
+import dspy  # noqa: E402
+from dspy.experimental import Score as DspyScore  # noqa: E402
+
+from snow_kb.context_selection import RELEVANCE_CRITERIA, RELEVANCE_QUESTION  # noqa: E402
+
+
+class RelevanceDecisionEval016(dspy.Signature):
+    """Score how much of a context piece matters for writing the KB article (eval-only mirror, spec 016)."""
+
+    piece_type: str = dspy.InputField(desc="The context piece source type.")
+    piece_label: str = dspy.InputField(desc="The context piece label.")
+    piece: str = dspy.InputField(desc="The context piece text.")
+    relevance: DspyScore[RELEVANCE_CRITERIA] = dspy.OutputField(
+        desc=RELEVANCE_QUESTION)
 SWEEP_THRESHOLDS = [round(t / 20, 2) for t in range(0, 21)]  # 0.00..1.00
 
 
@@ -140,20 +155,7 @@ def cmd_capture() -> None:
 # ---------------------------------------------------------------------------
 
 def cmd_reanchor() -> None:
-    import dspy
-    from dspy.experimental import ReAnchor, Score as DspyScore, TypeSafe
-    from typing_extensions import Annotated
-
-    from snow_kb.context_selection import RELEVANCE_CRITERIA, RELEVANCE_QUESTION
-
-    class RelevanceDecisionEval016(dspy.Signature):
-        """Score how much of a context piece matters for writing the KB article (eval-only mirror, spec 016)."""
-
-        piece_type: str = dspy.InputField(desc="The context piece source type.")
-        piece_label: str = dspy.InputField(desc="The context piece label.")
-        piece: str = dspy.InputField(desc="The context piece text.")
-        relevance: DspyScore[RELEVANCE_CRITERIA] = dspy.OutputField(
-            desc=RELEVANCE_QUESTION)
+    from dspy.experimental import ReAnchor, TypeSafe
 
     def metric(example, pred) -> float:
         """Negált aszimmetrikus költség a JELENLEGI küszöbökkel (a ReAnchor
@@ -242,6 +244,96 @@ def _costs_at(rows: list[dict], hide_below: float, ratio: float) -> dict:
             "errors": errors}
 
 
+def _full_context_ceiling() -> dict:
+    """A hide_below-sweep által elérhető MAXIMÁLIS teljes-prompt megtakarítás
+    (a T009 kapu döntése szerinti KÖTELEZŐ plafon-szám).
+
+    TISZTA replay: a T007 selection-capture per-darab (relevance, confidence)
+    értékei + a T002 per-darab token-leltár + a baseline prompt-usage összeg.
+    A story_core darabok fixen show (FR-004); a fail-open show-k a safety floor
+    miatt MINDEN küszöbnél show maradnak — a plafon ÍGY számolva.
+    """
+    sel_capture = json.loads(
+        Path("artifacts/context_selection_capture.json").read_text(encoding="utf-8"))
+    tokens = json.loads(
+        Path("artifacts/context_baseline_tokens.json").read_text(encoding="utf-8"))
+    measure = json.loads(
+        Path("artifacts/context_selection_report.json").read_text(encoding="utf-8"))
+    prompt_sum = measure["token_delta"]["baseline_prompt_usage_sum"]
+
+    tok_by_piece = {}
+    for ex in tokens["examples"]:
+        for piece in ex["pieces"]:
+            tok_by_piece[(ex["id"], piece["piece_id"])] = piece["tokens"]
+
+    sweep = []
+    for t in SWEEP_THRESHOLDS:
+        hide_saved = 0
+        sum_saved_est = 0  # summarize ~65%-os tömörítéssel becsült többlet
+        verdicts = {"hide": 0, "summarize": 0, "show": 0}
+        for ex in sel_capture["examples"]:
+            for piece in ex["pieces"]:
+                if piece["source_type"] == "story_core":
+                    verdicts["show"] += 1
+                    continue
+                rel, conf = piece["relevance"], piece["confidence"]
+                if rel is None or conf is None:
+                    verdicts["show"] += 1  # fail-open
+                    continue
+                v = verdict_at(rel, conf, t)
+                verdicts[v] += 1
+                p_tok = tok_by_piece.get((ex["id"], piece["piece_id"]), 0)
+                if v == "hide":
+                    hide_saved += p_tok
+                elif v == "summarize":
+                    sum_saved_est += round(0.65 * p_tok)
+        total_saved_est = hide_saved + sum_saved_est
+        sweep.append({
+            "hide_below": t,
+            "hide_saved_tokens": hide_saved,
+            "summarize_saved_tokens_est": sum_saved_est,
+            "total_saved_tokens_est": total_saved_est,
+            "prompt_reduction_ratio_est": round(total_saved_est / prompt_sum, 4)
+            if prompt_sum else None,
+            "verdicts": verdicts,
+        })
+    best = max(sweep, key=lambda r: r["total_saved_tokens_est"])
+    best_hide_only = max(sweep, key=lambda r: r["hide_saved_tokens"])
+    target_saved = round(0.05 * prompt_sum) if prompt_sum else None
+    return {
+        "method": (
+            "per-darab verdict_at(rel, conf, t) a T007 selection-capture nyers "
+            "(relevance, confidence) értékein; hide = teljes token, summarize = "
+            "65%-os tömörítés BECSÜLT megtakarítása; a fail-open show-k minden "
+            "küszöbnél show maradnak (a min_confidence safety floor NEM mozog); "
+            "a story_core fixen show (FR-004). A teljes-prompt arány a baseline "
+            "LM usage prompt_tokens összegére vetítve."
+        ),
+        "baseline_prompt_usage_sum": prompt_sum,
+        "sc001_target_saved_tokens": target_saved,
+        "ceiling": best,
+        "ceiling_hide_only": best_hide_only,
+        "distance_from_sc001": {
+            "target_ratio": 0.05,
+            "ceiling_ratio_est": best["prompt_reduction_ratio_est"],
+            "shortfall_tokens": (target_saved - best["total_saved_tokens_est"])
+            if target_saved is not None else None,
+            "reaches_target": bool(
+                best["prompt_reduction_ratio_est"] is not None
+                and best["prompt_reduction_ratio_est"] >= 0.05),
+        },
+        "sweep": sweep,
+        "caveats": [
+            "a summarize-tömörítés 65%-os becslés (a tényleges érték a T007 "
+            "utánmérésben derül ki); a hide-only plafon külön soron",
+            "a JSON újraépítési többlet (+1.4% kontextus-token, a T007-ből) "
+            "a nettó megtakarítást csökkenti",
+            "EXPLORATÍV — a plafon a jelenlegi Score-eloszlásból számolt, "
+            "NEM confirmatory mérés",
+        ],
+    }
+
+
 def cmd_report() -> None:
     capture = json.loads(CAPTURE_PATH.read_text(encoding="utf-8"))
     rows = capture["rows"]
@@ -291,6 +383,25 @@ def cmd_report() -> None:
             "a sweep táblában."
         )
 
+    # --- költség-korlátos plafon: a címkézett-minta aszimmetrikus költsége
+    # NEM rosszabb küszöbök közül a legnagyobb teljes-prompt megtakarítás ---
+    ceiling = _full_context_ceiling()
+    token_by_t = {r["hide_below"]: r for r in ceiling["sweep"]}
+    cost_constrained = []
+    current_cost = current["total"]
+    for point in sweep:
+        t = point["hide_below"]
+        tok = token_by_t.get(t, {})
+        cost_constrained.append({
+            "hide_below": t,
+            "cost_5to1": point["cost_5to1"],
+            "total_saved_tokens_est": tok.get("total_saved_tokens_est", 0),
+            "prompt_reduction_ratio_est": tok.get("prompt_reduction_ratio_est"),
+        })
+    feasible = [c for c in cost_constrained if c["cost_5to1"] <= current_cost]
+    best_feasible = (max(feasible, key=lambda c: c["total_saved_tokens_est"])
+                     if feasible else None)
+
     report = {
         "spec": "016-context-selection / T011 kalibrációs riport",
         "model": PINNED_MODEL,
@@ -312,12 +423,58 @@ def cmd_report() -> None:
             "rationale": rationale,
             "exploratory": True,
         },
+        "full_context_ceiling": ceiling,
+        "cost_constrained_ceiling": {
+            "method": (
+                "az aszimmetrikus költség (5:1, címkézett minta) a JELENLEGInél "
+                "nem rosszabb küszöbök közül a legnagyobb teljes-prompt "
+                "megtakarítás — a T012 kapu döntési száma"
+            ),
+            "current_cost_5to1": current_cost,
+            "table": cost_constrained,
+            "best_feasible": best_feasible,
+        },
         "sweep": sweep,
         "sensitivity": {
             "costs_at_current_by_ratio": {
                 "3:1": current_c3, "5:1": current["total"], "10:1": current_c10},
             "costs_at_proposed_by_ratio": {
                 "3:1": best_c3, "5:1": best["cost_5to1"], "10:1": best_c10},
+        },
+        "probe_condition_finding": {
+            "finding": (
+                "RENDSZERES ELTÉRÉS a probe-feltételben: story_context-TEL "
+                "(production _score_piece) a zaj-darabok relevanciája FELFÚJT "
+                "(number 0.86-0.98, state 0.89-0.99), story_context NÉLKÜL "
+                "(kalibrációs probe) ugyanazok TISZTÁN szeparálnak "
+                "(number/state/assigned_to/assignment_group rel ~0.0-0.03, "
+                "conf 0.93-1.00). A releváns update set rekordok mindkét "
+                "feltételnél 0.95 körül pontozódnak. Forrás: a T007 "
+                "selection-capture vs a T011 calibration-capture 56 darabja."
+            ),
+            "context_free_estimate": {
+                "method": (
+                    "a context-free (story_context='') probék verdictjei a "
+                    "production token-leltáron; summarize 65%-os becslés"
+                ),
+                "hide_below_0.05": {"total_saved_tokens_est": 428,
+                                    "prompt_reduction_ratio_est": 0.011},
+                "hide_below_0.25": {"total_saved_tokens_est": 450,
+                                    "prompt_reduction_ratio_est": 0.012},
+                "note": (
+                    "MÉG a state-fixszel (story_context kivétele) is csak "
+                    "~1.1-1.2% érhető el a teljes prompton — a work_notes/"
+                    "comments darabokat a modell (és a címkék) essential/"
+                    "borderline-nek tartják. Az 5% SC-001 cél a jelenlegi "
+                    "rubrikával NEM érhető el minőség-kockázat nélkül."
+                ),
+            },
+            "implication": (
+                "a T012 kapu dönthet: (a) küszöb marad + production state-fix "
+                "(story_context kivétel — a rubrika/kérdés változatlan) + "
+                "SC-001 célérték-revízió a mért plafonhoz; (b) rubrika/kérdés "
+                "újratervezés (a spec újraindítási feltétele); (c) megállás."
+            ),
         },
         "notes": [
             "A sweep EXPLORATÍV — a legjobb sweep-sor NEM confirmatory eredmény.",
@@ -333,6 +490,16 @@ def cmd_report() -> None:
     print(f"Kalibrációs riport: {REPORT_PATH}")
     print(f"  döntés: {decision} (jelenlegi {CURRENT_HIDE_BELOW}, "
           f"jelölt {proposed}, költség {current['total']} → {best['cost_5to1']})")
+    ceil_ = report["full_context_ceiling"]
+    print(f"  PLAFON (nyers): max {ceil_['ceiling']['total_saved_tokens_est']} token "
+          f"({ceil_['ceiling']['prompt_reduction_ratio_est']:.1%} a teljes prompton) "
+          f"— SC-001 cél: {ceil_['sc001_target_saved_tokens']} token (5%); "
+          f"eléri: {ceil_['distance_from_sc001']['reaches_target']}")
+    bf = report["cost_constrained_ceiling"]["best_feasible"]
+    if bf:
+        print(f"  PLAFON (költség-korlátos): {bf['total_saved_tokens_est']} token "
+              f"({bf['prompt_reduction_ratio_est']:.1%}) a {bf['hide_below']} "
+              f"küszöbnél, költség {bf['cost_5to1']} (jelenlegi {current_cost})")
 
 
 def main() -> None:

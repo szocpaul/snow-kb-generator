@@ -1,0 +1,36 @@
+{
+  "spec": "016-context-selection / T011 ReAnchor (aszimmetrikus, eval-only)",
+  "model": "jev-1.13.0",
+  "n_train": 56,
+  "asymmetric_score_before": -0.29464285714285715,
+  "asymmetric_score_after": -0.29464285714285715,
+  "ratio": 5,
+  "fitted_fields": {},
+  "reanchor_report": {
+    "train_score_before": -0.2946,
+    "train_score": -0.2946,
+    "fitted": [
+      {
+        "predictor": "self",
+        "field": "relevance",
+        "parameter": "cuts",
+        "train_score": -0.2946,
+        "train_score_at_start": -0.2946,
+        "observed": {
+          "calls": 56,
+          "distinct": 23,
+          "min": 0.0,
+          "max": 1.98,
+          "candidates": 29
+        },
+        "fold_check": {
+          "passed": 0,
+          "failed": 0
+        },
+        "train_score_original": -0.2946,
+        "skipped": "fitted behavior did not beat the original"
+      }
+    ]
+  },
+  "note": "A fitted paraméterek EXPLORATÍVAK — a threshold-döntés a context_calibration_report_016.json sweep-jében, és CSAK a T012 MANUÁLIS KAPU jóváhagyása után kerülhet a configba. A safety floor (min_confidence, fail-open=show, FR-004) NEM kalibrált."
+}
