@@ -23,7 +23,7 @@
 
 ## Phase 3: US2 – Impact Measurement
 
-- [ ] T007 [US2] Measurement on the gold examples: selected run vs baseline — per-example and aggregated token delta + rich_metric delta → `artifacts/context_selection_report.json`; the quality must not degrade beyond the noise band (SC-002); two runs in replay mode byte-identical (SC-005)
+- [x] T007 [US2] Measurement on the gold examples: selected run vs baseline — per-example and aggregated token delta + rich_metric delta → `artifacts/context_selection_report.json`; the quality MUST NOT degrade beyond the noise band (SC-002); two runs in replay mode are byte-identical (SC-005)
 - [x] T008 [US2] Recall gate (SC-003): exit-code test — the selected prompt contains the real component names referenced by the gold articles (0/9 drop-outs)
 - [ ] T009 [US2] **MANUAL GATE**: the review of the impact report — if the quality degraded or the recall dropped, the spec does NOT continue toward production — the runner CANNOT check it off
 
