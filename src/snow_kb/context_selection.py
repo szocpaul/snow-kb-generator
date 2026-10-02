@@ -334,13 +334,16 @@ def _score_piece(
     *,
     settings: Settings,
     client: Any,
-    story_context: str,
 ) -> PieceDecision:
     """Egy darab Score-minősítése + Python-policy. Bármilyen hiba → show."""
     cfg = settings.context_selection
     model = cfg.model
+    # A state SZÁNDÉKOSAN NEM tartalmazza a story core-szöveget: a T011
+    # kalibrációs mérés igazolta, hogy a story_context FELFÚJJA a Score-t
+    # (a zaj-darabok 0.86-0.99 relevanciát kaptak vele vs 0.00-0.03 nélküle —
+    # ld. specs/016-context-selection/gate-T012.md és a T012 emberi döntés).
+    # A rubrika/kérdés változatlan.
     state = {
-        "story_context": story_context[:2000],
         "piece_type": piece.source_type,
         "piece_label": piece.label,
         "piece": piece.text[:6000],
@@ -398,7 +401,6 @@ def classify_pieces(
     *,
     settings: Settings,
     client: Any = None,
-    story_context: str = "",
 ) -> list[PieceDecision]:
     """Minden darab minősítése. A story_core darabokra LLM-hívás sem indul
     (FR-004); SDK-hiba esetén az adott darab show (FR-002), a többi
@@ -424,9 +426,6 @@ def classify_pieces(
 
         client = TypeSafeClient()
 
-    if not story_context:
-        story_context = "\n".join(p.text for p in pieces if p.source_type == "story_core")
-
     for piece in pieces:
         if piece.source_type == "story_core":
             decisions.append(PieceDecision(
@@ -434,9 +433,7 @@ def classify_pieces(
                 None, None, cfg.model, "story-core",
             ))
             continue
-        decisions.append(_score_piece(
-            piece, settings=settings, client=client, story_context=story_context,
-        ))
+        decisions.append(_score_piece(piece, settings=settings, client=client))
     return decisions
 
 

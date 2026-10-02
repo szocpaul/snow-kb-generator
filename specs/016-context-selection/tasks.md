@@ -31,7 +31,7 @@
 
 - [x] T010 [US3] Címkézett kontextus-minta (min. 20 darab: releváns / zaj / határeset — a 015-ös fixture mintára, gépi + kézi címkézés), címkék commitolva
 - [x] T011 [US3] ReAnchor-kalibráció a hide-küszöbre, aszimmetrikus metrikával (kiinduló 5:1, KD4) + érzékenység-analízis + riport; a „küszöb marad" ág is fájlba írt eredmény; a safety floor (fail-open=show) NEM kalibrálható
-- [ ] T012 [US3] **MANUÁLIS KAPU**: a kalibrációs riport review-ja; küszöb-módosítás jóváhagyása + indoklás az Agent.md-be — a runner NEM pipálhatja
+- [x] T012 [US3] **MANUÁLIS KAPU**: a kalibrációs riport review-ja; küszöb-módosítás jóváhagyása + indoklás az Agent.md-be — a runner NEM pipálhatja
 
 ## Phase 5: Zárás
 
