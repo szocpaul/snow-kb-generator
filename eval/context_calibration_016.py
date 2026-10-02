@@ -423,12 +423,24 @@ def cmd_report() -> None:
             "rationale": rationale,
             "exploratory": True,
         },
+        "t012_human_decision": {
+            "decided_at": "2026-10-02 (T012 MANUAL GATE, human decision)",
+            "final_decision": "marad",
+            "final_hide_below": 0.25,
+            "rationale": (
+                "the human did NOT approve the threshold change: the sweep "
+                "the 0.25→0.05 'improvement' is at noise level (a single borderline flip); "
+                "the threshold STAYS at 0.25, the config is NOT modified; the feature "
+                "stays enabled=false; the SC-001 is DOCUMENTED RED (the ≥5% target "
+                "cannot be reached without a quality risk — see gate-T012.md)"
+            ),
+        },
         "full_context_ceiling": ceiling,
         "cost_constrained_ceiling": {
             "method": (
-                "the asymmetric cost (5:1, labeled sample) is WORSE than the CURRENT "
-                "the largest full-prompt among the not-worse thresholds "
-                "saving — the T012 gate decision number"
+                "the asymmetric cost (5:1, labelled sample) among the thresholds that are not "
+                "worse than the current one, the biggest total prompt "
+                "saving — the decision number of the T012 gate"
             ),
             "current_cost_5to1": current_cost,
             "table": cost_constrained,
@@ -443,44 +455,44 @@ def cmd_report() -> None:
         },
         "probe_condition_finding": {
             "finding": (
-                "REGULAR DEVIATION in the probe condition: WITH story_context "
+                "SYSTEMATIC DEVIATION in the probe condition: with the story_context "
                 "(production _score_piece) the relevance of the noise pieces is INFLATED "
-                "(number 0.86-0.98, state 0.89-0.99), WITHOUT story_context "
-                "(calibration probe) separate the same ones PURELY "
+                "(number 0.86-0.98, state 0.89-0.99), without the story_context "
+                "(calibration probe) the same ones separate CLEANLY "
                 "(number/state/assigned_to/assignment_group rel ~0.0-0.03, "
-                "conf 0.93-1.00). The relevant update set records both "
-                "condition scores around 0.95. Source: the T007 "
+                "conf 0.93-1.00). The relevant update set records score around 0.95 under both "
+                "conditions. Source: the T007 "
                 "selection-capture vs a T011 calibration-capture 56 darabja."
             ),
             "context_free_estimate": {
                 "method": (
-                    "the verdicts of the context-free (story_context='') probes are "
-                    "on the production token budget; summarize 65% estimate"
+                    "the verdicts of the context-free (story_context='') probes on the "
+                    "production token inventory; the summarize is a 65% estimate"
                 ),
                 "hide_below_0.05": {"total_saved_tokens_est": 428,
                                     "prompt_reduction_ratio_est": 0.011},
                 "hide_below_0.25": {"total_saved_tokens_est": 450,
                                     "prompt_reduction_ratio_est": 0.012},
                 "note": (
-                    "EVEN with the state fix (story_context exception) only "
-                    "~1.1-1.2% is reachable on the full prompt — the work_notes/"
-                    "comments pieces by the model (and the labels) essential/"
-                    "consider borderline. The 5% SC-001 goal with the current "
-                    "cannot be reached with the rubric without a quality risk."
+                    "EVEN with the state fix (excluding the story_context) only "
+                    "~1.1-1.2% is reachable on the total prompt — the model (and the labels) "
+                    "consider the work_notes/comments pieces essential/"
+                    "borderline. The 5% SC-001 target is NOT reachable with the current "
+                    "rubric without a quality risk."
                 ),
             },
             "implication": (
-                "the T012 gate can decide: (a) threshold stays + production state fix "
-                "(story_context exception — the rubric/question unchanged) + "
-                "SC-001 target value revision to the measured ceiling; (b) rubric/question "
-                "redesign (the spec restart condition); (c) stop."
+                "the T012 gate can decide: (a) the threshold stays + the production state fix "
+                "(excluding the story_context — the rubric/question unchanged) + "
+                "a revision of the SC-001 target to the measured ceiling; (b) a redesign of the rubric/question "
+                "(the restart condition of the spec); (c) stopping."
             ),
         },
         "notes": [
             "The sweep is EXPLORATORY — the best sweep row is NOT a confirmatory result.",
             "The report is a PURE replay from the capture file — a double run "
             "byte-identikus.",
-            "The config change can happen ONLY after the T012 MANUAL GATE.",
+            "The config change can only happen after the T012 MANUAL GATE.",
         ],
     }
     REPORT_PATH.write_text(

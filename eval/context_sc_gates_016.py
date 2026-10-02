@@ -53,6 +53,15 @@ def gate_sc001() -> bool:
           f"prompt, recorded: {target.get('decided_at', '?')}; reference: "
           f"kontextus-token {td['baseline_context_tokens']} → "
           f"{td['selected_context_tokens']} = {td['reduction_ratio']:.1%})")
+    if not ok:
+        # The human decision of the T012 MANUAL GATE (2026-10-02): the SC-001
+        # DOCUMENTED RED — the ≥5% target cannot be reached without a quality risk
+        # (the cost-bound ceiling is 0.0%, with the state fix ~1.1-1.2%; the SC-002
+        # primacy is what pulled it down). This gate does NOT fail the run.
+        print("  DOCUMENTED RED (T012 human decision): the target cannot be reached with the rubric "
+              "without a quality risk — see gate-T012.md §4; "
+              "a feature enabled=false marad")
+        return "documented"
     return ok
 
 
@@ -116,6 +125,7 @@ def gate_sc006() -> bool:
     report = json.loads(CALIB_PATH.read_text(encoding="utf-8"))
     calib = report.get("calibration", {})
     floor = report.get("safety_floor", {})
+    t012 = report.get("t012_human_decision", {})
     n = report.get("n_labeled", 0)
     has_rationale = bool(calib.get("decision")) and bool(calib.get("rationale"))
     floor_ok = (
@@ -123,9 +133,20 @@ def gate_sc006() -> bool:
         and floor.get("min_confidence") == 0.6
         and floor.get("story_core_never_hide") is True
     )
-    ok = n >= 20 and has_rationale and floor_ok and REANCHOR_PATH.exists()
+    # The final threshold decision is the human decision of the T012 MANUAL GATE; the gate
+    # checks that the config is UNCHANGED accordingly (0.25).
+    import yaml as _yaml
+
+    cfg_val = (_yaml.safe_load(Path("config.yaml").read_text(encoding="utf-8"))
+               .get("context_selection", {}).get("hide_below"))
+    config_ok = (t012.get("final_decision") == "marad"
+                 and cfg_val == t012.get("final_hide_below"))
+    ok = (n >= 20 and has_rationale and floor_ok and REANCHOR_PATH.exists()
+          and config_ok)
     print(f"SC-006 {'GREEN' if ok else 'RED'}: n={n} (≥20), "
-          f"decision={calib.get('decision')!r} with rationale={has_rationale}, "
+          f"sweep decision={calib.get('decision')!r} (EXPLORATORY) with a rationale={has_rationale}, "
+          f"T012 final decision={t012.get('final_decision')!r}, "
+          f"config hide_below={cfg_val} (unchanged={config_ok}), "
           f"safety floor untouched={floor_ok}, "
           f"ReAnchor report={'present' if REANCHOR_PATH.exists() else 'MISSING'}")
     return ok
@@ -146,8 +167,12 @@ def main() -> None:
     }
     print("=" * 60)
     for name, ok in results.items():
-        print(f"{name}: {'GREEN' if ok else 'RED'}")
-    sys.exit(0 if all(results.values()) else 1)
+        label = "GREEN" if ok is True else ("DOCUMENTED RED (accepted)" if ok == "documented" else "RED")
+        print(f"{name}: {label}")
+    # According to the T012 decision the documented RED of the SC-001 is an accepted final state;
+    # every other gate must be green.
+    ok_all = all(v is True or v == "documented" for v in results.values())
+    sys.exit(0 if ok_all else 1)
 
 
 if __name__ == "__main__":

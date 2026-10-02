@@ -35,7 +35,7 @@
 
 ## Phase 5: Closure
 
-- [ ] T013 SC gates (SC-001..SC-006) with exit code, `cache=False`/replay mode; full pytest suite green (387 + new); Agent.md log entry; backlog: close TASK-3; commit + push
+- [x] T013 SC gates (SC-001..SC-006) with exit code, `cache=False`/replay mode; full pytest suite green (387 + new); Agent.md log entry; backlog: closing TASK-3; commit + push
 
 ## Dependencies
 

@@ -754,5 +754,11 @@
    "cost_5to1": 31.0,
    "hide_below": 1.0
   }
- ]
+ ],
+ "t012_human_decision": {
+  "decided_at": "2026-10-02 (T012 MANUAL GATE, human decision)",
+  "final_decision": "marad",
+  "final_hide_below": 0.25,
+  "rationale": "the human did NOT approve the threshold change: the 0.25→0.05 'improvement' of the sweep is at noise level (a single borderline flip); the threshold STAYS at 0.25, the config is NOT modified; the feature stays enabled=false; the SC-001 is DOCUMENTED RED (the ≥5% target cannot be reached without a quality risk — see gate-T012.md)"
+ }
 }
