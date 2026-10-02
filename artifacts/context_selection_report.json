@@ -1,0 +1,190 @@
+{
+ "generation": {
+  "cache": false,
+  "max_tokens": 8000,
+  "model": "openai/models\\Qwen3.8-27B-UD-Q4_K_M.gguf",
+  "temperature": 0.6
+ },
+ "n_examples": 9,
+ "notes": [
+  "A baseline és a válogatott futás UGYANAZZAL a modellel, LM-beállításokkal és token-módszerrel készült (tasks.md T002).",
+  "A riport TISZTA replay a capture-fájlokból — kétszeri futtatás byte-identikus (SC-005).",
+  "A selected_context_tokens a válogatás UTÁNI story+update set tokenek; a summarize-költség (lokális endpoint) nincs benne — a summarize darabok a capture-fájlban jelölve."
+ ],
+ "per_example": [
+  {
+   "baseline_context_tokens": 413,
+   "baseline_prompt_usage": 3188,
+   "context_token_delta": 13,
+   "id": "gold-1",
+   "rich_metric_after": 0.9183,
+   "rich_metric_before": 0.8467,
+   "rich_metric_delta": 0.0717,
+   "selected_context_tokens": 426,
+   "selected_prompt_usage": 3187,
+   "verdicts": {
+    "hide": 0,
+    "show": 10,
+    "summarize": 0
+   }
+  },
+  {
+   "baseline_context_tokens": 502,
+   "baseline_prompt_usage": 3386,
+   "context_token_delta": 13,
+   "id": "gold-2",
+   "rich_metric_after": 0.9033,
+   "rich_metric_before": 0.8817,
+   "rich_metric_delta": 0.0217,
+   "selected_context_tokens": 515,
+   "selected_prompt_usage": 3348,
+   "verdicts": {
+    "hide": 0,
+    "show": 10,
+    "summarize": 0
+   }
+  },
+  {
+   "baseline_context_tokens": 429,
+   "baseline_prompt_usage": 3281,
+   "context_token_delta": 13,
+   "id": "gold-3",
+   "rich_metric_after": 0.805,
+   "rich_metric_before": 0.7883,
+   "rich_metric_delta": 0.0167,
+   "selected_context_tokens": 442,
+   "selected_prompt_usage": 3201,
+   "verdicts": {
+    "hide": 0,
+    "show": 10,
+    "summarize": 0
+   }
+  },
+  {
+   "baseline_context_tokens": 550,
+   "baseline_prompt_usage": 3519,
+   "context_token_delta": 13,
+   "id": "gold-4",
+   "rich_metric_after": 0.7717,
+   "rich_metric_before": 0.7583,
+   "rich_metric_delta": 0.0133,
+   "selected_context_tokens": 563,
+   "selected_prompt_usage": 3475,
+   "verdicts": {
+    "hide": 0,
+    "show": 10,
+    "summarize": 0
+   }
+  },
+  {
+   "baseline_context_tokens": 3536,
+   "baseline_prompt_usage": 8082,
+   "context_token_delta": 12,
+   "id": "gold-5",
+   "rich_metric_after": 0.8865,
+   "rich_metric_before": 0.8885,
+   "rich_metric_delta": -0.002,
+   "selected_context_tokens": 3548,
+   "selected_prompt_usage": 8184,
+   "verdicts": {
+    "hide": 0,
+    "show": 12,
+    "summarize": 0
+   }
+  },
+  {
+   "baseline_context_tokens": 702,
+   "baseline_prompt_usage": 3816,
+   "context_token_delta": 13,
+   "id": "gold-6",
+   "rich_metric_after": 0.8362,
+   "rich_metric_before": 0.8274,
+   "rich_metric_delta": 0.0088,
+   "selected_context_tokens": 715,
+   "selected_prompt_usage": 3774,
+   "verdicts": {
+    "hide": 0,
+    "show": 10,
+    "summarize": 0
+   }
+  },
+  {
+   "baseline_context_tokens": 650,
+   "baseline_prompt_usage": 3767,
+   "context_token_delta": 13,
+   "id": "gold-7",
+   "rich_metric_after": 0.7787,
+   "rich_metric_before": 0.7491,
+   "rich_metric_delta": 0.0296,
+   "selected_context_tokens": 663,
+   "selected_prompt_usage": 3759,
+   "verdicts": {
+    "hide": 0,
+    "show": 10,
+    "summarize": 0
+   }
+  },
+  {
+   "baseline_context_tokens": 981,
+   "baseline_prompt_usage": 4483,
+   "context_token_delta": 14,
+   "id": "gold-8",
+   "rich_metric_after": 0.83,
+   "rich_metric_before": 0.9575,
+   "rich_metric_delta": -0.1275,
+   "selected_context_tokens": 995,
+   "selected_prompt_usage": 4425,
+   "verdicts": {
+    "hide": 0,
+    "show": 10,
+    "summarize": 0
+   }
+  },
+  {
+   "baseline_context_tokens": 777,
+   "baseline_prompt_usage": 4028,
+   "context_token_delta": 13,
+   "id": "gold-9",
+   "rich_metric_after": 0.9305,
+   "rich_metric_before": 0.8777,
+   "rich_metric_delta": 0.0528,
+   "selected_context_tokens": 790,
+   "selected_prompt_usage": 4027,
+   "verdicts": {
+    "hide": 0,
+    "show": 10,
+    "summarize": 0
+   }
+  }
+ ],
+ "quality_delta": {
+  "avg_delta": 0.0094,
+  "not_worse_beyond_noise": true,
+  "paired_bootstrap_ci95": [
+   -0.0289,
+   0.0375
+  ],
+  "rich_metric_avg_after": 0.8511,
+  "rich_metric_avg_before": 0.8417,
+  "rule": "SC-002: a romlás csak akkor valós, ha a párosított bootstrap CI95 teljes egészében 0 alatt van (a 013/014-es nem-átfedő-intervallum szabály)."
+ },
+ "selection": {
+  "hide_below": 0.25,
+  "min_confidence": 0.6,
+  "model": "jev-1.13.0",
+  "summarize_below": 0.6,
+  "summarizer_endpoint": "http://desktop-c5ikame-1.tailee6bc1.ts.net:8033/v1"
+ },
+ "spec": "016-context-selection / T007 hatásmérés",
+ "token_delta": {
+  "baseline_context_tokens": 8540,
+  "baseline_prompt_usage_sum": 37550,
+  "delta": 117,
+  "prompt_metric_note": "az SC-001 GATE-metrika (T003 kapu): a TELJES prompt tokenje (template + kontextus), a generálás LM usage prompt_tokens összege alapján",
+  "prompt_reduction_ratio": 0.0045,
+  "reduction_ratio": -0.0137,
+  "selected_context_tokens": 8657,
+  "selected_prompt_usage_sum": 37380
+ },
+ "token_method": "llama.cpp /tokenize (Qwen3.8-27B-UD-Q4_K_M.gguf, valódi tokenizer)"
+}

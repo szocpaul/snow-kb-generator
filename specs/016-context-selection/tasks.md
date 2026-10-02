@@ -23,7 +23,7 @@
 
 ## Phase 3: US2 – Hatásmérés
 
-- [ ] T007 [US2] Mérés a gold példákon: válogatott futás vs baseline — per-példa és összesített token-delta + rich_metric-delta → `artifacts/context_selection_report.json`; a minőség nem romolhat a zaj-sávon túl (SC-002); replay-módban kétszeri futás byte-identikus (SC-005)
+- [x] T007 [US2] Mérés a gold példákon: válogatott futás vs baseline — per-példa és összesített token-delta + rich_metric-delta → `artifacts/context_selection_report.json`; a minőség nem romolhat a zaj-sávon túl (SC-002); replay-módban kétszeri futás byte-identikus (SC-005)
 - [x] T008 [US2] Recall-gate (SC-003): exit-code-os teszt — a válogatott prompt tartalmazza a gold cikkek által hivatkozott valós komponensneveket (0/9 kiesés)
 - [ ] T009 [US2] **MANUÁLIS KAPU**: a hatásriport review-ja — ha a minőség romlott vagy a recall kiesett, a spec NEM megy tovább production-felé — a runner NEM pipálhatja
 
