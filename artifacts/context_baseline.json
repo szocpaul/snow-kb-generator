@@ -1,0 +1,886 @@
+{
+ "api_base": "http://desktop-c5ikame-1.tailee6bc1.ts.net:8033/v1",
+ "cache": false,
+ "max_tokens": 8000,
+ "model": "openai/models\\Qwen3.8-27B-UD-Q4_K_M.gguf",
+ "n_examples": 9,
+ "noise_hint_ratio": 0.2137,
+ "notes": [
+  "A baseline DEV-MÓDÚ lokális Qwennel készült; az after-mérés (T007) ugyanezzel a modellel és token-módszerrel fut (tasks.md T002).",
+  "A noise_hint determinisztikus heurisztika (metadata-mező, near-empty) — NEM kalibrált döntés; a T003 kapu review-ja dönt az SC-001 célértékről.",
+  "A gold példákban related_articles_context nincs (a gold dataset nem tartalmaz ilyet) — a kapcsolódó-cikk zaj a prod kontextusban jelenik meg, a baseline nem méri.",
+  "Update set payload csak a gold-5 példában van."
+ ],
+ "per_example": [
+  {
+   "context_tokens": 413,
+   "id": "gold-1",
+   "noise_hint_tokens": 159,
+   "pieces": [
+    {
+     "char_len": 23,
+     "label": "Number",
+     "noise_hint": "metadata-field",
+     "piece_id": "story:number",
+     "source_type": "story_meta",
+     "tokens": 14
+    },
+    {
+     "char_len": 98,
+     "label": "Short Description",
+     "noise_hint": "",
+     "piece_id": "story:short_description",
+     "source_type": "story_core",
+     "tokens": 23
+    },
+    {
+     "char_len": 319,
+     "label": "Description",
+     "noise_hint": "",
+     "piece_id": "story:description",
+     "source_type": "story_core",
+     "tokens": 65
+    },
+    {
+     "char_len": 332,
+     "label": "Acceptance Criteria",
+     "noise_hint": "",
+     "piece_id": "story:acceptance_criteria",
+     "source_type": "story_core",
+     "tokens": 78
+    },
+    {
+     "char_len": 334,
+     "label": "U Technical Specification",
+     "noise_hint": "",
+     "piece_id": "story:u_technical_specification",
+     "source_type": "story_core",
+     "tokens": 88
+    },
+    {
+     "char_len": 198,
+     "label": "Work Notes",
+     "noise_hint": "metadata-field",
+     "piece_id": "story:work_notes",
+     "source_type": "story_meta",
+     "tokens": 88
+    },
+    {
+     "char_len": 96,
+     "label": "Comments",
+     "noise_hint": "metadata-field",
+     "piece_id": "story:comments",
+     "source_type": "story_meta",
+     "tokens": 34
+    },
+    {
+     "char_len": 26,
+     "label": "State",
+     "noise_hint": "metadata-field",
+     "piece_id": "story:state",
+     "source_type": "story_meta",
+     "tokens": 7
+    },
+    {
+     "char_len": 25,
+     "label": "Assigned To",
+     "noise_hint": "metadata-field",
+     "piece_id": "story:assigned_to",
+     "source_type": "story_meta",
+     "tokens": 8
+    },
+    {
+     "char_len": 38,
+     "label": "Assignment Group",
+     "noise_hint": "metadata-field",
+     "piece_id": "story:assignment_group",
+     "source_type": "story_meta",
+     "tokens": 8
+    }
+   ],
+   "rich_metric_score": 0.8467,
+   "usage": {
+    "completion_tokens": 2452,
+    "prompt_tokens": 3188,
+    "total_tokens": 5640
+   }
+  },
+  {
+   "context_tokens": 502,
+   "id": "gold-2",
+   "noise_hint_tokens": 193,
+   "pieces": [
+    {
+     "char_len": 23,
+     "label": "Number",
+     "noise_hint": "metadata-field",
+     "piece_id": "story:number",
+     "source_type": "story_meta",
+     "tokens": 14
+    },
+    {
+     "char_len": 109,
+     "label": "Short Description",
+     "noise_hint": "",
+     "piece_id": "story:short_description",
+     "source_type": "story_core",
+     "tokens": 24
+    },
+    {
+     "char_len": 245,
+     "label": "Description",
+     "noise_hint": "",
+     "piece_id": "story:description",
+     "source_type": "story_core",
+     "tokens": 43
+    },
+    {
+     "char_len": 380,
+     "label": "Acceptance Criteria",
+     "noise_hint": "",
+     "piece_id": "story:acceptance_criteria",
+     "source_type": "story_core",
+     "tokens": 83
+    },
+    {
+     "char_len": 591,
+     "label": "U Technical Specification",
+     "noise_hint": "",
+     "piece_id": "story:u_technical_specification",
+     "source_type": "story_core",
+     "tokens": 159
+    },
+    {
+     "char_len": 341,
+     "label": "Work Notes",
+     "noise_hint": "metadata-field",
+     "piece_id": "story:work_notes",
+     "source_type": "story_meta",
+     "tokens": 114
+    },
+    {
+     "char_len": 140,
+     "label": "Comments",
+     "noise_hint": "metadata-field",
+     "piece_id": "story:comments",
+     "source_type": "story_meta",
+     "tokens": 42
+    },
+    {
+     "char_len": 26,
+     "label": "State",
+     "noise_hint": "metadata-field",
+     "piece_id": "story:state",
+     "source_type": "story_meta",
+     "tokens": 7
+    },
+    {
+     "char_len": 25,
+     "label": "Assigned To",
+     "noise_hint": "metadata-field",
+     "piece_id": "story:assigned_to",
+     "source_type": "story_meta",
+     "tokens": 8
+    },
+    {
+     "char_len": 38,
+     "label": "Assignment Group",
+     "noise_hint": "metadata-field",
+     "piece_id": "story:assignment_group",
+     "source_type": "story_meta",
+     "tokens": 8
+    }
+   ],
+   "rich_metric_score": 0.8817,
+   "usage": {
+    "completion_tokens": 2729,
+    "prompt_tokens": 3386,
+    "total_tokens": 6115
+   }
+  },
+  {
+   "context_tokens": 429,
+   "id": "gold-3",
+   "noise_hint_tokens": 183,
+   "pieces": [
+    {
+     "char_len": 23,
+     "label": "Number",
+     "noise_hint": "metadata-field",
+     "piece_id": "story:number",
+     "source_type": "story_meta",
+     "tokens": 14
+    },
+    {
+     "char_len": 95,
+     "label": "Short Description",
+     "noise_hint": "",
+     "piece_id": "story:short_description",
+     "source_type": "story_core",
+     "tokens": 17
+    },
+    {
+     "char_len": 278,
+     "label": "Description",
+     "noise_hint": "",
+     "piece_id": "story:description",
+     "source_type": "story_core",
+     "tokens": 51
+    },
+    {
+     "char_len": 264,
+     "label": "Acceptance Criteria",
+     "noise_hint": "",
+     "piece_id": "story:acceptance_criteria",
+     "source_type": "story_core",
+     "tokens": 60
+    },
+    {
+     "char_len": 467,
+     "label": "U Technical Specification",
+     "noise_hint": "",
+     "piece_id": "story:u_technical_specification",
+     "source_type": "story_core",
+     "tokens": 118
+    },
+    {
+     "char_len": 303,
+     "label": "Work Notes",
+     "noise_hint": "metadata-field",
+     "piece_id": "story:work_notes",
+     "source_type": "story_meta",
+     "tokens": 104
+    },
+    {
+     "char_len": 120,
+     "label": "Comments",
+     "noise_hint": "metadata-field",
+     "piece_id": "story:comments",
+     "source_type": "story_meta",
+     "tokens": 42
+    },
+    {
+     "char_len": 26,
+     "label": "State",
+     "noise_hint": "metadata-field",
+     "piece_id": "story:state",
+     "source_type": "story_meta",
+     "tokens": 7
+    },
+    {
+     "char_len": 25,
+     "label": "Assigned To",
+     "noise_hint": "metadata-field",
+     "piece_id": "story:assigned_to",
+     "source_type": "story_meta",
+     "tokens": 8
+    },
+    {
+     "char_len": 38,
+     "label": "Assignment Group",
+     "noise_hint": "metadata-field",
+     "piece_id": "story:assignment_group",
+     "source_type": "story_meta",
+     "tokens": 8
+    }
+   ],
+   "rich_metric_score": 0.7883,
+   "usage": {
+    "completion_tokens": 2493,
+    "prompt_tokens": 3281,
+    "total_tokens": 5774
+   }
+  },
+  {
+   "context_tokens": 550,
+   "id": "gold-4",
+   "noise_hint_tokens": 181,
+   "pieces": [
+    {
+     "char_len": 23,
+     "label": "Number",
+     "noise_hint": "metadata-field",
+     "piece_id": "story:number",
+     "source_type": "story_meta",
+     "tokens": 14
+    },
+    {
+     "char_len": 101,
+     "label": "Short Description",
+     "noise_hint": "",
+     "piece_id": "story:short_description",
+     "source_type": "story_core",
+     "tokens": 22
+    },
+    {
+     "char_len": 320,
+     "label": "Description",
+     "noise_hint": "",
+     "piece_id": "story:description",
+     "source_type": "story_core",
+     "tokens": 66
+    },
+    {
+     "char_len": 447,
+     "label": "Acceptance Criteria",
+     "noise_hint": "",
+     "piece_id": "story:acceptance_criteria",
+     "source_type": "story_core",
+     "tokens": 107
+    },
+    {
+     "char_len": 693,
+     "label": "U Technical Specification",
+     "noise_hint": "",
+     "piece_id": "story:u_technical_specification",
+     "source_type": "story_core",
+     "tokens": 174
+    },
+    {
+     "char_len": 256,
+     "label": "Work Notes",
+     "noise_hint": "metadata-field",
+     "piece_id": "story:work_notes",
+     "source_type": "story_meta",
+     "tokens": 99
+    },
+    {
+     "char_len": 154,
+     "label": "Comments",
+     "noise_hint": "metadata-field",
+     "piece_id": "story:comments",
+     "source_type": "story_meta",
+     "tokens": 45
+    },
+    {
+     "char_len": 26,
+     "label": "State",
+     "noise_hint": "metadata-field",
+     "piece_id": "story:state",
+     "source_type": "story_meta",
+     "tokens": 7
+    },
+    {
+     "char_len": 25,
+     "label": "Assigned To",
+     "noise_hint": "metadata-field",
+     "piece_id": "story:assigned_to",
+     "source_type": "story_meta",
+     "tokens": 8
+    },
+    {
+     "char_len": 38,
+     "label": "Assignment Group",
+     "noise_hint": "metadata-field",
+     "piece_id": "story:assignment_group",
+     "source_type": "story_meta",
+     "tokens": 8
+    }
+   ],
+   "rich_metric_score": 0.7583,
+   "usage": {
+    "completion_tokens": 3586,
+    "prompt_tokens": 3519,
+    "total_tokens": 7105
+   }
+  },
+  {
+   "context_tokens": 3536,
+   "id": "gold-5",
+   "noise_hint_tokens": 189,
+   "pieces": [
+    {
+     "char_len": 23,
+     "label": "Number",
+     "noise_hint": "metadata-field",
+     "piece_id": "story:number",
+     "source_type": "story_meta",
+     "tokens": 14
+    },
+    {
+     "char_len": 100,
+     "label": "Short Description",
+     "noise_hint": "",
+     "piece_id": "story:short_description",
+     "source_type": "story_core",
+     "tokens": 19
+    },
+    {
+     "char_len": 479,
+     "label": "Description",
+     "noise_hint": "",
+     "piece_id": "story:description",
+     "source_type": "story_core",
+     "tokens": 85
+    },
+    {
+     "char_len": 461,
+     "label": "Acceptance Criteria",
+     "noise_hint": "",
+     "piece_id": "story:acceptance_criteria",
+     "source_type": "story_core",
+     "tokens": 105
+    },
+    {
+     "char_len": 674,
+     "label": "U Technical Specification",
+     "noise_hint": "",
+     "piece_id": "story:u_technical_specification",
+     "source_type": "story_core",
+     "tokens": 167
+    },
+    {
+     "char_len": 297,
+     "label": "Work Notes",
+     "noise_hint": "metadata-field",
+     "piece_id": "story:work_notes",
+     "source_type": "story_meta",
+     "tokens": 111
+    },
+    {
+     "char_len": 156,
+     "label": "Comments",
+     "noise_hint": "metadata-field",
+     "piece_id": "story:comments",
+     "source_type": "story_meta",
+     "tokens": 41
+    },
+    {
+     "char_len": 26,
+     "label": "State",
+     "noise_hint": "metadata-field",
+     "piece_id": "story:state",
+     "source_type": "story_meta",
+     "tokens": 7
+    },
+    {
+     "char_len": 25,
+     "label": "Assigned To",
+     "noise_hint": "metadata-field",
+     "piece_id": "story:assigned_to",
+     "source_type": "story_meta",
+     "tokens": 8
+    },
+    {
+     "char_len": 38,
+     "label": "Assignment Group",
+     "noise_hint": "metadata-field",
+     "piece_id": "story:assignment_group",
+     "source_type": "story_meta",
+     "tokens": 8
+    },
+    {
+     "char_len": 4835,
+     "label": "sys_script_include:SnowKbGenerator",
+     "noise_hint": "",
+     "piece_id": "update_set:0:sys_script_include:SnowKbGenerator",
+     "source_type": "update_set_record",
+     "tokens": 1377
+    },
+    {
+     "char_len": 5454,
+     "label": "sys_ui_action:createKbArticle",
+     "noise_hint": "",
+     "piece_id": "update_set:1:sys_ui_action:createKbArticle",
+     "source_type": "update_set_record",
+     "tokens": 1594
+    }
+   ],
+   "rich_metric_score": 0.8885,
+   "usage": {
+    "completion_tokens": 4591,
+    "prompt_tokens": 8082,
+    "total_tokens": 12673
+   }
+  },
+  {
+   "context_tokens": 702,
+   "id": "gold-6",
+   "noise_hint_tokens": 295,
+   "pieces": [
+    {
+     "char_len": 23,
+     "label": "Number",
+     "noise_hint": "metadata-field",
+     "piece_id": "story:number",
+     "source_type": "story_meta",
+     "tokens": 14
+    },
+    {
+     "char_len": 104,
+     "label": "Short Description",
+     "noise_hint": "",
+     "piece_id": "story:short_description",
+     "source_type": "story_core",
+     "tokens": 21
+    },
+    {
+     "char_len": 366,
+     "label": "Description",
+     "noise_hint": "",
+     "piece_id": "story:description",
+     "source_type": "story_core",
+     "tokens": 73
+    },
+    {
+     "char_len": 320,
+     "label": "Acceptance Criteria",
+     "noise_hint": "",
+     "piece_id": "story:acceptance_criteria",
+     "source_type": "story_core",
+     "tokens": 75
+    },
+    {
+     "char_len": 988,
+     "label": "U Technical Specification",
+     "noise_hint": "",
+     "piece_id": "story:u_technical_specification",
+     "source_type": "story_core",
+     "tokens": 238
+    },
+    {
+     "char_len": 578,
+     "label": "Work Notes",
+     "noise_hint": "metadata-field",
+     "piece_id": "story:work_notes",
+     "source_type": "story_meta",
+     "tokens": 193
+    },
+    {
+     "char_len": 189,
+     "label": "Comments",
+     "noise_hint": "metadata-field",
+     "piece_id": "story:comments",
+     "source_type": "story_meta",
+     "tokens": 65
+    },
+    {
+     "char_len": 26,
+     "label": "State",
+     "noise_hint": "metadata-field",
+     "piece_id": "story:state",
+     "source_type": "story_meta",
+     "tokens": 7
+    },
+    {
+     "char_len": 25,
+     "label": "Assigned To",
+     "noise_hint": "metadata-field",
+     "piece_id": "story:assigned_to",
+     "source_type": "story_meta",
+     "tokens": 8
+    },
+    {
+     "char_len": 38,
+     "label": "Assignment Group",
+     "noise_hint": "metadata-field",
+     "piece_id": "story:assignment_group",
+     "source_type": "story_meta",
+     "tokens": 8
+    }
+   ],
+   "rich_metric_score": 0.8274,
+   "usage": {
+    "completion_tokens": 3389,
+    "prompt_tokens": 3816,
+    "total_tokens": 7205
+   }
+  },
+  {
+   "context_tokens": 650,
+   "id": "gold-7",
+   "noise_hint_tokens": 218,
+   "pieces": [
+    {
+     "char_len": 23,
+     "label": "Number",
+     "noise_hint": "metadata-field",
+     "piece_id": "story:number",
+     "source_type": "story_meta",
+     "tokens": 14
+    },
+    {
+     "char_len": 153,
+     "label": "Short Description",
+     "noise_hint": "",
+     "piece_id": "story:short_description",
+     "source_type": "story_core",
+     "tokens": 30
+    },
+    {
+     "char_len": 484,
+     "label": "Description",
+     "noise_hint": "",
+     "piece_id": "story:description",
+     "source_type": "story_core",
+     "tokens": 89
+    },
+    {
+     "char_len": 506,
+     "label": "Acceptance Criteria",
+     "noise_hint": "",
+     "piece_id": "story:acceptance_criteria",
+     "source_type": "story_core",
+     "tokens": 107
+    },
+    {
+     "char_len": 843,
+     "label": "U Technical Specification",
+     "noise_hint": "",
+     "piece_id": "story:u_technical_specification",
+     "source_type": "story_core",
+     "tokens": 206
+    },
+    {
+     "char_len": 391,
+     "label": "Work Notes",
+     "noise_hint": "metadata-field",
+     "piece_id": "story:work_notes",
+     "source_type": "story_meta",
+     "tokens": 137
+    },
+    {
+     "char_len": 164,
+     "label": "Comments",
+     "noise_hint": "metadata-field",
+     "piece_id": "story:comments",
+     "source_type": "story_meta",
+     "tokens": 44
+    },
+    {
+     "char_len": 26,
+     "label": "State",
+     "noise_hint": "metadata-field",
+     "piece_id": "story:state",
+     "source_type": "story_meta",
+     "tokens": 7
+    },
+    {
+     "char_len": 32,
+     "label": "Assigned To",
+     "noise_hint": "metadata-field",
+     "piece_id": "story:assigned_to",
+     "source_type": "story_meta",
+     "tokens": 8
+    },
+    {
+     "char_len": 38,
+     "label": "Assignment Group",
+     "noise_hint": "metadata-field",
+     "piece_id": "story:assignment_group",
+     "source_type": "story_meta",
+     "tokens": 8
+    }
+   ],
+   "rich_metric_score": 0.7491,
+   "usage": {
+    "completion_tokens": 4004,
+    "prompt_tokens": 3767,
+    "total_tokens": 7771
+   }
+  },
+  {
+   "context_tokens": 981,
+   "id": "gold-8",
+   "noise_hint_tokens": 100,
+   "pieces": [
+    {
+     "char_len": 23,
+     "label": "Number",
+     "noise_hint": "metadata-field",
+     "piece_id": "story:number",
+     "source_type": "story_meta",
+     "tokens": 14
+    },
+    {
+     "char_len": 78,
+     "label": "Short Description",
+     "noise_hint": "",
+     "piece_id": "story:short_description",
+     "source_type": "story_core",
+     "tokens": 17
+    },
+    {
+     "char_len": 251,
+     "label": "Description",
+     "noise_hint": "",
+     "piece_id": "story:description",
+     "source_type": "story_core",
+     "tokens": 52
+    },
+    {
+     "char_len": 809,
+     "label": "Acceptance Criteria",
+     "noise_hint": "",
+     "piece_id": "story:acceptance_criteria",
+     "source_type": "story_core",
+     "tokens": 174
+    },
+    {
+     "char_len": 2455,
+     "label": "U Technical Specification",
+     "noise_hint": "",
+     "piece_id": "story:u_technical_specification",
+     "source_type": "story_core",
+     "tokens": 638
+    },
+    {
+     "char_len": 90,
+     "label": "Work Notes",
+     "noise_hint": "metadata-field",
+     "piece_id": "story:work_notes",
+     "source_type": "story_meta",
+     "tokens": 33
+    },
+    {
+     "char_len": 88,
+     "label": "Comments",
+     "noise_hint": "metadata-field",
+     "piece_id": "story:comments",
+     "source_type": "story_meta",
+     "tokens": 30
+    },
+    {
+     "char_len": 26,
+     "label": "State",
+     "noise_hint": "metadata-field",
+     "piece_id": "story:state",
+     "source_type": "story_meta",
+     "tokens": 7
+    },
+    {
+     "char_len": 32,
+     "label": "Assigned To",
+     "noise_hint": "metadata-field",
+     "piece_id": "story:assigned_to",
+     "source_type": "story_meta",
+     "tokens": 8
+    },
+    {
+     "char_len": 38,
+     "label": "Assignment Group",
+     "noise_hint": "metadata-field",
+     "piece_id": "story:assignment_group",
+     "source_type": "story_meta",
+     "tokens": 8
+    }
+   ],
+   "rich_metric_score": 0.9575,
+   "usage": {
+    "completion_tokens": 3838,
+    "prompt_tokens": 4483,
+    "total_tokens": 8321
+   }
+  },
+  {
+   "context_tokens": 777,
+   "id": "gold-9",
+   "noise_hint_tokens": 307,
+   "pieces": [
+    {
+     "char_len": 23,
+     "label": "Number",
+     "noise_hint": "metadata-field",
+     "piece_id": "story:number",
+     "source_type": "story_meta",
+     "tokens": 14
+    },
+    {
+     "char_len": 134,
+     "label": "Short Description",
+     "noise_hint": "",
+     "piece_id": "story:short_description",
+     "source_type": "story_core",
+     "tokens": 30
+    },
+    {
+     "char_len": 482,
+     "label": "Description",
+     "noise_hint": "",
+     "piece_id": "story:description",
+     "source_type": "story_core",
+     "tokens": 107
+    },
+    {
+     "char_len": 477,
+     "label": "Acceptance Criteria",
+     "noise_hint": "",
+     "piece_id": "story:acceptance_criteria",
+     "source_type": "story_core",
+     "tokens": 116
+    },
+    {
+     "char_len": 848,
+     "label": "U Technical Specification",
+     "noise_hint": "",
+     "piece_id": "story:u_technical_specification",
+     "source_type": "story_core",
+     "tokens": 217
+    },
+    {
+     "char_len": 514,
+     "label": "Work Notes",
+     "noise_hint": "metadata-field",
+     "piece_id": "story:work_notes",
+     "source_type": "story_meta",
+     "tokens": 188
+    },
+    {
+     "char_len": 249,
+     "label": "Comments",
+     "noise_hint": "metadata-field",
+     "piece_id": "story:comments",
+     "source_type": "story_meta",
+     "tokens": 82
+    },
+    {
+     "char_len": 26,
+     "label": "State",
+     "noise_hint": "metadata-field",
+     "piece_id": "story:state",
+     "source_type": "story_meta",
+     "tokens": 7
+    },
+    {
+     "char_len": 33,
+     "label": "Assigned To",
+     "noise_hint": "metadata-field",
+     "piece_id": "story:assigned_to",
+     "source_type": "story_meta",
+     "tokens": 8
+    },
+    {
+     "char_len": 38,
+     "label": "Assignment Group",
+     "noise_hint": "metadata-field",
+     "piece_id": "story:assignment_group",
+     "source_type": "story_meta",
+     "tokens": 8
+    }
+   ],
+   "rich_metric_score": 0.8777,
+   "usage": {
+    "completion_tokens": 2985,
+    "prompt_tokens": 4028,
+    "total_tokens": 7013
+   }
+  }
+ ],
+ "rich_metric_baseline_avg": 0.8417,
+ "rich_metric_baseline_scores": [
+  0.8467,
+  0.8817,
+  0.7883,
+  0.7583,
+  0.8885,
+  0.8274,
+  0.7491,
+  0.9575,
+  0.8777
+ ],
+ "spec": "016-context-selection / T002 baseline",
+ "temperature": 0.6,
+ "token_method": "llama.cpp /tokenize (Qwen3.8-27B-UD-Q4_K_M.gguf, valódi tokenizer)",
+ "total_context_tokens": 8540,
+ "total_noise_hint_tokens": 1825
+}
