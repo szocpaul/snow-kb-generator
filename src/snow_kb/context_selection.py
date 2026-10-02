@@ -334,13 +334,16 @@ def _score_piece(
     *,
     settings: Settings,
     client: Any,
-    story_context: str,
 ) -> PieceDecision:
     """The Score classification of a piece + the Python policy. Any error → show."""
     cfg = settings.context_selection
     model = cfg.model
+    # The state DELIBERATELY does not contain the story core text: the T011
+    # calibration measurement proved that the story_context INFLATES the Score
+    # (the noise pieces got a 0.86-0.99 relevance with it vs 0.00-0.03 without —
+    # see specs/016-context-selection/gate-T012.md and the T012 human decision).
+    # The rubric/question stays unchanged.
     state = {
-        "story_context": story_context[:2000],
         "piece_type": piece.source_type,
         "piece_label": piece.label,
         "piece": piece.text[:6000],
@@ -398,7 +401,6 @@ def classify_pieces(
     *,
     settings: Settings,
     client: Any = None,
-    story_context: str = "",
 ) -> list[PieceDecision]:
     """Classifies every piece. For the story_core pieces no LLM call is started
     (FR-004); on an SDK error the given piece is show (FR-002), the processing
@@ -424,9 +426,6 @@ def classify_pieces(
 
         client = TypeSafeClient()
 
-    if not story_context:
-        story_context = "\n".join(p.text for p in pieces if p.source_type == "story_core")
-
     for piece in pieces:
         if piece.source_type == "story_core":
             decisions.append(PieceDecision(
@@ -434,9 +433,7 @@ def classify_pieces(
                 None, None, cfg.model, "story-core",
             ))
             continue
-        decisions.append(_score_piece(
-            piece, settings=settings, client=client, story_context=story_context,
-        ))
+        decisions.append(_score_piece(piece, settings=settings, client=client))
     return decisions
 
 

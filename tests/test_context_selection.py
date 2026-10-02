@@ -277,6 +277,28 @@ class TestClassification:
         assert client.calls == []  # there is no LLM call for the trunk
 
 
+class TestStateFix:
+    """T012 decision, 2nd point: the story_context is excluded from the `_score_piece` state
+    (the calibration finding: the story_context INFLATED the Score — the noise was 0.86-0.99
+    with it vs 0.00-0.03 without it)."""
+
+    def test_state_excludes_story_core_text(self, tmp_path):
+        s = _settings(tmp_path)
+        core_text = "THE SECRET CORE BODY 9f8e7d"
+        pieces = [
+            ContextPiece("story:description", "story_core", "Description", core_text),
+            ContextPiece("story:state", "story_meta", "State", "State: Closed"),
+        ]
+        client = FakeScoreClient([_score_response(0.0, 0.99)])
+        classify_pieces(pieces, settings=s, client=client)
+        assert len(client.calls) == 1
+        state = client.calls[0]["state"]
+        assert "story_context" not in state
+        assert core_text not in json.dumps(state, ensure_ascii=False)
+        assert state["piece_type"] == "story_meta"
+        assert "piece" in state
+
+
 class TestRecording:
     def test_recording_schema(self, tmp_path):
         """FR-003: the JSONL line is in the jev format (request_hash, source, model, response)."""

@@ -31,7 +31,7 @@
 
 - [x] T010 [US3] Labelled context sample (min. 20 pieces: relevant / noise / borderline — following the 015 fixture pattern, machine + manual labelling), labels committed
 - [x] T011 [US3] ReAnchor calibration of the hide threshold, with an asymmetric metric (initial 5:1, KD4) + sensitivity analysis + report; the "threshold stays" branch is a written file result as well; the safety floor (fail-open=show) MUST NOT be calibrated
-- [ ] T012 [US3] **MANUAL GATE**: the review of the calibration report; approval of the threshold change + the justification in Agent.md — the runner CANNOT check it off
+- [x] T012 [US3] **MANUAL GATE**: the review of the calibration report; approval of a threshold change + justification in Agent.md — the runner MUST NOT tick it
 
 ## Phase 5: Closure
 
