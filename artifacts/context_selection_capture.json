@@ -1,0 +1,1021 @@
+{
+ "capture": "selection",
+ "model": "jev-1.13.0",
+ "hide_below": 0.25,
+ "summarize_below": 0.6,
+ "min_confidence": 0.6,
+ "summarizer_endpoint": "http://desktop-c5ikame-1.tailee6bc1.ts.net:8033/v1",
+ "token_method": "llama.cpp /tokenize (Qwen3.8-27B-UD-Q4_K_M.gguf, valódi tokenizer)",
+ "examples": [
+  {
+   "id": "gold-1",
+   "pieces": [
+    {
+     "piece_id": "story:number",
+     "source_type": "story_meta",
+     "label": "Number",
+     "verdict": "show",
+     "relevance": 0.94,
+     "confidence": 0.81,
+     "reason": "score",
+     "summarized": false
+    },
+    {
+     "piece_id": "story:short_description",
+     "source_type": "story_core",
+     "label": "Short Description",
+     "verdict": "show",
+     "relevance": null,
+     "confidence": null,
+     "reason": "story-core",
+     "summarized": false
+    },
+    {
+     "piece_id": "story:description",
+     "source_type": "story_core",
+     "label": "Description",
+     "verdict": "show",
+     "relevance": null,
+     "confidence": null,
+     "reason": "story-core",
+     "summarized": false
+    },
+    {
+     "piece_id": "story:acceptance_criteria",
+     "source_type": "story_core",
+     "label": "Acceptance Criteria",
+     "verdict": "show",
+     "relevance": null,
+     "confidence": null,
+     "reason": "story-core",
+     "summarized": false
+    },
+    {
+     "piece_id": "story:u_technical_specification",
+     "source_type": "story_core",
+     "label": "U Technical Specification",
+     "verdict": "show",
+     "relevance": null,
+     "confidence": null,
+     "reason": "story-core",
+     "summarized": false
+    },
+    {
+     "piece_id": "story:work_notes",
+     "source_type": "story_meta",
+     "label": "Work Notes",
+     "verdict": "show",
+     "relevance": 0.865,
+     "confidence": 0.59,
+     "reason": "low-confidence",
+     "summarized": false
+    },
+    {
+     "piece_id": "story:comments",
+     "source_type": "story_meta",
+     "label": "Comments",
+     "verdict": "show",
+     "relevance": 0.84,
+     "confidence": 0.52,
+     "reason": "low-confidence",
+     "summarized": false
+    },
+    {
+     "piece_id": "story:state",
+     "source_type": "story_meta",
+     "label": "State",
+     "verdict": "show",
+     "relevance": 0.93,
+     "confidence": 0.79,
+     "reason": "score",
+     "summarized": false
+    },
+    {
+     "piece_id": "story:assigned_to",
+     "source_type": "story_meta",
+     "label": "Assigned To",
+     "verdict": "show",
+     "relevance": 0.22,
+     "confidence": 0.33,
+     "reason": "low-confidence",
+     "summarized": false
+    },
+    {
+     "piece_id": "story:assignment_group",
+     "source_type": "story_meta",
+     "label": "Assignment Group",
+     "verdict": "show",
+     "relevance": 0.435,
+     "confidence": 0.0,
+     "reason": "low-confidence",
+     "summarized": false
+    }
+   ],
+   "selected_story_text": "{\n\"number\": \"STRY0010001\",\n\"short_description\": \"[Interface Mgmt]: Implement Inbound Webhook for Jira Issue creation in SNOW\",\n\"description\": \"Implemented an inbound integration to receive Jira webhooks and create corresponding Incidents in ServiceNow. When a Jira issue is created, the webhook posts to a Scripted REST API in ServiceNow, which parses the JSON payload and creates a new Incident with the Jira issue key mapped to a custom field.\",\n\"acceptance_criteria\": \"1. A Scripted REST API endpoint (/api/x_jira/webhook) accepts POST requests from Jira.\\n2. The payload includes jira_key, summary, description, and priority.\\n3. A new Incident is created in ServiceNow with u_jira_key populated.\\n4. Authentication uses Basic Auth credentials validated via a Script Include.\",\n\"u_technical_specification\": \"1. Created a Scripted REST API (Scripted REST API: JiraInboundWebhook) with HTTP Method POST.\\n2. Configured a Script Include (JiraInboundUtils) to parse JSON and map fields.\\n3. Implemented Basic Auth validation using a custom credential record.\\n4. Mapped jira_key to u_jira_key on the incident table.\",\n\"work_notes\": \"2024-07-16 10:00: Dev - Created Scripted REST API endpoint.\\n2024-07-16 12:00: Dev - Tested with Postman, 200 OK received.\\n2024-07-16 14:30: Dev - Implemented Basic Auth validation.\",\n\"comments\": \"2024-07-16 15:00: QA - Verified Incident creation with correct u_jira_key mapping.\",\n\"state\": \"Closed Complete\",\n\"assigned_to\": \"Jane Dev\",\n\"assignment_group\": \"Integration Team\"\n}",
+   "selected_update_set_payloads": "",
+   "selected_related_articles_context": "",
+   "selected_story_tokens": 426,
+   "selected_update_set_tokens": 0
+  },
+  {
+   "id": "gold-2",
+   "pieces": [
+    {
+     "piece_id": "story:number",
+     "source_type": "story_meta",
+     "label": "Number",
+     "verdict": "show",
+     "relevance": 0.96,
+     "confidence": 0.88,
+     "reason": "score",
+     "summarized": false
+    },
+    {
+     "piece_id": "story:short_description",
+     "source_type": "story_core",
+     "label": "Short Description",
+     "verdict": "show",
+     "relevance": null,
+     "confidence": null,
+     "reason": "story-core",
+     "summarized": false
+    },
+    {
+     "piece_id": "story:description",
+     "source_type": "story_core",
+     "label": "Description",
+     "verdict": "show",
+     "relevance": null,
+     "confidence": null,
+     "reason": "story-core",
+     "summarized": false
+    },
+    {
+     "piece_id": "story:acceptance_criteria",
+     "source_type": "story_core",
+     "label": "Acceptance Criteria",
+     "verdict": "show",
+     "relevance": null,
+     "confidence": null,
+     "reason": "story-core",
+     "summarized": false
+    },
+    {
+     "piece_id": "story:u_technical_specification",
+     "source_type": "story_core",
+     "label": "U Technical Specification",
+     "verdict": "show",
+     "relevance": null,
+     "confidence": null,
+     "reason": "story-core",
+     "summarized": false
+    },
+    {
+     "piece_id": "story:work_notes",
+     "source_type": "story_meta",
+     "label": "Work Notes",
+     "verdict": "show",
+     "relevance": 0.96,
+     "confidence": 0.88,
+     "reason": "score",
+     "summarized": false
+    },
+    {
+     "piece_id": "story:comments",
+     "source_type": "story_meta",
+     "label": "Comments",
+     "verdict": "show",
+     "relevance": 0.94,
+     "confidence": 0.82,
+     "reason": "score",
+     "summarized": false
+    },
+    {
+     "piece_id": "story:state",
+     "source_type": "story_meta",
+     "label": "State",
+     "verdict": "show",
+     "relevance": 0.95,
+     "confidence": 0.85,
+     "reason": "score",
+     "summarized": false
+    },
+    {
+     "piece_id": "story:assigned_to",
+     "source_type": "story_meta",
+     "label": "Assigned To",
+     "verdict": "show",
+     "relevance": 0.225,
+     "confidence": 0.32,
+     "reason": "low-confidence",
+     "summarized": false
+    },
+    {
+     "piece_id": "story:assignment_group",
+     "source_type": "story_meta",
+     "label": "Assignment Group",
+     "verdict": "show",
+     "relevance": 0.485,
+     "confidence": 0.0,
+     "reason": "low-confidence",
+     "summarized": false
+    }
+   ],
+   "selected_story_text": "{\n\"number\": \"STRY0010002\",\n\"short_description\": \"[Interface Mgmt]: Implement Outbound REST API for Jira Bug creation from SNOW Incident\",\n\"description\": \"Implemented an outbound REST integration to automatically push ServiceNow Incidents to Jira Cloud when escalated. This integration pushes incident details via REST API and writes the returned Jira Issue Key back to the Incident.\",\n\"acceptance_criteria\": \"1. When an Incident state changes to 'Escalated', a Business Rule triggers the outbound payload.\\n2. The payload includes number, short_description, description, and assignment_group.\\n3. Authentication uses Basic Auth with an API Token stored in ServiceNow Credentials table.\\n4. The returned Jira Issue Key is written to the Incident's u_jira_key field.\",\n\"u_technical_specification\": \"1. Used the ServiceNow RESTMessageV2 (Outbound) to POST to https://yourcompany.atlassian.net/rest/api/2/issue.\\n2. Set HTTP Headers: 'Content-Type': 'application/json', 'Authorization': 'Basic <base64_token>'.\\n3. Built JSON payload dynamically in a Script Include (JiraIntegrationUtils) using JSON.stringify.\\n4. Configured a Business Rule (After Update) on incident table to check for state change to 'Escalated' (state=6) and call the Script Include.\\n5. Parsed the HTTP response to extract the Jira 'key' (e.g., PROJ-123) and wrote it back to the Incident.\",\n\"work_notes\": \"2024-07-16 09:00: Dev - Created credentials in the ServiceNow Basic Auth configuration.\\n2024-07-16 11:30: Dev - Wrote the Script Include (JiraIntegrationUtils) and tested the POST request via REST Explorer. 200 OK received.\\n2024-07-16 14:00: Dev - Implemented the Business Rule and verified it works when the state changes.\",\n\"comments\": \"2024-07-16 16:00: QA - Verified payload structure matches Jira requirements. Jira Issue Key successfully written back to SNOW.\",\n\"state\": \"Closed Complete\",\n\"assigned_to\": \"Jane Dev\",\n\"assignment_group\": \"Integration Team\"\n}",
+   "selected_update_set_payloads": "",
+   "selected_related_articles_context": "",
+   "selected_story_tokens": 515,
+   "selected_update_set_tokens": 0
+  },
+  {
+   "id": "gold-3",
+   "pieces": [
+    {
+     "piece_id": "story:number",
+     "source_type": "story_meta",
+     "label": "Number",
+     "verdict": "show",
+     "relevance": 0.97,
+     "confidence": 0.91,
+     "reason": "score",
+     "summarized": false
+    },
+    {
+     "piece_id": "story:short_description",
+     "source_type": "story_core",
+     "label": "Short Description",
+     "verdict": "show",
+     "relevance": null,
+     "confidence": null,
+     "reason": "story-core",
+     "summarized": false
+    },
+    {
+     "piece_id": "story:description",
+     "source_type": "story_core",
+     "label": "Description",
+     "verdict": "show",
+     "relevance": null,
+     "confidence": null,
+     "reason": "story-core",
+     "summarized": false
+    },
+    {
+     "piece_id": "story:acceptance_criteria",
+     "source_type": "story_core",
+     "label": "Acceptance Criteria",
+     "verdict": "show",
+     "relevance": null,
+     "confidence": null,
+     "reason": "story-core",
+     "summarized": false
+    },
+    {
+     "piece_id": "story:u_technical_specification",
+     "source_type": "story_core",
+     "label": "U Technical Specification",
+     "verdict": "show",
+     "relevance": null,
+     "confidence": null,
+     "reason": "story-core",
+     "summarized": false
+    },
+    {
+     "piece_id": "story:work_notes",
+     "source_type": "story_meta",
+     "label": "Work Notes",
+     "verdict": "show",
+     "relevance": 0.935,
+     "confidence": 0.81,
+     "reason": "score",
+     "summarized": false
+    },
+    {
+     "piece_id": "story:comments",
+     "source_type": "story_meta",
+     "label": "Comments",
+     "verdict": "show",
+     "relevance": 0.725,
+     "confidence": 0.18,
+     "reason": "low-confidence",
+     "summarized": false
+    },
+    {
+     "piece_id": "story:state",
+     "source_type": "story_meta",
+     "label": "State",
+     "verdict": "show",
+     "relevance": 0.93,
+     "confidence": 0.8,
+     "reason": "score",
+     "summarized": false
+    },
+    {
+     "piece_id": "story:assigned_to",
+     "source_type": "story_meta",
+     "label": "Assigned To",
+     "verdict": "show",
+     "relevance": 0.24,
+     "confidence": 0.28,
+     "reason": "low-confidence",
+     "summarized": false
+    },
+    {
+     "piece_id": "story:assignment_group",
+     "source_type": "story_meta",
+     "label": "Assignment Group",
+     "verdict": "show",
+     "relevance": 0.36,
+     "confidence": 0.0,
+     "reason": "low-confidence",
+     "summarized": false
+    }
+   ],
+   "selected_story_text": "{\n\"number\": \"STRY0010003\",\n\"short_description\": \"[Portal]: Fix intermittent LDAP authentication failures during SSO login\",\n\"description\": \"Implemented a fix for intermittent LDAP authentication failures on the Service Portal. Users were experiencing 'User Not Found' errors when logging in via SSO due to LDAP query timeouts under heavy load. A retry mechanism was added to the LDAP connection logic.\",\n\"acceptance_criteria\": \"1. LDAP connection retry logic is implemented (max 3 attempts with 500ms delay).\\n2. A friendly error message is shown if the LDAP server is unreachable after retries.\\n3. No high-priority incidents are created for transient LDAP failures.\",\n\"u_technical_specification\": \"1. Modified the standard LDAP Server record configuration to increase the 'Connection Timeout' from 5s to 15s.\\n2. Created a custom Script Include 'LDAP_Retry_Authenticator' using the GlideLDAP API.\\n3. The script uses a 'do-while' loop to attempt the LDAP search up to 3 times with a 500ms delay between attempts.\\n4. Added an Email Alert rule triggered by a scheduled job checking the 'ldap_connection_status' metric every 10 minutes.\",\n\"work_notes\": \"2024-07-16 10:00: Dev - Increased timeout on the production LDAP server record.\\n2024-07-16 14:00: Dev - Wrote the LDAP_Retry_Authenticator Script Include and tested the loop logic.\\n2024-07-17 09:30: Dev - Disabled the standard event rule that auto-created Incidents for login failures.\",\n\"comments\": \"2024-07-17 15:00: QA - Tested with 50 mock users. 0 false negatives. The friendly message works perfectly.\",\n\"state\": \"Closed Complete\",\n\"assigned_to\": \"Jane Dev\",\n\"assignment_group\": \"Integration Team\"\n}",
+   "selected_update_set_payloads": "",
+   "selected_related_articles_context": "",
+   "selected_story_tokens": 442,
+   "selected_update_set_tokens": 0
+  },
+  {
+   "id": "gold-4",
+   "pieces": [
+    {
+     "piece_id": "story:number",
+     "source_type": "story_meta",
+     "label": "Number",
+     "verdict": "show",
+     "relevance": 0.98,
+     "confidence": 0.94,
+     "reason": "score",
+     "summarized": false
+    },
+    {
+     "piece_id": "story:short_description",
+     "source_type": "story_core",
+     "label": "Short Description",
+     "verdict": "show",
+     "relevance": null,
+     "confidence": null,
+     "reason": "story-core",
+     "summarized": false
+    },
+    {
+     "piece_id": "story:description",
+     "source_type": "story_core",
+     "label": "Description",
+     "verdict": "show",
+     "relevance": null,
+     "confidence": null,
+     "reason": "story-core",
+     "summarized": false
+    },
+    {
+     "piece_id": "story:acceptance_criteria",
+     "source_type": "story_core",
+     "label": "Acceptance Criteria",
+     "verdict": "show",
+     "relevance": null,
+     "confidence": null,
+     "reason": "story-core",
+     "summarized": false
+    },
+    {
+     "piece_id": "story:u_technical_specification",
+     "source_type": "story_core",
+     "label": "U Technical Specification",
+     "verdict": "show",
+     "relevance": null,
+     "confidence": null,
+     "reason": "story-core",
+     "summarized": false
+    },
+    {
+     "piece_id": "story:work_notes",
+     "source_type": "story_meta",
+     "label": "Work Notes",
+     "verdict": "show",
+     "relevance": 0.845,
+     "confidence": 0.53,
+     "reason": "low-confidence",
+     "summarized": false
+    },
+    {
+     "piece_id": "story:comments",
+     "source_type": "story_meta",
+     "label": "Comments",
+     "verdict": "show",
+     "relevance": 0.845,
+     "confidence": 0.54,
+     "reason": "low-confidence",
+     "summarized": false
+    },
+    {
+     "piece_id": "story:state",
+     "source_type": "story_meta",
+     "label": "State",
+     "verdict": "show",
+     "relevance": 0.985,
+     "confidence": 0.95,
+     "reason": "score",
+     "summarized": false
+    },
+    {
+     "piece_id": "story:assigned_to",
+     "source_type": "story_meta",
+     "label": "Assigned To",
+     "verdict": "show",
+     "relevance": 0.275,
+     "confidence": 0.18,
+     "reason": "low-confidence",
+     "summarized": false
+    },
+    {
+     "piece_id": "story:assignment_group",
+     "source_type": "story_meta",
+     "label": "Assignment Group",
+     "verdict": "show",
+     "relevance": 0.445,
+     "confidence": 0.0,
+     "reason": "low-confidence",
+     "summarized": false
+    }
+   ],
+   "selected_story_text": "{\n\"number\": \"STRY0010004\",\n\"short_description\": \"[SAP Integration]: Resolve IDOC status 51 failures for Vendor Invoice creation\",\n\"description\": \"Implemented a fix for SAP IDOC status 51 failures during Vendor Invoice (MIR4) creation. The middleware (PI/PO) now sends a callback to ServiceNow with the exact IDOC error message, allowing the finance team to identify and resolve tax code mismatches or missing purchase order references automatically.\",\n\"acceptance_criteria\": \"1. When SAP returns a status 51 error, the middleware sends a callback to ServiceNow with the exact IDOC error message.\\n2. The ServiceNow Incident or custom 'Invoice Status' record is automatically updated with the IDOC failure reason.\\n3. An automated notification is sent to the finance group (SAP_Finance_Team) alerting them of the failure.\\n4. A 'Retry' UI action is made available on the form to re-trigger the IDOC.\",\n\"u_technical_specification\": \"1. Configured SAP PI/PO to send a REST Outbound message (HTTP POST) to ServiceNow's custom Scripted REST API: /api/x_sap/invoice/idoc_status.\\n2. The ServiceNow Scripted REST API parses the JSON payload, specifically extracting the IDOC number, MIR4 transaction ID, and the exact status 51 error text (e.g., 'Tax code I2 does not exist').\\n3. Implemented a Business Rule on the 'u_invoice_tracker' table that triggers a workflow.\\n4. The workflow sends an event to the notification engine sysevent for the SAP_Finance_Team group.\\n5. Created a UI Policy to make the 'IDOC Error Reason' field read-only and red, so finance cannot overwrite it during manual fixes.\",\n\"work_notes\": \"2024-03-12 09:00: Dev - Installed the SAP Rest API plugin.\\n2024-03-12 11:00: Dev - Tested Scripted REST API with SAP PI/PO team. Payload is accepted successfully.\\n2024-03-12 14:30: Dev - Configured the sysevent for the notification email.\",\n\"comments\": \"2024-03-13 09:00: SAP Admin - Validated the test failure with Finance. The system caught the Tax code error perfectly. Ready for production.\",\n\"state\": \"Closed Complete\",\n\"assigned_to\": \"Jane Dev\",\n\"assignment_group\": \"Integration Team\"\n}",
+   "selected_update_set_payloads": "",
+   "selected_related_articles_context": "",
+   "selected_story_tokens": 563,
+   "selected_update_set_tokens": 0
+  },
+  {
+   "id": "gold-5",
+   "pieces": [
+    {
+     "piece_id": "story:number",
+     "source_type": "story_meta",
+     "label": "Number",
+     "verdict": "show",
+     "relevance": 0.855,
+     "confidence": 0.57,
+     "reason": "low-confidence",
+     "summarized": false
+    },
+    {
+     "piece_id": "story:short_description",
+     "source_type": "story_core",
+     "label": "Short Description",
+     "verdict": "show",
+     "relevance": null,
+     "confidence": null,
+     "reason": "story-core",
+     "summarized": false
+    },
+    {
+     "piece_id": "story:description",
+     "source_type": "story_core",
+     "label": "Description",
+     "verdict": "show",
+     "relevance": null,
+     "confidence": null,
+     "reason": "story-core",
+     "summarized": false
+    },
+    {
+     "piece_id": "story:acceptance_criteria",
+     "source_type": "story_core",
+     "label": "Acceptance Criteria",
+     "verdict": "show",
+     "relevance": null,
+     "confidence": null,
+     "reason": "story-core",
+     "summarized": false
+    },
+    {
+     "piece_id": "story:u_technical_specification",
+     "source_type": "story_core",
+     "label": "U Technical Specification",
+     "verdict": "show",
+     "relevance": null,
+     "confidence": null,
+     "reason": "story-core",
+     "summarized": false
+    },
+    {
+     "piece_id": "story:work_notes",
+     "source_type": "story_meta",
+     "label": "Work Notes",
+     "verdict": "show",
+     "relevance": 0.95,
+     "confidence": 0.86,
+     "reason": "score",
+     "summarized": false
+    },
+    {
+     "piece_id": "story:comments",
+     "source_type": "story_meta",
+     "label": "Comments",
+     "verdict": "show",
+     "relevance": 0.8,
+     "confidence": 0.4,
+     "reason": "low-confidence",
+     "summarized": false
+    },
+    {
+     "piece_id": "story:state",
+     "source_type": "story_meta",
+     "label": "State",
+     "verdict": "show",
+     "relevance": 0.94,
+     "confidence": 0.82,
+     "reason": "score",
+     "summarized": false
+    },
+    {
+     "piece_id": "story:assigned_to",
+     "source_type": "story_meta",
+     "label": "Assigned To",
+     "verdict": "show",
+     "relevance": 0.295,
+     "confidence": 0.11,
+     "reason": "low-confidence",
+     "summarized": false
+    },
+    {
+     "piece_id": "story:assignment_group",
+     "source_type": "story_meta",
+     "label": "Assignment Group",
+     "verdict": "show",
+     "relevance": 0.52,
+     "confidence": 0.0,
+     "reason": "low-confidence",
+     "summarized": false
+    },
+    {
+     "piece_id": "update_set:0:sys_script_include:SnowKbGenerator",
+     "source_type": "update_set_record",
+     "label": "sys_script_include:SnowKbGenerator",
+     "verdict": "show",
+     "relevance": 0.945,
+     "confidence": 0.84,
+     "reason": "score",
+     "summarized": false
+    },
+    {
+     "piece_id": "update_set:1:sys_ui_action:createKbArticle",
+     "source_type": "update_set_record",
+     "label": "sys_ui_action:createKbArticle",
+     "verdict": "show",
+     "relevance": 0.95,
+     "confidence": 0.86,
+     "reason": "score",
+     "summarized": false
+    }
+   ],
+   "selected_story_text": "{\n\"number\": \"STRY0010016\",\n\"short_description\": \"[KB Generator]: Automate Knowledge Base creation from Stories via AI pipeline\",\n\"description\": \"Implemented a fully automated workflow to generate Knowledge Base articles directly from completed ServiceNow Stories. When a developer completes a Story, they can click a UI Action button to send the Story context (including technical specifications and modifications) to an external AI pipeline. The pipeline processes the request, generates a formatted HTML KB article, creates it in the ServiceNow KB, and returns the link directly to the Story's work notes.\",\n\"acceptance_criteria\": \"1. A custom field 'u_technical_specification' is created on the rm_story table to capture deep technical context.\\n2. A client-callable Script Include 'SnowKbGenerator' exists to handle the REST API integration.\\n3. A server-side UI Action 'Create KB Article' is available on the Story form, restricted to 'Closed Complete' state.\\n4. The UI Action successfully updates the Story work_notes with the URL of the newly created KB article.\",\n\"u_technical_specification\": \"The implementation relies on native ServiceNow REST capabilities (sn_ws.RESTMessageV2) communicating with a FastAPI server.\\n1. The 'SnowKbGenerator' Script Include initializes the API endpoint (http://10.20.30.40:8000/generate-kb) and API key.\\n2. It uses the native JSON encoder (new JSON().encode()) to construct the payload safely.\\n3. The POST request includes a 120-second timeout to accommodate the AI generation time.\\n4. The UI Action script runs server-side, extracts 'current.number', triggers the REST call, parses the JSON response, and writes the 'kb_url' directly into 'current.work_notes' before the automatic form save occurs.\",\n\"work_notes\": \"2026-07-15 14:00: Dev - Created u_technical_specification field on rm_story.\\n2026-07-15 17:30: Dev - Implemented SnowKbGenerator Script Include with RESTMessageV2 call.\\n2026-07-16 16:00: Dev - Added 'Create KB Article' UI Action, tested end-to-end: KB link written to work_notes.\",\n\"comments\": \"2026-07-16 17:00: Integration Team - Verified KB creation from a Closed Complete story; duplicate and missing-group errors handled gracefully.\",\n\"state\": \"Closed Complete\",\n\"assigned_to\": \"Jane Dev\",\n\"assignment_group\": \"Integration Team\"\n}",
+   "selected_update_set_payloads": "<record_update table=\"sys_script_include\"><sys_script_include action=\"INSERT_OR_UPDATE\"><access>package_private</access><active>false</active><api_name>global.SnowKbGenerator</api_name><caller_access/><client_callable>true</client_callable><description/><mobile_callable>false</mobile_callable><name>SnowKbGenerator</name><sandbox_callable>false</sandbox_callable><script><![CDATA[// ============================================================================\n// Script Include: SnowKbGenerator\n// ============================================================================\n// Ezt a scriptet egy új Script Include recordba kell másolni a ServiceNow-ban.\n// Name: SnowKbGenerator\n// Client callable: true (a UI Action GlideAjax hívása miatt)\n//\n// Ez a script a szerveren fut, és HTTP REST hívást intéz a FastAPI pipeline-hez.\n// ============================================================================\n\nvar SnowKbGenerator = Class.create();\nSnowKbGenerator.prototype = {\n    initialize: function() {\n        // --- BEÁLLÍTÁSOK ---\n        // Ide írd a FastAPI szervered címét és API kulcsát!\n        this.API_URL = 'http://10.20.30.40:8000/generate-kb';\n        this.API_KEY = 'REDACTED-API-KEY';\n    },\n\n    /**\n     * Elindítja a KB generálást a megadott Story-hoz.\n     * @param {string} storyId - A Story száma (pl. STRY0010012)\n     * @param {string} storySysId - A Story sys_id-ja\n     * @return {string} JSON válasz {success, kb_url, title, message}\n     */\n    generateKb: function(storyId, storySysId) {\n        // HTTP kérés összeállítása\n        var requestBody = JSON.stringify({\n            story_id: storyId,\n            push: true\n        });\n\n        // REST hívás a FastAPI szerverhez\n        var restMessage = new sn_ws.RESTMessageV2();\n        restMessage.setEndpoint(this.API_URL);\n        restMessage.setHttpMethod('POST');\n        restMessage.setRequestHeader('Content-Type', 'application/json');\n        restMessage.setRequestHeader('X-API-Key', this.API_KEY);\n        restMessage.setRequestBody(requestBody);\n\n        // Timeout beállítása (60 másodperc — a GLM generálás időbe telik)\n        restMessage.setRequestTimeout(60000);\n\n        var response = restMessage.execute();\n        var httpStatus = response.getStatusCode();\n        var responseBody = response.getBody();\n\n        // Válasz feldolgozása\n        if (httpStatus === 200) {\n            var result = JSON.parse(responseBody);\n\n            // Ha sikeres, belerakjuk a KB linket a Story work_notes mezőjébe\n            if (result.success && result.kb_url) {\n                this._addWorkNote(storySysId, \"KB article created: \" + result.kb_url + \" (\" + result.title + \")\");\n            }\n\n            return JSON.stringify(result);\n        } else {\n            // Hiba\n            var errorMsg = 'HTTP ' + httpStatus + ': ' + responseBody;\n            this._addWorkNote(storySysId, \"KB article generation FAILED: \" + errorMsg.substring(0, 200));\n            return JSON.stringify({\n                success: false,\n                message: errorMsg\n            });\n        }\n    },\n\n    /**\n     * Work note hozzáadása a Story-hoz.\n     * @param {string} storySysId - A Story sys_id-ja\n     * @param {string} note - A work note szövege\n     */\n    _addWorkNote: function(storySysId, note) {\n        try {\n            var gr = new GlideRecord('rm_story');\n            if (gr.get(storySysId)) {\n                // work_notes mező frissítése\n                gr.work_notes = gr.getValue('work_notes') + '\\n' + note;\n                gr.update();\n            }\n        } catch (ex) {\n            // Ha hiba van a work note írásakor, nem dobunk kivételt\n            gs.log('SnowKbGenerator work_note error: ' + ex.message);\n        }\n    },\n\n    type: 'SnowKbGenerator'\n};]]></script><sys_class_name>sys_script_include</sys_class_name><sys_created_by>developer</sys_created_by><sys_created_on>2026-07-13 18:09:37</sys_created_on><sys_id>anon0000000000000000000000000002</sys_id><sys_mod_count>2</sys_mod_count><sys_name>SnowKbGenerator</sys_name><sys_package display_value=\"Global\" source=\"global\">global</sys_package><sys_policy/><sys_scope display_value=\"Global\">global</sys_scope><sys_update_name>sys_script_include_anon0000000000000000000000000002</sys_update_name><sys_updated_by>developer</sys_updated_by><sys_updated_on>2026-07-13 19:52:24</sys_updated_on></sys_script_include><sys_es_latest_script action=\"INSERT_OR_UPDATE\"><id>anon0000000000000000000000000002</id><sys_created_by>developer</sys_created_by><sys_created_on>2026-07-13 18:09:37</sys_created_on><sys_id>anon0000000000000000000000000001</sys_id><sys_mod_count>0</sys_mod_count><sys_updated_by>developer</sys_updated_by><sys_updated_on>2026-07-13 18:09:37</sys_updated_on><table>sys_script_include</table><use_es_latest>true</use_es_latest></sys_es_latest_script></record_update><record_update sys_domain=\"global\" table=\"sys_ui_action\"><sys_ui_action action=\"INSERT_OR_UPDATE\"><action_name>create_kb_server_action</action_name><active>true</active><client>false</client><client_script_v2><![CDATA[function onClick(g_form) {\n\n}]]></client_script_v2><comments/><condition>current.state == '3'</condition><form_action>true</form_action><form_button>true</form_button><form_button_v2>false</form_button_v2><form_context_menu>false</form_context_menu><form_link>false</form_link><form_menu_button_v2>false</form_menu_button_v2><form_style/><format_for_configurable_workspace>false</format_for_configurable_workspace><hint/><isolate_script>false</isolate_script><list_action>false</list_action><list_banner_button>false</list_banner_button><list_button>false</list_button><list_choice>false</list_choice><list_context_menu>false</list_context_menu><list_link>false</list_link><list_save_with_form_button>false</list_save_with_form_button><list_style/><messages/><name>createKbArticle</name><onclick/><order>100</order><script><![CDATA[// ============================================================================\n// UI Action Script: Create KB Article (SERVER-SIDE)\n// ============================================================================\n// Ez a script a ServiceNow szerverén fut, és közvetlenül onnan hívja meg a \n// VPS-en lévő FastAPI szerverünket. Kezeli a 200, 409 (Duplicate), \n// 422 (Missing Group) és egyéb hibakódokat.\n// ============================================================================\n\n// 1. A 'current' változó automatikusan a megnyitott Story-t tartalmazza\nvar storyId = current.number;\n\n// --- BEÁLLÍTÁSOK ---\nvar apiUrl = 'http://10.20.30.40:8000/generate-kb';\nvar apiKey = 'REDACTED-API-KEY';\n\n// 2. Payload összeállítása\nvar payload = {};\npayload.story_id = storyId + ''; // string-ként kényszerítés\npayload.push = true;\n// A UI Action gombra kattintva a felhasználó már jóváhagyta a generálást,\n// ezért a force_update=true-t küldjük, hogy felülírja a régit, ha van.\npayload.force_update = true;\n\n// 3. REST hívás indítása a VPS szerverünknek\nvar restMessage = new sn_ws.RESTMessageV2();\nrestMessage.setEndpoint(apiUrl);\nrestMessage.setHttpMethod('POST');\nrestMessage.setRequestHeader('Content-Type', 'application/json');\nrestMessage.setRequestHeader('X-API-Key', apiKey);\nrestMessage.setRequestBody(JSON.stringify(payload));\nrestMessage.setRequestTimeout(120000); // 120 másodperc timeout a GLM generálás miatt\n\nvar response = restMessage.execute();\nvar httpStatus = response.getStatusCode();\nvar responseBody = response.getBody();\n\n// 4. Válasz feldolgozása a HTTP státuszkód alapján\nif (httpStatus === 200) {\n    // Sikeres generálás vagy frissítés\n    var result = JSON.parse(responseBody);\n    if (result.success && result.kb_url) {\n        current.work_notes = \"KB article created/updated: \" + result.kb_url + \" (\" + result.title + \")\";\n    } else {\n        current.work_notes = \"KB generation finished, but response was invalid.\";\n    }\n} else if (httpStatus === 422) {\n    // Unprocessable Entity (pl. hiányzik az Assignment Group)\n    var errData = JSON.parse(responseBody).detail;\n    current.work_notes = \"Generálás megszakítva: \" + (errData.message || 'Hiányzó kötelező adat (pl. Assignment Group).');\n    gs.addErrorMessage(\"Hiba: A Story-n kötelező az Assignment Group mező!\");\n} else if (httpStatus === 409) {\n    // Conflict (Már létezik KB cikk a Story-hoz)\n    current.work_notes = \"Figyelem: Már létezik KB cikk ehhez a Story-hoz. A gomb ismételt megnyomásával a rendszer felül fogja írni a régit.\";\n    gs.addInfoMessage(\"Már létezik KB cikk. Kattints a gombra mégegyszer a felülíráshoz!\");\n} else {\n    // Egyéb hibák (pl. 500 Internal Server Error, vagy 0 Connection Refused)\n    current.work_notes = \"Hiba történt (HTTP \" + httpStatus + \"): \" + responseBody.substring(0, 150);\n    gs.addErrorMessage(\"Hiba a generálás során (HTTP \" + httpStatus + \")\");\n}\n\n// 5. Irányítás beállítása: maradjon nyitva a Story-n a frissítés után\naction.setRedirectURL(current);\naction.setReturnURL(current);]]></script><show_insert>false</show_insert><show_multiple_update>false</show_multiple_update><show_query>false</show_query><show_update>true</show_update><sys_class_name>sys_ui_action</sys_class_name><sys_created_by>developer</sys_created_by><sys_created_on>2026-07-13 18:23:25</sys_created_on><sys_domain>global</sys_domain><sys_domain_path>/</sys_domain_path><sys_id>anon0000000000000000000000000004</sys_id><sys_mod_count>14</sys_mod_count><sys_name>createKbArticle</sys_name><sys_overrides/><sys_package display_value=\"Global\" source=\"global\">global</sys_package><sys_policy/><sys_scope display_value=\"Global\">global</sys_scope><sys_update_name>sys_ui_action_anon0000000000000000000000000004</sys_update_name><sys_updated_by>developer</sys_updated_by><sys_updated_on>2026-07-16 18:16:15</sys_updated_on><table>rm_story</table><ui11_compatible>true</ui11_compatible><ui16_compatible>false</ui16_compatible></sys_ui_action><sys_es_latest_script action=\"INSERT_OR_UPDATE\"><id>anon0000000000000000000000000004</id><sys_created_by>developer</sys_created_by><sys_created_on>2026-07-13 18:23:19</sys_created_on><sys_id>anon0000000000000000000000000003</sys_id><sys_mod_count>1</sys_mod_count><sys_updated_by>developer</sys_updated_by><sys_updated_on>2026-07-13 18:31:12</sys_updated_on><table>sys_ui_action</table><use_es_latest>false</use_es_latest></sys_es_latest_script></record_update>",
+   "selected_related_articles_context": "",
+   "selected_story_tokens": 578,
+   "selected_update_set_tokens": 2970
+  },
+  {
+   "id": "gold-6",
+   "pieces": [
+    {
+     "piece_id": "story:number",
+     "source_type": "story_meta",
+     "label": "Number",
+     "verdict": "show",
+     "relevance": 0.95,
+     "confidence": 0.85,
+     "reason": "score",
+     "summarized": false
+    },
+    {
+     "piece_id": "story:short_description",
+     "source_type": "story_core",
+     "label": "Short Description",
+     "verdict": "show",
+     "relevance": null,
+     "confidence": null,
+     "reason": "story-core",
+     "summarized": false
+    },
+    {
+     "piece_id": "story:description",
+     "source_type": "story_core",
+     "label": "Description",
+     "verdict": "show",
+     "relevance": null,
+     "confidence": null,
+     "reason": "story-core",
+     "summarized": false
+    },
+    {
+     "piece_id": "story:acceptance_criteria",
+     "source_type": "story_core",
+     "label": "Acceptance Criteria",
+     "verdict": "show",
+     "relevance": null,
+     "confidence": null,
+     "reason": "story-core",
+     "summarized": false
+    },
+    {
+     "piece_id": "story:u_technical_specification",
+     "source_type": "story_core",
+     "label": "U Technical Specification",
+     "verdict": "show",
+     "relevance": null,
+     "confidence": null,
+     "reason": "story-core",
+     "summarized": false
+    },
+    {
+     "piece_id": "story:work_notes",
+     "source_type": "story_meta",
+     "label": "Work Notes",
+     "verdict": "show",
+     "relevance": 0.985,
+     "confidence": 0.96,
+     "reason": "score",
+     "summarized": false
+    },
+    {
+     "piece_id": "story:comments",
+     "source_type": "story_meta",
+     "label": "Comments",
+     "verdict": "show",
+     "relevance": 0.72,
+     "confidence": 0.16,
+     "reason": "low-confidence",
+     "summarized": false
+    },
+    {
+     "piece_id": "story:state",
+     "source_type": "story_meta",
+     "label": "State",
+     "verdict": "show",
+     "relevance": 0.985,
+     "confidence": 0.96,
+     "reason": "score",
+     "summarized": false
+    },
+    {
+     "piece_id": "story:assigned_to",
+     "source_type": "story_meta",
+     "label": "Assigned To",
+     "verdict": "show",
+     "relevance": 0.275,
+     "confidence": 0.17,
+     "reason": "low-confidence",
+     "summarized": false
+    },
+    {
+     "piece_id": "story:assignment_group",
+     "source_type": "story_meta",
+     "label": "Assignment Group",
+     "verdict": "show",
+     "relevance": 0.42,
+     "confidence": 0.0,
+     "reason": "low-confidence",
+     "summarized": false
+    }
+   ],
+   "selected_story_text": "{\n\"number\": \"STRY0010005\",\n\"short_description\": \"[SolMan]: Fix data inconsistencies between ServiceNow and SolMan for Change Tasks\",\n\"description\": \"Implemented a fix for data inconsistencies between ServiceNow Change Tasks (CTASKs) and SolMan Change Documents (CDs). CTASKs were not automatically closing when their corresponding SolMan CDs reached terminal states ('Confirmed' or 'Withdrawn'). A Business Rule and a Fix Script were implemented to synchronize the states and close orphaned CTASKs.\",\n\"acceptance_criteria\": \"1. When a SolMan CD state changes to 'Confirmed' or 'Withdrawn', the corresponding CTASK is automatically closed (state=3).\\n2. A Fix Script reconciles historical CTASKs that were stuck open due to this gap.\\n3. A log output is generated to validate the count and correctness of updated records.\",\n\"u_technical_specification\": \"1. Reviewed the Business Rule named 'SolMan: Sync CD State to CTASK Closure Readiness' on the change_task table. Confirmed it is configured to run Before update with the condition u_cd_state.changesTo() == true.\\n2. Verified the Business Rule logic: when a CTASK's u_cd_state changes to 'Confirmed' or 'Withdrawn', the script queries all sibling CTASKs linked to the same parent CHG and auto-closes them (state=3) only if every sibling CTASK has a terminal CD state.\\n3. In a non-production environment, executed the Fix Script named 'SolMan: Fix CD State Inconsistencies' as a one-time Scheduled Script Execution.\\n4. Confirmed the Fix Script queries all CTASKs where u_cd_state IN ('Confirmed', 'Withdrawn') AND state != 3, verifies the parent CHG has no active CTASKs with non-terminal CD states, and updates qualifying CTASKs to state=3.\\n5. Reviewed the log output in non-prod to validate the count and correctness of updated records before proceeding.\",\n\"work_notes\": \"2024-07-16 10:00: Dev - Reproduced: CTASK stayed open after the SolMan CD reached 'Confirmed'.\\n2024-07-16 14:00: Dev - Reviewed Business Rule 'SolMan: Sync CD State to CTASK Closure Readiness'; confirmed it runs Before update with condition u_cd_state.changesTo() == true.\\n2024-07-16 16:00: Dev - Executed Fix Script 'SolMan: Fix CD State Inconsistencies' in non-prod as a one-time Scheduled Script Execution; verified the log counts.\\n2024-07-16 17:00: Dev - Confirmed sibling CTASKs auto-close (state=3) only when every sibling CTASK has a terminal CD state.\",\n\"comments\": \"2024-07-16 12:00: QA Team - Confirmed resolved in staging environment. Running full regression.\\n2024-07-16 15:00: QA Team - All regression tests passed. Ready for production.\",\n\"state\": \"Closed Complete\",\n\"assigned_to\": \"Jane Dev\",\n\"assignment_group\": \"Integration Team\"\n}",
+   "selected_update_set_payloads": "",
+   "selected_related_articles_context": "",
+   "selected_story_tokens": 715,
+   "selected_update_set_tokens": 0
+  },
+  {
+   "id": "gold-7",
+   "pieces": [
+    {
+     "piece_id": "story:number",
+     "source_type": "story_meta",
+     "label": "Number",
+     "verdict": "show",
+     "relevance": 0.955,
+     "confidence": 0.86,
+     "reason": "score",
+     "summarized": false
+    },
+    {
+     "piece_id": "story:short_description",
+     "source_type": "story_core",
+     "label": "Short Description",
+     "verdict": "show",
+     "relevance": null,
+     "confidence": null,
+     "reason": "story-core",
+     "summarized": false
+    },
+    {
+     "piece_id": "story:description",
+     "source_type": "story_core",
+     "label": "Description",
+     "verdict": "show",
+     "relevance": null,
+     "confidence": null,
+     "reason": "story-core",
+     "summarized": false
+    },
+    {
+     "piece_id": "story:acceptance_criteria",
+     "source_type": "story_core",
+     "label": "Acceptance Criteria",
+     "verdict": "show",
+     "relevance": null,
+     "confidence": null,
+     "reason": "story-core",
+     "summarized": false
+    },
+    {
+     "piece_id": "story:u_technical_specification",
+     "source_type": "story_core",
+     "label": "U Technical Specification",
+     "verdict": "show",
+     "relevance": null,
+     "confidence": null,
+     "reason": "story-core",
+     "summarized": false
+    },
+    {
+     "piece_id": "story:work_notes",
+     "source_type": "story_meta",
+     "label": "Work Notes",
+     "verdict": "show",
+     "relevance": 0.985,
+     "confidence": 0.95,
+     "reason": "score",
+     "summarized": false
+    },
+    {
+     "piece_id": "story:comments",
+     "source_type": "story_meta",
+     "label": "Comments",
+     "verdict": "show",
+     "relevance": 0.905,
+     "confidence": 0.71,
+     "reason": "score",
+     "summarized": false
+    },
+    {
+     "piece_id": "story:state",
+     "source_type": "story_meta",
+     "label": "State",
+     "verdict": "show",
+     "relevance": 0.98,
+     "confidence": 0.94,
+     "reason": "score",
+     "summarized": false
+    },
+    {
+     "piece_id": "story:assigned_to",
+     "source_type": "story_meta",
+     "label": "Assigned To",
+     "verdict": "show",
+     "relevance": 0.41,
+     "confidence": 0.0,
+     "reason": "low-confidence",
+     "summarized": false
+    },
+    {
+     "piece_id": "story:assignment_group",
+     "source_type": "story_meta",
+     "label": "Assignment Group",
+     "verdict": "show",
+     "relevance": 0.555,
+     "confidence": 0.0,
+     "reason": "low-confidence",
+     "summarized": false
+    }
+   ],
+   "selected_story_text": "{\n\"number\": \"STRY0010014\",\n\"short_description\": \"[ServiceNow]: Implement bidirectional integration between ServiceNow and SAP SolMan (Conigma) for Change Requests and Change Tasks\",\n\"description\": \"Implemented a bidirectional integration between ServiceNow and SAP Solution Manager (Conigma) to synchronize Change Requests and Change Tasks. Inbound: a Scripted REST API receives SolMan CD state updates and maps them to change_task records. Outbound: a REST Message Function pushes Change Request state changes to SolMan via mTLS-authenticated calls. Supporting Script Includes handle payload mapping, validation, and logging through the ALDI Integration Framework.\",\n\"acceptance_criteria\": \"1. SolMan can POST CD state updates to the ServiceNow Scripted REST endpoint (/api/aldie/solman/change/task), which updates the corresponding change_task record.\\n2. When a Change Request state changes in ServiceNow, an outbound REST call notifies SolMan with the new state.\\n3. Authentication: inbound requires an integration user with the SNC internal role; outbound uses mTLS certificates.\\n4. All integration events are logged via ALDIIntegrationFrameworkUtil for traceability.\",\n\"u_technical_specification\": \"1. Created Scripted REST API 'ALDI SolMan' (namespace /api/aldie/solman) with resource POST /change/task for inbound CD state updates; enforces ACL b7b63e761b89499034b7dceacd4bcb6d.\\n2. Implemented Script Include 'ALDISolManChangeInterface' for inbound payload mapping and validation (mandatory fields: number, sys_id, short_description, u_cd_state, u_cd_number).\\n3. Implemented Script Include 'ALDIIntegrationFrameworkUtil' as the generic framework for interface logic and logging.\\n4. Created REST Message Function for outbound notifications to the Conigma endpoint, authenticated via mTLS certificate records.\\n5. Configured Business Rule on change_request to trigger the outbound call on state changes.\\n6. Validated end-to-end: inbound POST updates change_task; outbound state change is received by SolMan.\",\n\"work_notes\": \"2026-07-27 10:00: Dev - Created Scripted REST API and ACL for the SolMan namespace.\\n2026-07-27 12:00: Dev - Implemented ALDISolManChangeInterface payload mapping and mandatory field validation.\\n2026-07-27 14:00: Dev - Configured outbound REST Message Function with mTLS certificates; tested from non-prod.\\n2026-07-27 16:00: Dev - End-to-end test passed in both directions.\",\n\"comments\": \"2026-07-27 17:00: Integration Team - Reviewed interface logs in ALDIIntegrationFrameworkUtil; both directions traceable. Ready for production rollout.\",\n\"state\": \"Closed Complete\",\n\"assigned_to\": \"Integration Dev\",\n\"assignment_group\": \"Integration Team\"\n}",
+   "selected_update_set_payloads": "",
+   "selected_related_articles_context": "",
+   "selected_story_tokens": 663,
+   "selected_update_set_tokens": 0
+  },
+  {
+   "id": "gold-8",
+   "pieces": [
+    {
+     "piece_id": "story:number",
+     "source_type": "story_meta",
+     "label": "Number",
+     "verdict": "show",
+     "relevance": 0.905,
+     "confidence": 0.72,
+     "reason": "score",
+     "summarized": false
+    },
+    {
+     "piece_id": "story:short_description",
+     "source_type": "story_core",
+     "label": "Short Description",
+     "verdict": "show",
+     "relevance": null,
+     "confidence": null,
+     "reason": "story-core",
+     "summarized": false
+    },
+    {
+     "piece_id": "story:description",
+     "source_type": "story_core",
+     "label": "Description",
+     "verdict": "show",
+     "relevance": null,
+     "confidence": null,
+     "reason": "story-core",
+     "summarized": false
+    },
+    {
+     "piece_id": "story:acceptance_criteria",
+     "source_type": "story_core",
+     "label": "Acceptance Criteria",
+     "verdict": "show",
+     "relevance": null,
+     "confidence": null,
+     "reason": "story-core",
+     "summarized": false
+    },
+    {
+     "piece_id": "story:u_technical_specification",
+     "source_type": "story_core",
+     "label": "U Technical Specification",
+     "verdict": "show",
+     "relevance": null,
+     "confidence": null,
+     "reason": "story-core",
+     "summarized": false
+    },
+    {
+     "piece_id": "story:work_notes",
+     "source_type": "story_meta",
+     "label": "Work Notes",
+     "verdict": "show",
+     "relevance": 0.78,
+     "confidence": 0.34,
+     "reason": "low-confidence",
+     "summarized": false
+    },
+    {
+     "piece_id": "story:comments",
+     "source_type": "story_meta",
+     "label": "Comments",
+     "verdict": "show",
+     "relevance": 0.77,
+     "confidence": 0.3,
+     "reason": "low-confidence",
+     "summarized": false
+    },
+    {
+     "piece_id": "story:state",
+     "source_type": "story_meta",
+     "label": "State",
+     "verdict": "show",
+     "relevance": 0.885,
+     "confidence": 0.66,
+     "reason": "score",
+     "summarized": false
+    },
+    {
+     "piece_id": "story:assigned_to",
+     "source_type": "story_meta",
+     "label": "Assigned To",
+     "verdict": "show",
+     "relevance": 0.785,
+     "confidence": 0.36,
+     "reason": "low-confidence",
+     "summarized": false
+    },
+    {
+     "piece_id": "story:assignment_group",
+     "source_type": "story_meta",
+     "label": "Assignment Group",
+     "verdict": "show",
+     "relevance": 0.605,
+     "confidence": 0.0,
+     "reason": "low-confidence",
+     "summarized": false
+    }
+   ],
+   "selected_story_text": "{\n\"number\": \"STRY0010013\",\n\"short_description\": \"ALMEX: Repair Process Automation (new SOAP integration)\",\n\"description\": \"As a product owner I want the requested ALMEX interface to be created in order to leverage automation on the repair process for ALMEX devices and ensure that there is a workflow established with the vendor (ALMEX SAP system via SOAP).\",\n\"acceptance_criteria\": \"Aldi ServiceNow is integrated with the ALMEX SAP system via SOAP.   \\r\\n  Aldi ServiceNow acts as the SOAP server while ALMEX system will send unidirectional calls on a periodic basis to update ServiceNow with data from the repair orders created on ALMEX side.   \\r\\n  It is possible to create a mostly automated ServiceNow SSR for ALMEX repair cases which will allow stores to easily send out devices for repair (ideally only needing to enter the device serial into the SSR) and track the whole process by automatically generating a repair order and exchanging data like parcel tracking and status information. A diagramme of the suggested flow can be found in the attachments as well as a SOAP Call documentation, which has been pulled from an already existing test system at ALMEX.\",\n\"u_technical_specification\": \"The recording function does not work correctly after the release change. Since the one catalog item consists of almost 70 objects, I left it in the original update set, although I actually only wanted to have one update set. Update Sets STRY0429735_V2 and STRY0429735_V3 cover only small adjustments/new requirements after the preview/UAT of this request.  \\r\\n The integration is a SOAP inbound interface on ALDI side. The Static WSDL &#34;  ALDIAlmex &#34;  is here required as ALMEX expects a SOAP standard here and not a ServiceNow SOAP/WSDL. The Scripted Web Service   &#34;ALDIAlmex &#34;  defines the endpoint.  \\r\\n Script Include &#34;  ALDIAlmexInterface  &#34; contains all required logic for the two defined SOAP operations &#34; GetReturns&#34;  and &#34; ConfirmReturns&#34; . The ALDI Interface Trigger Condition is &#34;  ALMEX -&gt; SN  &#34;.  Script Include   &#34;ALDIAlmexInterfaceClient  &#34; contains support functions like reference qualifiers or reading some sys properties for Catalog Item &#34;  ALMEX Customer Repair Request  &#34;.  The requests from the catalog item &#34;  ALMEX Customer Repair Request  &#34; is the data for ALMEX integration here.   ALMEX uses the SOAP endpoint and its methods to read all open ALMEX requests and to update or to close them.   \\r\\n For an easier data handling in the requested item the  correlation_id  and  correlation_display  are set by the flow   &#34;Cat Item: ALMEX Customer Repair Order  ”. This means that it is no longer necessary to access variables that are unique for ALMEX, such as the serial number. The serial number is used as an ID in ALMEX. We always provide in the response payload next to the serial number the requested item sys_id and the requested item number.  There are several Catalog Client Scripts for request validation and loading default data.   There are three System Properties. Sys Property &#34;  aldi.integration.almex.config &#34;  holds all required global properties.  Sys Property &#34;  aldi.almex.config.list  &#34; defines the countries for the requests and if for the country a vat id is required or not.  Sys Property &#34;  aldi.integration.almex.config.matrix  &#34; defines the SOAP response layout and its mapped fields from the catalog item.   The integration User is &#34;  interface.almex.user  &#34; is created for this integration. The user has the  snc_internal  role and all soap roles except delete.\",\n\"work_notes\": \"2026-07-27 10:00: Dev - Implementation completed and verified in non-prod.\",\n\"comments\": \"2026-07-27 16:00: Integration Team - Reviewed and approved for production.\",\n\"state\": \"Closed Complete\",\n\"assigned_to\": \"Integration Dev\",\n\"assignment_group\": \"Integration Team\"\n}",
+   "selected_update_set_payloads": "",
+   "selected_related_articles_context": "",
+   "selected_story_tokens": 995,
+   "selected_update_set_tokens": 0
+  },
+  {
+   "id": "gold-9",
+   "pieces": [
+    {
+     "piece_id": "story:number",
+     "source_type": "story_meta",
+     "label": "Number",
+     "verdict": "show",
+     "relevance": 0.975,
+     "confidence": 0.92,
+     "reason": "score",
+     "summarized": false
+    },
+    {
+     "piece_id": "story:short_description",
+     "source_type": "story_core",
+     "label": "Short Description",
+     "verdict": "show",
+     "relevance": null,
+     "confidence": null,
+     "reason": "story-core",
+     "summarized": false
+    },
+    {
+     "piece_id": "story:description",
+     "source_type": "story_core",
+     "label": "Description",
+     "verdict": "show",
+     "relevance": null,
+     "confidence": null,
+     "reason": "story-core",
+     "summarized": false
+    },
+    {
+     "piece_id": "story:acceptance_criteria",
+     "source_type": "story_core",
+     "label": "Acceptance Criteria",
+     "verdict": "show",
+     "relevance": null,
+     "confidence": null,
+     "reason": "story-core",
+     "summarized": false
+    },
+    {
+     "piece_id": "story:u_technical_specification",
+     "source_type": "story_core",
+     "label": "U Technical Specification",
+     "verdict": "show",
+     "relevance": null,
+     "confidence": null,
+     "reason": "story-core",
+     "summarized": false
+    },
+    {
+     "piece_id": "story:work_notes",
+     "source_type": "story_meta",
+     "label": "Work Notes",
+     "verdict": "show",
+     "relevance": 0.955,
+     "confidence": 0.87,
+     "reason": "score",
+     "summarized": false
+    },
+    {
+     "piece_id": "story:comments",
+     "source_type": "story_meta",
+     "label": "Comments",
+     "verdict": "show",
+     "relevance": 0.87,
+     "confidence": 0.61,
+     "reason": "score",
+     "summarized": false
+    },
+    {
+     "piece_id": "story:state",
+     "source_type": "story_meta",
+     "label": "State",
+     "verdict": "show",
+     "relevance": 0.915,
+     "confidence": 0.74,
+     "reason": "score",
+     "summarized": false
+    },
+    {
+     "piece_id": "story:assigned_to",
+     "source_type": "story_meta",
+     "label": "Assigned To",
+     "verdict": "show",
+     "relevance": 0.345,
+     "confidence": 0.0,
+     "reason": "low-confidence",
+     "summarized": false
+    },
+    {
+     "piece_id": "story:assignment_group",
+     "source_type": "story_meta",
+     "label": "Assignment Group",
+     "verdict": "show",
+     "relevance": 0.39,
+     "confidence": 0.0,
+     "reason": "low-confidence",
+     "summarized": false
+    }
+   ],
+   "selected_story_text": "{\n\"number\": \"STRY0010015\",\n\"short_description\": \"[Interface Mgmt]: Outbound OData integration - Push approved Change Request dates to SAP S/4HANA Project System\",\n\"description\": \"Implemented an outbound integration that pushes approved Change Request (CHG) planned start and end dates from ServiceNow to SAP S/4HANA Project System (PS) via OData. When a CHG reaches the 'Scheduled' state, a Business Rule triggers the ALDI Integration Framework, which builds the payload and calls the S/4HANA OData endpoint API_PROJECT_MAINTAIN with the WBS element reference stored on the CHG. The S/4HANA side updates the project milestone dates accordingly.\",\n\"acceptance_criteria\": \"1. When a CHG moves to 'Scheduled', the planned start/end dates are sent to S/4HANA within 5 minutes.\\n2. The WBS element reference (u_wbs_element) on the CHG is mandatory; missing values block the outbound call and log an error.\\n3. Failed calls are retried up to 3 times with exponential backoff and logged in the ALDI Integration Framework log table.\\n4. The OData response code and message are stored on the integration log record for traceability.\",\n\"u_technical_specification\": \"Business Rule 'ALDI: CHG Scheduled - Push Dates to S4' on the change_request table, runs After update with condition state changes to 'Scheduled' (-1). Script Include 'ALDIS4ProjectInterface' builds the JSON payload (WBS element, planned dates, CHG number) and calls REST Message 'ALDI S4 OData Outbound', function 'UpdateProjectDates'. Authentication: OAuth 2.0 client credentials against the S/4HANA OData gateway (token endpoint https://s4hana.prd.aldi-sued.com/sap/bc/sec/oauth2/token). Endpoint: https://s4hana.prd.aldi-sued.com/sap/opu/odata/sap/API_PROJECT_MAINTAIN/ProjectMilestone. Retry logic: up to 3 attempts, exponential backoff (1/5/15 minutes), implemented via the ALDI Integration Framework retry queue. Payload validation: u_wbs_element mandatory; empty value aborts the call and writes an error log.\",\n\"work_notes\": \"2024-08-05 09:30: Dev - Confirmed with SAP team that API_PROJECT_MAINTAIN is exposed on the S/4HANA gateway.\\n2024-08-05 14:00: Dev - Implemented ALDIS4ProjectInterface payload builder; unit tested with sample WBS element PRJ-1002345-01.\\n2024-08-06 10:15: Dev - OAuth2 client credentials configured in ServiceNow OAuth registry; token fetch verified from non-prod.\\n2024-08-06 16:45: Dev - End-to-end test passed: CHG0001234 moved to Scheduled, milestone dates updated in S/4HANA within 2 minutes.\",\n\"comments\": \"2024-08-07 09:00: SAP Basis - Gateway throttling limit is 100 calls/minute; current volume is well below.\\n2024-08-07 11:30: QA Team - Verified retry behavior by temporarily blocking the endpoint; 3 retries logged with correct backoff.\",\n\"state\": \"Closed Complete\",\n\"assigned_to\": \"John Integration\",\n\"assignment_group\": \"Integration Team\"\n}",
+   "selected_update_set_payloads": "",
+   "selected_related_articles_context": "",
+   "selected_story_tokens": 790,
+   "selected_update_set_tokens": 0
+  }
+ ]
+}

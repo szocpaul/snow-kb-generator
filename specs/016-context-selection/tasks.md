@@ -24,12 +24,12 @@
 ## Phase 3: US2 – Hatásmérés
 
 - [ ] T007 [US2] Mérés a gold példákon: válogatott futás vs baseline — per-példa és összesített token-delta + rich_metric-delta → `artifacts/context_selection_report.json`; a minőség nem romolhat a zaj-sávon túl (SC-002); replay-módban kétszeri futás byte-identikus (SC-005)
-- [ ] T008 [US2] Recall-gate (SC-003): exit-code-os teszt — a válogatott prompt tartalmazza a gold cikkek által hivatkozott valós komponensneveket (0/9 kiesés)
+- [x] T008 [US2] Recall-gate (SC-003): exit-code-os teszt — a válogatott prompt tartalmazza a gold cikkek által hivatkozott valós komponensneveket (0/9 kiesés)
 - [ ] T009 [US2] **MANUÁLIS KAPU**: a hatásriport review-ja — ha a minőség romlott vagy a recall kiesett, a spec NEM megy tovább production-felé — a runner NEM pipálhatja
 
 ## Phase 4: US3 – Kalibráció
 
-- [ ] T010 [US3] Címkézett kontextus-minta (min. 20 darab: releváns / zaj / határeset — a 015-ös fixture mintára, gépi + kézi címkézés), címkék commitolva
+- [x] T010 [US3] Címkézett kontextus-minta (min. 20 darab: releváns / zaj / határeset — a 015-ös fixture mintára, gépi + kézi címkézés), címkék commitolva
 - [ ] T011 [US3] ReAnchor-kalibráció a hide-küszöbre, aszimmetrikus metrikával (kiinduló 5:1, KD4) + érzékenység-analízis + riport; a „küszöb marad" ág is fájlba írt eredmény; a safety floor (fail-open=show) NEM kalibrálható
 - [ ] T012 [US3] **MANUÁLIS KAPU**: a kalibrációs riport review-ja; küszöb-módosítás jóváhagyása + indoklás az Agent.md-be — a runner NEM pipálhatja
 
