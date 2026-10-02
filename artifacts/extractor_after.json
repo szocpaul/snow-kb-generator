@@ -1,0 +1,171 @@
+{
+ "spec": "fix/extractor-refinement (Agent.md §46 hibaosztály)",
+ "created_at": "2026-10-02T06:18:38.068301+00:00",
+ "extractor": "src/snow_kb/verification.py extract_component_candidates (011-minta) + brand-blacklist + fragment-szabály + 'not exist' szuffix",
+ "dataset": "data/examples/gold_dataset.md (9 gold cikk)",
+ "total_candidates": 22,
+ "false_candidates": [],
+ "per_example": [
+  {
+   "index": 0,
+   "candidates": [
+    {
+     "name": "JiraInboundUtils",
+     "kind": "camelcase",
+     "false_candidate": false
+    }
+   ]
+  },
+  {
+   "index": 1,
+   "candidates": [
+    {
+     "name": "JiraIntegrationUtils",
+     "kind": "camelcase",
+     "false_candidate": false
+    }
+   ]
+  },
+  {
+   "index": 2,
+   "candidates": []
+  },
+  {
+   "index": 3,
+   "candidates": []
+  },
+  {
+   "index": 4,
+   "candidates": [
+    {
+     "name": "Create KB Article",
+     "kind": "quoted",
+     "false_candidate": false
+    },
+    {
+     "name": "current.work_notes",
+     "kind": "dotted",
+     "false_candidate": false
+    },
+    {
+     "name": "current.number",
+     "kind": "dotted",
+     "false_candidate": false
+    }
+   ]
+  },
+  {
+   "index": 5,
+   "candidates": [
+    {
+     "name": "SolMan: Sync CD State to CTASK Closure Readiness",
+     "kind": "quoted",
+     "false_candidate": false
+    },
+    {
+     "name": "SolMan: Fix CD State Inconsistencies",
+     "kind": "quoted",
+     "false_candidate": false
+    },
+    {
+     "name": "SolMan",
+     "kind": "camelcase",
+     "false_candidate": false
+    }
+   ]
+  },
+  {
+   "index": 6,
+   "candidates": [
+    {
+     "name": "interface.solman",
+     "kind": "dotted",
+     "false_candidate": false
+    },
+    {
+     "name": "aldi.solman",
+     "kind": "dotted",
+     "false_candidate": false
+    },
+    {
+     "name": "SolMan",
+     "kind": "camelcase",
+     "false_candidate": false
+    }
+   ]
+  },
+  {
+   "index": 7,
+   "candidates": [
+    {
+     "name": "aldi.integration.almex.config",
+     "kind": "dotted",
+     "false_candidate": false
+    },
+    {
+     "name": "aldi.almex.config.list",
+     "kind": "dotted",
+     "false_candidate": false
+    },
+    {
+     "name": "aldi.integration.almex.config.matrix",
+     "kind": "dotted",
+     "false_candidate": false
+    },
+    {
+     "name": "interface.almex.user",
+     "kind": "dotted",
+     "false_candidate": false
+    },
+    {
+     "name": "GetReturns",
+     "kind": "camelcase",
+     "false_candidate": false
+    },
+    {
+     "name": "ConfirmReturns",
+     "kind": "camelcase",
+     "false_candidate": false
+    }
+   ]
+  },
+  {
+   "index": 8,
+   "candidates": [
+    {
+     "name": "ALDI S4 OData Outbound",
+     "kind": "quoted",
+     "false_candidate": false
+    },
+    {
+     "name": "ALDI: CHG Scheduled - Push Dates to S4",
+     "kind": "quoted",
+     "false_candidate": false
+    },
+    {
+     "name": "ALDIS4ProjectInterface",
+     "kind": "quoted",
+     "false_candidate": false
+    },
+    {
+     "name": "UpdateProjectDates",
+     "kind": "quoted",
+     "false_candidate": false
+    },
+    {
+     "name": "ProjectMilestone",
+     "kind": "camelcase",
+     "false_candidate": false
+    }
+   ]
+  }
+ ],
+ "false_candidate_count": 0,
+ "comparison": {
+  "candidates_before": 26,
+  "candidates_after": 22,
+  "false_before": 4,
+  "false_after": 0,
+  "recall": "21/21 keep-név megmaradt (TestRecall::test_gold_articles_recall_no_loss ZÖLD)"
+ }
+}

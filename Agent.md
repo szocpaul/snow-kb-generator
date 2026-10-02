@@ -1011,3 +1011,39 @@ c45e95e (T013), dd36ea9 (T014-csomag riport)
 ### Nyitott
 - Megfigyelési időszak: 1–2 hét JSONL-elemzés (jelzés-arány a 0.35-ös kapunál).
 - A 016-os spec (kontextus-válogatás, backlog TASK-3) a megfigyelés után.
+
+## 47. Kinyerő-finomítás: brand-blacklist + fragment-szabály (fix/extractor-refinement, 2026-10-01)
+
+### Tények
+- **Hibaosztály** (§46): a kinyerő nem-komponensekből csinált jelöltet —
+  `SnowKbGenerator` (projektnév), `ChTask`/`FrameWork` (CamelCase-fragmentumok).
+- **Baseline** (`artifacts/extractor_baseline.json`): 9 gold cikk, 26 jelölt,
+  4 extraction-szintű false candidate.
+- **Javítás a `verification.py` kinyerőjében** (a kalibrált réteg és a gate érintetlen):
+  1. **Brand/projekt-blacklist** (exact-match, normalizált kulcs: szóköz/kötőjel/
+     aláhúzás-telenített casefold): `snowkbgenerator`, `snowkb`, `aldi`.
+     A brandet TARTALMAZÓ valódi nevek (`ALDIS4ProjectInterface`,
+     'ALDI S4 OData Outbound', `aldi.*` dotted) NEM esnek ki.
+  2. **Fragment-kontextus-szabály** (011-whitelist mintájára): a CamelCase-találat
+     kiesik, ha szóközökkel határolt Title Case szó veszi körül, ami NEM a 011-es
+     whitelist komponens-TÍPUS szava ('Interface FrameWork', 'ChTask State upd'
+     fragment; "JiraIntegrationUtils Script Include" recall-marad).
+  3. `_LOG_MESSAGE_SUFFIXES` bővítve: `" not exist"` ('Tax code I2 does not exist').
+- **After** (`artifacts/extractor_after.json`): 26→22 jelölt, false 4→0,
+  recall 21/21 (a keep-nevek mind megmaradtak — recall-teszt ZÖLD).
+
+### Döntések
+- **SolMan NEM került blacklistre** (az első javítási változatot visszavontuk):
+  a 014-es Out-of-Scope design szerint a külső rendszer NEVEI szándékosan jelöltek,
+  a kalibrált réteg "external"-nek ismeri fel őket (not_applicable, nem flag) —
+  a `test_external_system_name_not_flagged` ezt őrzi. A blacklist csak a
+  kinyerési szinten biztosan nem-komponens nevekre való (user-direktíva:
+  SnowKbGenerator, snow_kb, ALDI).
+- A blacklist exact-match: substring-szűrés recall-katasztrófát okozna
+  (ALDIS4ProjectInterface).
+
+### Tanulság
+- Új kinyerő-szűrésnél az ELSŐ próbafutás a teljes suite + gold-recall
+  együtt — a "SolMan" ütközés (két spec ellentétes elvárása) csak így jött elő.
+- A kinyerő és a kalibrált réteg felelőssége külön válik: a kinyerő a
+  biztosan nem-komponenseket szűri, a kalibrált réteg a homályos/external eseteket.
