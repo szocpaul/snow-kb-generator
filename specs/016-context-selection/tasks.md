@@ -17,9 +17,9 @@
 
 ## Phase 2: US1 – A válogató modul (teszt-előbb)
 
-- [ ] T004 [US1] Teszt: `tests/test_context_selection.py` — nyilvánvaló zaj → hide/summarize; releváns darab → show; alacsony confidence → show (recall-védelem, `<` operátor); SDK-hiba → minden darab show (fail-open); story-főtörzs sosem hide (FR-004); recording-bejegyzés séma. FAIL implementáció előtt
-- [ ] T005 [US1] `src/snow_kb/context_selection.py` — darabolás + Score-döntés (pinnelt modell, `dspy.experimental.Score` eval-only minta vagy közvetlen SDK a 013/014 mintára) + Python-policy (hide/summarize/show a küszökből) + summarize a lokális Qwen-endpointon (fail-open: show) + JSONL recording
-- [ ] T006 [US1] Bekötés a `pipeline.py`-ba: a GenerateKb a válogatott kontextust kapja (config-flaggel kikapcsolható, FR-006); program.py/program.json érintetlen — T005 után
+- [x] T004 [US1] Teszt: `tests/test_context_selection.py` — nyilvánvaló zaj → hide/summarize; releváns darab → show; alacsony confidence → show (recall-védelem, `<` operátor); SDK-hiba → minden darab show (fail-open); story-főtörzs sosem hide (FR-004); recording-bejegyzés séma. FAIL implementáció előtt
+- [x] T005 [US1] `src/snow_kb/context_selection.py` — darabolás + Score-döntés (pinnelt modell, `dspy.experimental.Score` eval-only minta vagy közvetlen SDK a 013/014 mintára) + Python-policy (hide/summarize/show a küszökből) + summarize a lokális Qwen-endpointon (fail-open: show) + JSONL recording
+- [x] T006 [US1] Bekötés a `pipeline.py`-ba: a GenerateKb a válogatott kontextust kapja (config-flaggel kikapcsolható, FR-006); program.py/program.json érintetlen — T005 után
 
 ## Phase 3: US2 – Hatásmérés
 
