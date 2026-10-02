@@ -80,6 +80,27 @@ verification_gate:
   # Replay-kompatibilis JSONL döntésnapló (FR-003) — a kalibrációs mérés adatforrása.
   recording_path: "artifacts/verification_decisions.jsonl"
 
+
+# Kontextus-válogatás a cikkgenerálás előtt (spec 016).
+# enabled=false az alapértelmezés — a bekapcsolás csak a T003/T009/T012
+# MANUÁLIS KAPUk után, mérés-alapú döntéssel. Fail-open: hiba vagy alacsony
+# confidence esetén minden darab változatlanul bekerül (show).
+context_selection:
+  enabled: false
+  # PINNELT döntési modellverzió — lebegő alias TILOS a kalibrációhoz.
+  model: "jev-1.13.0"
+  # Policy-küszöbök a normalizált relevanciára ([0,1], '<' operátor, a
+  # határérték a biztonságos irányba dől). A hide_below CSAK a T012 MANUÁLIS
+  # KAPU jóváhagyása után módosulhat (a T011 ReAnchor-kalibráció exploratív).
+  hide_below: 0.25
+  summarize_below: 0.60
+  # Fail-open küszöb: ennél alacsonyabb confidence-nél a darab show (FR-002).
+  min_confidence: 0.6
+  # A summarize összefoglaló a lokális Qwen-endpointon (KD3 — élesben is ez).
+  summarizer_endpoint: "http://desktop-c5ikame-1.tailee6bc1.ts.net:8033/v1"
+  # Replay-kompatibilis JSONL döntésnapló (FR-003).
+  recording_path: "artifacts/context_selection_decisions.jsonl"
+
 gepa:
   auto: "medium"                        # light | medium | heavy
   candidate_selection: "pareto"

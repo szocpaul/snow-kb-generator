@@ -11,7 +11,7 @@
 
 ## Phase 1: Setup + Baseline (playbook: baseline-előbb)
 
-- [ ] T001 [P] Config-bővítés `config.yaml`-ban: `context_selection.enabled` (kezdő: false), `context_selection.model` (pinnelt), `context_selection.hide_below` / `summarize_below` küszöbök, `context_selection.summarizer_endpoint` (lokális Qwen api_base, KD3), `context_selection.recording_path` — + teszt a config-parsolásra
+- [x] T001 [P] Config-bővítés `config.yaml`-ban: `context_selection.enabled` (kezdő: false), `context_selection.model` (pinnelt), `context_selection.hide_below` / `summarize_below` küszöbök, `context_selection.summarizer_endpoint` (lokális Qwen api_base, KD3), `context_selection.recording_path` — + teszt a config-parsolásra
 - [ ] T002 [US2] Baseline-mérés: a gold példák kontextusának darabolása (story-szekciók / update set rekordok / kapcsolódó cikkek) + per-darab token-leltár; rich_metric baseline újramérve `cache=False`-szal → `artifacts/context_baseline.json` (fájlba, nem chatbe). **Részletszabályok**: (a) a baseline a dev-módú lokális Qwennel készül (az after-mérés is ezzel fut — az összevetés azonos modellen kötelező); (b) a token-számlálás a Qwen-tokenizerrel, vagy ha az nem érhető el, dokumentált becslővel (pl. tiktoken) — a használt módszer a riportban jelölve, és az after-mérésnek UGYANAZZAL kell dolgoznia
 - [ ] T003 [US2] **MANUÁLIS KAPU**: a baseline + zaj-leltár review-ja; az SC-001 token-célérték EZ ITT rögzül (a plan.md KD6 szerint, plan-frissítéssel); ha nincs mérhető zaj → a spec megáll (014-es minta) — a runner NEM pipálhatja
 

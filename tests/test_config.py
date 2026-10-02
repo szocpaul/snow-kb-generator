@@ -274,6 +274,68 @@ class TestAudienceDecisionConfig:
             load_settings(path)
 
 
+class TestContextSelectionConfig:
+    """Spec 016 T001: context_selection config-blokk parsolása."""
+
+    def test_defaults_when_block_missing(self, valid_yaml, set_env):
+        """Hiányzó blokk → biztonságos defaultok (kikapcsolva, pinnelt modell)."""
+        s = load_settings(valid_yaml)
+        assert s.context_selection.enabled is False
+        assert s.context_selection.model == "jev-1.13.0"
+        assert s.context_selection.hide_below == 0.25
+        assert s.context_selection.summarize_below == 0.60
+        assert s.context_selection.min_confidence == 0.6
+        assert s.context_selection.summarizer_endpoint.startswith("http")
+        assert s.context_selection.recording_path.endswith(".jsonl")
+
+    def test_block_parsed_from_yaml(self, make_yaml, set_env):
+        path = make_yaml({
+            "servicenow": {"knowledge_base_id": "kb_test_123"},
+            "context_selection": {
+                "enabled": True,
+                "model": "jev-1.13.0",
+                "hide_below": 0.3,
+                "summarize_below": 0.5,
+                "min_confidence": 0.7,
+                "summarizer_endpoint": "http://localhost:8033/v1",
+                "recording_path": "artifacts/test_context_selection.jsonl",
+            },
+        })
+        s = load_settings(path)
+        assert s.context_selection.enabled is True
+        assert s.context_selection.hide_below == 0.3
+        assert s.context_selection.summarize_below == 0.5
+        assert s.context_selection.min_confidence == 0.7
+        assert s.context_selection.summarizer_endpoint == "http://localhost:8033/v1"
+        assert s.context_selection.recording_path == "artifacts/test_context_selection.jsonl"
+
+    def test_latest_alias_rejected(self, make_yaml, set_env):
+        """Lebegő alias (jev-latest) nem engedélyezett — pinnelt verzió kell."""
+        path = make_yaml({
+            "servicenow": {"knowledge_base_id": "kb_test_123"},
+            "context_selection": {"model": "jev-latest"},
+        })
+        with pytest.raises(ConfigError):
+            load_settings(path)
+
+    def test_threshold_out_of_range_rejected(self, make_yaml, set_env):
+        path = make_yaml({
+            "servicenow": {"knowledge_base_id": "kb_test_123"},
+            "context_selection": {"hide_below": 1.5},
+        })
+        with pytest.raises(ConfigError):
+            load_settings(path)
+
+    def test_hide_above_summarize_rejected(self, make_yaml, set_env):
+        """A hide_below nem lehet nagyobb a summarize_below-nál (üres summarize-sáv)."""
+        path = make_yaml({
+            "servicenow": {"knowledge_base_id": "kb_test_123"},
+            "context_selection": {"hide_below": 0.7, "summarize_below": 0.5},
+        })
+        with pytest.raises(ConfigError):
+            load_settings(path)
+
+
 class TestVerificationGateConfig:
     """Spec 014 T001: verification_gate config-blokk parsolása."""
 
