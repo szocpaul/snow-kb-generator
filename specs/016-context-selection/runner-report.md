@@ -1,7 +1,8 @@
 # spec 016 runner report — CONTEXT SELECTION FOR ARTICLE GENERATION
 
-**Status**: 🟡 PARKED at the **T009 MANUAL GATE** — waiting for a human decision
-(review of the impact report; continuation with the T011 calibration or stop).
+**Status**: 🟡 PARKED at the **T012 MANUAL GATE** — waiting for a human decision
+(review of the calibration report: threshold stays + state fix + target value revision,
+rubric redesign or stop).
 
 **Branch**: `016-context-selection` | **Run mode**: DEV (SNOW_KB_DEV_MODE=1,
 local Qwen3.8-27B; no Kimi token usage) | **Date**: 2026-10-02
@@ -30,15 +31,15 @@ local Qwen3.8-27B; no Kimi token usage) | **Date**: 2026-10-02
 |---|---|---|
 | T007 measurement | ✅ DONE | **INERT selection** (0 hide / 0 summarize / 92 show): full prompt reduction **0.45%** (SC-001 RED at the current thresholds); quality **did not degrade** (0.8417 → 0.8511, CI95 [−0.029, +0.038], SC-002 green); report byte-identical (SC-005 mechanics green); context tokens +1.4% (JSON rebuild overhead) |
 | T008 recall gate | ✅ DONE | **0/9 dropouts**, with exit code (SC-003 green) |
-| T009 MANUAL GATE | 🟡 WAITING | gate report: `specs/016-context-selection/gate-T009.md`; the Score model also scores the admin metadata highly; on the truly low-relevance pieces the confidence is also at the floor (fail-open show) — the limits of the T011 sweep are predicted in advance |
+| T009 MANUAL GATE | ✅ APPROVED (human, 2026-10-02) | CONTINUATION with the T011 calibration; mandatory in the report: ceiling number, distance from 5%, sensitivity analysis, "threshold stays" branch |
 
 ### Phase 4: US3 – Calibration
 
 | Task | Status | Result |
 |---|---|---|
 | T010 labeled sample | ✅ DONE | **56 pieces** (39 noise / 14 borderline / 3 relevant), justified review per piece; `data/examples/context_labeled_016.json` committed |
-| T011 calibration | ⏸ after the T009 gate | script ready (`eval/context_calibration_016.py`: capture + ReAnchor + replay sweep, asymmetric 5:1, sensitivity 3:1/10:1) |
-| T012 MANUAL GATE | ⏸ | — |
+| T011 calibration | ✅ DONE | `artifacts/context_calibration_report_016.json` + ReAnchor report: labeled sweep 0.25→0.05 MARGINAL (16.5→16.0, recall error 0, ratio-insensitive) → **proposal: the threshold STAYS**; ReAnchor −0.2946→−0.2946; **ceiling: raw 11.1% / cost-limited 0.0% / with state fix ~1.1-1.2%**; **root cause: the production story_context inflates the Score**; the 5% target is not reachable with the rubric |
+| T012 MANUAL GATE | 🟡 WAITING | gate report: `specs/016-context-selection/gate-T012.md`; options: (a) threshold stays + state fix + target value revision ~1%, (b) rubric redesign (spec restart), (c) documented stop with SC-001 RED |
 
 ### Phase 5: Closure
 
@@ -62,7 +63,7 @@ local Qwen3.8-27B; no Kimi token usage) | **Date**: 2026-10-02
 | SC-003 (recall) | 🟢 GREEN | 0/9 dropouts |
 | SC-004 (fail-open) | 🟢 GREEN | 22 tests (T013 runs them with exit code) |
 | SC-005 (replay) | 🟢 GREEN | report byte-identical |
-| SC-006 (calibration) | ⏸ after T011/T012 | — |
+| SC-006 (calibration) | ⏸ after the T012 decision | the report is ready (n=56, decision+justification, safety floor untouched); the gate runs in T013 |
 
 ## Pytest-suite
 
@@ -78,10 +79,13 @@ local Qwen3.8-27B; no Kimi token usage) | **Date**: 2026-10-02
 - `da4e7ab` T003 APPROVED: SC-001 = ≥5% on the full prompt — target.json + plan KD6
 - `9b6b4d1` T008+T010: recall gate green + 56-piece labeled sample
 - `0b9c90d` T007: impact measurement — INERT selection, quality green
-- `3b4138a` T009 MANUAL GATE: gate report — runner WAITS
+- `3b4138a` T009 MANUAL GATE: gate report
+- `0b9c90d`…`9b6b4d1` T007/T008/T010 (committed in the order preceding T009)
+- `c88f2e1` T011: ReAnchor + sweep + ceiling analysis + story_context root cause
+- `053eb5b` T012 MANUAL GATE: gate report — runner WAITS
 
 ## Stuck / waiting
 
-The runner waits at the T009 MANUAL GATE: the review of the impact report (continuation with the T011
-with calibration or stop). The gate message was sent to the `snow-main` session.
-Until the decision, the runner does NOT continue with T011.
+The runner waits at the T012 MANUAL GATE: the review of the calibration report. The
+gate message sent to the `snow-main` session. The config is NOT modified until the
+before approval; until the decision, the runner does NOT continue with T013.
