@@ -43,6 +43,21 @@ CURRENT_SUMMARIZE_BELOW = 0.60
 CURRENT_MIN_CONFIDENCE = 0.6  # the safety floor — NOT calibratable
 
 BASE_RATIO = 5   # the starting asymmetric ratio (plan KD4)
+
+import dspy  # noqa: E402
+from dspy.experimental import Score as DspyScore  # noqa: E402
+
+from snow_kb.context_selection import RELEVANCE_CRITERIA, RELEVANCE_QUESTION  # noqa: E402
+
+
+class RelevanceDecisionEval016(dspy.Signature):
+    """Score how much of a context piece matters for writing the KB article (eval-only mirror, spec 016)."""
+
+    piece_type: str = dspy.InputField(desc="The context piece source type.")
+    piece_label: str = dspy.InputField(desc="The context piece label.")
+    piece: str = dspy.InputField(desc="The context piece text.")
+    relevance: DspyScore[RELEVANCE_CRITERIA] = dspy.OutputField(
+        desc=RELEVANCE_QUESTION)
 SWEEP_THRESHOLDS = [round(t / 20, 2) for t in range(0, 21)]  # 0.00..1.00
 
 
@@ -140,20 +155,7 @@ def cmd_capture() -> None:
 # ---------------------------------------------------------------------------
 
 def cmd_reanchor() -> None:
-    import dspy
-    from dspy.experimental import ReAnchor, Score as DspyScore, TypeSafe
-    from typing_extensions import Annotated
-
-    from snow_kb.context_selection import RELEVANCE_CRITERIA, RELEVANCE_QUESTION
-
-    class RelevanceDecisionEval016(dspy.Signature):
-        """Score how much of a context piece matters for writing the KB article (eval-only mirror, spec 016)."""
-
-        piece_type: str = dspy.InputField(desc="The context piece source type.")
-        piece_label: str = dspy.InputField(desc="The context piece label.")
-        piece: str = dspy.InputField(desc="The context piece text.")
-        relevance: DspyScore[RELEVANCE_CRITERIA] = dspy.OutputField(
-            desc=RELEVANCE_QUESTION)
+    from dspy.experimental import ReAnchor, TypeSafe
 
     def metric(example, pred) -> float:
         """The negated asymmetric cost with the CURRENT thresholds (the ReAnchor
@@ -242,6 +244,96 @@ def _costs_at(rows: list[dict], hide_below: float, ratio: float) -> dict:
             "errors": errors}
 
 
+def _full_context_ceiling() -> dict:
+    """The MAXIMUM total prompt saving reachable by the hide_below sweep
+    (the mandatory ceiling number per the decision of the T009 gate).
+
+    TISZTA replay: a T007 selection-capture per-darab (relevance, confidence)
+    its values + the per piece token inventory of T002 + the baseline prompt usage sum.
+    A story_core darabok fixen show (FR-004); a fail-open show-k a safety floor
+    because of that they stay show at EVERY threshold — the ceiling is calculated this way.
+    """
+    sel_capture = json.loads(
+        Path("artifacts/context_selection_capture.json").read_text(encoding="utf-8"))
+    tokens = json.loads(
+        Path("artifacts/context_baseline_tokens.json").read_text(encoding="utf-8"))
+    measure = json.loads(
+        Path("artifacts/context_selection_report.json").read_text(encoding="utf-8"))
+    prompt_sum = measure["token_delta"]["baseline_prompt_usage_sum"]
+
+    tok_by_piece = {}
+    for ex in tokens["examples"]:
+        for piece in ex["pieces"]:
+            tok_by_piece[(ex["id"], piece["piece_id"])] = piece["tokens"]
+
+    sweep = []
+    for t in SWEEP_THRESHOLDS:
+        hide_saved = 0
+        sum_saved_est = 0  # the extra estimated with a ~65% summarize compression
+        verdicts = {"hide": 0, "summarize": 0, "show": 0}
+        for ex in sel_capture["examples"]:
+            for piece in ex["pieces"]:
+                if piece["source_type"] == "story_core":
+                    verdicts["show"] += 1
+                    continue
+                rel, conf = piece["relevance"], piece["confidence"]
+                if rel is None or conf is None:
+                    verdicts["show"] += 1  # fail-open
+                    continue
+                v = verdict_at(rel, conf, t)
+                verdicts[v] += 1
+                p_tok = tok_by_piece.get((ex["id"], piece["piece_id"]), 0)
+                if v == "hide":
+                    hide_saved += p_tok
+                elif v == "summarize":
+                    sum_saved_est += round(0.65 * p_tok)
+        total_saved_est = hide_saved + sum_saved_est
+        sweep.append({
+            "hide_below": t,
+            "hide_saved_tokens": hide_saved,
+            "summarize_saved_tokens_est": sum_saved_est,
+            "total_saved_tokens_est": total_saved_est,
+            "prompt_reduction_ratio_est": round(total_saved_est / prompt_sum, 4)
+            if prompt_sum else None,
+            "verdicts": verdicts,
+        })
+    best = max(sweep, key=lambda r: r["total_saved_tokens_est"])
+    best_hide_only = max(sweep, key=lambda r: r["hide_saved_tokens"])
+    target_saved = round(0.05 * prompt_sum) if prompt_sum else None
+    return {
+        "method": (
+            "per-darab verdict_at(rel, conf, t) a T007 selection-capture nyers "
+            "the (relevance, confidence) values; hide = the full tokens, summarize = "
+            "the ESTIMATED saving of a 65% compression; the fail-open shows stay "
+            "show at every threshold (the min_confidence safety floor does NOT move); "
+            "the story_core is fix show (FR-004). The total prompt ratio refers to the baseline "
+            "LM usage prompt_tokens sum."
+        ),
+        "baseline_prompt_usage_sum": prompt_sum,
+        "sc001_target_saved_tokens": target_saved,
+        "ceiling": best,
+        "ceiling_hide_only": best_hide_only,
+        "distance_from_sc001": {
+            "target_ratio": 0.05,
+            "ceiling_ratio_est": best["prompt_reduction_ratio_est"],
+            "shortfall_tokens": (target_saved - best["total_saved_tokens_est"])
+            if target_saved is not None else None,
+            "reaches_target": bool(
+                best["prompt_reduction_ratio_est"] is not None
+                and best["prompt_reduction_ratio_est"] >= 0.05),
+        },
+        "sweep": sweep,
+        "caveats": [
+            "the summarize compression is a 65% estimate (the actual value shows up in the T007 "
+            "after measurement); the hide-only ceiling is on a separate line",
+            "the extra cost of rebuilding the JSON (+1.4% context tokens, from T007) "
+            "reduces the net saving",
+            "EXPLORATORY — the ceiling is calculated from the current Score distribution, "
+            "NOT a confirmatory measurement",
+        ],
+    }
+
+
 def cmd_report() -> None:
     capture = json.loads(CAPTURE_PATH.read_text(encoding="utf-8"))
     rows = capture["rows"]
@@ -291,6 +383,25 @@ def cmd_report() -> None:
             "in the sweep table."
         )
 
+    # --- the cost-bound ceiling: the asymmetric cost of the labelled sample
+    # among the thresholds that are not worse, the biggest total prompt saving ---
+    ceiling = _full_context_ceiling()
+    token_by_t = {r["hide_below"]: r for r in ceiling["sweep"]}
+    cost_constrained = []
+    current_cost = current["total"]
+    for point in sweep:
+        t = point["hide_below"]
+        tok = token_by_t.get(t, {})
+        cost_constrained.append({
+            "hide_below": t,
+            "cost_5to1": point["cost_5to1"],
+            "total_saved_tokens_est": tok.get("total_saved_tokens_est", 0),
+            "prompt_reduction_ratio_est": tok.get("prompt_reduction_ratio_est"),
+        })
+    feasible = [c for c in cost_constrained if c["cost_5to1"] <= current_cost]
+    best_feasible = (max(feasible, key=lambda c: c["total_saved_tokens_est"])
+                     if feasible else None)
+
     report = {
         "spec": "016-context-selection / T011 calibration report",
         "model": PINNED_MODEL,
@@ -312,12 +423,58 @@ def cmd_report() -> None:
             "rationale": rationale,
             "exploratory": True,
         },
+        "full_context_ceiling": ceiling,
+        "cost_constrained_ceiling": {
+            "method": (
+                "the asymmetric cost (5:1, labeled sample) is WORSE than the CURRENT "
+                "the largest full-prompt among the not-worse thresholds "
+                "saving — the T012 gate decision number"
+            ),
+            "current_cost_5to1": current_cost,
+            "table": cost_constrained,
+            "best_feasible": best_feasible,
+        },
         "sweep": sweep,
         "sensitivity": {
             "costs_at_current_by_ratio": {
                 "3:1": current_c3, "5:1": current["total"], "10:1": current_c10},
             "costs_at_proposed_by_ratio": {
                 "3:1": best_c3, "5:1": best["cost_5to1"], "10:1": best_c10},
+        },
+        "probe_condition_finding": {
+            "finding": (
+                "REGULAR DEVIATION in the probe condition: WITH story_context "
+                "(production _score_piece) the relevance of the noise pieces is INFLATED "
+                "(number 0.86-0.98, state 0.89-0.99), WITHOUT story_context "
+                "(calibration probe) separate the same ones PURELY "
+                "(number/state/assigned_to/assignment_group rel ~0.0-0.03, "
+                "conf 0.93-1.00). The relevant update set records both "
+                "condition scores around 0.95. Source: the T007 "
+                "selection-capture vs a T011 calibration-capture 56 darabja."
+            ),
+            "context_free_estimate": {
+                "method": (
+                    "the verdicts of the context-free (story_context='') probes are "
+                    "on the production token budget; summarize 65% estimate"
+                ),
+                "hide_below_0.05": {"total_saved_tokens_est": 428,
+                                    "prompt_reduction_ratio_est": 0.011},
+                "hide_below_0.25": {"total_saved_tokens_est": 450,
+                                    "prompt_reduction_ratio_est": 0.012},
+                "note": (
+                    "EVEN with the state fix (story_context exception) only "
+                    "~1.1-1.2% is reachable on the full prompt — the work_notes/"
+                    "comments pieces by the model (and the labels) essential/"
+                    "consider borderline. The 5% SC-001 goal with the current "
+                    "cannot be reached with the rubric without a quality risk."
+                ),
+            },
+            "implication": (
+                "the T012 gate can decide: (a) threshold stays + production state fix "
+                "(story_context exception — the rubric/question unchanged) + "
+                "SC-001 target value revision to the measured ceiling; (b) rubric/question "
+                "redesign (the spec restart condition); (c) stop."
+            ),
         },
         "notes": [
             "The sweep is EXPLORATORY — the best sweep row is NOT a confirmatory result.",
@@ -333,6 +490,16 @@ def cmd_report() -> None:
     print(f"Calibration report: {REPORT_PATH}")
     print(f"  decision: {decision} (current {CURRENT_HIDE_BELOW}, "
           f"candidate {proposed}, cost {current['total']} → {best['cost_5to1']})")
+    ceil_ = report["full_context_ceiling"]
+    print(f"  PLAFON (nyers): max {ceil_['ceiling']['total_saved_tokens_est']} token "
+          f"({ceil_['ceiling']['prompt_reduction_ratio_est']:.1%} a teljes prompton) "
+          f"— SC-001 target: {ceil_['sc001_target_saved_tokens']} tokens (5%); "
+          f"reached: {ceil_['distance_from_sc001']['reaches_target']}")
+    bf = report["cost_constrained_ceiling"]["best_feasible"]
+    if bf:
+        print(f"  CEILING (cost-bound): {bf['total_saved_tokens_est']} tokens "
+              f"({bf['prompt_reduction_ratio_est']:.1%}) a {bf['hide_below']} "
+              f"at the threshold, cost {bf['cost_5to1']} (current {current_cost})")
 
 
 def main() -> None:
