@@ -48,7 +48,36 @@ _STATE_TERMS = {
 
 # Naplóüzenet-szuffixek: az ilyen idézett stringek hibaüzenetek, nem nevek
 # (T004: 'SnowKbGenerator work_note error', 'User Not Found' minták).
-_LOG_MESSAGE_SUFFIXES = (" error", " failed", " failure", " not found", " timeout")
+_LOG_MESSAGE_SUFFIXES = (" error", " failed", " failure", " not found", " timeout",
+                       " not exist")
+
+# Brand/projekt-blacklist (Agent.md §46): a kinyerő nem-komponensekből is csinálhat
+# jelöltet — a projekt-/cég-/terméknevek EXACT-MATCH (normalizált) alapon kiesnek.
+# A normalizálás miatt a felületalakok (SnowKbGenerator / snow-kb-generator /
+# 'Snow Kb Generator' / snow_kb) egy kulcsra futnak; a brandet TARTALMAZÓ valódi
+# nevek (ALDIS4ProjectInterface, 'ALDI S4 OData Outbound') NEM esnek ki.
+_BRAND_BLACKLIST: set[str] = {
+    "snowkbgenerator",  # SnowKbGenerator / snow-kb-generator / Snow Kb Generator
+    "snowkb",           # snow_kb
+    "aldi",
+    # "solman" SZÁNDÉKOSAN NINCS itt: a külső rendszer NEVEI (014 Out of Scope)
+    # jelöltek maradnak, a kalibrált réteg "external"-nek ismeri fel őket
+    # (not_applicable — nem flag). A blacklist csak a kinyerési szinten
+    # biztosan nem-komponens nevekre való.
+}
+
+
+def _brand_key(name: str) -> str:
+    """Blacklist-kulcs: szóköz/kötőjel/aláhúzás nélküli casefold (pontok maradnak)."""
+    return re.sub(r"[\s_\-]+", "", name).casefold()
+
+
+# A 011-es whitelist komponens-TÍPUS szavai (casefold) — a fragment-kontextus-
+# szabály ezeket NEM tekinti „hosszabb, szóközökkel írt emberi név" részének
+# ("JiraIntegrationUtils Script Include" recall-marad, "Interface FrameWork" fragment).
+_COMPONENT_TYPE_WORDS_CF: set[str] = {
+    w.casefold() for phrase in COMPONENT_NAME_WHITELIST for w in phrase.split()
+}
 
 # Publikus TLD-k: az ezekre végződő dotted nevek külső hostok/domainek
 # (a T004 baseline tanulsága: aldi.com, interface.solman-stílusú false positive-ok).
@@ -119,6 +148,9 @@ def extract_component_candidates(html: str) -> list[ComponentCandidate]:
         name = name.strip()
         if not name or name.casefold() in _WHITELIST_CF:
             return
+        # Brand/projekt-nevek NEM komponens-jelöltek (Agent.md §46)
+        if _brand_key(name) in _BRAND_BLACKLIST:
+            return
         # Állapot-szavak és naplóüzenet-szerű idézett stringek NEM komponensnevek
         if " " not in name and name.casefold() in _STATE_TERMS:
             return
@@ -136,10 +168,29 @@ def extract_component_candidates(html: str) -> list[ComponentCandidate]:
         if d.rsplit(".", 1)[-1].casefold() in _TLD_SUFFIXES:  # FQDN → külső host
             continue
         _add(d, "dotted")
-    for m in re.findall(r"\b([A-Z][a-z]+(?:[A-Z][a-z]+)+)\b", text):  # CamelCase
-        _add(m, "camelcase")
+    for m in re.finditer(r"\b([A-Z][a-z]+(?:[A-Z][a-z]+)+)\b", text):  # CamelCase
+        if _is_camelcase_fragment(text, m.start(), m.end()):
+            continue
+        _add(m.group(1), "camelcase")
 
     return candidates
+
+
+def _is_camelcase_fragment(text: str, start: int, end: int) -> bool:
+    """A CamelCase-találat egy hosszabb, szóközökkel írt emberi név RÉSZE-e
+    (Agent.md §46: 'Interface FrameWork' → FrameWork, 'ChTask State upd' → ChTask).
+
+    Fragment, ha közvetlenül (szóközökkel) Title Case szó határolja, ami NEM
+    a 011-es whitelist komponens-TÍPUS szava — így a "JiraIntegrationUtils
+    Script Include" / "Script Include JiraInboundUtils" alakok recall-maradnak.
+    """
+    before = re.search(r"([A-Z][a-z]+)\s+$", text[:start])
+    if before and before.group(1).casefold() not in _COMPONENT_TYPE_WORDS_CF:
+        return True
+    after = re.match(r"\s+([A-Z][a-z]+)", text[end:])
+    if after and after.group(1).casefold() not in _COMPONENT_TYPE_WORDS_CF:
+        return True
+    return False
 
 
 # ---------------------------------------------------------------------------
