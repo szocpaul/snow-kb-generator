@@ -1,7 +1,8 @@
 # spec 016 runner-report — KONTEXTUS-VÁLOGATÁS A CIKKGENERÁLÁSHOZ
 
-**Állapot**: 🟡 PARKOLVA a **T009 MANUÁLIS KAPUnál** — emberi döntésre vár
-(a hatásriport review-ja; folytatás a T011 kalibrációval vagy megállítás).
+**Állapot**: 🟡 PARKOLVA a **T012 MANUÁLIS KAPUnál** — emberi döntésre vár
+(a kalibrációs riport review-ja: küszöb-marad + state-fix + célérték-revízió,
+rubrika-újratervezés vagy megállás).
 
 **Branch**: `016-context-selection` | **Futási mód**: DEV (SNOW_KB_DEV_MODE=1,
 lokális Qwen3.8-27B; Kimi-token felhasználás nélkül) | **Dátum**: 2026-10-02
@@ -30,15 +31,15 @@ lokális Qwen3.8-27B; Kimi-token felhasználás nélkül) | **Dátum**: 2026-10-
 |---|---|---|
 | T007 mérés | ✅ KÉSZ | **INERT válogatás** (0 hide / 0 summarize / 92 show): teljes-prompt csökkenés **0.45%** (SC-001 PIROS a jelenlegi küszöbökön); minőség **nem romlott** (0.8417 → 0.8511, CI95 [−0.029, +0.038], SC-002 zöld); riport byte-identikus (SC-005 mechanika zöld); kontextus-token +1.4% (JSON újraépítési többlet) |
 | T008 recall-gate | ✅ KÉSZ | **0/9 kiesés**, exit-code-os (SC-003 zöld) |
-| T009 MANUÁLIS KAPU | 🟡 VÁRAKOZIK | gate-riport: `specs/016-context-selection/gate-T009.md`; a Score-modell az admin-metát is magasan pontozza; a ténylegesen alacsony relevanciájú darabokon a confidence is a padlón (fail-open show) — a T011 sweep korlátai előre jelzve |
+| T009 MANUÁLIS KAPU | ✅ JÓVÁHAGYVA (ember, 2026-10-02) | FOLYTATÁS a T011 kalibrációval; a riportban kötelező: plafon-szám, távolság az 5%-tól, érzékenység-analízis, „küszöb marad" ág |
 
 ### Phase 4: US3 – Kalibráció
 
 | Task | Állapot | Eredmény |
 |---|---|---|
 | T010 címkézett minta | ✅ KÉSZ | **56 darab** (39 noise / 14 borderline / 3 relevant), per-darab indokolt review; `data/examples/context_labeled_016.json` commitolva |
-| T011 kalibráció | ⏸ a T009 kapu után | script kész (`eval/context_calibration_016.py`: capture + ReAnchor + replay-sweep, aszimmetrikus 5:1, érzékenység 3:1/10:1) |
-| T012 MANUÁLIS KAPU | ⏸ | — |
+| T011 kalibráció | ✅ KÉSZ | `artifacts/context_calibration_report_016.json` + ReAnchor-riport: labeled sweep 0.25→0.05 MARGINÁLIS (16.5→16.0, recall-hiba 0, ratio-érzéketlen) → **javaslat: a küszöb MARAD**; ReAnchor −0.2946→−0.2946; **plafon: nyers 11.1% / költség-korlátos 0.0% / state-fixszel ~1.1-1.2%**; **gyökéroka: a production story_context felfújja a Score-t**; az 5% cél a rubrikával nem érhető el |
+| T012 MANUÁLIS KAPU | 🟡 VÁRAKOZIK | gate-riport: `specs/016-context-selection/gate-T012.md`; opciók: (a) küszöb marad + state-fix + célérték-revízió ~1%, (b) rubrika-újratervezés (spec-restart), (c) megállás dokumentált SC-001 PIROS-sal |
 
 ### Phase 5: Zárás
 
@@ -62,7 +63,7 @@ lokális Qwen3.8-27B; Kimi-token felhasználás nélkül) | **Dátum**: 2026-10-
 | SC-003 (recall) | 🟢 ZÖLD | 0/9 kiesés |
 | SC-004 (fail-open) | 🟢 ZÖLD | 22 teszt (a T013 futtatja exit-code-dal) |
 | SC-005 (replay) | 🟢 ZÖLD | riport byte-identikus |
-| SC-006 (kalibráció) | ⏸ a T011/T012 után | — |
+| SC-006 (kalibráció) | ⏸ a T012 döntés után | a riport kész (n=56, döntés+indoklás, safety floor érintetlen); a gate a T013-ban fut |
 
 ## Pytest-suite
 
@@ -78,10 +79,13 @@ lokális Qwen3.8-27B; Kimi-token felhasználás nélkül) | **Dátum**: 2026-10-
 - `da4e7ab` T003 JÓVÁHAGYVA: SC-001 = ≥5% a teljes prompton — target.json + plan KD6
 - `9b6b4d1` T008+T010: recall-gate zöld + 56 darabos címkézett minta
 - `0b9c90d` T007: hatásmérés — INERT válogatás, minőség zöld
-- `3b4138a` T009 MANUÁLIS KAPU: gate-riport — runner VÁR
+- `3b4138a` T009 MANUÁLIS KAPU: gate-riport
+- `0b9c90d`…`9b6b4d1` T007/T008/T010 (a T009 előtti sorrendben commitolva)
+- `c88f2e1` T011: ReAnchor + sweep + plafon-elemzés + story_context gyökéroka
+- `053eb5b` T012 MANUÁLIS KAPU: gate-riport — runner VÁR
 
 ## Elakadás / várakozás
 
-A runner a T009 MANUÁLIS KAPUnál vár: a hatásriport review-ja (folytatás a T011
-kalibrációval vagy megállítás). A kapu-üzenet elküldve a `snow-main` sessionnek.
-A döntésig a runner NEM folytatja a T011-et.
+A runner a T012 MANUÁLIS KAPUnál vár: a kalibrációs riport review-ja. A
+kapu-üzenet elküldve a `snow-main` sessionnek. A config NEM módosul a
+jóváhagyás előtt; a döntésig a runner NEM folytatja a T013-at.
