@@ -11,7 +11,7 @@
 
 ## Phase 1: Setup + Baseline (playbook: baseline-first)
 
-- [ ] T001 [P] Config extension in `config.yaml`: `context_selection.enabled` (initial: false), `context_selection.model` (pinned), `context_selection.hide_below` / `summarize_below` thresholds, `context_selection.summarizer_endpoint` (local Qwen api_base, KD3), `context_selection.recording_path` — + test for the config parsing
+- [x] T001 [P] Config extension in `config.yaml`: `context_selection.enabled` (initial: false), `context_selection.model` (pinned), `context_selection.hide_below` / `summarize_below` thresholds, `context_selection.summarizer_endpoint` (local Qwen api_base, KD3), `context_selection.recording_path` — + a test for the config parsing
 - [ ] T002 [US2] Baseline measurement: chunking the context of the gold examples (story sections / update set records / related articles) + per-chunk token inventory; re-measuring the rich_metric baseline with `cache=False` → `artifacts/context_baseline.json` (into a file, not into chat). **Detail rules**: (a) the baseline is made with the dev-mode local Qwen (the after measurement runs with the same one — the comparison on the same model is mandatory); (b) the token counting is done with the Qwen tokenizer, or if it is not available, with a documented estimator (e.g. tiktoken) — the method used is marked in the report, and the after measurement MUST work with the SAME one
 - [ ] T003 [US2] **MANUAL GATE**: the review of the baseline + noise inventory; the SC-001 token target value is FIXED here (per plan.md KD6, with a plan update); if there is no measurable noise → the spec stops (014 pattern) — the runner CANNOT check it off
 

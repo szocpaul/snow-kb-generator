@@ -109,6 +109,55 @@ class AudienceDecisionConfig(BaseModel):
         return v
 
 
+class ContextSelectionConfig(BaseModel):
+    """Context selection before the article generation (spec 016).
+
+    When enabled=False the pipeline uses the unchanged context (FR-006).
+    Below the normalized relevance value ([0,1]) of the Score decision the policy is:
+      relevance < hide_below       → hide
+      relevance < summarize_below  → summarize (local Qwen summary, KD3)
+      otherwise                    → show
+    The threshold operator is '<' (the threshold value leans to the safe, show direction).
+    Fail-open (FR-002): an error or confidence < min_confidence → show.
+    The story trunk is never hidden (FR-004).
+    The model must be a pinned version (because of the calibration).
+    """
+
+    enabled: bool = False
+    model: str = "jev-1.13.0"          # pinned version, not a floating alias
+    hide_below: float = 0.25           # below this: hide (tuned by the T012 calibration)
+    summarize_below: float = 0.60      # ez alatt (de hide felett): summarize
+    min_confidence: float = 0.6        # below this: fail-open show (recall protection)
+    summarizer_endpoint: str = (
+        "http://llm-server.local:8033/v1"  # local Qwen (KD3)
+    )
+    recording_path: str = "artifacts/context_selection_decisions.jsonl"
+
+    @field_validator("hide_below", "summarize_below", "min_confidence")
+    @classmethod
+    def _range(cls, v: float) -> float:
+        if not 0.0 <= v <= 1.0:
+            raise ValueError("the thresholds must be between 0.0 and 1.0")
+        return v
+
+    @field_validator("model")
+    @classmethod
+    def _pinned_model(cls, v: str) -> str:
+        if not v or v.endswith("-latest"):
+            raise ValueError(
+                f"context_selection.model='{v}' — a pinned version is required (e.g. 'jev-1.13.0'), "
+                "a floating alias is not allowed because of the calibration."
+            )
+        return v
+
+    def model_post_init(self, __context) -> None:
+        if self.hide_below > self.summarize_below:
+            raise ValueError(
+                f"hide_below ({self.hide_below}) cannot be greater than "
+                f"summarize_below ({self.summarize_below})"
+            )
+
+
 class VerificationGateConfig(BaseModel):
     """Component name verification against the instance + production push gate (spec 014).
 
@@ -187,6 +236,7 @@ class Settings(BaseModel):
     pipeline: PipelineConfig = Field(default_factory=PipelineConfig)
     audience_decision: AudienceDecisionConfig = Field(default_factory=AudienceDecisionConfig)
     verification_gate: VerificationGateConfig = Field(default_factory=VerificationGateConfig)
+    context_selection: ContextSelectionConfig = Field(default_factory=ContextSelectionConfig)
     models: ModelsConfig = Field(default_factory=ModelsConfig)
     gepa: GepaConfig = Field(default_factory=GepaConfig)
 
@@ -260,6 +310,7 @@ def load_settings(
             pipeline=PipelineConfig(**(yaml_data.get("pipeline") or {})),
             audience_decision=AudienceDecisionConfig(**(yaml_data.get("audience_decision") or {})),
             verification_gate=VerificationGateConfig(**(yaml_data.get("verification_gate") or {})),
+            context_selection=ContextSelectionConfig(**(yaml_data.get("context_selection") or {})),
             models=ModelsConfig(**(yaml_data.get("models") or {})),
             gepa=GepaConfig(**(yaml_data.get("gepa") or {})),
             snow_instance=secrets.snow_instance,
