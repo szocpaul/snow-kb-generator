@@ -1,0 +1,9 @@
+{
+ "spec": "016-context-selection / SC-001 célérték (T003 MANUÁLIS KAPU döntése)",
+ "decided_at": "2026-10-02 (emberi jóváhagyás, snow-main)",
+ "target_reduction_ratio": 0.05,
+ "metric": "teljes prompt token (template + kontextus együtt) — a generálás LM usage prompt_tokens mezője alapján, NEM csak a kontextus-darabokon",
+ "interpretation": "A kapu-üzenet szerint a teljes-prompt 5% szűkebb mozgástér: a kontextus-zaj 1825/8540 kontextus-token (21.4%), de a teljes prompt ~3200-8100 token/példa. A várakozás: a 333 admin-hide token + a summarize-sáv a teljes prompton ~1-3%-ot ad; az 5% elérése a summarize-tömörítés mértékétől függ.",
+ "sc002_primary": "az SC-002 minőség-gate ELSŐDLEGES: ha az 5% csak minőség-romlással érhető el, a minőség nyer — a T009 riport ezt őszintén jelenti (PIROS, ha kell)",
+ "context_reduction_reference": "a kontextus-token-csökkenés is a riportban (referencia), de a GATE a teljes-prompt arány"
+}

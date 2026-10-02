@@ -100,6 +100,16 @@ servicenow_client.create_kb_article → a 014/015-ös gate változatlanul él
 6. **Az SC-001 célérték a baseline után rögzül** — a Phase 0 zaj-leltár adja a
    reális célt (ha nincs mérhető zaj, a spec megáll — a 014-es minta).
 
+   **RÖGZÍTVE a T003 MANUÁLIS KAPUn (2026-10-02, emberi jóváhagyás): ≥5% token-
+   megtakarítás a TELJES PROMPTON mérve (template + kontextus, a generálás LM
+   usage prompt_tokens alapja) — NEM csak a kontextus-darabokon.** Az SC-002
+   minőség-gate ELSŐDLEGES: ha az 5% csak minőség-romlással érhető el, a minőség
+   nyer (a T009 riport őszintén jelenti, PIROS-sal is). A kontextus-token-
+   csökkenés referencia-számként a riportban marad (baseline: 8540 kontextus-
+   token, 1825 zaj-jelölt = 21.4%; a teljes prompt ~3200-8100 token/példa, így
+   az 5% teljes-prompt cél szűkebb mozgástér — ld.
+   artifacts/context_sc001_target.json).
+
 ## Phases
 
 1. **Phase 0 – Baseline**: a gold példák kontextusának darabolása + token-leltár

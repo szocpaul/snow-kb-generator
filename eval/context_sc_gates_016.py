@@ -1,8 +1,9 @@
 """eval/context_sc_gates_016.py — spec 016 T013: SC-001..SC-006 gate-ek
 exit-code-dal.
 
-  SC-001: költség — a válogatott futás kontextus-tokenje számszerűen kisebb
-          a baseline-nál, és eléri a T003 MANUÁLIS KAPUnál rögzített célértéket
+  SC-001: költség — a válogatott futás TELJES PROMPT tokenje (template +
+          kontextus, LM usage prompt_tokens) legalább a T003 MANUÁLIS KAPUnál
+          rögzített aránnyal (≥5%) kisebb a baseline-nál
           (artifacts/context_sc001_target.json)
   SC-002: minőség-védelem — a rich_metric-delta párosított bootstrap CI95-e
           NEM teljesen 0 alatt (a 013/014-es nem-átfedő-intervallum szabály)
@@ -37,13 +38,21 @@ def gate_sc001() -> bool:
     target = json.loads(TARGET_PATH.read_text(encoding="utf-8"))
     report = json.loads(MEASURE_PATH.read_text(encoding="utf-8"))
     td = report["token_delta"]
-    reduction = td["reduction_ratio"]
     target_ratio = target["target_reduction_ratio"]
-    ok = td["delta"] < 0 and reduction >= target_ratio
-    print(f"SC-001 {'ZÖLD' if ok else 'PIROS'}: kontextus-token "
-          f"{td['baseline_context_tokens']} → {td['selected_context_tokens']} "
-          f"({reduction:.1%} csökkenés; cél ≥ {target_ratio:.1%}, "
-          f"rögzítve: {target.get('decided_at', '?')})")
+    # A T003 kapu döntése: a cél a TELJES PROMPTON mért csökkenés (LM usage
+    # prompt_tokens), NEM csak a kontextus-darabokon.
+    prompt_reduction = td.get("prompt_reduction_ratio")
+    if prompt_reduction is None:
+        print("SC-001 PIROS: nincs prompt-usage adat a riportban (a generálás "
+              "usage capture-je hiányzik)")
+        return False
+    ok = prompt_reduction >= target_ratio
+    print(f"SC-001 {'ZÖLD' if ok else 'PIROS'}: teljes prompt "
+          f"{td['baseline_prompt_usage_sum']} → {td['selected_prompt_usage_sum']} "
+          f"({prompt_reduction:.1%} csökkenés; cél ≥ {target_ratio:.1%} a TELJES "
+          f"prompton, rögzítve: {target.get('decided_at', '?')}; referencia: "
+          f"kontextus-token {td['baseline_context_tokens']} → "
+          f"{td['selected_context_tokens']} = {td['reduction_ratio']:.1%})")
     return ok
 
 
