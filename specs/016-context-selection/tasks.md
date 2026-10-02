@@ -17,9 +17,9 @@
 
 ## Phase 2: US1 – The Selection Module (test-first)
 
-- [ ] T004 [US1] Test: `tests/test_context_selection.py` — obvious noise → hide/summarize; relevant chunk → show; low confidence → show (recall protection, `<` operator); SDK error → all chunks show (fail-open); the story body is never hidden (FR-004); recording entry schema. FAIL before implementation
-- [ ] T005 [US1] `src/snow_kb/context_selection.py` — chunking + Score decision (pinned model, `dspy.experimental.Score` eval-only sample or direct SDK following the 013/014 pattern) + Python policy (hide/summarize/show from the threshold) + summarize on the local Qwen endpoint (fail-open: show) + JSONL recording
-- [ ] T006 [US1] Wiring into `pipeline.py`: GenerateKb receives the selected context (can be switched off with the config flag, FR-006); program.py/program.json untouched — after T005
+- [x] T004 [US1] Test: `tests/test_context_selection.py` — obvious noise → hide/summarize; relevant piece → show; low confidence → show (recall protection, `<` operator); SDK error → every piece show (fail-open); the story body is never hide (FR-004); recording entry schema. MUST fail before the implementation
+- [x] T005 [US1] `src/snow_kb/context_selection.py` — splitting + Score decision (pinned model, `dspy.experimental.Score` eval-only pattern or direct SDK following the 013/014 pattern) + Python policy (hide/summarize/show from the threshold) + summarize on the local Qwen endpoint (fail-open: show) + JSONL recording
+- [x] T006 [US1] Wiring into `pipeline.py`: GenerateKb receives the selected context (switchable via config flag, FR-006); program.py/program.json stay untouched — after T005
 
 ## Phase 3: US2 – Impact Measurement
 
