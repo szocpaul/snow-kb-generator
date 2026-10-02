@@ -423,6 +423,18 @@ def cmd_report() -> None:
             "rationale": rationale,
             "exploratory": True,
         },
+        "t012_human_decision": {
+            "decided_at": "2026-10-02 (T012 MANUÁLIS KAPU, emberi döntés)",
+            "final_decision": "marad",
+            "final_hide_below": 0.25,
+            "rationale": (
+                "az ember NEM hagyta jóvá a küszöb-módosítást: a sweep "
+                "0.25→0.05 'javulása' zajszintű (egyetlen borderline flip); "
+                "a küszöb MARAD 0.25, a config NEM módosul; a feature "
+                "enabled=false marad; az SC-001 DOKUMENTÁLT PIROS (a ≥5% cél "
+                "minőség-kockázat nélkül nem elérhető — ld. gate-T012.md)"
+            ),
+        },
         "full_context_ceiling": ceiling,
         "cost_constrained_ceiling": {
             "method": (

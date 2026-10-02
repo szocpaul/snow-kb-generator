@@ -35,7 +35,7 @@
 
 ## Phase 5: Zárás
 
-- [ ] T013 SC-gate-ek (SC-001..SC-006) exit-code-dal, `cache=False`/replay-mód; teljes pytest-suite zöld (387 + új); Agent.md naplóbejegyzés; backlog: TASK-3 lezárása; commit + push
+- [x] T013 SC-gate-ek (SC-001..SC-006) exit-code-dal, `cache=False`/replay-mód; teljes pytest-suite zöld (387 + új); Agent.md naplóbejegyzés; backlog: TASK-3 lezárása; commit + push
 
 ## Dependencies
 

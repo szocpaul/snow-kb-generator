@@ -53,6 +53,15 @@ def gate_sc001() -> bool:
           f"prompton, rögzítve: {target.get('decided_at', '?')}; referencia: "
           f"kontextus-token {td['baseline_context_tokens']} → "
           f"{td['selected_context_tokens']} = {td['reduction_ratio']:.1%})")
+    if not ok:
+        # A T012 MANUÁLIS KAPU emberi döntése (2026-10-02): az SC-001
+        # DOKUMENTÁLT PIROS — a ≥5% cél a minőség-kockázat nélkül nem érhető el
+        # (költség-korlátos plafon 0.0%, state-fixszel ~1.1-1.2%; az SC-002
+        # elsődlegessége húzta meg). Ez a gate NEM buktatja a futást.
+        print("  DOKUMENTÁLT PIROS (T012 emberi döntés): a cél a rubrikával "
+              "minőség-kockázat nélkül nem érhető el — ld. gate-T012.md §4; "
+              "a feature enabled=false marad")
+        return "documented"
     return ok
 
 
@@ -116,6 +125,7 @@ def gate_sc006() -> bool:
     report = json.loads(CALIB_PATH.read_text(encoding="utf-8"))
     calib = report.get("calibration", {})
     floor = report.get("safety_floor", {})
+    t012 = report.get("t012_human_decision", {})
     n = report.get("n_labeled", 0)
     has_rationale = bool(calib.get("decision")) and bool(calib.get("rationale"))
     floor_ok = (
@@ -123,9 +133,20 @@ def gate_sc006() -> bool:
         and floor.get("min_confidence") == 0.6
         and floor.get("story_core_never_hide") is True
     )
-    ok = n >= 20 and has_rationale and floor_ok and REANCHOR_PATH.exists()
+    # A végső küszöb-döntés a T012 MANUÁLIS KAPU emberi döntése; a gate
+    # ellenőrzi, hogy a config a döntésnek megfelelően VÁLTOZATLAN (0.25).
+    import yaml as _yaml
+
+    cfg_val = (_yaml.safe_load(Path("config.yaml").read_text(encoding="utf-8"))
+               .get("context_selection", {}).get("hide_below"))
+    config_ok = (t012.get("final_decision") == "marad"
+                 and cfg_val == t012.get("final_hide_below"))
+    ok = (n >= 20 and has_rationale and floor_ok and REANCHOR_PATH.exists()
+          and config_ok)
     print(f"SC-006 {'ZÖLD' if ok else 'PIROS'}: n={n} (≥20), "
-          f"döntés={calib.get('decision')!r} indoklással={has_rationale}, "
+          f"sweep-döntés={calib.get('decision')!r} (EXPLORATÍV) indoklással={has_rationale}, "
+          f"T012 végső döntés={t012.get('final_decision')!r}, "
+          f"config hide_below={cfg_val} (változatlan={config_ok}), "
           f"safety floor érintetlen={floor_ok}, "
           f"ReAnchor-riport={'megvan' if REANCHOR_PATH.exists() else 'HIÁNYZIK'}")
     return ok
@@ -146,8 +167,12 @@ def main() -> None:
     }
     print("=" * 60)
     for name, ok in results.items():
-        print(f"{name}: {'ZÖLD' if ok else 'PIROS'}")
-    sys.exit(0 if all(results.values()) else 1)
+        label = "ZÖLD" if ok is True else ("DOKUMENTÁLT PIROS (elfogadott)" if ok == "documented" else "PIROS")
+        print(f"{name}: {label}")
+    # A T012 döntés szerint az SC-001 dokumentált PIROS elfogadott végállapot;
+    # minden más gate kötelezően zöld.
+    ok_all = all(v is True or v == "documented" for v in results.values())
+    sys.exit(0 if ok_all else 1)
 
 
 if __name__ == "__main__":

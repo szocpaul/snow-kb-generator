@@ -1,91 +1,91 @@
 # spec 016 runner-report — KONTEXTUS-VÁLOGATÁS A CIKKGENERÁLÁSHOZ
 
-**Állapot**: 🟡 PARKOLVA a **T012 MANUÁLIS KAPUnál** — emberi döntésre vár
-(a kalibrációs riport review-ja: küszöb-marad + state-fix + célérték-revízió,
-rubrika-újratervezés vagy megállás).
+**VÉGÁLLAPOT**: ✅ **LEZÁRVA** — a spec a T012 MANUÁLIS KAPUnál emberi döntéssel
+**MEGÁLLT** (opció (c), 2026-10-02): a feature `enabled=false`-szal, inaktívan,
+teljes mérési nyomvonallal és egy valós gyökéroka-javítással (state-fix) zárult.
+Ez a spec-cél szerinti elfogadott végállapot: a „measured, not claimed" elv
+szerint a megállás is teljes értékű kimenet, ha a plafon számszerű és az ok
+azonosított.
 
 **Branch**: `016-context-selection` | **Futási mód**: DEV (SNOW_KB_DEV_MODE=1,
 lokális Qwen3.8-27B; Kimi-token felhasználás nélkül) | **Dátum**: 2026-10-02
 
+## SC-gate-ek végső állása (`python -m eval.context_sc_gates_016` → exit 0)
+
+| Gate | Állapot | Számok |
+|---|---|---|
+| SC-001 (költség) | 🔴 **DOKUMENTÁLT PIROS (elfogadott, T012)** | mért 0.45% teljes prompton vs ≥5% cél; költség-korlátos plafon 0.0%; state-fixszel ~1.1–1.2% — a cél minőség-kockázat nélkül nem érhető el (az SC-002 elsődlegessége húzta meg) |
+| SC-002 (minőség) | 🟢 ZÖLD | rich_metric 0.8417 → 0.8511, párosított CI95 [−0.029, +0.038] (átfedi a 0-t) |
+| SC-003 (recall) | 🟢 ZÖLD | 0/9 kiesés, exit-code-os gate |
+| SC-004 (fail-open) | 🟢 ZÖLD | 23 teszt zöld (SDK-hiba → mind show; alacsony confidence → show; story-core sosem hide) |
+| SC-005 (replay) | 🟢 ZÖLD | a hatásmérés riport kétszer futtatva byte-identikus |
+| SC-006 (kalibráció) | 🟢 ZÖLD | n=56 (≥20); sweep-döntés exploratív; **T012 végső döntés: „marad" (0.25)**; config változatlan; safety floor érintetlen |
+
 ## Per-phase eredmények
 
 ### Phase 1: Setup + Baseline
-
-| Task | Állapot | Eredmény |
-|---|---|---|
-| T001 config | ✅ KÉSZ | `context_selection` config-blokk (enabled=false, pinnelt jev-1.13.0, hide_below=0.25, summarize_below=0.60, min_confidence=0.6, summarizer_endpoint=lokális Qwen, recording_path) + 5 új config-teszt |
-| T002 baseline | ✅ KÉSZ | `artifacts/context_baseline.json`: 9 gold példa, lokális Qwen, cache=False; **8540 kontextus-token**, **1825 zaj-jelölt (21.4%)**, **rich_metric avg 0.8417**; replay-ból byte-identikus |
-| T003 MANUÁLIS KAPU | ✅ JÓVÁHAGYVA (ember, 2026-10-02) | **SC-001 = ≥5% a TELJES PROMPTON** (LM usage prompt_tokens), SC-002 elsődleges; rögzítve: plan.md KD6 + `artifacts/context_sc001_target.json` |
+- **T001** ✅ `context_selection` config-blokk + 5 config-teszt.
+- **T002** ✅ Baseline: 9 gold, lokális Qwen, cache=False; **8540 kontextus-token,
+  1825 zaj-jelölt (21.4%)**, rich_metric avg **0.8417**; token-módszer: llama.cpp
+  `/tokenize`; replay-ból byte-identikus.
+- **T003** ✅ MANUÁLIS KAPU — **jóváhagyva**: SC-001 = ≥5% a TELJES PROMPTON
+  (LM usage prompt_tokens), SC-002 elsődleges.
 
 ### Phase 2: US1 – a válogató modul
-
-| Task | Állapot | Eredmény |
-|---|---|---|
-| T004 tesztek | ✅ KÉSZ | `tests/test_context_selection.py` — 22 teszt, FAIL-first (collection error a modul hiányában), majd zöld |
-| T005 modul | ✅ KÉSZ | `src/snow_kb/context_selection.py`: darabolás (JSON/markdown story, update set XML, related sorok) + Score-döntés (pinnelt jev-1.13.0, typesafe_sdk.Score) + Python-policy (`<` operátor, határérték a biztonságos irányba) + fail-open show + FR-004 (story_core-ra LLM-hívás sem indul) + summarize a lokális endpointon (fail-open az eredeti szövegre) + jev-formátumú JSONL recording |
-| T006 bekötés | ✅ KÉSZ | `pipeline.py`: a program a VÁLOGATOTT kontextust kapja; a 014/015 gate és a strip-guardrailek az EREDETIT; enabled=False → bit-azonos viselkedés; program.py/program.json érintetlen |
+- **T004/T005/T006** ✅ teszt-előbb sorrendben: `context_selection.py`
+  (darabolás + Score-döntés pinnelt jev-1.13.0-val + Python-policy `<`
+  operátorral + fail-open show + FR-004 story-core védelem + summarize a lokális
+  Qwenen + jev-recording) + pipeline-bekötés (a 014/015 gate az EREDETI
+  kontextust kapja; program.py/program.json érintetlen).
 
 ### Phase 3: US2 – Hatásmérés
-
-| Task | Állapot | Eredmény |
-|---|---|---|
-| T007 mérés | ✅ KÉSZ | **INERT válogatás** (0 hide / 0 summarize / 92 show): teljes-prompt csökkenés **0.45%** (SC-001 PIROS a jelenlegi küszöbökön); minőség **nem romlott** (0.8417 → 0.8511, CI95 [−0.029, +0.038], SC-002 zöld); riport byte-identikus (SC-005 mechanika zöld); kontextus-token +1.4% (JSON újraépítési többlet) |
-| T008 recall-gate | ✅ KÉSZ | **0/9 kiesés**, exit-code-os (SC-003 zöld) |
-| T009 MANUÁLIS KAPU | ✅ JÓVÁHAGYVA (ember, 2026-10-02) | FOLYTATÁS a T011 kalibrációval; a riportban kötelező: plafon-szám, távolság az 5%-tól, érzékenység-analízis, „küszöb marad" ág |
+- **T007** ✅ **INERT válogatás** (0 hide / 0 summarize / 92 show): teljes-prompt
+  csökkenés **0.45%**; minőség nem romlott; kontextus-token +1.4% (JSON
+  újraépítési többlet).
+- **T008** ✅ recall-gate **0/9 kiesés**.
+- **T009** ✅ MANUÁLIS KAPU — **jóváhagyva a folytatás** a T011 kalibrációval
+  (kötelező elemek: plafon-szám, távolság a céltól, érzékenység, „marad" ág).
 
 ### Phase 4: US3 – Kalibráció
-
-| Task | Állapot | Eredmény |
-|---|---|---|
-| T010 címkézett minta | ✅ KÉSZ | **56 darab** (39 noise / 14 borderline / 3 relevant), per-darab indokolt review; `data/examples/context_labeled_016.json` commitolva |
-| T011 kalibráció | ✅ KÉSZ | `artifacts/context_calibration_report_016.json` + ReAnchor-riport: labeled sweep 0.25→0.05 MARGINÁLIS (16.5→16.0, recall-hiba 0, ratio-érzéketlen) → **javaslat: a küszöb MARAD**; ReAnchor −0.2946→−0.2946; **plafon: nyers 11.1% / költség-korlátos 0.0% / state-fixszel ~1.1-1.2%**; **gyökéroka: a production story_context felfújja a Score-t**; az 5% cél a rubrikával nem érhető el |
-| T012 MANUÁLIS KAPU | 🟡 VÁRAKOZIK | gate-riport: `specs/016-context-selection/gate-T012.md`; opciók: (a) küszöb marad + state-fix + célérték-revízió ~1%, (b) rubrika-újratervezés (spec-restart), (c) megállás dokumentált SC-001 PIROS-sal |
+- **T010** ✅ 56 címkézett darab (39 noise / 14 borderline / 3 relevant),
+  per-darab indokolt review, commitolva.
+- **T011** ✅ ReAnchor (−0.2946 → −0.2946, nincs javulás) + sweep: a 0.25→0.05
+  „javulás" zajszintű (16.5→16.0, recall-hiba 0, ratio-érzéketlen).
+  **Plafon-táblázat**: nyers 11.1% / költség-korlátos 0.0% / state-fixszel
+  ~1.1–1.2%. **Gyökéroka-finding**: a production `story_context` FELFÚJJA a
+  Score-t (zaj: 0.86–0.99 ctx-tel vs 0.00–0.03 ctx nélkül, conf 0.93–1.00).
+- **T012** ✅ MANUÁLIS KAPU — **emberi döntés: (c) MEGÁLLÁS**: a küszöb MARAD
+  0.25 (nincs config-módosítás); a **state-fix BEKERÜLT** (a `_score_piece`
+  state-je már nem tartalmazza a core-szöveget + teszt); a feature
+  `enabled=false` marad; SC-001 dokumentált PIROS; Agent.md §48 naplóbejegyzés.
 
 ### Phase 5: Zárás
+- **T013** ✅ SC-001..SC-006 gate-ek exit-code-dal (ld. fenti tábla, exit 0);
+  teljes pytest-suite **415 passed** (`env -u SNOW_KB_DEV_MODE`);
+  Agent.md §48 naplóbejegyzés; backlog **TASK-3 lezárva** (Done, a dokumentált
+  kimenetellel); commit + push a `016-context-selection` branchre.
 
-| Task | Állapot | Eredmény |
-|---|---|---|
-| T013 SC-gate-ek | ⏸ | `eval/context_sc_gates_016.py` kész; az SC-001 gate a T003 döntés szerint a teljes-prompt arányt méri |
+## Kulcs-tanulságok (a teljes jelentés: Agent.md §48)
 
-## Baseline kulcsszámok (a T003 kapu tárgya)
+1. A „nincs mérhető hatás" is teljes értékű spec-kimenet — a plafon számszerű,
+   a gyökéroka azonosított, a megállás dokumentált.
+2. A probe-feltétel (mi kerül a state-be) a döntés minőségének része — a
+   kalibrációs wrapper és a production state legyen tudatosan egyforma.
+3. A kontextus-zaj ≠ prompt-zaj: a kontextus 21.4%-a zaj-jelölt, de a kontextus
+   a teljes prompt ~23%-a — a célérték a gate nevezőjéhez kötött.
 
-- Mérhető zaj: **21.4%** (1825/8540 token) — a spec NEM áll meg.
-- Nyilvánvaló hide-jelöltek (number/state/assigned_to/assignment_group): 333 token (3.9%).
-- Summarize-jelöltek (work_notes/comments): ~1492 token.
-- Token-módszer: llama.cpp `/tokenize` (a Qwen valódi tokenizere) — az after-mérés ugyanez.
+## Commit-hash-ek (016-context-selection branch)
 
-## SC-gate-ek (előzetes, a T007 mérésből)
-
-| Gate | Állapot | Megjegyzés |
-|---|---|---|
-| SC-001 (költség) | 🔴 PIROS a jelenlegi küszöbökön | mért 0.45% < 5% (inert válogatás) |
-| SC-002 (minőség) | 🟢 ZÖLD | CI95 [−0.029, +0.038] átfedi a 0-t |
-| SC-003 (recall) | 🟢 ZÖLD | 0/9 kiesés |
-| SC-004 (fail-open) | 🟢 ZÖLD | 22 teszt (a T013 futtatja exit-code-dal) |
-| SC-005 (replay) | 🟢 ZÖLD | riport byte-identikus |
-| SC-006 (kalibráció) | ⏸ a T012 döntés után | a riport kész (n=56, döntés+indoklás, safety floor érintetlen); a gate a T013-ban fut |
-
-## Pytest-suite
-
-- Kiindulás: **387 passed** ✅
-- T001/T004–T006 után: **414 passed** ✅ (`env -u SNOW_KB_DEV_MODE` alatt)
-
-## Commit-hash-ek
-
-- `ee0d6e4` T001: context_selection config-blokk + config-tesztek
-- `8cbec87` T004+T005+T006: context_selection modul + pipeline-bekötés + 22 teszt (414 zöld)
-- `3502be3` T002: baseline-mérés + eval-scriptek
-- `2485fc8` T003 MANUÁLIS KAPU: gate-riport
-- `da4e7ab` T003 JÓVÁHAGYVA: SC-001 = ≥5% a teljes prompton — target.json + plan KD6
-- `9b6b4d1` T008+T010: recall-gate zöld + 56 darabos címkézett minta
-- `0b9c90d` T007: hatásmérés — INERT válogatás, minőség zöld
-- `3b4138a` T009 MANUÁLIS KAPU: gate-riport
-- `0b9c90d`…`9b6b4d1` T007/T008/T010 (a T009 előtti sorrendben commitolva)
-- `c88f2e1` T011: ReAnchor + sweep + plafon-elemzés + story_context gyökéroka
-- `053eb5b` T012 MANUÁLIS KAPU: gate-riport — runner VÁR
-
-## Elakadás / várakozás
-
-A runner a T012 MANUÁLIS KAPUnál vár: a kalibrációs riport review-ja. A
-kapu-üzenet elküldve a `snow-main` sessionnek. A config NEM módosul a
-jóváhagyás előtt; a döntésig a runner NEM folytatja a T013-at.
+- `ee0d6e4` T001 config-blokk + tesztek
+- `8cbec87` T004+T005+T006 modul + bekötés (414 zöld)
+- `3502be3` T002 baseline + eval-scriptek
+- `2485fc8` T003 gate-riport
+- `da4e7ab` T003 jóváhagyva: SC-001 target (teljes prompt 5%)
+- `9b6b4d1` T008+T010 recall-gate + címkézett minta
+- `0b9c90d` T007 hatásmérés (INERT)
+- `3b4138a` T009 gate-riport
+- `c88f2e1` T011 kalibráció + plafon + gyökéroka
+- `053eb5b` T012 gate-riport
+- `23fc303` T012 jóváhagyva: state-fix + teszt (415 zöld)
+- T013 záró-commit: SC-gate-kód (SC-001 dokumentált PIROS + SC-006 T012-végső
+  ellenőrzés), kalibrációs riport T012-döntéssel, Agent.md §48, ez a riport
