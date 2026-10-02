@@ -1032,3 +1032,39 @@ c45e95e (T013), dd36ea9 (T014 package report)
 ### Open
 - Observation period: 1–2 weeks of JSONL analysis (signal rate at the 0.35 gate).
 - The 016 spec (context selection, backlog TASK-3) comes after the observation.
+
+## 47. Extractor refinement: brand blacklist + fragment rule (fix/extractor-refinement, 2026-10-01)
+
+### Facts
+- **Error class** (§46): the extractor made a candidate from non-components —
+  `SnowKbGenerator` (project name), `ChTask`/`FrameWork` (CamelCase fragments).
+- **Baseline** (`artifacts/extractor_baseline.json`): 9 gold articles, 26 candidates,
+  4 extraction-level false candidates.
+- **Fix in the extractor of `verification.py`** (the calibrated layer and the gate are untouched):
+  1. **Brand/project blacklist** (exact match, normalized key: space/hyphen/
+     underscore-stripped casefold): `snowkbgenerator`, `snowkb`, `aldi`.
+     Real names that CONTAIN the brand (`S4ProjectInterface`,
+     'ERP OData Outbound', dotted `aldi.*`) are NOT dropped.
+  2. **Fragment context rule** (following the 011 whitelist): the CamelCase hit
+     is dropped if a space-delimited Title Case word surrounds it, which is NOT the
+     component-TYPE word of the 011 whitelist ('Interface FrameWork', 'ChTask State upd'
+     fragment; "JiraIntegrationUtils Script Include" recall stays).
+  3. `_LOG_MESSAGE_SUFFIXES` extended: `" not exist"` ('Tax code I2 does not exist').
+- **After** (`artifacts/extractor_after.json`): 26→22 candidates, false 4→0,
+  recall 21/21 (all keep names remained — recall test GREEN).
+
+### Decisions
+- **SolMan was NOT put on the blacklist** (the first fix version was reverted):
+  according to the 014 Out-of-Scope design the names of the external system are intentionally candidates,
+  the calibrated layer recognizes them as "external" (not_applicable, not flag) —
+  the `test_external_system_name_not_flagged` guards this. The blacklist is only for
+  names that are certainly not components at the extraction level (user directive:
+  SnowKbGenerator, snow_kb, ALDI).
+- The blacklist is exact match: substring filtering would cause a recall catastrophe
+  (S4ProjectInterface).
+
+### Lesson
+- With a new extractor filter, the FIRST trial run covers the full suite + gold recall
+  together — the "SolMan" collision (opposite expectations in two specs) only surfaced this way.
+- The responsibility of the extractor and the calibrated layer separates: the extractor filters the
+  certainly-not-components, the calibrated layer handles the ambiguous/external cases.

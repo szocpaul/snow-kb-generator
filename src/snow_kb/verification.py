@@ -48,7 +48,37 @@ _STATE_TERMS = {
 
 # Log message suffixes: such quoted strings are error messages, not names
 # (T004: samples like 'SnowKbGenerator work_note error', 'User Not Found').
-_LOG_MESSAGE_SUFFIXES = (" error", " failed", " failure", " not found", " timeout")
+_LOG_MESSAGE_SUFFIXES = (" error", " failed", " failure", " not found", " timeout",
+                       " not exist")
+
+# Brand/project blacklist (Agent.md §46): the extractor can also make a candidate
+# from non-components — the project/company/product names are dropped on an
+# EXACT-MATCH (normalized) basis.
+# Thanks to the normalization the surface forms (SnowKbGenerator / snow-kb-generator /
+# 'Snow Kb Generator' / snow_kb) run into one key; the real names CONTAINING the brand
+# names (S4ProjectInterface, 'ERP OData Outbound') do NOT fall out.
+_BRAND_BLACKLIST: set[str] = {
+    "snowkbgenerator",  # SnowKbGenerator / snow-kb-generator / Snow Kb Generator
+    "snowkb",           # snow_kb
+    "aldi",
+    # "solman" is DELIBERATELY not here: the names of the external system (014 Out
+    # of Scope) remain candidates, the calibrated layer recognizes them as
+    # "external" (not_applicable — not flagged). The blacklist is only for names
+    # that are certainly not components at the extraction level.
+}
+
+
+def _brand_key(name: str) -> str:
+    """Blacklist key: casefold without spaces/hyphens/underscores (dots are kept)."""
+    return re.sub(r"[\s_\-]+", "", name).casefold()
+
+
+# The component-TYPE words of the 011 whitelist (casefold) — the fragment context
+# rule does NOT consider these part of a "longer, human name written with spaces"
+# ("JiraIntegrationUtils Script Include" recall-marad, "Interface FrameWork" fragment).
+_COMPONENT_TYPE_WORDS_CF: set[str] = {
+    w.casefold() for phrase in COMPONENT_NAME_WHITELIST for w in phrase.split()
+}
 
 # Public TLDs: the dotted names ending with these are external hosts/domains
 # (the T004 baseline lesson: example-service.com, interface.solman-like false positives).
@@ -119,6 +149,9 @@ def extract_component_candidates(html: str) -> list[ComponentCandidate]:
         name = name.strip()
         if not name or name.casefold() in _WHITELIST_CF:
             return
+        # Brand/project names are NOT component candidates (Agent.md §46)
+        if _brand_key(name) in _BRAND_BLACKLIST:
+            return
         # State words and log-message-like quoted strings are NOT component names
         if " " not in name and name.casefold() in _STATE_TERMS:
             return
@@ -136,10 +169,29 @@ def extract_component_candidates(html: str) -> list[ComponentCandidate]:
         if d.rsplit(".", 1)[-1].casefold() in _TLD_SUFFIXES:  # FQDN → external host
             continue
         _add(d, "dotted")
-    for m in re.findall(r"\b([A-Z][a-z]+(?:[A-Z][a-z]+)+)\b", text):  # CamelCase
-        _add(m, "camelcase")
+    for m in re.finditer(r"\b([A-Z][a-z]+(?:[A-Z][a-z]+)+)\b", text):  # CamelCase
+        if _is_camelcase_fragment(text, m.start(), m.end()):
+            continue
+        _add(m.group(1), "camelcase")
 
     return candidates
+
+
+def _is_camelcase_fragment(text: str, start: int, end: int) -> bool:
+    """Whether a CamelCase hit is PART of a longer, human name written with spaces
+    (Agent.md §46: 'Interface FrameWork' → FrameWork, 'ChTask State upd' → ChTask).
+
+    A fragment, if it is directly delimited (by spaces) by a Title Case word that is
+    NOT a component-TYPE word of the 011 whitelist — so the "JiraIntegrationUtils
+    Script Include" / "Script Include JiraInboundUtils" alakok recall-maradnak.
+    """
+    before = re.search(r"([A-Z][a-z]+)\s+$", text[:start])
+    if before and before.group(1).casefold() not in _COMPONENT_TYPE_WORDS_CF:
+        return True
+    after = re.match(r"\s+([A-Z][a-z]+)", text[end:])
+    if after and after.group(1).casefold() not in _COMPONENT_TYPE_WORDS_CF:
+        return True
+    return False
 
 
 # ---------------------------------------------------------------------------

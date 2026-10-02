@@ -1,0 +1,219 @@
+{
+ "spec": "fix/extractor-refinement (the error class of Agent.md §46)",
+ "created_at": "2026-10-02T06:11:16.464202+00:00",
+ "extractor": "src/snow_kb/verification.py extract_component_candidates (011-minta)",
+ "dataset": "data/examples/gold_dataset.md (9 gold articles)",
+ "total_candidates": 26,
+ "false_candidates": [
+  {
+   "example": 3,
+   "name": "Tax code I2 does not exist",
+   "kind": "quoted",
+   "reason": "a log-message-like quoted string"
+  },
+  {
+   "example": 4,
+   "name": "SnowKbGenerator",
+   "kind": "camelcase",
+   "reason": "the project name (brand)"
+  },
+  {
+   "example": 6,
+   "name": "ChTask",
+   "kind": "camelcase",
+   "reason": "a CamelCase fragment (the abbreviation of Change Task, part of a longer name)"
+  },
+  {
+   "example": 6,
+   "name": "FrameWork",
+   "kind": "camelcase",
+   "reason": "a CamelCase fragment (part of 'Interface FrameWork')"
+  }
+ ],
+ "per_example": [
+  {
+   "index": 0,
+   "candidates": [
+    {
+     "name": "JiraInboundUtils",
+     "kind": "camelcase",
+     "false_candidate": false
+    }
+   ]
+  },
+  {
+   "index": 1,
+   "candidates": [
+    {
+     "name": "JiraIntegrationUtils",
+     "kind": "camelcase",
+     "false_candidate": false
+    }
+   ]
+  },
+  {
+   "index": 2,
+   "candidates": []
+  },
+  {
+   "index": 3,
+   "candidates": [
+    {
+     "name": "Tax code I2 does not exist",
+     "kind": "quoted",
+     "false_candidate": true,
+     "reason": "a log-message-like quoted string"
+    }
+   ]
+  },
+  {
+   "index": 4,
+   "candidates": [
+    {
+     "name": "Create KB Article",
+     "kind": "quoted",
+     "false_candidate": false
+    },
+    {
+     "name": "current.work_notes",
+     "kind": "dotted",
+     "false_candidate": false
+    },
+    {
+     "name": "current.number",
+     "kind": "dotted",
+     "false_candidate": false
+    },
+    {
+     "name": "SnowKbGenerator",
+     "kind": "camelcase",
+     "false_candidate": true,
+     "reason": "the project name (brand)"
+    }
+   ]
+  },
+  {
+   "index": 5,
+   "candidates": [
+    {
+     "name": "SolMan: Sync CD State to CTASK Closure Readiness",
+     "kind": "quoted",
+     "false_candidate": false
+    },
+    {
+     "name": "SolMan: Fix CD State Inconsistencies",
+     "kind": "quoted",
+     "false_candidate": false
+    },
+    {
+     "name": "SolMan",
+     "kind": "camelcase",
+     "false_candidate": false,
+     "reason": "the product name (brand)",
+     "note": "an external system candidate (the 014 design, handled by the calibrated layer)"
+    }
+   ]
+  },
+  {
+   "index": 6,
+   "candidates": [
+    {
+     "name": "interface.solman",
+     "kind": "dotted",
+     "false_candidate": false
+    },
+    {
+     "name": "integration.solman",
+     "kind": "dotted",
+     "false_candidate": false
+    },
+    {
+     "name": "SolMan",
+     "kind": "camelcase",
+     "false_candidate": false,
+     "reason": "the product name (brand)",
+     "note": "an external system candidate (the 014 design, handled by the calibrated layer)"
+    },
+    {
+     "name": "ChTask",
+     "kind": "camelcase",
+     "false_candidate": true,
+     "reason": "a CamelCase fragment (the abbreviation of Change Task, part of a longer name)"
+    },
+    {
+     "name": "FrameWork",
+     "kind": "camelcase",
+     "false_candidate": true,
+     "reason": "a CamelCase fragment (part of 'Interface FrameWork')"
+    }
+   ]
+  },
+  {
+   "index": 7,
+   "candidates": [
+    {
+     "name": "integration.vendor.config",
+     "kind": "dotted",
+     "false_candidate": false
+    },
+    {
+     "name": "vendor.config.list",
+     "kind": "dotted",
+     "false_candidate": false
+    },
+    {
+     "name": "integration.vendor.config.matrix",
+     "kind": "dotted",
+     "false_candidate": false
+    },
+    {
+     "name": "interface.vendor.service",
+     "kind": "dotted",
+     "false_candidate": false
+    },
+    {
+     "name": "GetReturns",
+     "kind": "camelcase",
+     "false_candidate": false
+    },
+    {
+     "name": "ConfirmReturns",
+     "kind": "camelcase",
+     "false_candidate": false
+    }
+   ]
+  },
+  {
+   "index": 8,
+   "candidates": [
+    {
+     "name": "ERP OData Outbound",
+     "kind": "quoted",
+     "false_candidate": false
+    },
+    {
+     "name": "Milestone Dates Push to ERP",
+     "kind": "quoted",
+     "false_candidate": false
+    },
+    {
+     "name": "S4ProjectInterface",
+     "kind": "quoted",
+     "false_candidate": false
+    },
+    {
+     "name": "UpdateProjectDates",
+     "kind": "quoted",
+     "false_candidate": false
+    },
+    {
+     "name": "ProjectMilestone",
+     "kind": "camelcase",
+     "false_candidate": false
+    }
+   ]
+  }
+ ],
+ "false_candidate_count": 4,
+ "classification_note": "The bare name 'SolMan' is NOT a false candidate at the extraction level: according to the 014 Out-of-Scope design the names of the external system are deliberately candidates, the calibrated layer recognizes them as 'external' (not_applicable). The blacklist only applies to the brands/projects named by the user (SnowKbGenerator, snow_kb, ALDI) + the fragments."
+}
