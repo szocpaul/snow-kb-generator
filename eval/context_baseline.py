@@ -5,15 +5,17 @@ baseline RE-MEASURED with cache=False, in DEV MODE (local Qwen) — the after me
 (T007) runs with the SAME model and the SAME token counting method
 (the detailed rules of tasks.md T002).
 
-Token counting: the /tokenize endpoint of the local llama.cpp server (the Qwen3.8-27B
-the real tokenizer). The method is marked in the report; the T007 after measurement
-must work with exactly the same.
+Token counting: the /tokenize endpoint of the local llama.cpp server (the real tokenizer of
+Qwen3.8-27B). The method is marked in the report; the T007 after measurement
+It must work with exactly the same.
 
 Capture/report separation (the 015 pattern):
     SNOW_KB_DEV_MODE=1 python -m eval.context_baseline capture-generations
         # live generation on the 9 gold examples (SLOW, local Qwen, cache=False)
     python -m eval.context_baseline capture-tokens
         # chunking + /tokenize calls (a live endpoint is required)
+    SNOW_KB_DEV_MODE=1 python -m eval.context_baseline capture-metrics
+        # live: rich_metric (it calls the style judge LM) on the stored generations
     python -m eval.context_baseline report
         # PURE replay: computed from the capture files, byte-identical report
 
@@ -31,6 +33,7 @@ from pathlib import Path
 
 GENERATIONS_PATH = Path("artifacts/context_baseline_generations.json")
 TOKENS_PATH = Path("artifacts/context_baseline_tokens.json")
+METRICS_PATH = Path("artifacts/context_baseline_metrics.json")
 REPORT_PATH = Path("artifacts/context_baseline.json")
 
 DATASET_PATH = Path("data/examples/gold_dataset.md")
@@ -173,6 +176,49 @@ def cmd_capture_tokens() -> None:
 
 
 # ---------------------------------------------------------------------------
+# capture-metrics: rich_metric on the stored generations (live LM for the style judge)
+# ---------------------------------------------------------------------------
+
+def capture_metrics_for(gens_path: Path, out_path: Path) -> None:
+    """rich_metric (together with the style judge) on the stored generations.
+
+    rich_metric is NOT a pure function (it calls the style judge LM) — therefore the
+    metric is made at CAPTURE time, and the report only reads the stored points
+    (so the report stays a PURE replay, SC-005). The baseline and the after measurement
+    have their metric made with the SAME judge LM (local Qwen).
+    """
+    from eval.dataset import load_gold_dataset
+    from eval.metric import rich_metric
+
+    gens = json.loads(gens_path.read_text(encoding="utf-8"))["examples"]
+    trainset, valset = load_gold_dataset(DATASET_PATH)
+    gold_by_id = {f"gold-{i+1}": ex for i, ex in enumerate(trainset + valset)}
+
+    _configure_lm()
+    rows = []
+    for ex in gens:
+        ex_id = ex["id"]
+        print(f"[{ex_id}] rich_metric (style judge: 3 samples)...", flush=True)
+        pred = type("P", (), {"html": ex["generated_html"], "article": None})()
+        out = rich_metric(gold_by_id[ex_id], pred)
+        rows.append({
+            "id": ex_id,
+            "score": float(out.score),
+            "feedback": str(out.feedback),
+        })
+        print(f"  score={float(out.score):.4f}", flush=True)
+    doc = {"capture": "metrics", "judge_lm": TASK_MODEL,
+           "examples": rows}
+    out_path.write_text(json.dumps(doc, ensure_ascii=False, indent=1) + "\n",
+                        encoding="utf-8")
+    print(f"Metrics saved: {out_path}")
+
+
+def cmd_capture_metrics() -> None:
+    capture_metrics_for(GENERATIONS_PATH, METRICS_PATH)
+
+
+# ---------------------------------------------------------------------------
 # report: a PURE replay from the capture files (deterministic)
 # ---------------------------------------------------------------------------
 
@@ -192,12 +238,11 @@ def _noise_heuristic(piece: dict) -> str:
     return ""
 
 
-def build_report(gens_doc: dict, tokens_doc: dict) -> dict:
-    from eval.dataset import load_gold_dataset
-    from eval.metric import rich_metric
-
-    trainset, valset = load_gold_dataset(DATASET_PATH)
-    gold_by_id = {f"gold-{i+1}": ex for i, ex in enumerate(trainset + valset)}
+def build_report(gens_doc: dict, tokens_doc: dict,
+                 metrics_doc: dict | None = None) -> dict:
+    if metrics_doc is None:
+        metrics_doc = json.loads(METRICS_PATH.read_text(encoding="utf-8"))
+    score_by_id = {r["id"]: float(r["score"]) for r in metrics_doc["examples"]}
 
     per_example = []
     total_context_tokens = 0
@@ -206,10 +251,7 @@ def build_report(gens_doc: dict, tokens_doc: dict) -> dict:
     for gen_row, tok_row in zip(gens_doc["examples"], tokens_doc["examples"]):
         assert gen_row["id"] == tok_row["id"], "the row order of the capture files differs"
         ex_id = gen_row["id"]
-        gold = gold_by_id[ex_id]
-        pred = type("P", (), {"html": gen_row["generated_html"], "article": None})()
-        metric_out = rich_metric(gold, pred)
-        score = float(metric_out.score)
+        score = score_by_id[ex_id]
         scores.append(score)
 
         pieces = []
@@ -266,7 +308,8 @@ def build_report(gens_doc: dict, tokens_doc: dict) -> dict:
 def cmd_report() -> None:
     gens_doc = json.loads(GENERATIONS_PATH.read_text(encoding="utf-8"))
     tokens_doc = json.loads(TOKENS_PATH.read_text(encoding="utf-8"))
-    report = build_report(gens_doc, tokens_doc)
+    metrics_doc = json.loads(METRICS_PATH.read_text(encoding="utf-8"))
+    report = build_report(gens_doc, tokens_doc, metrics_doc)
     REPORT_PATH.write_text(
         json.dumps(report, ensure_ascii=False, indent=1, sort_keys=True) + "\n",
         encoding="utf-8",
@@ -280,13 +323,16 @@ def cmd_report() -> None:
 
 def main(argv: list[str] | None = None) -> None:
     argv = argv if argv is not None else sys.argv[1:]
-    if not argv or argv[0] not in ("capture-generations", "capture-tokens", "report"):
+    cmds = ("capture-generations", "capture-tokens", "capture-metrics", "report")
+    if not argv or argv[0] not in cmds:
         print(__doc__)
         sys.exit(2)
     if argv[0] == "capture-generations":
         cmd_capture_generations()
     elif argv[0] == "capture-tokens":
         cmd_capture_tokens()
+    elif argv[0] == "capture-metrics":
+        cmd_capture_metrics()
     else:
         cmd_report()
 
