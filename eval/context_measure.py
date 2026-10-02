@@ -308,6 +308,15 @@ def build_report() -> dict:
             "reduction_ratio": round(1 - total_sel / total_base, 4) if total_base else 0.0,
             "baseline_prompt_usage_sum": sum(base_prompt) if base_prompt else None,
             "selected_prompt_usage_sum": sum(sel_prompt) if sel_prompt else None,
+            "prompt_reduction_ratio": (
+                round(1 - sum(sel_prompt) / sum(base_prompt), 4)
+                if base_prompt and sel_prompt else None
+            ),
+            "prompt_metric_note": (
+                "az SC-001 GATE-metrika (T003 kapu): a TELJES prompt tokenje "
+                "(template + context), based on the sum of the LM usage prompt_tokens "
+                "of the generation"
+            ),
         },
         "quality_delta": {
             "rich_metric_avg_before": round(avg_before, 4),

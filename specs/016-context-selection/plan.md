@@ -100,6 +100,16 @@ servicenow_client.create_kb_article → the 014/015 gate stays unchanged
 6. **The SC-001 target value is fixed after the baseline** — the Phase 0 noise inventory gives the
    real goal (if there is no measurable noise, the spec stops — the 014 sample).
 
+   **FROZEN on the T003 MANUAL GATE (2026-10-02, human approval): ≥5% token-
+   saving measured on the FULL PROMPT (template + context, the generation LM
+   basis of usage prompt_tokens) — NOT only on the context pieces.** The SC-002
+   quality gate is PRIMARY: if the 5% is only achievable with quality degradation, the quality
+   wins (the T009 report honestly states it, even RED). The context token-
+   decrease remains as a reference number in the report (baseline: 8540 context-
+   token, 1825 noise candidates = 21.4%; the full prompt is ~3200-8100 tokens/example, thus
+   the 5% full-prompt target gives a narrower range of movement — see.
+   artifacts/context_sc001_target.json).
+
 ## Phases
 
 1. **Phase 0 – Baseline**: splitting the context of the gold examples + token inventory

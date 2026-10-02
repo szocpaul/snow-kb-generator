@@ -1,8 +1,9 @@
 """eval/context_sc_gates_016.py — spec 016 T013: SC-001..SC-006 gate-ek
 exit-code-dal.
 
-  SC-001: cost — the context token count of the selected run is numerically smaller
-          than the baseline, and reaches the target value fixed at the T003 MANUAL GATE
+  SC-001: cost — the FULL PROMPT tokens of the selected run (template +
+          context, LM usage prompt_tokens) are at least by the ratio recorded at the
+          T003 MANUAL GATE smaller than the baseline (≥5%)
           (artifacts/context_sc001_target.json)
   SC-002: quality protection — the paired bootstrap CI95 of the rich_metric delta
           is NOT entirely below 0 (the 013/014 non-overlapping interval rule)
@@ -37,13 +38,21 @@ def gate_sc001() -> bool:
     target = json.loads(TARGET_PATH.read_text(encoding="utf-8"))
     report = json.loads(MEASURE_PATH.read_text(encoding="utf-8"))
     td = report["token_delta"]
-    reduction = td["reduction_ratio"]
     target_ratio = target["target_reduction_ratio"]
-    ok = td["delta"] < 0 and reduction >= target_ratio
-    print(f"SC-001 {'GREEN' if ok else 'RED'}: context token "
-          f"{td['baseline_context_tokens']} → {td['selected_context_tokens']} "
-          f"({reduction:.1%} reduction; target ≥ {target_ratio:.1%}, "
-          f"fixed at: {target.get('decided_at', '?')})")
+    # The decision of the T003 gate: the target is the reduction measured on the FULL PROMPT (LM usage
+    # prompt_tokens), NOT only on the context pieces.
+    prompt_reduction = td.get("prompt_reduction_ratio")
+    if prompt_reduction is None:
+        print("SC-001 RED: there is no prompt usage data in the report (the generation "
+              "is missing its usage capture)")
+        return False
+    ok = prompt_reduction >= target_ratio
+    print(f"SC-001 {'GREEN' if ok else 'RED'}: the full prompt "
+          f"{td['baseline_prompt_usage_sum']} → {td['selected_prompt_usage_sum']} "
+          f"({prompt_reduction:.1%} reduction; target ≥ {target_ratio:.1%} on the FULL "
+          f"prompt, recorded: {target.get('decided_at', '?')}; reference: "
+          f"kontextus-token {td['baseline_context_tokens']} → "
+          f"{td['selected_context_tokens']} = {td['reduction_ratio']:.1%})")
     return ok
 
 
