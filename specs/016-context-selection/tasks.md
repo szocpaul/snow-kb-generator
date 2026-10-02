@@ -24,12 +24,12 @@
 ## Phase 3: US2 – Impact Measurement
 
 - [ ] T007 [US2] Measurement on the gold examples: selected run vs baseline — per-example and aggregated token delta + rich_metric delta → `artifacts/context_selection_report.json`; the quality must not degrade beyond the noise band (SC-002); two runs in replay mode byte-identical (SC-005)
-- [ ] T008 [US2] Recall gate (SC-003): test with exit code — the selected prompt contains the real component names referenced by the gold articles (0/9 missing)
+- [x] T008 [US2] Recall gate (SC-003): exit-code test — the selected prompt contains the real component names referenced by the gold articles (0/9 drop-outs)
 - [ ] T009 [US2] **MANUAL GATE**: the review of the impact report — if the quality degraded or the recall dropped, the spec does NOT continue toward production — the runner CANNOT check it off
 
 ## Phase 4: US3 – Calibration
 
-- [ ] T010 [US3] Labeled context sample (min. 20 chunks: relevant / noise / borderline — following the 015 fixture sample, machine + manual labeling), labels committed
+- [x] T010 [US3] Labelled context sample (min. 20 pieces: relevant / noise / borderline — following the 015 fixture pattern, machine + manual labelling), labels committed
 - [ ] T011 [US3] ReAnchor calibration for the hide threshold, with the asymmetric metric (starting 5:1, KD4) + sensitivity analysis + report; the „threshold stays" branch also written to a file as a result; the safety floor (fail-open=show) is NOT calibratable
 - [ ] T012 [US3] **MANUAL GATE**: the review of the calibration report; approval of the threshold change + the justification in Agent.md — the runner CANNOT check it off
 
