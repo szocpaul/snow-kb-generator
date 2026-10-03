@@ -397,6 +397,7 @@ def generate_kb_article(
     force_update: bool = False,
     spot_checker: "Any | None" = None,
     decision_client: "Any | None" = None,
+    context_decision_client: "Any | None" = None,
 ) -> KBArticle:
     """Lefuttatja a teljes pipeline-t: Story → KB Article.
 
@@ -419,6 +420,8 @@ def generate_kb_article(
         decision_client: opcionális system_one-kompatibilis client a kalibrált
             réteghez (None → éles TypeSafeClient a TYPESAFE_API_KEY-ből; kulcs
             nélkül fail-open a determinisztikus útra).
+        context_decision_client: opcionális system_one-kompatibilis client a
+            kontextus-válogatáshoz (spec 016; teszt/replay injektálásra).
 
     Returns:
         A generált KBArticle (push esetén a sys_id-jával kitöltve).
@@ -450,6 +453,9 @@ def generate_kb_article(
 
     # 3. Story szöveggé egyítése
     story_text = assemble_story_text(story, settings)
+    # Spec 016: a válogatás a TISZTA story-szekciókon fut (az update set
+    # summary a 3b-ben fűződik hozzá — az mindig bekerül, nem minősíthető).
+    story_text_pure = story_text
 
     # 3b. Update Set módosítások hozzáfűzése (ha vannak)
     update_set_summary = ""
@@ -487,6 +493,41 @@ def generate_kb_article(
     if not settings.dry_run:
         audience_override, audience_note = resolve_audience(story_text, settings)
 
+    # 3e. Kontextus-válogatás (spec 016): a program a VÁLOGATOTT kontextust
+    # kapja; a verification gate (014/015) és a strip-guardrailek az EREDETIT
+    # (a gate-kontextus bit-azonosan változatlan). enabled=False vagy
+    # BÁRMILYEN hiba → változatlan kontextus (fail-open, FR-002/FR-006).
+    program_story_text = story_text
+    program_update_set_payloads = update_set_payloads
+    program_related_context = related_articles_context
+    if settings.context_selection.enabled and not settings.dry_run:
+        try:
+            from snow_kb.context_selection import select_context
+
+            selection = select_context(
+                story_text=story_text_pure,
+                update_set_payloads=update_set_payloads,
+                related_articles_context=related_articles_context,
+                settings=settings,
+                client=context_decision_client,
+            )
+            program_story_text = selection.story_text
+            if update_set_summary:
+                program_story_text += "\n\n" + update_set_summary
+            program_update_set_payloads = selection.update_set_payloads
+            program_related_context = selection.related_articles_context
+            n_hide = sum(1 for d in selection.decisions if d.verdict == "hide")
+            n_sum = sum(1 for d in selection.decisions if d.verdict == "summarize")
+            logger.info(
+                "Context-selection (spec 016): %d darab, %d hide, %d summarize",
+                len(selection.decisions), n_hide, n_sum,
+            )
+        except Exception as exc:
+            logger.warning(
+                "Context-selection fail-open (%s: %s) — változatlan kontextus.",
+                type(exc).__name__, exc,
+            )
+
     # 4. Dry-run: a program hívás kihagyása (nincs LM), mock cikk a Story-ból
     if settings.dry_run:
         article = _mock_article_from_story(story, settings)
@@ -508,10 +549,10 @@ def generate_kb_article(
 
         with dspy.context(lm=lm):
             pred = program(
-                story_text=story_text,
-                update_set_payloads=update_set_payloads,
+                story_text=program_story_text,
+                update_set_payloads=program_update_set_payloads,
                 template_context=template_context,
-                related_articles_context=related_articles_context,
+                related_articles_context=program_related_context,
                 category=settings.snow.default_category,
                 knowledge_base_id=settings.snow.knowledge_base_id,
             )

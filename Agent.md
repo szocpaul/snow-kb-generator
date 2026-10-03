@@ -1047,3 +1047,53 @@ c45e95e (T013), dd36ea9 (T014-csomag riport)
   együtt — a "SolMan" ütközés (két spec ellentétes elvárása) csak így jött elő.
 - A kinyerő és a kalibrált réteg felelőssége külön válik: a kinyerő a
   biztosan nem-komponenseket szűri, a kalibrált réteg a homályos/external eseteket.
+
+## 48. Spec 016: kontextus-válogatás — mérés, gyökéroka-finding, dokumentált megállás (2026-10-02)
+
+**Kimenet**: a spec a T012 MANUÁLIS KAPUnál emberi döntéssel **MEGÁLLT** — a
+feature `enabled=false`-szal, inaktívan, de teljes mérési nyomvonallal kerül a
+kódbázisba (a 013-as archiválás mintája). A válogató modul
+(`src/snow_kb/context_selection.py`) és a pipeline-bekötés működőképes, 23
+teszttel fedett; a küszöbök a kalibráció után is a kiinduló értékeken maradtak.
+
+### A mérési lánc röviden
+- **Baseline (T002)**: 9 gold példa, lokális Qwen, cache=False; 8540
+  kontextus-token, 1825 zaj-jelölt (21.4%); rich_metric avg 0.8417.
+- **Hatásmérés (T007)**: a válogatás INERT a kiinduló küszöbökön (0 hide / 0
+  summarize / 92 show); teljes-prompt csökkenés 0.45% (SC-001 cél: ≥5%);
+  minőség nem romlott (0.8417 → 0.8511, CI95 [−0.029, +0.038]); recall 0/9;
+  riport replay-ból byte-identikus.
+- **Kalibráció (T011)**: 56 címkézett darab; a sweep „javulása" (0.25→0.05,
+  16.5→16.0) zajszintű; ReAnchor nem talált javulást; a safety floor
+  (fail-open=show, min_confidence, FR-004) érintetlen.
+
+### A spec két legértékesebb eredménye
+1. **Plafon-táblázat** (a T009 kapu által kért szám): nyers plafon 11.1%
+   (aszimmetrikusan tilos zóna) / **költség-korlátos plafon 0.0%** /
+   state-fixszel **~1.1–1.2%** a teljes prompton. Az SC-001 ≥5% cél a
+   rubrikával minőség-kockázat nélkül nem érhető el — az SC-002
+   elsődlegessége (T003 döntés) húzta meg a határt.
+2. **Gyökéroka-finding**: a Score-döntés state-jében a `story_context`
+   (core-szöveg) **FELFÚJJA a relevancia-pontokat** — az azonos zaj-darabok
+   ctx-tel 0.86–0.99, ctx nélkül 0.00–0.03 (conf 0.93–1.00). A T012 döntés
+   szerint a state-fix BEKERÜLT (a `_score_piece` state-je már nem
+   tartalmazza a core-szöveget; a rubrika/kérdés változatlan; teszt őrzi).
+
+### T012 emberi döntés (indoklás a küszöb-rögzítéshez)
+- A küszöb **MARAD 0.25** — a sweep „javulása" egyetlen borderline flip volt,
+  a config NEM módosul (a sweep EXPLORATÍV volt, nem confirmatory).
+- A feature **enabled=false marad** — a mért plafon (~1.1–1.2% state-fixszel)
+  nem indokolja a bekapcsolást; az SC-001 DOKUMENTÁLT PIROS.
+- A spec zárása: SC-002/003/004/005/006 ZÖLD, SC-001 dokumentált PIROS
+  (elfogadott végállapot), suite 415 zöld.
+
+### Tanulság
+- A „nincs mérhető hatás" is teljes értékű spec-kimenet, ha a plafon
+  számszerű és a gyökéroka azonosított — a megállás NEM kudarc, hanem a
+  „measured, not claimed" elv betartása.
+- A probe-feltétel (mi kerül a state-be) a döntés minőségének része: a
+  kalibrációs wrapper és a production hívás state-je legyen tudatosan
+  EGYFORMA, különben a sweep nem a production viselkedést kalibrálja.
+- A kontextus-zaj NEM egyenlő a prompt-zajjal: a kontextus 21.4%-a zaj-jelölt,
+  de a teljes promptban a kontextus csak ~23% — a célértéket mindig ahhoz a
+  nevezőhöz kell mérni, amihez a gate tartozik.

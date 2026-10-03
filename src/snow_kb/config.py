@@ -108,6 +108,55 @@ class AudienceDecisionConfig(BaseModel):
         return v
 
 
+class ContextSelectionConfig(BaseModel):
+    """Kontextus-válogatás a cikkgenerálás előtt (spec 016).
+
+    enabled=False esetén a pipeline változatlan kontextust használ (FR-006).
+    A Score-döntés normalizált relevancia-értéke ([0,1]) alatt a policy:
+      relevance < hide_below       → hide
+      relevance < summarize_below  → summarize (lokális Qwen összefoglaló, KD3)
+      egyébként                    → show
+    A küszöb-operátor '<' (a határérték a biztonságos, show-irányba dől).
+    Fail-open (FR-002): hiba vagy confidence < min_confidence → show.
+    A story-főtörzs sosem hide (FR-004).
+    A model pinnelt verzió kell legyen (a kalibráció miatt).
+    """
+
+    enabled: bool = False
+    model: str = "jev-1.13.0"          # pinnelt verzió, nem lebegő alias
+    hide_below: float = 0.25           # ez alatt: hide (T012 kalibráció hangolja)
+    summarize_below: float = 0.60      # ez alatt (de hide felett): summarize
+    min_confidence: float = 0.6        # ez alatt: fail-open show (recall-védelem)
+    summarizer_endpoint: str = (
+        "http://desktop-c5ikame-1.tailee6bc1.ts.net:8033/v1"  # lokális Qwen (KD3)
+    )
+    recording_path: str = "artifacts/context_selection_decisions.jsonl"
+
+    @field_validator("hide_below", "summarize_below", "min_confidence")
+    @classmethod
+    def _range(cls, v: float) -> float:
+        if not 0.0 <= v <= 1.0:
+            raise ValueError("a küszöbök 0.0 és 1.0 között kell legyenek")
+        return v
+
+    @field_validator("model")
+    @classmethod
+    def _pinned_model(cls, v: str) -> str:
+        if not v or v.endswith("-latest"):
+            raise ValueError(
+                f"context_selection.model='{v}' — pinnelt verzió kell (pl. 'jev-1.13.0'), "
+                "lebegő alias nem engedélyezett a kalibráció miatt."
+            )
+        return v
+
+    def model_post_init(self, __context) -> None:
+        if self.hide_below > self.summarize_below:
+            raise ValueError(
+                f"hide_below ({self.hide_below}) nem lehet nagyobb, mint "
+                f"summarize_below ({self.summarize_below})"
+            )
+
+
 class VerificationGateConfig(BaseModel):
     """Komponensnév-hitelesítés az instance ellen + production push-gate (spec 014).
 
@@ -186,6 +235,7 @@ class Settings(BaseModel):
     pipeline: PipelineConfig = Field(default_factory=PipelineConfig)
     audience_decision: AudienceDecisionConfig = Field(default_factory=AudienceDecisionConfig)
     verification_gate: VerificationGateConfig = Field(default_factory=VerificationGateConfig)
+    context_selection: ContextSelectionConfig = Field(default_factory=ContextSelectionConfig)
     models: ModelsConfig = Field(default_factory=ModelsConfig)
     gepa: GepaConfig = Field(default_factory=GepaConfig)
 
@@ -259,6 +309,7 @@ def load_settings(
             pipeline=PipelineConfig(**(yaml_data.get("pipeline") or {})),
             audience_decision=AudienceDecisionConfig(**(yaml_data.get("audience_decision") or {})),
             verification_gate=VerificationGateConfig(**(yaml_data.get("verification_gate") or {})),
+            context_selection=ContextSelectionConfig(**(yaml_data.get("context_selection") or {})),
             models=ModelsConfig(**(yaml_data.get("models") or {})),
             gepa=GepaConfig(**(yaml_data.get("gepa") or {})),
             snow_instance=secrets.snow_instance,
