@@ -1068,3 +1068,53 @@ c45e95e (T013), dd36ea9 (T014 package report)
   together — the "SolMan" collision (opposite expectations in two specs) only surfaced this way.
 - The responsibility of the extractor and the calibrated layer separates: the extractor filters the
   certainly-not-components, the calibrated layer handles the ambiguous/external cases.
+
+## 48. Spec 016: context selection — measurement, root-cause finding, documented stop (2026-10-02)
+
+**Output**: the spec STOPPED at the T012 MANUAL GATE with a human decision — the
+feature goes into the codebase with `enabled=false`, inactive, but with the full measurement trail
+(same pattern as the 013 archiving). The selection module
+(`src/snow_kb/context_selection.py`) and the pipeline wiring work, covered by 23
+tests; the thresholds stayed at the initial values even after calibration.
+
+### The measurement chain in short
+- **Baseline (T002)**: 9 gold examples, local Qwen, cache=False; 8540
+  context tokens, 1825 noise candidates (21.4%); rich_metric avg 0.8417.
+- **Impact measurement (T007)**: the selection is INERT at the initial thresholds (0 hide / 0
+  summarize / 92 show); full-prompt reduction 0.45% (SC-001 goal: ≥5%);
+  quality did not drop (0.8417 → 0.8511, CI95 [−0.029, +0.038]); recall 0/9;
+  report byte-identical from replay.
+- **Calibration (T011)**: 56 labelled items; the sweep "improvement" (0.25→0.05,
+  16.5→16.0) is at noise level; ReAnchor found no improvement; the safety floor
+  (fail-open=show, min_confidence, FR-004) untouched.
+
+### The two most valuable results of the spec
+1. **Ceiling table** (the number requested by the T009 gate): raw ceiling 11.1%
+   (asymmetric forbidden zone) / **cost-constrained ceiling 0.0%** /
+   with state fix **~1.1–1.2%** on the full prompt. The SC-001 ≥5% goal is not
+   reachable without quality risk given the rubric — the priority of SC-002
+   (T003 decision) set the boundary.
+2. **Root-cause finding**: in the state of the Score decision the `story_context`
+   (core text) **INFLATES the relevance scores** — the same noise items with
+   ctx score 0.86–0.99, without ctx 0.00–0.03 (conf 0.93–1.00). The T012 decision
+   says the state fix WAS INCLUDED (the state of `_score_piece` no longer
+   contains the core text; the rubric/question is unchanged; a test guards it).
+
+### T012 human decision (rationale for fixing the threshold)
+- The threshold **STAYS 0.25** — the sweep "improvement" was a single borderline flip,
+  the config is NOT changed (the sweep was EXPLORATORY, not confirmatory).
+- The feature **stays enabled=false** — the measured ceiling (~1.1–1.2% with state fix)
+  does not justify switching it on; SC-001 is DOCUMENTED RED.
+- Spec close-out: SC-002/003/004/005/006 GREEN, SC-001 documented RED
+  (accepted end state), suite 415 green.
+
+### Lesson
+- "No measurable effect" is also a full-value spec output, when the ceiling is
+  numeric and the root cause is identified — the stop is NOT a failure, but compliance with the
+  "measured, not claimed" principle.
+- The probe condition (what goes into the state) is part of the quality of the decision: the
+  state of the calibration wrapper and the production call must be deliberately
+  IDENTICAL, otherwise the sweep does not calibrate production behaviour.
+- Context noise is NOT the same as prompt noise: 21.4% of the context is noise candidates,
+  but in the full prompt the context is only ~23% — the target value must always be measured against the
+  denominator that the gate is tied to.

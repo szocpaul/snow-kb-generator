@@ -80,6 +80,27 @@ verification_gate:
   # replay compatible because of it. The replay-compatible JSONL decision log (FR-003) — the data source of the calibration measurement.
   recording_path: "artifacts/verification_decisions.jsonl"
 
+
+# The context selection before the article generation (spec 016).
+# enabled=false is the default — switching it on only after the T003/T009/T012
+# MANUAL GATEs, with a measurement-based decision. Fail-open: on an error or a low
+# confidence every piece goes in unchanged (show).
+context_selection:
+  enabled: false
+  # The PINNED decision model version — a floating alias is FORBIDDEN for the calibration.
+  model: "jev-1.13.0"
+  # The policy thresholds on the normalized relevance ([0,1], the '<' operator, the
+  # threshold value leans to the safe direction). The hide_below can only change after the T012 MANUAL
+  # GATE approves it (the T011 ReAnchor calibration is exploratory).
+  hide_below: 0.25
+  summarize_below: 0.60
+  # The fail-open threshold: below this confidence the piece is show (FR-002).
+  min_confidence: 0.6
+  # The summarize summary on the local Qwen endpoint (KD3 — this is also the production one).
+  summarizer_endpoint: "http://llm-server.local:8033/v1"
+  # The replay-compatible JSONL decision log (FR-003).
+  recording_path: "artifacts/context_selection_decisions.jsonl"
+
 gepa:
   auto: "medium"                        # light | medium | heavy
   candidate_selection: "pareto"

@@ -1,0 +1,515 @@
+{
+ "spec": "016-context-selection / T010 labelled context sample",
+ "label_semantics": {
+  "relevant": "show is needed — hiding it is a recall error",
+  "noise": "hide is OK — showing it is only cost",
+  "borderline": "a summarize candidate"
+ },
+ "review": "the human manual review (REVIEWED_LABELS, with a justification per piece)",
+ "examples": [
+  {
+   "example_id": "gold-1",
+   "piece_id": "story:number",
+   "source_type": "story_meta",
+   "label_text": "Number",
+   "text": "\"number\": \"STRY0010001\"",
+   "label": "noise",
+   "label_note": "story identifier, not needed for the article"
+  },
+  {
+   "example_id": "gold-1",
+   "piece_id": "story:work_notes",
+   "source_type": "story_meta",
+   "label_text": "Work Notes",
+   "text": "\"work_notes\": \"2024-07-16 10:00: Dev - Created Scripted REST API endpoint.\\n2024-07-16 12:00: Dev - Tested with Postman, 200 OK received.\\n2024-07-16 14:30: Dev - Implemented Basic Auth validation.\"",
+   "label": "borderline",
+   "label_note": "dev log (endpoint, Basic Auth) — the essence is also in the tech spec, compressible"
+  },
+  {
+   "example_id": "gold-1",
+   "piece_id": "story:comments",
+   "source_type": "story_meta",
+   "label_text": "Comments",
+   "text": "\"comments\": \"2024-07-16 15:00: QA - Verified Incident creation with correct u_jira_key mapping.\"",
+   "label": "borderline",
+   "label_note": "QA verification of the u_jira_key mapping — compressible into one sentence"
+  },
+  {
+   "example_id": "gold-1",
+   "piece_id": "story:state",
+   "source_type": "story_meta",
+   "label_text": "State",
+   "text": "\"state\": \"Closed Complete\"",
+   "label": "noise",
+   "label_note": "workflow state, administrative meta"
+  },
+  {
+   "example_id": "gold-1",
+   "piece_id": "story:assigned_to",
+   "source_type": "story_meta",
+   "label_text": "Assigned To",
+   "text": "\"assigned_to\": \"Jane Dev\"",
+   "label": "noise",
+   "label_note": "person meta, not content"
+  },
+  {
+   "example_id": "gold-1",
+   "piece_id": "story:assignment_group",
+   "source_type": "story_meta",
+   "label_text": "Assignment Group",
+   "text": "\"assignment_group\": \"Integration Team\"",
+   "label": "noise",
+   "label_note": "team metadata, not content"
+  },
+  {
+   "example_id": "gold-2",
+   "piece_id": "story:number",
+   "source_type": "story_meta",
+   "label_text": "Number",
+   "text": "\"number\": \"STRY0010002\"",
+   "label": "noise",
+   "label_note": "story identifier, not needed for the article"
+  },
+  {
+   "example_id": "gold-2",
+   "piece_id": "story:work_notes",
+   "source_type": "story_meta",
+   "label_text": "Work Notes",
+   "text": "\"work_notes\": \"2024-07-16 09:00: Dev - Created credentials in the ServiceNow Basic Auth configuration.\\n2024-07-16 11:30: Dev - Wrote the Script Include (JiraIntegrationUtils) and tested the POST request via REST Explorer. 200 OK received.\\n2024-07-16 14:00: Dev - Implemented the Business Rule and verified it works when the state changes.\"",
+   "label": "borderline",
+   "label_note": "a mention of JiraIntegrationUtils, but the details are in the tech spec — compressible"
+  },
+  {
+   "example_id": "gold-2",
+   "piece_id": "story:comments",
+   "source_type": "story_meta",
+   "label_text": "Comments",
+   "text": "\"comments\": \"2024-07-16 16:00: QA - Verified payload structure matches Jira requirements. Jira Issue Key successfully written back to SNOW.\"",
+   "label": "borderline",
+   "label_note": "QA payload verification — compressible"
+  },
+  {
+   "example_id": "gold-2",
+   "piece_id": "story:state",
+   "source_type": "story_meta",
+   "label_text": "State",
+   "text": "\"state\": \"Closed Complete\"",
+   "label": "noise",
+   "label_note": "workflow state, administrative meta"
+  },
+  {
+   "example_id": "gold-2",
+   "piece_id": "story:assigned_to",
+   "source_type": "story_meta",
+   "label_text": "Assigned To",
+   "text": "\"assigned_to\": \"Jane Dev\"",
+   "label": "noise",
+   "label_note": "person meta, not content"
+  },
+  {
+   "example_id": "gold-2",
+   "piece_id": "story:assignment_group",
+   "source_type": "story_meta",
+   "label_text": "Assignment Group",
+   "text": "\"assignment_group\": \"Integration Team\"",
+   "label": "noise",
+   "label_note": "team metadata, not content"
+  },
+  {
+   "example_id": "gold-3",
+   "piece_id": "story:number",
+   "source_type": "story_meta",
+   "label_text": "Number",
+   "text": "\"number\": \"STRY0010003\"",
+   "label": "noise",
+   "label_note": "story identifier, not needed for the article"
+  },
+  {
+   "example_id": "gold-3",
+   "piece_id": "story:work_notes",
+   "source_type": "story_meta",
+   "label_text": "Work Notes",
+   "text": "\"work_notes\": \"2024-07-16 10:00: Dev - Increased timeout on the production LDAP server record.\\n2024-07-16 14:00: Dev - Wrote the LDAP_Retry_Authenticator Script Include and tested the loop logic.\\n2024-07-17 09:30: Dev - Disabled the standard event rule that auto-created Incidents for login failures.\"",
+   "label": "borderline",
+   "label_note": "LDAP_Retry_Authenticator dev details — the component name is also in the tech spec"
+  },
+  {
+   "example_id": "gold-3",
+   "piece_id": "story:comments",
+   "source_type": "story_meta",
+   "label_text": "Comments",
+   "text": "\"comments\": \"2024-07-17 15:00: QA - Tested with 50 mock users. 0 false negatives. The friendly message works perfectly.\"",
+   "label": "borderline",
+   "label_note": "QA test (50 mock users) — compressible"
+  },
+  {
+   "example_id": "gold-3",
+   "piece_id": "story:state",
+   "source_type": "story_meta",
+   "label_text": "State",
+   "text": "\"state\": \"Closed Complete\"",
+   "label": "noise",
+   "label_note": "workflow state, administrative meta"
+  },
+  {
+   "example_id": "gold-3",
+   "piece_id": "story:assigned_to",
+   "source_type": "story_meta",
+   "label_text": "Assigned To",
+   "text": "\"assigned_to\": \"Jane Dev\"",
+   "label": "noise",
+   "label_note": "person meta, not content"
+  },
+  {
+   "example_id": "gold-3",
+   "piece_id": "story:assignment_group",
+   "source_type": "story_meta",
+   "label_text": "Assignment Group",
+   "text": "\"assignment_group\": \"Integration Team\"",
+   "label": "noise",
+   "label_note": "team metadata, not content"
+  },
+  {
+   "example_id": "gold-4",
+   "piece_id": "story:number",
+   "source_type": "story_meta",
+   "label_text": "Number",
+   "text": "\"number\": \"STRY0010004\"",
+   "label": "noise",
+   "label_note": "story identifier, not needed for the article"
+  },
+  {
+   "example_id": "gold-4",
+   "piece_id": "story:work_notes",
+   "source_type": "story_meta",
+   "label_text": "Work Notes",
+   "text": "\"work_notes\": \"2024-03-12 09:00: Dev - Installed the SAP Rest API plugin.\\n2024-03-12 11:00: Dev - Tested Scripted REST API with SAP PI/PO team. Payload is accepted successfully.\\n2024-03-12 14:30: Dev - Configured the sysevent for the notification email.\"",
+   "label": "borderline",
+   "label_note": "the SAP plugin installation procedure — background, compressible"
+  },
+  {
+   "example_id": "gold-4",
+   "piece_id": "story:comments",
+   "source_type": "story_meta",
+   "label_text": "Comments",
+   "text": "\"comments\": \"2024-03-13 09:00: SAP Admin - Validated the test failure with Finance. The system caught the Tax code error perfectly. Ready for production.\"",
+   "label": "borderline",
+   "label_note": "finance validation — one sentence"
+  },
+  {
+   "example_id": "gold-4",
+   "piece_id": "story:state",
+   "source_type": "story_meta",
+   "label_text": "State",
+   "text": "\"state\": \"Closed Complete\"",
+   "label": "noise",
+   "label_note": "workflow state, administrative meta"
+  },
+  {
+   "example_id": "gold-4",
+   "piece_id": "story:assigned_to",
+   "source_type": "story_meta",
+   "label_text": "Assigned To",
+   "text": "\"assigned_to\": \"Jane Dev\"",
+   "label": "noise",
+   "label_note": "person meta, not content"
+  },
+  {
+   "example_id": "gold-4",
+   "piece_id": "story:assignment_group",
+   "source_type": "story_meta",
+   "label_text": "Assignment Group",
+   "text": "\"assignment_group\": \"Integration Team\"",
+   "label": "noise",
+   "label_note": "team metadata, not content"
+  },
+  {
+   "example_id": "gold-5",
+   "piece_id": "story:number",
+   "source_type": "story_meta",
+   "label_text": "Number",
+   "text": "\"number\": \"STRY0010016\"",
+   "label": "noise",
+   "label_note": "story identifier, not needed for the article"
+  },
+  {
+   "example_id": "gold-5",
+   "piece_id": "story:work_notes",
+   "source_type": "story_meta",
+   "label_text": "Work Notes",
+   "text": "\"work_notes\": \"2026-07-15 14:00: Dev - Created u_technical_specification field on rm_story.\\n2026-07-15 17:30: Dev - Implemented SnowKbGenerator Script Include with RESTMessageV2 call.\\n2026-07-16 16:00: Dev - Added 'Create KB Article' UI Action, tested end-to-end: KB link written to work_notes.\"",
+   "label": "borderline",
+   "label_note": "SnowKbGenerator implementation log — the record itself is in the update set"
+  },
+  {
+   "example_id": "gold-5",
+   "piece_id": "story:comments",
+   "source_type": "story_meta",
+   "label_text": "Comments",
+   "text": "\"comments\": \"2026-07-16 17:00: Integration Team - Verified KB creation from a Closed Complete story; duplicate and missing-group errors handled gracefully.\"",
+   "label": "borderline",
+   "label_note": "edge case verification (duplication, missing group) — compressible"
+  },
+  {
+   "example_id": "gold-5",
+   "piece_id": "story:state",
+   "source_type": "story_meta",
+   "label_text": "State",
+   "text": "\"state\": \"Closed Complete\"",
+   "label": "noise",
+   "label_note": "workflow state, administrative meta"
+  },
+  {
+   "example_id": "gold-5",
+   "piece_id": "story:assigned_to",
+   "source_type": "story_meta",
+   "label_text": "Assigned To",
+   "text": "\"assigned_to\": \"Jane Dev\"",
+   "label": "noise",
+   "label_note": "person meta, not content"
+  },
+  {
+   "example_id": "gold-5",
+   "piece_id": "story:assignment_group",
+   "source_type": "story_meta",
+   "label_text": "Assignment Group",
+   "text": "\"assignment_group\": \"Integration Team\"",
+   "label": "noise",
+   "label_note": "team metadata, not content"
+  },
+  {
+   "example_id": "gold-5",
+   "piece_id": "update_set:0:sys_script_include:SnowKbGenerator",
+   "source_type": "update_set_record",
+   "label_text": "sys_script_include:SnowKbGenerator",
+   "text": "<record_update table=\"sys_script_include\"><sys_script_include action=\"INSERT_OR_UPDATE\"><access>package_private</access><active>false</active><api_name>global.SnowKbGenerator</api_name><caller_access/><client_callable>true</client_callable><description/><mobile_callable>false</mobile_callable><name>SnowKbGenerator</name><sandbox_callable>false</sandbox_callable><script><![CDATA[// ============================================================================\n// Script Include: SnowKbGenerator\n// ============================================================================\n// This script must be copied into a new Script Include record in ServiceNow.\n// Name: SnowKbGenerator\n// Client callable: true (because of the UI Action GlideAjax call)\n//\n// This script runs on the server and makes an HTTP REST call to the FastAPI\n// pipeline.\n// ============================================================================\n\nvar SnowKbGenerator = Class.create();\nSnowKbGenerator.prototype = {\n    initialize: function() {\n        // --- SETTINGS ---\n        // Put your FastAPI server address and API key here!\n        this.API_URL = 'http://10.20.30.40:8000/generate-kb';\n        this.API_KEY = 'REDACTED-API-KEY';\n    },\n\n    /**\n     * Starts the KB generation for the given Story.\n     * @param {string} storyId - The Story number (e.g. STRY0010012)\n     * @param {string} storySysId - The Story sys_id\n     * @return {string} JSON response {success, kb_url, title, message}\n     */\n    generateKb: function(storyId, storySysId) {\n        // Assemble the HTTP request body\n        var requestBody = JSON.stringify({\n            story_id: storyId,\n            push: true\n        });\n\n        // REST call to the FastAPI server\n        var restMessage = new sn_ws.RESTMessageV2();\n        restMessage.setEndpoint(this.API_URL);\n        restMessage.setHttpMethod('POST');\n        restMessage.setRequestHeader('Content-Type', 'application/json');\n        restMessage.setRequestHeader('X-API-Key', this.API_KEY);\n        restMessage.setRequestBody(requestBody);\n\n        // Set the timeout (60 seconds \u2014 the GLM generation takes time)\n        restMessage.setRequestTimeout(60000);\n\n        var response = restMessage.execute();\n        var httpStatus = response.getStatusCode();\n        var responseBody = response.getBody();\n\n        // Process the response\n        if (httpStatus === 200) {\n            var result = JSON.parse(responseBody);\n\n            // If successful, put the KB link into the Story's work_notes field\n            if (result.success && result.kb_url) {\n                this._addWorkNote(storySysId, \"KB article created: \" + result.kb_url + \" (\" + result.title + \")\");\n            }\n\n            return JSON.stringify(result);\n        } else {\n            // Error\n            var errorMsg = 'HTTP ' + httpStatus + ': ' + responseBody;\n            this._addWorkNote(storySysId, \"KB article generation FAILED: \" + errorMsg.substring(0, 200));\n            return JSON.stringify({\n                success: false,\n                message: errorMsg\n            });\n        }\n    },\n\n    /**\n     * Adds a work note to the Story.\n     * @param {string} storySysId - The Story sys_id\n     * @param {string} note - The work note text\n     */\n    _addWorkNote: function(storySysId, note) {\n        try {\n            var gr = new GlideRecord('rm_story');\n            if (gr.get(storySysId)) {\n                // update the work_notes field\n                gr.work_notes = gr.getValue('work_notes') + '\\n' + note;\n                gr.update();\n            }\n        } catch (ex) {\n            // If there is an error while writing the work note, we do not throw\n            gs.log('SnowKbGenerator work_note error: ' + ex.message);\n        }\n    },\n\n    type: 'SnowKbGenerator'\n};\n]]></script><sys_class_name>sys_script_include</sys_class_name><sys_created_by>developer</sys_created_by><sys_created_on>2026-07-13 18:09:37</sys_created_on><sys_id>anon0000000000000000000000000002</sys_id><sys_mod_count>2</sys_mod_count><sys_name>SnowKbGenerator</sys_name><sys_package display_value=\"Global\" source=\"global\">global</sys_package><sys_policy/><sys_scope display_value=\"Global\">global</sys_scope><sys_update_name>sys_script_include_anon0000000000000000000000000002</sys_update_name><sys_updated_by>developer</sys_updated_by><sys_updated_on>2026-07-13 19:52:24</sys_updated_on></sys_script_include><sys_es_latest_script action=\"INSERT_OR_UPDATE\"><id>anon0000000000000000000000000002</id><sys_created_by>developer</sys_created_by><sys_created_on>2026-07-13 18:09:37</sys_created_on><sys_id>anon0000000000000000000000000001</sys_id><sys_mod_count>0</sys_mod_count><sys_updated_by>developer</sys_updated_by><sys_updated_on>2026-07-13 18:09:37</sys_updated_on><table>sys_script_include</table><use_es_latest>true</use_es_latest></sys_es_latest_script></record_update>",
+   "label": "relevant",
+   "label_note": "the Script Include that carries the change — the main source of the article"
+  },
+  {
+   "example_id": "gold-5",
+   "piece_id": "update_set:1:sys_ui_action:createKbArticle",
+   "source_type": "update_set_record",
+   "label_text": "sys_ui_action:createKbArticle",
+   "text": "<record_update sys_domain=\"global\" table=\"sys_ui_action\"><sys_ui_action action=\"INSERT_OR_UPDATE\"><action_name>create_kb_server_action</action_name><active>true</active><client>false</client><client_script_v2><![CDATA[function onClick(g_form) {\n\n}]]></client_script_v2><comments/><condition>current.state == '3'</condition><form_action>true</form_action><form_button>true</form_button><form_button_v2>false</form_button_v2><form_context_menu>false</form_context_menu><form_link>false</form_link><form_menu_button_v2>false</form_menu_button_v2><form_style/><format_for_configurable_workspace>false</format_for_configurable_workspace><hint/><isolate_script>false</isolate_script><list_action>false</list_action><list_banner_button>false</list_banner_button><list_button>false</list_button><list_choice>false</list_choice><list_context_menu>false</list_context_menu><list_link>false</list_link><list_save_with_form_button>false</list_save_with_form_button><list_style/><messages/><name>createKbArticle</name><onclick/><order>100</order><script><![CDATA[// ============================================================================\n// UI Action Script: Create KB Article (SERVER-SIDE)\n// ============================================================================\n// This script runs on the ServiceNow server and calls our FastAPI server on\n// the VPS directly from there. It handles the 200, 409 (Duplicate),\n// 422 (Missing Group) and other error codes.\n// ============================================================================\n\n// 1. The 'current' variable automatically holds the opened Story\nvar storyId = current.number;\n\n// --- SETTINGS ---\n// The key matches the .env SNOW_WEBHOOK_API_KEY field. Provide the real value\n// in ServiceNow (UI Action property or Script Include global); in the repo\n// there is only a placeholder.\nvar apiUrl = 'http://10.20.30.40:8000/generate-kb';\nvar apiKey = 'REDACTED-API-KEY';\n\n// 2. Assemble the payload\nvar payload = {};\npayload.story_id = storyId + ''; // force to string\npayload.push = true;\n// The user has already approved the generation by clicking the button,\n// so we send force_update=true to overwrite the old one if there is one.\npayload.force_update = true; \n\n// 3. Send the REST call to our VPS server\nvar restMessage = new sn_ws.RESTMessageV2();\nrestMessage.setEndpoint(apiUrl);\nrestMessage.setHttpMethod('POST');\nrestMessage.setRequestHeader('Content-Type', 'application/json');\nrestMessage.setRequestHeader('X-API-Key', apiKey);\nrestMessage.setRequestBody(JSON.stringify(payload));\nrestMessage.setRequestTimeout(120000); // 120 second timeout because of the GLM generation\n\nvar response = restMessage.execute();\nvar httpStatus = response.getStatusCode();\nvar responseBody = response.getBody();\n\n// 4. Process the response based on the HTTP status code\nif (httpStatus === 200) {\n    // Successful generation or update\n    var result = JSON.parse(responseBody);\n    if (result.success && result.kb_url) {\n        current.work_notes = \"KB article created/updated: \" + result.kb_url + \" (\" + result.title + \")\";\n    } else {\n        current.work_notes = \"KB generation finished, but response was invalid.\";\n    }\n} else if (httpStatus === 422) {\n    // Unprocessable Entity (e.g. the Assignment Group is missing)\n    var errData = JSON.parse(responseBody).detail;\n    current.work_notes = \"Generation aborted: \" + (errData.message || 'Missing required data (e.g. Assignment Group).');\n    gs.addErrorMessage(\"Error: the Assignment Group field is mandatory on the Story!\");\n} else if (httpStatus === 409) {\n    // Conflict (a KB article already exists for the Story)\n    current.work_notes = \"Warning: a KB article already exists for this Story. Pressing the button again overwrites the old one.\";\n    gs.addInfoMessage(\"A KB article already exists. Press the button again to overwrite it!\");\n} else {\n    // Other errors (e.g. 500 Internal Server Error, or 0 Connection Refused)\n    current.work_notes = \"An error occurred (HTTP \" + httpStatus + \"): \" + responseBody.substring(0, 150);\n    gs.addErrorMessage(\"Error during generation (HTTP \" + httpStatus + \")\");\n}\n\n// 5. Set the redirect: stay on the Story after the refresh\naction.setRedirectURL(current);\naction.setReturnURL(current);\n]]></script><show_insert>false</show_insert><show_multiple_update>false</show_multiple_update><show_query>false</show_query><show_update>true</show_update><sys_class_name>sys_ui_action</sys_class_name><sys_created_by>developer</sys_created_by><sys_created_on>2026-07-13 18:23:25</sys_created_on><sys_domain>global</sys_domain><sys_domain_path>/</sys_domain_path><sys_id>anon0000000000000000000000000004</sys_id><sys_mod_count>14</sys_mod_count><sys_name>createKbArticle</sys_name><sys_overrides/><sys_package display_value=\"Global\" source=\"global\">global</sys_package><sys_policy/><sys_scope display_value=\"Global\">global</sys_scope><sys_update_name>sys_ui_action_anon0000000000000000000000000004</sys_update_name><sys_updated_by>developer</sys_updated_by><sys_updated_on>2026-07-16 18:16:15</sys_updated_on><table>rm_story</table><ui11_compatible>true</ui11_compatible><ui16_compatible>false</ui16_compatible></sys_ui_action><sys_es_latest_script action=\"INSERT_OR_UPDATE\"><id>anon0000000000000000000000000004</id><sys_created_by>developer</sys_created_by><sys_created_on>2026-07-13 18:23:19</sys_created_on><sys_id>anon0000000000000000000000000003</sys_id><sys_mod_count>1</sys_mod_count><sys_updated_by>developer</sys_updated_by><sys_updated_on>2026-07-13 18:31:12</sys_updated_on><table>sys_ui_action</table><use_es_latest>false</use_es_latest></sys_es_latest_script></record_update>",
+   "label": "relevant",
+   "label_note": "the UI Action record — the article refers to it"
+  },
+  {
+   "example_id": "gold-6",
+   "piece_id": "story:number",
+   "source_type": "story_meta",
+   "label_text": "Number",
+   "text": "\"number\": \"STRY0010005\"",
+   "label": "noise",
+   "label_note": "story identifier, not needed for the article"
+  },
+  {
+   "example_id": "gold-6",
+   "piece_id": "story:work_notes",
+   "source_type": "story_meta",
+   "label_text": "Work Notes",
+   "text": "\"work_notes\": \"2024-07-16 10:00: Dev - Reproduced: CTASK stayed open after the SolMan CD reached 'Confirmed'.\\n2024-07-16 14:00: Dev - Reviewed Business Rule 'SolMan: Sync CD State to CTASK Closure Readiness'; confirmed it runs Before update with condition u_cd_state.changesTo() == true.\\n2024-07-16 16:00: Dev - Executed Fix Script 'SolMan: Fix CD State Inconsistencies' in non-prod as a one-time Scheduled Script Execution; verified the log counts.\\n2024-07-16 17:00: Dev - Confirmed sibling CTASKs auto-close (state=3) only when every sibling CTASK has a terminal CD state.\"",
+   "label": "borderline",
+   "label_note": "Business Rule review log — the BR name is also in the tech spec"
+  },
+  {
+   "example_id": "gold-6",
+   "piece_id": "story:comments",
+   "source_type": "story_meta",
+   "label_text": "Comments",
+   "text": "\"comments\": \"2024-07-16 12:00: QA Team - Confirmed resolved in staging environment. Running full regression.\\n2024-07-16 15:00: QA Team - All regression tests passed. Ready for production.\"",
+   "label": "noise",
+   "label_note": "pure QA administration (staging/regression OK), without content"
+  },
+  {
+   "example_id": "gold-6",
+   "piece_id": "story:state",
+   "source_type": "story_meta",
+   "label_text": "State",
+   "text": "\"state\": \"Closed Complete\"",
+   "label": "noise",
+   "label_note": "workflow state, administrative meta"
+  },
+  {
+   "example_id": "gold-6",
+   "piece_id": "story:assigned_to",
+   "source_type": "story_meta",
+   "label_text": "Assigned To",
+   "text": "\"assigned_to\": \"Jane Dev\"",
+   "label": "noise",
+   "label_note": "person meta, not content"
+  },
+  {
+   "example_id": "gold-6",
+   "piece_id": "story:assignment_group",
+   "source_type": "story_meta",
+   "label_text": "Assignment Group",
+   "text": "\"assignment_group\": \"Integration Team\"",
+   "label": "noise",
+   "label_note": "team metadata, not content"
+  },
+  {
+   "example_id": "gold-7",
+   "piece_id": "story:number",
+   "source_type": "story_meta",
+   "label_text": "Number",
+   "text": "\"number\": \"STRY0010014\"",
+   "label": "noise",
+   "label_note": "story identifier, not needed for the article"
+  },
+  {
+   "example_id": "gold-7",
+   "piece_id": "story:work_notes",
+   "source_type": "story_meta",
+   "label_text": "Work Notes",
+   "text": "\"work_notes\": \"2026-07-27 10:00: Dev - Created Scripted REST API and ACL for the SolMan namespace.\\n2026-07-27 12:00: Dev - Implemented ChangeSyncInterface payload mapping and mandatory field validation.\\n2026-07-27 14:00: Dev - Configured outbound REST Message Function with mTLS certificates; tested from non-prod.\\n2026-07-27 16:00: Dev - End-to-end test passed in both directions.\"",
+   "label": "borderline",
+   "label_note": "ChangeSyncInterface mapping log — the details are in the tech spec"
+  },
+  {
+   "example_id": "gold-7",
+   "piece_id": "story:comments",
+   "source_type": "story_meta",
+   "label_text": "Comments",
+   "text": "\"comments\": \"2026-07-27 17:00: Integration Team - Reviewed interface logs in IntegrationFrameworkUtil; both directions traceable. Ready for production rollout.\"",
+   "label": "borderline",
+   "label_note": "a log review with IntegrationFrameworkUtil — a component name, compressible"
+  },
+  {
+   "example_id": "gold-7",
+   "piece_id": "story:state",
+   "source_type": "story_meta",
+   "label_text": "State",
+   "text": "\"state\": \"Closed Complete\"",
+   "label": "noise",
+   "label_note": "workflow state, administrative meta"
+  },
+  {
+   "example_id": "gold-7",
+   "piece_id": "story:assigned_to",
+   "source_type": "story_meta",
+   "label_text": "Assigned To",
+   "text": "\"assigned_to\": \"Integration Dev\"",
+   "label": "noise",
+   "label_note": "person meta, not content"
+  },
+  {
+   "example_id": "gold-7",
+   "piece_id": "story:assignment_group",
+   "source_type": "story_meta",
+   "label_text": "Assignment Group",
+   "text": "\"assignment_group\": \"Integration Team\"",
+   "label": "noise",
+   "label_note": "team metadata, not content"
+  },
+  {
+   "example_id": "gold-8",
+   "piece_id": "story:number",
+   "source_type": "story_meta",
+   "label_text": "Number",
+   "text": "\"number\": \"STRY0010013\"",
+   "label": "noise",
+   "label_note": "story identifier, not needed for the article"
+  },
+  {
+   "example_id": "gold-8",
+   "piece_id": "story:work_notes",
+   "source_type": "story_meta",
+   "label_text": "Work Notes",
+   "text": "\"work_notes\": \"2026-07-27 10:00: Dev - Implementation completed and verified in non-prod.\"",
+   "label": "noise",
+   "label_note": "a single boilerplate sentence (completed and verified), zero content"
+  },
+  {
+   "example_id": "gold-8",
+   "piece_id": "story:comments",
+   "source_type": "story_meta",
+   "label_text": "Comments",
+   "text": "\"comments\": \"2026-07-27 16:00: Integration Team - Reviewed and approved for production.\"",
+   "label": "noise",
+   "label_note": "pure approval administration"
+  },
+  {
+   "example_id": "gold-8",
+   "piece_id": "story:state",
+   "source_type": "story_meta",
+   "label_text": "State",
+   "text": "\"state\": \"Closed Complete\"",
+   "label": "noise",
+   "label_note": "workflow state, administrative meta"
+  },
+  {
+   "example_id": "gold-8",
+   "piece_id": "story:assigned_to",
+   "source_type": "story_meta",
+   "label_text": "Assigned To",
+   "text": "\"assigned_to\": \"Integration Dev\"",
+   "label": "noise",
+   "label_note": "person meta, not content"
+  },
+  {
+   "example_id": "gold-8",
+   "piece_id": "story:assignment_group",
+   "source_type": "story_meta",
+   "label_text": "Assignment Group",
+   "text": "\"assignment_group\": \"Integration Team\"",
+   "label": "noise",
+   "label_note": "team metadata, not content"
+  },
+  {
+   "example_id": "gold-9",
+   "piece_id": "story:number",
+   "source_type": "story_meta",
+   "label_text": "Number",
+   "text": "\"number\": \"STRY0010015\"",
+   "label": "noise",
+   "label_note": "story identifier, not needed for the article"
+  },
+  {
+   "example_id": "gold-9",
+   "piece_id": "story:work_notes",
+   "source_type": "story_meta",
+   "label_text": "Work Notes",
+   "text": "\"work_notes\": \"2024-08-05 09:30: Dev - Confirmed with SAP team that API_PROJECT_MAINTAIN is exposed on the S/4HANA gateway.\\n2024-08-05 14:00: Dev - Implemented S4ProjectInterface payload builder; unit tested with sample WBS element PRJ-1002345-01.\\n2024-08-06 10:15: Dev - OAuth2 client credentials configured in ServiceNow OAuth registry; token fetch verified from non-prod.\\n2024-08-06 16:45: Dev - End-to-end test passed: CHG0001234 moved to Scheduled, milestone dates updated in S/4HANA within 2 minutes.\"",
+   "label": "borderline",
+   "label_note": "API_PROJECT_MAINTAIN / S4ProjectInterface log — the names are in the tech spec as well"
+  },
+  {
+   "example_id": "gold-9",
+   "piece_id": "story:comments",
+   "source_type": "story_meta",
+   "label_text": "Comments",
+   "text": "\"comments\": \"2024-08-07 09:00: SAP Basis - Conigma throttling limit is 100 calls/minute; current volume is well below.\\n2024-08-07 11:30: QA Team - Verified retry behavior by temporarily blocking the endpoint; 3 retries logged with correct backoff.\"",
+   "label": "relevant",
+   "label_note": "a concrete operational fact: the 100 calls/min throttling limit + the retry behaviour — this is NOT in the tech spec"
+  },
+  {
+   "example_id": "gold-9",
+   "piece_id": "story:state",
+   "source_type": "story_meta",
+   "label_text": "State",
+   "text": "\"state\": \"Closed Complete\"",
+   "label": "noise",
+   "label_note": "workflow state, administrative meta"
+  },
+  {
+   "example_id": "gold-9",
+   "piece_id": "story:assigned_to",
+   "source_type": "story_meta",
+   "label_text": "Assigned To",
+   "text": "\"assigned_to\": \"John Integration\"",
+   "label": "noise",
+   "label_note": "person meta, not content"
+  },
+  {
+   "example_id": "gold-9",
+   "piece_id": "story:assignment_group",
+   "source_type": "story_meta",
+   "label_text": "Assignment Group",
+   "text": "\"assignment_group\": \"Integration Team\"",
+   "label": "noise",
+   "label_note": "team metadata, not content"
+  }
+ ]
+}

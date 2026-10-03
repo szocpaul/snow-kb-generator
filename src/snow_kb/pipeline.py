@@ -397,35 +397,38 @@ def generate_kb_article(
     force_update: bool = False,
     spot_checker: "Any | None" = None,
     decision_client: "Any | None" = None,
+    context_decision_client: "Any | None" = None,
 ) -> KBArticle:
     """Lefuttatja a teljes pipeline-t: Story → KB Article.
 
     Args:
-        story_identifier: the number of the Story (STRY...) or its sys_id.
-        client: the ServiceNow client (or mock) that implements the Protocol.
-        settings: if None, loads them using load_settings().
-        program: if None, creates a new StoryToKBArticle(). When testing
-            you can also pass a pre-configured/mock program.
-        program_path: if given (and program is None), the optimized program
-            loads it from this JSON file (GEPA export, see artifacts/program.json).
+        story_identifier: the Story number (STRY...) or its sys_id.
+        client: the ServiceNow client (or a mock) that implements the Protocol.
+        settings: if None, it is loaded with load_settings().
+        program: if None, a new StoryToKBArticle() is created. For testing you can
+            also pass an already configured/mock program.
+        program_path: if given (and the program is None), the optimized program is
+            loaded from this JSON file (the GEPA export, see artifacts/program.json).
             If the file does not exist or is broken, it falls back to the basic StoryToKBArticle().
-        push: if True, writes the article back to the ServiceNow KB with the client.
-            in dry_run mode this will automatically be False.
-        force_update: if True, and a KB article already exists for the Story, the pipeline
-            overwrites (updates) the existing one instead of raising an error.
-        spot_checker: optional SpotChecker for the verification gate (spec 014;
-            for test/replay injection). If None, the gate uses the client session
-            builds one — or it is skipped entirely, if the gate is disabled.
-        decision_client: optional system_one-compatible client for the calibrated
-            layer (None → live TypeSafeClient from TYPESAFE_API_KEY; key
-            without fail-open to the deterministic path).
+        push: if True, the article is written back to the ServiceNow KB with the client.
+            In dry_run mode this is automatically False.
+        force_update: if True and a KB article already exists for the Story, the
+            pipeline overwrites (updates) the existing one instead of raising an error.
+        spot_checker: an optional SpotChecker for the verification gate (spec 014;
+            for test/replay injection). When None the gate builds one on the client
+            session — or it is skipped entirely if the gate is disabled.
+        decision_client: an optional system_one-compatible client for the calibrated
+            layer (None → a production TypeSafeClient from TYPESAFE_API_KEY; without a
+            key it fails open to the deterministic path).
+        context_decision_client: an optional system_one-compatible client for the
+            context selection (spec 016; for test/replay injection).
 
     Returns:
-        The generated KBArticle (filled with its sys_id in case of push).
+        The generated KBArticle (filled in with the sys_id if it was pushed).
 
     Raises:
         ConfigError: if the settings are invalid.
-        The client errors (e.g. StoryNotFound) propagate.
+        The errors of the client (e.g. StoryNotFound) propagate.
     """
     # 1. Load the settings (if not given)
     if settings is None:
@@ -450,6 +453,9 @@ def generate_kb_article(
 
     # 3. Merging the Story into a single text
     story_text = assemble_story_text(story, settings)
+    # Spec 016: the selection runs on the CLEAN story sections (the update set
+    # summary is merged in at 3b — it always goes in and is not classifiable).
+    story_text_pure = story_text
 
     # 3b. Append the Update Set modifications (if there are any)
     update_set_summary = ""
@@ -487,6 +493,41 @@ def generate_kb_article(
     if not settings.dry_run:
         audience_override, audience_note = resolve_audience(story_text, settings)
 
+    # 3e. Context selection (spec 016): the program gets the SELECTED context;
+    # the verification gate (014/015) and the strip guardrails get the ORIGINAL
+    # (the gate context is bit-identically unchanged). enabled=False or ANY error
+    # → unchanged context (fail-open, FR-002/FR-006).
+    program_story_text = story_text
+    program_update_set_payloads = update_set_payloads
+    program_related_context = related_articles_context
+    if settings.context_selection.enabled and not settings.dry_run:
+        try:
+            from snow_kb.context_selection import select_context
+
+            selection = select_context(
+                story_text=story_text_pure,
+                update_set_payloads=update_set_payloads,
+                related_articles_context=related_articles_context,
+                settings=settings,
+                client=context_decision_client,
+            )
+            program_story_text = selection.story_text
+            if update_set_summary:
+                program_story_text += "\n\n" + update_set_summary
+            program_update_set_payloads = selection.update_set_payloads
+            program_related_context = selection.related_articles_context
+            n_hide = sum(1 for d in selection.decisions if d.verdict == "hide")
+            n_sum = sum(1 for d in selection.decisions if d.verdict == "summarize")
+            logger.info(
+                "Context-selection (spec 016): %d pieces, %d hide, %d summarize",
+                len(selection.decisions), n_hide, n_sum,
+            )
+        except Exception as exc:
+            logger.warning(
+                "Context-selection fail-open (%s: %s) — unchanged context.",
+                type(exc).__name__, exc,
+            )
+
     # 4. Dry-run: skipping the program call (no LM), mock article from the Story
     if settings.dry_run:
         article = _mock_article_from_story(story, settings)
@@ -508,10 +549,10 @@ def generate_kb_article(
 
         with dspy.context(lm=lm):
             pred = program(
-                story_text=story_text,
-                update_set_payloads=update_set_payloads,
+                story_text=program_story_text,
+                update_set_payloads=program_update_set_payloads,
                 template_context=template_context,
-                related_articles_context=related_articles_context,
+                related_articles_context=program_related_context,
                 category=settings.snow.default_category,
                 knowledge_base_id=settings.snow.knowledge_base_id,
             )
