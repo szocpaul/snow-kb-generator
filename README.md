@@ -22,6 +22,9 @@ When developers finish a ServiceNow Story (`STRY...`), someone has to manually w
 - Team-specific KB templates (assignment-group-based detection, few-shot generation)
 - Update Set XML/code analysis (ChainOfThought)
 - Hallucination guardrails: KB-number validation, component-name detection, HTML-nesting check
+- Calibrated component-name verification gate against the live instance before KB push (spec 014/015, asymmetric calibration, human-approved threshold)
+- Typed audience decision with confidence (spec 013)
+- Context-selection infrastructure for generation (spec 016): measured on the gold set, documented stop — the safe-noise ceiling is ~1% of the full prompt, so it ships **inactive** (`enabled=false`) with the measurement trail intact
 
 ## Results (measured, not claimed)
 
@@ -31,13 +34,14 @@ When developers finish a ServiceNow Story (`STRY...`), someone has to manually w
 | Overall score (5-axis rich metric) | **0.869** (Kimi K3) / **0.859** (local 27B), 9-example gold dataset |
 | Measurement noise (3 identical runs) | **±0.018** overall, ±0.017 style (after multi-sample judge, was ±0.188) |
 | Hallucination axis | 1.000 across all evals; every production article verified component-by-component |
-| Test suite | **286/286 passing** |
+| Test suite | **415/415 passing** |
 
 Key engineering lessons baked in: LLM-judge variance calibration, GEPA prompt-transfer failure detection (a 35B-tuned program *degrades* on a 27B model), OAuth token auto-refresh under systemd, thread-safe DSPy configuration for web servers.
 
 ## Tech stack
 
-- **Python 3.12**, **DSPy 3.3.x** (Signatures, Modules, GEPA optimization)
+- **Python 3.12**, **DSPy 3.4.x** (Signatures, Modules, GEPA optimization, `dspy[typesafe]`)
+- **TypeSafe API** (`typesafe-sdk`, pinned `jev-1.13.0`) — typed, calibrated decisions: article audience (spec 013) and the component-name verification gate (spec 014/015)
 - **LM (since 2026-08-25):** DEFAULT = **Kimi K3** (Kimi Code subscription, `task_model: "kimi"`) | **Dev mode** = local Qwen3.8-27B (llama.cpp) — toggle via `SNOW_KB_DEV_MODE=1` env or CLI `--dev` flag
 - **ServiceNow Table API** (`requests`) — Story fetch + KB CRUD
 - **FastAPI + Uvicorn** — webhook server for the UI Action (systemd, `Restart=always`)
@@ -105,10 +109,14 @@ snow_kb_generator/
 │   ├── pipeline.py             # Orchestrator (fetch → generate → push)
 │   ├── servicenow_client.py    # ServiceNow Table API client
 │   ├── signatures.py           # DSPy Signatures (AnalyzeChanges, ExtractChange, GenerateKbFromTemplate)
-│   └── program.py              # StoryToKBArticle(dspy.Module)
+│   ├── program.py              # StoryToKBArticle(dspy.Module)
+│   ├── audience.py             # Typed audience decision (typesafe-sdk, spec 013)
+│   ├── verification.py         # Component-name verification gate, calibrated (spec 014/015)
+│   ├── context_selection.py    # Context selection for generation — measured, INACTIVE (enabled=false, spec 016)
+│   └── vendor/                 # Vendored replay/eval helpers (jev_replay.py)
 ├── eval/                       # GEPA eval harness (dataset, rich_metric, baseline, compare)
-├── specs/                      # 12 feature specs (spec-kit, spec-driven development)
-├── tests/                      # 286 pytest tests
+├── specs/                      # 15 feature specs (spec-kit, spec-driven development)
+├── tests/                      # 415 pytest tests
 ├── deploy/                     # systemd unit + setup guide
 ├── scripts_pdi/                # bootstrap_pdi.py — new ServiceNow instance setup
 ├── servicenow/                 # UI Action script to install in ServiceNow
@@ -125,7 +133,7 @@ snow_kb_generator/
 6. **GEPA optimization** — ✅ Done (Kimi K3 reflection; 35B run: 0.773 → 0.859 — note: the 35B-tuned program does **not** transfer to the 27B model, so production uses the base program; a 27B GEPA run is in the backlog with a ready starter package)
 7. **Export & deploy** — ✅ Done (systemd server, live end-to-end validation on two model generations)
 
-**Spec-driven development:** the project actively uses the spec-kit methodology — 12 completed feature specs in `specs/` (duplicate prevention, team templates, GEPA quality, hallucination guardrails, direction-aware quality, human-style articles, component-hallucination metric, style-judge noise reduction, and more).
+**Spec-driven development:** the project actively uses the spec-kit methodology — 15 completed feature specs in `specs/` (duplicate prevention, team templates, GEPA quality, hallucination guardrails, direction-aware quality, human-style articles, component-hallucination metric, style-judge noise reduction, and more).
 
 ## License
 
