@@ -19,8 +19,8 @@ Fill it in like this:
 Paste the content of the `ui_action_script.js` file into the UI Action **"Script"** field.
 
 **Check the settings in the script:**
-- `apiUrl`: The IP address and port of your VPS server (currently: `http://192.0.2.10:8000/generate-kb`)
-- `apiKey`: The API key of the server (currently: `REPLACE_WITH_RANDOM_KEY`)
+- `apiUrl`: your server address and port (in the repo you only see a placeholder: `http://192.0.2.10:8000/generate-kb`)
+- `apiKey`: your server API key — the value of the `.env` field `SNOW_WEBHOOK_API_KEY`. Generate with: `openssl rand -hex 32`. NEVER write the real key into the repo.
 
 ### 3. Operation
 When a developer presses the button on a closed Story:

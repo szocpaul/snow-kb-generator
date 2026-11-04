@@ -164,8 +164,8 @@ class TestUpdateSetPayloads:
         assert "STRY0010016" in ex.story_text
         assert "sys_script_include" in ex.update_set_payloads
         assert "SnowKbGenerator" in ex.update_set_payloads
-        # anonymization check: no production IP / API key / sys_id
-        assert "91.99" not in ex.update_set_payloads
+        # anonymization check: no prod IP / API key / sys_id
+        assert "192.0.2" not in ex.update_set_payloads
         assert "REPLACE_WITH_RANDOM_KEY" not in ex.update_set_payloads
         import re
         assert not re.findall(r"\b[0-9a-f]{32}\b", ex.update_set_payloads)

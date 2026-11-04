@@ -10,6 +10,9 @@
 var storyId = current.number;
 
 // --- SETTINGS ---
+// The key matches the .env SNOW_WEBHOOK_API_KEY field. Provide the real value
+// in ServiceNow (UI Action property or Script Include global); in the repo
+// there is only a placeholder.
 var apiUrl = 'http://192.0.2.10:8000/generate-kb';
 var apiKey = 'REPLACE_WITH_RANDOM_KEY';
 
