@@ -133,9 +133,9 @@ class TestGoldDatasetNoFictionalReferences:
     def test_no_fictional_kb_numbers_in_gold_articles(self):
         """No example article may contain a KB number disguised as real.
 
-        Allowed: the KBXXXXXXX placeholder, as well as the REAL, hyperlinked
-        references (KB numbers embedded in <a href>, e.g. from the prod STYLE-REF
-        articles linked from the source). Forbidden: a standalone KB + a digit sequence pattern.
+        Allowed: the KBXXXXXXX placeholder and the REAL, hyperlinked references
+        (KB numbers embedded in <a href> tags, e.g. linked articles that come from
+        the prod reference). Forbidden: a standalone KB + digit pattern.
         """
         import re
 

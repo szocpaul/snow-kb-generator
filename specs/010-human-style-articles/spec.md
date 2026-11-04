@@ -6,12 +6,12 @@
 
 **Status**: In Progress (US1–US3 implemented and validated; US4 is in the T010c–T014 phase)
 
-**Input**: User description: "The finished KB articles look very AI-written, not human enough. The structure and the facts are fine, but the tone is robotic: boilerplate phrases ('This document describes', 'seamless', 'leverage'), uniform sentence rhythm, generalizations instead of specifics. The goal: the articles should read as if a senior engineer had written them — the hand-written STYLE-REF is the style reference."
+**Input**: User description: "The finished KB articles look very AI-written, not human enough. The structure and the facts are fine, but the tone is robotic: boilerplate phrases ('This document describes', 'seamless', 'leverage'), a uniform sentence rhythm, generalisations instead of specifics. The goal: the articles should read as if a senior engineer had written them — the hand-written reference article is the style sample."
 
 ## Background (diagnosis)
 
 - The `rich_metric` currently measures 4 axes (structure, content, template, hallucination) — **not style**. The basic law of GEPA: it only fixes what the metric sees. Therefore the robotic tone is invisible to the optimization.
-- The STYLE-REF (hand-written SolMan article) downloaded from ServiceNow: **`data/examples/style_reference.html`** (16.5k characters) — this is the human style sample to compare against; the judge prompt gets a representative excerpt of it.
+- The hand-written integration article (the style sample) is in the `data/examples/style_reference.html` file (15.9k characters) — this is the human style sample that can serve as a reference; the judge prompt gets a representative excerpt of it.
 - **Gold dataset cleaned and extended (2026-07-29)**: the banned phrases ("This document describes/outlines", "seamless") were removed from the gold HTML files — previously the content axis rewarded what the style axis is going to penalize. The foreign (LDAP/auth) work_notes leftovers were deleted from the Example 5 story. New 8th example (SAP S/4HANA outbound OData) → the split is **4 train / 4 val**. Every earlier baseline number is outdated; the new reference is the fresh baseline from T010.
 - **Model decision (clean measurements from 2026-07-29, `cache=False`)**: Kimi K3 **0.769** > local Qwen3.6-35B-A3B **0.733** (the old K3 number of 0.655 was contaminated by the cache). The task model nevertheless stays the **local Qwen** — against the 0.036 quality difference, the marginal cost of the GEPA rollouts (several hundred generations) is zero, and it is GEPA that must bring in the style improvement. The only remaining Kimi dependency is the GEPA reflection/proposer (K3, few calls).
 - **Cache hygiene**: `cache=False` is mandatory in the measurement scripts — the first local baseline on 2026-07-29 replayed the Kimi answers from the DSPy disk cache (`~/.dspy_cache`) (false 0.655). The fix in `eval/baseline.py` has already been made.
@@ -35,9 +35,9 @@ The `GenerateKbFromTemplate` docstring is extended with a SINGLE style block (bo
 
 ### User Story 2 - Style Judge in Metric (Priority: P2)
 
-The fifth axis of `rich_metric`: an **LLM-as-judge** (the same **local Qwen3.6-35B-A3B** as the task model) that evaluates on a 0-1 scale whether the article speaks in a human expert tone, and gives concrete criticism ("which phrase is robotic and why"). The judge prompt contains the STYLE-REF as a positive style sample.
+The fifth axis of the `rich_metric`: an **LLM-as-judge** (the same **local Qwen3.6-35B-A3B** as the task model) that scores on a 0-1 scale whether the article speaks in a human expert tone, and gives a specific critique ("which phrase is robotic and why"). The judge prompt contains the style reference as a positive example.
 
-**Deliberate trade-off**: the judge and the task use the same model (self-evaluation risk) — in exchange for zero cost. Mitigation: the judge prompt is organized around the ban list and the STYLE-REF reference (not free-form evaluation), and the SC-002 validation checks the bias on robotic/human test icons.
+**Deliberate trade-off**: the judge and the task are the same model (risk of self-evaluation) — in exchange, zero cost. Mitigation: the judge prompt is organised around the ban list and the style reference (not a free-form evaluation), and the SC-002 validation checks the bias on robotic/human test fixtures.
 
 **Why this priority**: This makes style *measurable* — from this point on GEPA sees it and can optimize it.
 
@@ -85,7 +85,7 @@ GEPA run with the **local task model** (the rollouts are free), Kimi K3 reflecti
 
 - **FR-001**: The style rules of the signature do NOT degrade the existing behaviour (evidence-first, template conformance, the guardrails are untouched).
 - **FR-002**: The style judge is deterministically fault-tolerant: if the judge call goes astray (e.g. the local server is not reachable — a VPS/server restart is a real scenario), the style axis is 0.5 (neutral) plus a warning — the metric never stops because of it.
-- **FR-003**: The judge prompt contains the ban list and the STYLE-REF reference excerpt.
+- **FR-003**: The judge prompt contains the ban list and an excerpt of the style reference.
 - **FR-004**: The time budget of the GEPA run is controlled: `max_metric_calls = 200` (time limit, not quota protection — the rollouts are local; with the judge calls ~1.5-2 hours with the `-np 4` slots — 2026-08-08: the server was expanded from `-np 2` to `-np 4`, verified with a preflight). The reflection/proposer calls still go to Kimi K3, and their number is small. `num_threads` is aligned with the slots of the server (4).
 - **FR-005**: `run_gepa_optimization()` creates the SkilledProposer with the style-focused `additional_instructions`; the existing evidence-first and KB-hallucination rules remain.
 - **FR-006**: Every measurement script (baseline, GEPA, validation) runs with `cache=False` — the DSPy disk cache can replay earlier answers without model identification (lesson from the false baseline on 2026-07-29).

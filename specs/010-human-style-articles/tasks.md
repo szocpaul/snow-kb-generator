@@ -10,7 +10,7 @@
 
 ## Phase 2: Style Judge in Metric (US2)
 
-- [x] T004 [US2] `StyleJudge(dspy.Signature)` into `eval/metric.py`: input = article_html + style_reference (STYLE-REF excerpt), output = score (0-1) + critique
+- [x] T004 [US2] `StyleJudge(dspy.Signature)` in `eval/metric.py`: input = article_html + style_reference (an excerpt of the style reference), output = score (0-1) + critique
 - [x] T005 [US2] `_style_score(html)` helper: judge call with the **local Qwen endpoint** (the same as the task model); Exception → 0.5 + warning (fault tolerance, FR-002)
 - [x] T006 [US2] Extending `rich_metric` with the 5th axis; new weights (0.25/0.25/0.15/0.15/0.20); the critique goes into the feedback
 - [x] T007 [US2] Tests (mock judge): robotic article → low score + concrete feedback; human-like → high; judge error → 0.5; weight alignment in the existing tests

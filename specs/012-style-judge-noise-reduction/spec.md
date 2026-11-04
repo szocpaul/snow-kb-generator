@@ -12,7 +12,7 @@
 
 - **The measurement (Agent.md 32):** axis spreads over 3 identical baseline runs: hallucination 0.000, template 0.000, structure 0.042, content 0.070, **style 0.188**. The spread of the style axis is ~3-4× larger than that of the other axes.
 - **The source of the noise:** `_style_score()` (eval/metric.py) issues a SINGLE `dspy.Predict(StyleJudge)` call, with the global `temperature=0.6` LM config. The same article gets a different score from run to run.
-- **The judge itself is good** (spec 010 SC-002 validation): the machine test score is 0.00, the hand-written STYLE-REF is 1.00 — the *average* is in a good place, the *standard deviation* is the problem. Not a judge swap is needed, but variance reduction.
+- **The judge itself is good** (spec 010 SC-002 validation): the robotic test icon scores 0.00, the hand-written style reference 1.00 — the *average* is in a good place, the *spread* is the problem. It is not about replacing the judge, but about reducing the variance.
 - **Physics:** the spread of the average of n independent samples ≈ σ/√n → 3 samples: ±0.19 → ~±0.11; 5 samples: ~±0.08.
 - **Cost side:** the judge is local (marginal cost zero), but the measurement time grows: metric call = 1 generation + N judge calls. The baseline measurement (~10 min) takes ~15-25 min with N=3. This modifies the estimate of a future GEPA run.
 - **Why not temperature=0?** A single temp=0 call can make the judge rigid (hidden bias), and we do not know its clamping behaviour either. The primary path of the spec is averaging over samples; temp=0 is a fallback option in the calibration phase.
@@ -47,7 +47,7 @@ After the change the baseline is re-measured 3 times, and the spread of the styl
 **Acceptance Scenarios**:
 
 1. **Given** the multi-sample judge, **When** the baseline runs 3 times, **Then** the style min–max spread ≤ 0.10.
-2. **Given** the calibration, **When** the judge validation is repeated, **Then** the machine test score < 0.4 and the STYLE-REF reference > 0.7 (the discrimination has not degraded).
+2. **Given** the calibration, **When** the judge validation is repeated, **Then** the robotic test icon < 0.4 and the style reference > 0.7 (the discrimination did not degrade).
 3. **Given** the new baseline averages, **When** the documentation happens, **Then** the new reference is recorded (the earlier ones are marked as obsolete).
 
 ---
@@ -79,7 +79,7 @@ Re-opening the mini-GEPA question that was postponed in spec 011 T009, in light 
 
 - **SC-001**: `_style_score` = the average of N successful samples; partial error handled; all-error → 0.5 (mock tests).
 - **SC-002**: The style spread on 3 identical baseline runs is ≤ 0.10 (down from 0.188).
-- **SC-003**: The judge discrimination is unchanged (machine < 0.4, STYLE-REF > 0.7).
+- **SC-003**: The discrimination of the judge is unchanged (robotic < 0.4, the style reference > 0.7).
 - **SC-004**: The mini-GEPA re-evaluation is documented numerically; the human decision is recorded.
 
 ## Out of Scope

@@ -103,7 +103,7 @@ class TestStyleAxisFaultTolerance:
 class TestStyleReference:
     def test_reference_file_loaded_and_cached(self):
         ref = eval.metric._load_style_reference()
-        assert "SolMan" in ref  # the real STYLE-REF content
+        assert "ChangeSyncInterface" in ref  # the content of the hand-written sample
         assert len(ref) <= 3000  # a token-saving excerpt
         # the second call comes from the cache (the same object)
         assert eval.metric._load_style_reference() is ref

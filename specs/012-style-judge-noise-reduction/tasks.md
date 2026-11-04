@@ -11,7 +11,7 @@
 
 ## Phase 2: Calibration Proof (US2)
 
-- [x] T005 [US2] Judge discrimination revalidation (FR-005): machine test score < 0.4, STYLE-REF > 0.7
+- [x] T005 [US2] Re-validation of the judge discrimination (FR-005): robotic test icon < 0.4, the style reference > 0.7
 - [x] T006 [US2] Baseline 3× re-measurement (`python -m eval.baseline --model local --output runs/baseline{,_recheck,_recheck2}.json`, `cache=False` — FR-004) — preflight on llama.cpp before the runs
 - [x] T007 [US2] Spread analysis: per-axis min–max table; **style spread ≤ 0.10** (SC-002) — if it is not met: evaluation of N=5 or temp=0, the decision documented; recording the new baseline reference
 
@@ -41,7 +41,7 @@ Preflight: llama.cpp `/health` 200 + smoke generation 0.3 s — the server was a
 
 **SC-002 MET: style spread 0.188 → 0.017 (target: ≤ 0.10) — even better than the expected ~0.11** (averaging the axis per run reduces the variance further). The N=5 / temp=0 fallback options were NOT needed (not even the first option of plan Key Decision #2).
 
-Methodological note: the per-EXAMPLE style standard deviation is still 0.20–0.27, but in this case the task-model generation variance (temp=0.6, the articles differ per run) and the judge noise are not separated — SC-002 is met with the original calibration, using the same method, for the standard deviation of the axis AVERAGES. Judge discrimination (T005/SC-003): machine test score 0.017 (< 0.4 ✅), STYLE-REF 0.950 (> 0.7 ✅) — `runs/t005_judge_revalidation.json`.
+Methodological note: the per-EXAMPLE style spread is still 0.20–0.27, but this includes the generation variance of the task model (temp=0.6, the articles differ from run to run) and the judge noise inseparably — SC-002 is met with the same method as the original calibration, on the spread of the axis AVERAGES. Judge discrimination (T005/SC-003): robotic test icon 0.017 (< 0.4 ✅), the style reference 0.950 (> 0.7 ✅) — `runs/t005_judge_revalidation.json`.
 
 ### New baseline reference (after spec 012, N=3 judge)
 

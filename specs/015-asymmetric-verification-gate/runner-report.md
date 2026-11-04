@@ -25,9 +25,9 @@ Last update: 2026-10-01T17:16:55
   insertje ACL-tiltott → a capture a platform standard mechanizmusa: az user
   current update set set to the fixture set (user preference), benign
   field touch + IMMEDIATE restore (the record content did not change), the
-  preference restored to the original at the end (`eb0825f9...`).
+  preference restored to the original at the end (`ea9a4e63...`).
   - Story: **STRY0010004** ("ServiceNow oldali webhook-fogadas es KB-draft
-    generalas bekotese"), Update Set: **STRY0010004** (sys_id e39388bc...).
+    generalas bekotese"), Update Set: **STRY0010004** (sys_id e17d49d7...).
   - 13 captured components: 4 Script Include (PrototypeServer,
     MosaicHermesUtils, RAGResponseGenerator, CodeSigningUtil), 3 Business Rule
     ('Change Phase Events Before', 'Contract Instance', 'Choice Events'),
@@ -115,7 +115,7 @@ The runner MUST NOT tick the T003 checkbox.
 - The human APPROVED all 13 names; an independent check proved: the
   sys_updated_on change is a side effect of the capture (touch+revert), there is
   NO content modification, NO '[spec015-capture]' residue.
-- The orphaned STRY0010005 + 8b6e1927 update set was already DELETED during the run
+- The orphan STRY0010005 + 8b6e1911 update set were already DELETED during the
   run (the runner's cleanup); re-checked: both are 404.
 
 ## Phase 2/3/5 results (T005, T007, T008, T012)

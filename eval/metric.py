@@ -330,7 +330,7 @@ def _extract_facts(html: str) -> list[str]:
     for m in re.findall(r"['\u2018\u2019]([^'\u2018\u2019]{3,80})['\u2018\u2019]", text):
         facts.add(m.strip())
 
-    # Record/article numbers (STRY0010005, STYLE-REF, CHG0001234)
+    # The record/article numbers (STRY0010005, KB9000000, CHG0001234)
     facts.update(re.findall(r'\b(?:KB\d{6,}|STRY\d{6,}|CHG\d{6,}|CTASK\d{6,})\b', text))
 
     # URL-ek / endpointok
@@ -602,7 +602,8 @@ class StyleJudge(dspy.Signature):
 
     You receive an article (article_html) and a positive style reference
     (style_reference) — an excerpt from a hand-written KB article by a senior
-    engineer (STYLE-REF). Judge ONLY the writing style, not factual accuracy.
+    engineer (the hand-written style reference article). Judge ONLY the writing
+    style, not factual accuracy.
 
     Score the article from 0.0 to 1.0:
     - 1.0: reads like the reference — direct facts, concrete identifiers
@@ -634,11 +635,11 @@ _STYLE_REFERENCE_CACHE: str | None = None
 
 
 def _load_style_reference() -> str:
-    """Loads the STYLE-REF style reference excerpt (cached).
+    """Loads the style reference excerpt (cached).
 
-    Instead of the full HTML we take a representative excerpt from the beginning
-    (token saving — the judge prompt is sent on every metric call).
-    In case of a missing file an empty string: the judge can work without a reference.
+    Instead of the full HTML we take a representative excerpt from its beginning
+    (to save tokens — the judge prompt goes out with every metric call).
+    With a missing file an empty string: the judge can also work without a reference.
     """
     global _STYLE_REFERENCE_CACHE
     if _STYLE_REFERENCE_CACHE is None:

@@ -25,9 +25,9 @@ Selected field: 3/3
     field           rm_story.type (sys_dictionary, updated: 2026-09-24 20:43:29)
     field           rm_story.story_points (sys_dictionary, updated: 2026-09-24 20:42:48)
 [2/4] Story letrehozasa (rm_story)...
-    Story: STRY0010004 (sys_id: 00000000000000000000000000000009)
+    Story: STRY0010004 (sys_id: 00000000000000000000000000000007)
 [3/4] Update Set letrehozasa + capture-sorok (sys_update_xml)...
-    Update Set: STRY0010004 (sys_id: 00000000000000000000000000000004)
+    Update Set: STRY0010004 (sys_id: 00000000000000000000000000000016)
 [1/4] Komponens-kivalasztas a metaadat-tablakbol...
 Selected script_include: 4/4
 Selected business_rule: 3/3
@@ -47,19 +47,19 @@ Selected field: 3/3
     field           rm_story.type (sys_dictionary, updated: 2026-09-24 20:43:29)
     field           rm_story.story_points (sys_dictionary, updated: 2026-09-24 20:42:48)
 [2/4] Story letrehozasa (rm_story)...
-    Story: STRY0010005 (sys_id: 00000000000000000000000000000054)
+    Story: STRY0010005 (sys_id: 00000000000000000000000000000043)
 [3/4] Update Set letrehozasa...
-    Update Set: STRY0010005 (sys_id: 00000000000000000000000000000053) — allapot: /opt/snow-kb-generator/artifacts/verification_fixture_state.json
-    sys_update_set preference: 00000000000000000000000000000004 -> 00000000000000000000000000000053
+    Update Set: STRY0010005 (sys_id: 00000000000000000000000000000006) — allapot: /opt/snow-kb-generator/artifacts/verification_fixture_state.json
+    sys_update_set preference: 00000000000000000000000000000016 -> 00000000000000000000000000000006
     capture: [Script Include] PrototypeServer
-    sys_update_set preference visszaallitva: 00000000000000000000000000000004
+    sys_update_set preference visszaallitva: 00000000000000000000000000000016
 Jeloltek script_include: 16 (kvota: 4)
 Jeloltek business_rule: 12 (kvota: 3)
 Jeloltek system_property: 12 (kvota: 3)
 Jeloltek field: 12 (kvota: 3)
-[resume] Meglevo allapot: Story=STRY0010004, Update Set=00000000000000000000000000000004
+[resume] Meglevo allapot: Story=STRY0010004, Update Set=00000000000000000000000000000016
 [4/5] Capture: aktualis update set atallitasa + touch+revert jeloltenkent...
-    sys_update_set preference: 00000000000000000000000000000011 -> 00000000000000000000000000000004
+    sys_update_set preference: 00000000000000000000000000000017 -> 00000000000000000000000000000016
     capture mar megvan: PrototypeServer — kihagyom
     capture: [Script Include] MosaicHermesUtils
     capture: [Script Include] RAGResponseGenerator
@@ -67,8 +67,8 @@ Jeloltek field: 12 (kvota: 3)
     capture: [Business Rule] Change Phase Events Before
     capture: [Business Rule] Contract Instance
     capture: [Business Rule] Choice Events
-    capture SIKERTELEN (fallback a kovetkezo jeloltre): glide.crypto.core.config.cache — PATCH sys_properties/00000000000000000000000000000038 -> HTTP 403: {"error":{"message":"Operation Failed","detail":"ACL Exception Update Failed due to security constraints"},"status":"failure"}
-    capture SIKERTELEN (fallback a kovetkezo jeloltre): sn_kmf.resolution_framework.enabled — PATCH sys_properties/00000000000000000000000000000050 -> HTTP 403: {"error":{"message":"Operation Failed","detail":"ACL Exception Update Failed due to security constraints"},"status":"failure"}
+    capture SIKERTELEN (fallback a kovetkezo jeloltre): glide.crypto.core.config.cache — PATCH sys_properties/00000000000000000000000000000042 -> HTTP 403: {"error":{"message":"Operation Failed","detail":"ACL Exception Update Failed due to security constraints"},"status":"failure"}
+    capture SIKERTELEN (fallback a kovetkezo jeloltre): sn_kmf.resolution_framework.enabled — PATCH sys_properties/00000000000000000000000000000036 -> HTTP 403: {"error":{"message":"Operation Failed","detail":"ACL Exception Update Failed due to security constraints"},"status":"failure"}
     capture: [System Property] com.snc.sdlc.scrum.pp.smclass
     capture: [System Property] glide.lastplugin
     capture: [System Property] glide.ui.session_timeout
@@ -85,6 +85,6 @@ Jeloltek field: 12 (kvota: 3)
     the capture does NOT appear in the update set: rm_story.epic — fallback
     the capture does NOT appear in the update set: rm_story.enhancement — fallback
     FEWER field components were captured (0/3)
-    sys_update_set preference visszaallitva: 00000000000000000000000000000011
+    sys_update_set preference visszaallitva: 00000000000000000000000000000017
 [5/5] Story-leiras veglegesitese a capture-olt nevekkel + dump...
 DONE. Story=STRY0010004, Update Set=STRY0010004, component=10 — the dump review is the T003 MANUAL GATE.

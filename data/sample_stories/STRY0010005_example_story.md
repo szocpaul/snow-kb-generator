@@ -29,7 +29,7 @@ Just copy the content into the matching fields of the ServiceNow Story form!
 2024-07-13 10:15: System - Added Dictionary and Field Label modifications for 'Technical Specification'.
 2024-07-13 10:30: System - Created Script Include 'SnowKbGenerator' with REST outbound logic.
 2024-07-13 11:00: System - Created UI Action 'Create KB Article' and configured Form Layout.
-2024-07-13 11:30: System - Completed all development tasks. Link to Update Set: https://dev.service-now.com/sys_update_set.do?sys_id=00000000000000000000000000000018`
+2024-07-13 11:30: System - Completed all development tasks. Link to Update Set: https://dev.service-now.com/sys_update_set.do?sys_id=00000000000000000000000000000056`
 
 ---
 *(A note for the pipeline: although the text itself is about 2000 characters, your real `STRY0010005` Update Set is 36,000 characters! When you press the button, the pipeline uses the name of the Update Set (`STRY0010005`) to download the code and to start the RLM.)*

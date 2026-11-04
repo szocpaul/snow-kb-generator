@@ -294,7 +294,7 @@ The `run_gepa_optimization()` function calls `optimizer.compile()`, which return
 
 - FastAPI server restarted; the optimized program (`artifacts/program.json`) was loaded at startup.
 - STRY0010010 generation with `push=false`: ✅ successful (with the optimized program).
-- Live push `force_update=true`: ✅ the KB article was created/updated: https://dev.service-now.com/kb_view.do?sys_kb_id=00000000000000000000000000000012
+- Production push with `force_update=true`: ✅ the KB article was created/updated: https://dev.service-now.com/kb_view.do?sys_kb_id=00000000000000000000000000000037
 - **All tasks of specs/003-gepa-kb-quality (T001-T019) are done.** The GEPA-optimized program serves the ServiceNow UI Action webhook in production.
 
 ## 18. Spec 004: Hallucination-Free KB Generation COMPLETED (2026-07-26)
@@ -486,12 +486,12 @@ The metric penalty reduces FREQUENCY (GEPA learns it), the guardrail zeroes the 
 - The banned phrases were removed from the gold HTML files ("This document describes/outlines", "seamless") — the content axis previously rewarded what the style axis penalises.
 - Example 5 story work_notes cleaned (LDAP/auth leftovers deleted).
 - New 8th example (SAP S/4HANA outbound OData, synthetic) → **4 train / 4 val**.
-- **STYLE-REF style reference downloaded:** `data/examples/style_reference.html` (the positive sample of the style judge).
+- **Style reference set up:** `data/examples/style_reference.html` (the positive sample for the style judge).
 
 ### Spec 010 Implementation (T001-T009b, T010-T011 done)
 - `BANNED_PHRASES` (eval/metric.py) + signature WRITING STYLE block (US1) — in the production STRY0010013 article **0 hits on the banned list** ✅
 - `StyleJudge` + `_style_score()` for the 5th axis (US2), error tolerance 0.5 (FR-002); new weights 0.25/0.25/0.15/0.15/0.20
-- Judge validated (SC-002): machine test icon **0.00**, STYLE-REF **1.00**
+- Judge validated (SC-002): the robotic test icon **0.00**, the style reference **1.00**
 - SkilledProposer guidance extended with style rules (US3); the evidence-first rules remain
 - `eval/baseline.py` CLI: `python -m eval.baseline --model local|kimi --output ...` (T009b; `scripts/` deleted)
 
@@ -628,7 +628,7 @@ The spec011-runner + calib-runner chain worked well: preflight → implementatio
 ### What was achieved (T001-T009, dedicated runner agent)
 
 - **Multi-sample style judge (US1):** `_style_score()` now issues `STYLE_JUDGE_SAMPLES = 3` judge calls, the score is the average of the clamped scores of the SUCCESSFUL samples; the critique is the one from the sample closest to the mean (so the GEPA reflection gets a representative text). Partial error tolerance (FR-001): 1-2 errors → mean(remaining) + warning, NOT 0.5; all errors → the spec 010 behaviour (0.5, "") is unchanged. The constant can be overridden in tests (FR-002). +8 mock tests, **282/282 green**.
-- **Judge discrimination revalidated (SC-003):** machine test icon **0.017** (< 0.4 ✅), STYLE-REF **0.950** (> 0.7 ✅) — `runs/t005_judge_revalidation.json`.
+- **Judge discrimination re-validated (SC-003):** robotic test icon **0.017** (< 0.4 ✅), the style reference **0.950** (> 0.7 ✅) — `runs/t005_judge_revalidation.json`.
 - **Calibration (SC-002 MET):** axis deviations of 3 identical baseline runs (`cache=False`, preflight: llama.cpp health + smoke OK): hallucination 0.000, template 0.000, structure 0.042, content 0.039, **style 0.017** (down from 0.188 — the target was ≤ 0.10, better than the expected ~0.11). Overall noise: 0.018. The N=5 / temp=0 fallback options were not needed.
 - **New baseline reference:** `runs/baseline.json` average **0.751** (structure 0.875 / content 0.667 / template 0.750 / hallucination 1.000 / style 0.513). The spec 011 numbers are OUTDATED (saved: `runs/*_pre_spec012.json`).
 - **Numeric re-evaluation of mini-GEPA (T008, in tasks.md):** interpretability threshold = measured deviation (0.018) + margin (0.02) ≈ **0.04**; the upper end of the expected gain (+0.02–0.05) is already above the threshold → the original reason for the postponement is gone. GEPA DID NOT run; **the decision is the human's** (estimated time ~5-7 hours based on the 200-call run, because a metric call goes from 2→4 local calls).
@@ -645,7 +645,7 @@ The spec011-runner + calib-runner chain worked well: preflight → implementatio
 ### Measurements (spec 012 noise-reduced metric, 5 train/4 val, cache=False)
 - **27B base program: 0.859** (structure 1.000, template 1.000, style 0.754) vs 35B base 0.751 → **+0.108**
 - **27B + the 35B GEPA-optimized program: 0.768** → the GEPA gain does NOT transfer, it even hurts (template 0.75: the direction violation came back; hallucination 0.75)
-- Judge validation with the new model: machine 0.050 / STYLE-REF 0.983 ✅ (better discrimination than the 35B)
+- Judge validation with the new model: robotic 0.050 / the style reference 0.983 ✅ (better discrimination than on the 35B)
 
 ### Decision (human): 27B + BASE program in production
 - `artifacts/program.json` → `artifacts/program_35b_optimized.json` (kept in version control); the server/CLI fallback thus loads the base program (pipeline._load_program)
@@ -658,7 +658,7 @@ The spec011-runner + calib-runner chain worked well: preflight → implementatio
 
 ## 34. Production PDI test with the new 27B model (2026-08-20)
 
-- UI Action button → POST /generate-kb 200 OK → KB article for STRY0010014 (`ea7fcd7f...e3ad`), update branch
+- UI Action button → POST /generate-kb 200 OK → KB article for STRY0010014 (`e6f35133...e3ad`), update path
 - "Bidirectional REST Integration: ServiceNow ↔ SAP SolMan" — **17.2k characters**, all 7 sections, correctly Inbound AND Outbound (bidirectional → direction handling ✅)
 - Component check (spec 011 prototype): **8/8 names verified from the story, 0 fabricated**
 - Speed: fast enough according to the user (draft-mtp speculation + Vulkan: ~88 t/s decode measured)
@@ -694,7 +694,7 @@ The implementation of spec 010-012 happened with the `autonomous-spec-runner` sk
 ## 36. Incident: HTML nesting error in a generated article (2026-08-25) + backlog trigger
 
 ### What happened
-The end of the article generated for STRY0010004 (`efbdcd4e...10e6`) visually "slipped": in the Testing Guide section the model produced broken HTML (`<li><em><ul>` — unclosed `<em>` + unnecessary nested list), into which the Known Issues and Investigation Steps sections fell. The tag COUNTS were balanced (a naive counter will not catch it), the nesting ORDER was wrong.
+The end of the article generated for STRY0010004 (`ef46f4eb...10e6`) visually "slipped": in the Testing Guide section the model produced invalid HTML (`<li><em><ul>` — an unclosed `<em>` + a superfluous nested list), into which the Known Issues and Investigation Steps sections fell. The tag COUNTS were balanced (a naive counter does not catch it), the nesting ORDER was wrong.
 
 ### Fix and output
 - Manual HTML fix via the API (4 scenarios flattened into a plain list, orphan closing tags removed) → `runs/kb_last_gen_fixed.html`

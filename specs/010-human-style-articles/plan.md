@@ -7,7 +7,7 @@
 - Python 3.12, DSPy **3.3.0** (updated from 3.3.0b1 on 2026-08-07, 258/258 tests pass; the GEPA `log_dir` checkpoint-resume is verified — an interrupted run can be continued with the same `log_dir`)
 - **Interpreter: `../.venv`** (the shared venv of the parent directory — the project has NO `.venv` of its own, and it is NOT the system Python; see Agent.md) — every gate and measurement command runs with it
 - **Task + judge LM: local Qwen3.6-35B-A3B** (llama.cpp, `http://llm-server.local:8033/v1`) — clean measurements from 2026-07-29 (`cache=False`, old dataset): K3 0.769 > local 0.733; the zero marginal cost was decisive (GEPA rollouts)
-- **Dataset**: cleaned, 8 examples (4 train / 4 val, 2026-07-29) — the gold HTMLs are boilerplate-free, the STYLE-REF reference is in `data/examples/`; the baseline must be re-measured on it (T010)
+- **Dataset**: cleaned, 8 examples (4 train / 4 val, 2026-07-29) — the gold HTML files are boilerplate-free, the style reference is in `data/examples/`; the baseline must be re-measured on it (T010)
 - **GEPA reflection/proposer: Kimi K3** (`_RefreshingKimiLM`) — the only remaining Kimi dependency, with few calls
 - Judge and task use the same model — a deliberate trade-off (zero cost); the SC-002 validation (robotic/human test fixtures) checks the bias of the judge
 - `cache=False` is mandatory in the measurement scripts (lesson from the false cache replay, 2026-07-29)
@@ -37,7 +37,7 @@ generated article ──► rich_metric ───┼── structure / content /
 1. **The judge is a `dspy.Signature` in metric.py** (`StyleJudge`: article_html + style_reference → score + critique), **with the local Qwen LM** (the same endpoint as the task model). Not a separate module — the metric is its place.
 2. **Fault tolerance:** a judge exception (e.g. the local server is not reachable) → score=0.5 + warning log; the metric never stops.
 3. **Weights:** 0.25 structure + 0.25 content + 0.15 template + 0.15 hallucination + 0.20 style. The thresholds of the existing tests must be aligned.
-4. **The style reference is baked into the judge prompt**: a representative excerpt of the STYLE-REF gold article (not the full HTML — token saving).
+4. **The style reference is baked into the judge prompt**: a representative excerpt of the style reference article (not the full HTML — token economy).
 5. **The boilerplate ban list is a shared constant** (`BANNED_PHRASES`): the signature block, the judge prompt and the SC-001 regex check use the same list.
 6. **US3 only replaces the `additional_instructions` text** on the existing SkilledProposer instance — the fallback logic and the prompt_model (Kimi K3) stay unchanged.
 7. **No docstring consolidation** (separate spec, backlog).
