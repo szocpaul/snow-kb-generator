@@ -4,6 +4,20 @@
 
 *(Hungarian version: [README.hu.md](README.hu.md))*
 
+## Public repository notice
+
+This repository is published for reference. Everything environment-specific has
+been replaced with placeholders:
+
+- **no credentials** — no API keys, tokens or passwords are committed (see `.env.example`);
+- **no endpoints** — the ServiceNow instance, the API server address and the model
+  endpoints are configuration, not repository content;
+- **no customer data** — the Knowledge Base article used as the style reference is
+  synthetic, and every identifier in the datasets and artifacts is a placeholder.
+
+Run it against your own environment: copy `.env.example` to `.env`, fill in the
+values, and follow [docs/getting-started.md](docs/getting-started.md).
+
 ## What is this?
 
 When developers finish a ServiceNow Story (`STRY...`), someone has to manually write a Knowledge Base article about the solution. This project **fully automates** that:
