@@ -678,7 +678,7 @@ The spec011-runner + calib-runner chain worked well: preflight → implementatio
 - **Production stack:** Qwen3.8-27B dense (llama.cpp, Vulkan, draft-mtp, ~88 t/s) + **base program** (the 35B GEPA-optimized program did not transfer, set aside: `artifacts/program_35b_optimized.json`) + FastAPI systemd service (snow-kb.service, Restart=always)
 - **Measured quality (spec 012 metric, 5 train/4 val):** overall **0.859** (structure 1.000 / content 0.631 / template 1.000 / hallucination 1.000 / style 0.754); measurement noise ±0.018
 - **Production validation:** STRY0010014 → bidirectional article, 17.2k characters, 8/8 components verified, human review accepted (2026-08-20)
-- **Tests:** 282/282 green; everything committed/pushed; the `validated-2026-08-11` tag is the restore point for the 35B era
+- **Tests:** 282/282 green; everything committed/pushed; the validated state of that era is marked in the commit history
 
 ### Closed specs
 - **010** human-style articles: style axis + judge + GEPA 200-call (0.773→0.873 best) + production validation (the review caught a hallucination → hotfix chain)
