@@ -16,8 +16,9 @@ The 013/014 measurement infrastructure is reused unchanged.
 
 **Language/Version**: Python 3.12
 
-**Primary Dependencies**: unchanged (typesafe-sdk + dspy[typesafe] already in the project);
-the fixture creation runs on the existing `servicenow_client` table API + the `scripts_pdi/` sample
+**Primary Dependencies**: unchanged (typesafe-sdk + dspy[typesafe] are already in the
+project); the fixture creation uses the existing `servicenow_client` table-API + the
+`scripts_pdi/` pattern
 
 **Storage**: PDI fixture (Story + Update Set, on the instance side), labelled sample under
 `data/examples/`, spot-check cache + JSONL recording (existing)
@@ -76,33 +77,38 @@ PDI fixture (Story + Update Set, real components)
 
 ## Key Decisions
 
-1. **The cost ratio: 10:1** (false „exists" : false „does not exist") — the reference sample
-   (fit_thresholds.py) value, and it also protects us in our domain: the hallucination that slips through
-   misleads the reader, the unnecessary signal is noise. (Alternative: 5:1 or 20:1 —
-   the exact ratio must be supported by a sensitivity analysis in the calibration report;
-   if the threshold is insensitive to the ratio, the simplest 10:1 remains.)
-2. **The fixture is built on the PDI, with a script** (following `scripts_pdi/`): Story + Update Set
-   + registration of the components that exist on the PDI — reproducible, in case of a PDI rebuild
-   re-runnable. (Alternative: manual fixture — rejected, not reproducible.)
-3. **The gate moves into the inside of `_create_kb_article_live`** (not a wrapper, not a decorator):
-   the call contains a single entry point. The pipeline-level call is removed.
-   (Alternative: decorator on the client — rejected, magic beyond the signature;
-   the purest form of the v1 sample according to the „inside the tool" principle is the internal call.)
-4. **The calibration only tunes `confidence_threshold`** — the fail-open and the
-   flag-only default behavior with a manually set safety floor (spec Edge Cases).
-   (The reference sample works the same way: DENY_BELOW stays manual.)
-5. **Regression gate on the existing sample (SC-003)** — the new threshold only takes effect if
-   into effect, if it does not worsen on the 24-example sample. (Alternative: measure only on the new sample —
-   rejected, the old sample is the single longer-standing witness of the production behavior.)
-6. **The calibration runs on the combined sample of the 24 + fixture examples**, but the dev-origin
-   „exists" labels excluded from the PDI measurement (FR-002) — the instance facts do not
-   support it. (This is the deliberate closing of the 014 SC-001 RED.)
+1. **The cost ratio: 10:1** (false "exists" : false "does not exist") — the value of the
+   reference pattern (fit_thresholds.py), and it also protects our domain: a
+   hallucination that slips through misleads the reader, an unnecessary signal is just
+   noise. (Alternative: 5:1 or 20:1 — the exact ratio must be substantiated in the
+   calibration report with a sensitivity analysis; if the threshold is insensitive to the
+   ratio, the simplest 10:1 stays.)
+2. **The fixture is created on the PDI, with a script** (following the `scripts_pdi/`
+   pattern): Story + Update Set + the registration of the components that exist on the
+   PDI — reproducible, re-runnable in case of a PDI rebuild. (Alternative: a manual
+   fixture — rejected, not reproducible.)
+3. **The gate moves into the body of `_create_kb_article_live`** (not a wrapper, not a
+   decorator): the single entry point of the call contains it. The pipeline-layer call is
+   deleted. (Alternative: a decorator on the client — rejected, magic outside the
+   signature; the purest form according to the v1 pattern's "inside the tool" principle is
+   the internal call.)
+4. **The calibration tunes only the `confidence_threshold`** — the fail-open and the
+   flag-only base behaviour are a manually set safety floor (spec Edge Cases). (The
+   reference pattern is the same: DENY_BELOW stays manual.)
+5. **Regression gate on the existing sample (SC-003)** — the new threshold only goes
+   live if it does not degrade the 24-example sample. (Alternative: measure only on the
+   new sample — rejected, the old sample is the only witness with a longer history of the
+   production behaviour.)
+6. **The 24 + fixture examples are calibrated on the merged sample**, but the dev-derived
+   "exists" labels are excluded from the PDI measurement (FR-002) — the instance facts
+   do not support them. (This is the deliberate closure of the 014 SC-001 RED.)
 
 ## Fixture content (KD2 details — based on the 2026-10-01 discussion)
 
-**The Story topic**: the snow-kb-generator project itself, as an integration project —
-„Wiring up the ServiceNow-side webhook reception and KB draft generation". The story text
-with a structure similar to the real project (problem, change summary, affected components).
+**The topic of the Story**: the snow-kb-generator project itself, as an integration
+project — "ServiceNow-side webhook receiving and KB draft generation integration". The
+story text has a structure similar to the real project (problem, change summary, affected
+components).
 
 **The content of the Update Set**: components that **ALREADY EXIST** on the PDI go into it
 (update set capture of existing records — we do not create anything new). The fixture

@@ -1,6 +1,6 @@
 # Example Story for the RLM testing (based on an Update Set)
 
-This text is based directly on your real integration code (Update Set: STRY0010005).
+This text is built directly on your real integration code (Update Set: STRY0010005). 
 Just copy the content into the matching fields of the ServiceNow Story form!
 
 ---

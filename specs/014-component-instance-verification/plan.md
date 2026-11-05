@@ -61,14 +61,16 @@ Story fetch + Update Set fetch (unchanged)
 ┌─ pipeline.py ────────────────────────────────────────────────────┐
 │  ExtractChange → GenerateKbFromTemplate (unchanged)              │
 │                                                                  │
-│  NEW: verify_component_names(article_html, update_set_text)              │
+│  NEW: verify_component_names(article_html, update_set_text)      │
 │    ┌─ deterministic core: candidate extraction (011 pattern)     │
-│    │   → 1. Update Set whitelist (get_update_set_changes), 2. what is not in it: per-name spot-check in the instance (cached)               │
+│    │   → 1. Update Set whitelist (get_update_set_changes),       │
+│    │      2. what is not in it: per-name spot-check in the       │
+│    │         instance (cached)                                   │
 │    │   → exists / does not exist (clean cases)                   │
 │    └─ ambiguous cases → calibrated decision (TypeSafe Noul,      │
-│        pinned version): "does this name refer to this real            │
-│        komponensre utal-e?"                                      │
-│    → JSONL recording (013 format) + fail-open (FR-002)         │
+│        pinned version): "does this name refer to this real       │
+│        component?"                                               │
+│    → JSONL recording (013 format) + fail-open (FR-002)           │
 │    → config.behavior: flag (default) / strip / block             │
 └──────────────────────────────────────────────────────────────────┘
         │
@@ -83,55 +85,57 @@ story-based hallucination axis, backwards compatible.
 ## Key Decisions
 
 1. **The default behaviour of the gate: FLAG (work_notes), not strip and not block** —
-   removing the component name from the article is a much bolder intervention than the KB-number strip
-   was (it dismantles the meaning of the text); blocking, on the other hand, risks availability.
-   (Alternative: strip following the 004 pattern — rejected, the names present in the sentence context
-   strip gives an unreadable article; blocking — rejected, fail-closed.)
-   *The config switch can be tightened at any time, if the measurement data supports it.*
-2. **Two-layer check: deterministic core + calibrated layer only for the ambiguous
-   cases** — it decides "exists/does not exist" by exact name match (fact, free);
-   the Jev only kicks in for the writing variants. (Alternative: a Jev call for every name —
-   rejected, unnecessary cost and calibration noise in the clean cases.)
+   removing a component name from the article is a much more drastic intervention than
+   the KB-number strip was (it breaks the meaning of the text); blocking, on the other
+   hand, puts availability at risk.
+   (Alternative: strip following the 004 pattern — rejected, stripping names that appear
+   in the sentence context produces an unreadable article; blocking — rejected, fail-closed.)
+   *The config switch can tighten this at any time, if the measurement data justifies it.*
+2. **Two-layer verification: deterministic core + a calibrated layer only for the ambiguous
+   cases** — "exists / does not exist" is decided by exact name matching (a fact, for free);
+   Jev only steps in for the spelling variants. (Alternative: a Jev call for every name —
+   rejected, unnecessary cost and calibration noise on the clean cases.)
 3. **Hierarchical ground truth: Update Set first + per-name spot-check** — the
-   primary whitelist is the content of the story's Update Set (the `get_update_set_changes`
-   already brings; what is there is real AND the subject of the article). What is not in the update set,
-   for that, no full instance snapshot is made, but a targeted per-name spot check
-   ("is there a Script Include named X?"), cached. (Alternative: full
+   primary whitelist is the content of the story's Update Set (`get_update_set_changes`
+   already provides it; what is in there is real AND is the subject of the article). What
+   is not in the Update Set does NOT get a full instance snapshot, but a targeted
+   per-name spot-check ("is there a Script Include named X?"), cached. (Alternative: full
    instance snapshot — rejected, unnecessary data movement; "Update Set only" — rejected,
-   false positives on the legitimate already-existing component references, e.g. `incident`
-   table or affected existing script.) The cache is part of the recording → the replay
-   stays byte-identical (SC-004). **Edge case**: if the story has no Update Set,
-   the gate only goes up to the spot-check layer (because of the 011 dataset gap this is common
-   can — the measurement will show how much).
-4. **Per-component decision** (not per-article) — the suspicious ones can be named in the work_notes
-   name; the 013 work_notes flag pattern asks for this. (Alternative: per-article bool —
-   rejected, it does not localize the bug.)
-5. **Reuse of the 013 infrastructure, without generalization** — the
-   the jev_replay/jev_metrics/ReAnchor pattern is carried over into the verification context;
-   we do NOT refactor it into a "general decision framework" (YAGNI; if 015 also becomes a decision
-   there will be, then the abstraction is worth it).
+   a flood of false positives on legitimate existing component references, e.g. the
+   `incident` table or an affected existing script.) The cache is part of the recording
+   → the replay stays byte-identical (SC-004). **Edge case**: if the story has no Update
+   Set, the gate only goes as far as the spot-check layer (due to the 011 dataset gap
+   this may be common — the measurement will show how often).
+4. **Per-component decision** (not per-article) — the suspicious name can be named
+   in the work_notes; the 013 work_notes flag pattern asks for this. (Alternative: a
+   per-article bool — rejected, it does not localise the error.)
+5. **Reusing the 013 infrastructure without generalising it** — the
+   jev_replay/jev_metrics/ReAnchor pattern is carried over into the verification context;
+   we do NOT refactor it into a "general decision framework" (YAGNI; if 015 also becomes
+   a decision, then the abstraction will earn its keep).
 6. **Pinned decision model** for the calibrated layer (for the reason known since 013:
    model swap = baseline re-measurement).
-7. **The calibration tool is ReAnchor** following the 013 T012 pattern (evaluation-only
+7. **ReAnchor as the calibration tool**, following the 013 T012 pattern (evaluation-only
    DSPy wrapper; the production call remains a direct SDK call).
 
 ## Phases
 
-1. **Phase 0 – Baseline + PDI preparation**: the Update Sets of the measured stories
-   imports into the PDI (`scripts_pdi/bootstrap_pdi.py` extension or manual import —
-   the gold samples come from a customer instance, without import the spot-check is 100%
-   would give a false positive, see spec Assumptions); checking one sample component
-   with a spot check. Afterwards: the existing gold + one freshly generated article sample
-   inventory of the component names against the whitelist + spot check — how many "do not
-   exists" candidate there is NOW (the first numerical proof of the size of the problem).
+1. **Phase 0 – Baseline + PDI preparation**: import of the Update Sets of the measured
+   stories into the PDI (`scripts_pdi/bootstrap_pdi.py` extension or manual import —
+   the gold samples come from the customer instance, without the import the spot-check
+   would give 100% false positives, see spec Assumptions); verification with a spot-check
+   of one sample component. Afterwards: an inventory of the component names of the
+   existing gold + one freshly generated article sample against the whitelist + spot-check
+   — how many "does not exist" candidates there are TODAY (the first numerical evidence
+   of the size of the problem).
 2. **Phase 1 (US1)**: metric instance axis + tests (mock snapshot).
-3. **Phase 2 (US2)**: `verification.py` deterministic core + gate integration in front of the
-   in front of `servicenow_client._create_kb_article_live` + work_notes flag + tests.
+3. **Phase 2 (US2)**: `verification.py` deterministic core + gate integration in front of
+   `servicenow_client._create_kb_article_live` + work_notes flag + tests.
 4. **Phase 3 (US3)**: calibrated layer for the ambiguous cases + recording + tests.
-5. **Phase 4 – Measurement**: labeled sample (≥20 examples: real names + intentional
+5. **Phase 4 – Measurement**: labelled sample (≥20 examples: real names + intentional
    spelling variants + fabricated names), live capture + replay + ReAnchor +
-   SC-001..SC-004 gates with exit codes.
+   SC-001..SC-004 gates with exit code.
 
 ## Complexity Tracking
 
-There is no constitution violation — the table stays empty.
+No constitution violation — the table stays empty.

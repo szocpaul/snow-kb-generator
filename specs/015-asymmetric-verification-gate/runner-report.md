@@ -20,14 +20,15 @@ Last update: 2026-10-01T17:16:55
 
 ### Phase 1 — Fixture + baseline (T001, T002, T004 DONE)
 
-- **T001**: `scripts_pdi/fixture_verification_gate.py` — a komponensek a PDI-n
-  an ALREADY EXISTING record (capture, NOT creation). The direct `sys_update_xml`
-  insertje ACL-tiltott → a capture a platform standard mechanizmusa: az user
-  current update set set to the fixture set (user preference), benign
-  field touch + IMMEDIATE restore (the record content did not change), the
-  preference restored to the original at the end (`ea9a4e63...`).
-  - Story: **STRY0010004** ("ServiceNow oldali webhook-fogadas es KB-draft
-    generalas bekotese"), Update Set: **STRY0010004** (sys_id e17d49d7...).
+- **T001**: `scripts_pdi/fixture_verification_gate.py` — the components are records
+  that ALREADY EXIST on the PDI (capture, NOT creation). A direct insert of
+  `sys_update_xml` is ACL-blocked → the capture is the platform's standard
+  mechanism: the user's current update set is set to the fixture set (user
+  preference), a benign field touch + IMMEDIATE revert (the record content did
+  not change), the preference is restored to the original at the end
+  (`ea9a4e63...`).
+  - Story: **STRY0010004** ("ServiceNow-side webhook receiving and KB draft
+    generation integration"), Update Set: **STRY0010004** (sys_id e17d49d7...).
   - 13 captured components: 4 Script Include (PrototypeServer,
     MosaicHermesUtils, RAGResponseGenerator, CodeSigningUtil), 3 Business Rule
     ('Change Phase Events Before', 'Contract Instance', 'Choice Events'),
@@ -97,18 +98,20 @@ The runner MUST NOT tick the T003 checkbox.
 
 ## Notes
 
-- The `git add -A` pulled in the `.groma/` autoscan files (the `groma agent-instructions`
-  first scan created it) in the 55be7a8 commit — I did NOT write/curate it
-  on them; if they are not needed for the branch, they can be removed in a separate commit.
-- Kimi token usage: 0 (everything local/dev mode; the TypeSafe jev calls
-  only ran in the smoke test, the calibration capture is due after T003).
+- The `git add -A` pulled in the `.groma/` autoscan files (created by the first
+  scan of `groma agent-instructions`) into the 55be7a8 commit — I did NOT
+  write/curate them; if they are not needed on the branch, they can be removed
+  in a separate commit.
+- Kimi token usage: 0 (everything local/dev mode; the TypeSafe jev calls ran
+  only in the smoke test, the calibration capture is due after T003).
 
 
 ---
 
 # CONTINUATION after the T003 approval (2026-10-01T17:41:27)
 
-**Status: PARKED at the T009 MANUAL GATE** (human review of the calibration report).
+**Status: PARKED at the T009 MANUAL GATE** (the human review of the calibration
+report).
 
 ## T003 approval + cleanup proof
 
@@ -123,32 +126,33 @@ The runner MUST NOT tick the T003 checkbox.
 - **T005**: `data/examples/verification_labeled_015.json` — 57 examples
   (24 old + 33 fixture-derived). The T005 MINIMUM: 9 extractable names (≥8 ✓) —
   4 approved names (RAGResponseGenerator, kb_knowledge.u_source_story,
-  rm_story.story_points, rm_story.type) the gate's conservative 011
-  not visible to the extractor's regexes → as a non-measurable example
-  (the label is still true; this is the documented limitation of the extractor).
-  The FR-002 filter is cache-based: each of the 6 old "exists" ones is empirically
-  PDI-verified, not a single one was dropped.
+  rm_story.story_points, rm_story.type) are not visible in their surface form to
+  the gate's conservative 011 extractor regexes → not usable as measurable
+  examples (the label is still real; this is a documented limitation of the
+  extractor). The FR-002 filter is cache-based: each of the 6 old "exists" names
+  is empirically PDI-verified, none was dropped.
 - **T007**: capture (57 cases, live jev-1.13.0 + PDI spot-check) + replay report
   + ReAnchor (asymmetric metric, eval-only wrapper):
-  - ReAnchor: aszimmetrikus score **−0.526 → −0.281**, szimmetrikus accuracy
+  - ReAnchor: asymmetric score **−0.526 → −0.281**, symmetric accuracy
     0.474 → 0.719 (EXPLORATORY fitted parameters).
   - Sweep (EXPLORATORY): the candidate threshold **0.35** (asymmetric cost
     21 → 18; fp_exists 0, fn 21 → 18). The dominant error class: the calibrated
-    layer says "no"/"external" for the spelling variants of the real names (this the
-    threshold does NOT fix).
+    layer answers "no"/"external" for the spelling variants of the real names
+    (this is NOT improved by the threshold).
   - **Sensitivity analysis (KD1): the threshold is SENSITIVE to the ratio** —
-    At 10:1 and 20:1 the 0.35 wins, at 5:1 the 0.0-0.10 band would win.
-    This is the key data for the T009 decision.
+    at 10:1 and 20:1 the 0.35 wins, at 5:1 the 0.0-0.10 band would win.
+    This is the key data point of the T009 decision.
   - The symmetric comparison in the report (spec US2): 21 → 18.
 - **T008 / SC-003**: the old 24 examples: asymmetric cost **4 → 3** at 0.35 —
-  There is NO degradation.
+  NO degradation.
 - **T012**: `eval/verification_sc_gates_015.py` — **SC-001..SC-005 ALL GREEN**:
   - SC-001 GREEN: 13/13 fixture names exist via spot-check (live PDI)
-  - SC-002 GREEN: n=57 (≥30), the decision is justified, the symmetric comparison exists
+  - SC-002 GREEN: n=57 (≥30), the decision is justified, the symmetric comparison
+    is present
   - SC-003 GREEN: no degradation on the old sample
   - SC-004 GREEN: the gate-move tests (12+9) exit=0
   - SC-005 GREEN: double replay byte-identical (37007 bytes)
-- pytest teljes suite: **363 passed**.
+- pytest full suite: **363 passed**.
 
 ## MANUAL GATE — T009 (human to-do)
 
@@ -156,13 +160,15 @@ The runner MUST NOT tick the T003 checkbox.
 (+ `artifacts/verification_reanchor_report_015.json`).
 
 The candidate decision: `confidence_threshold: 0.7 → 0.35` (asymmetric cost
-21 → 18 on the 57 examples; on the old sample 4 → 3, no degradation). WARNING: the candidate
-EXPLORATORY sweep result, and because of the ratio sensitivity (at 5:1 the 0.0
-would win) confirming the 10:1 KD1 ratio is also part of the decision.
+21 → 18 on the 57 examples; 4 → 3 on the old sample, no degradation). ATTENTION:
+the candidate is an EXPLORATORY sweep result, and because of the ratio sensitivity
+(at 5:1 the 0.0 would win) the confirmation of the 10:1 KD1 ratio is also part of
+the decision.
 
-- If you APPROVE: the runner writes the 0.35 into config.yaml + the rationale into the
-  goes into Agent.md (this is part of T013), then closing.
-- If NOT: the threshold stays 0.7, the "stays" rationale goes into the report/Agent.md.
+- If you APPROVE: the runner writes the 0.35 into config.yaml + the rationale
+  goes into the Agent.md (this is part of T013), then closes.
+- If you DO NOT: the threshold stays at 0.7, the "stays" rationale goes into the
+  report/Agent.md.
 
 The config.yaml is NOT modified until the approval (it is 0.7 now as well). The
 runner MUST NOT tick the T009 checkbox.
@@ -185,7 +191,7 @@ runner MUST NOT tick the T009 checkbox.
 - The **10:1 weight ratio is CONFIRMED**; the `confidence_threshold` was **CHANGED
   from 0.7 → 0.35** in config.yaml (with the human's approval).
 - **MANDATORY CONDITION (the human's comment): the 0.35 threshold rests on a SINGLE
-  false positive case (in the sweep 0.35 is the lowest value that filters out the 1
+  FP example (in the sweep 0.35 is the lowest value that filters out the 1
   fabricated case that slipped through) — the threshold MUST BE RE-MEASURED at the
   NEXT sample extension.** It is recorded in the Agent.md §45 rationale and in the
   config.yaml comment as well.
@@ -221,5 +227,6 @@ runner MUST NOT tick the T009 checkbox.
 
 - **Deploy**: the go-live of the gate move is a HUMAN step (`sudo systemctl restart
   snow-kb.service`) — the deploy/README.md note. The runner did NOT deploy.
-- **When expanding the sample**: the 0.35 threshold must be re-measured (T009 condition).
-- A human can tick the T003/T009 tasks.md checkboxes (the runner did not).
+- **At the next sample extension**: the 0.35 threshold must be re-measured (the
+  T009 condition).
+- The human may tick the T003/T009 checkboxes in tasks.md (the runner did not).

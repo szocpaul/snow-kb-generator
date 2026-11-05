@@ -4,14 +4,15 @@
 **Run mode**: SNOW_KB_DEV_MODE=1 (local Qwen3.8-27B as the task model; Kimi token usage: 0)
 
 ## Preflight (all GREEN)
-- 0: branch + 4 spec files existed; 0b: `task_model == "local"` in dev mode; 0c: local llama.cpp smoke OK
+- 0: branch + 4 spec files were present; 0b: `task_model == "local"` in dev mode; 0c: local llama.cpp smoke OK
 - 1: TYPESAFE_API_KEY + minimal system_one call OK (jev-1.13.0)
-- 2: typesafe-sdk 0.7.2 + dspy 3.4.0 a projekt-venvben (`/opt/snow-kb-venv`)
-- 3: gold dataset with 9 runnable story inputs; 4: pytest starting state 287/287 green
-- Note: `pytest -q` with SNOW_KB_DEV_MODE=1 fails 1 environment-polluted test
-  (`test_default_task_model_is_kimi`) — the suite must be run without env, dev mode is
-  is needed for LLM runs. In addition, a pre-existing isolation error: the `tests/test_pipeline.py`
-  fails 9 tests when run on its own (green in the full suite) — this was already the case before spec 013.
+- 2: typesafe-sdk 0.7.2 + dspy 3.4.0 in the project venv (`/opt/snow-kb-venv`)
+- 3: gold dataset with 9 runnable story inputs; 4: pytest in the initial state 287/287 green
+- Note: `pytest -q` with SNOW_KB_DEV_MODE=1 fails 1 environment-pollution test
+  (`test_default_task_model_is_kimi`) — the suite must be run without the env var; dev mode is
+  only needed for the runs that use the LLM. There is also a pre-existing isolation bug: running
+  `tests/test_pipeline.py` on its own fails 9 tests (it is green in the full suite) — this was
+  already the case before spec 013.
 
 ## Per-phase results
 

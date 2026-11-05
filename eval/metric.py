@@ -75,7 +75,7 @@ def _instance_axis(html: str, update_set_text: str, story_context: str = "") -> 
             decision_model=_INSTANCE_DECISION_MODEL,
             confidence_threshold=_INSTANCE_THRESHOLD,
         )
-    except Exception as exc:  # noqa: BLE001 — deliberately wide net (FR-002)
+    except Exception as exc:  # noqa: BLE001 — a deliberately wide net (FR-002)
         import logging
 
         logging.getLogger(__name__).warning(
@@ -166,7 +166,7 @@ def rich_metric(gold, pred, trace=None, pred_name=None, pred_trace=None):
         hallucinated_components = _find_hallucinated_components(
             actual_html, story_text, evidence_context
         )
-    except Exception as exc:  # noqa: BLE001 — deliberately wide net (FR-002)
+    except Exception as exc:  # noqa: BLE001 — a deliberately wide net (FR-002)
         import logging
 
         logging.getLogger(__name__).warning(
@@ -567,7 +567,7 @@ def _find_hallucinated_components(
     """
     import re
 
-    text = re.sub(r"<[^>]+>", " ", html)  # drop the tags + the attribute URLs
+    text = re.sub(r"<[^>]+>", " ", html)  # dropping the tags + the attribute URLs
     text = re.sub(r"https?://\S+", " ", text)  # the visible URLs (e.g. the link text)
     text = re.sub(r"\b\S+@\S+\b", " ", text)  # the email addresses
 

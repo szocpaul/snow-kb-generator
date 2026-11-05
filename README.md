@@ -2,8 +2,6 @@
 
 > A DSPy pipeline that turns completed ServiceNow **Stories** into **Knowledge Base articles** — automatically, powered by **Kimi K3** (default mode) or a local **Qwen3.8-27B** (Dev mode, llama.cpp), triggered by a ServiceNow UI Action button.
 
-*(Hungarian version: [README.hu.md](README.hu.md))*
-
 ## Public repository notice
 
 This repository is published for reference. Everything environment-specific has

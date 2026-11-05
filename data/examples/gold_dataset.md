@@ -477,8 +477,8 @@ SnowKbGenerator.prototype = {
 }]]></client_script_v2><comments/><condition>current.state == '3'</condition><form_action>true</form_action><form_button>true</form_button><form_button_v2>false</form_button_v2><form_context_menu>false</form_context_menu><form_link>false</form_link><form_menu_button_v2>false</form_menu_button_v2><form_style/><format_for_configurable_workspace>false</format_for_configurable_workspace><hint/><isolate_script>false</isolate_script><list_action>false</list_action><list_banner_button>false</list_banner_button><list_button>false</list_button><list_choice>false</list_choice><list_context_menu>false</list_context_menu><list_link>false</list_link><list_save_with_form_button>false</list_save_with_form_button><list_style/><messages/><name>createKbArticle</name><onclick/><order>100</order><script><![CDATA[// ============================================================================
 // UI Action Script: Create KB Article (SERVER-SIDE)
 // ============================================================================
-// This script runs on the ServiceNow server and calls our
-// FastAPI server on the VPS. It handles the 200, 409 (Duplicate),
+// This script runs on the ServiceNow server and calls the 
+// FastAPI server on the VPS directly. It handles the 200, 409 (Duplicate), 
 // 422 (Missing Group) and other error codes.
 // ============================================================================
 

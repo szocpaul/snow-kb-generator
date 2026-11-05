@@ -66,4 +66,3 @@
 * [ ] The tests are in place before the implementation
 
 * [ ] Every task names a concrete file
-

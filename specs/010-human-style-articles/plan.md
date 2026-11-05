@@ -25,10 +25,10 @@ generated article ──► rich_metric ───┼── structure / content /
               GEPA reflection sees the feedback
                     │
                     ▼
-         (US3) SkilledProposer(additional_instructions = style guidance)
+           (US3) SkilledProposer(additional_instructions = style guidance)
                     │  generalizable style rules into the prompts
                     ▼
-         (US4) GEPA (max_metric_calls=200, local rollout + Kimi K3 reflection)
+           (US4) GEPA (max_metric_calls=200, local rollout + Kimi K3 reflection)
                     → proving the style axis improvement
 ```
 

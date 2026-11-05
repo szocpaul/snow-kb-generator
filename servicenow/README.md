@@ -1,6 +1,6 @@
 # ServiceNow UI Action: "Create KB" (server-side solution)
 
-This folder contains the ServiceNow-side script that you must copy into the UI Action record.
+This folder contains the ServiceNow-side script that you have to paste into the UI Action record.
 **This script runs on the ServiceNow server** and calls our FastAPI server on the VPS directly from there. (Much more stable than GlideAjax calls started from the browser).
 
 ## Installation steps

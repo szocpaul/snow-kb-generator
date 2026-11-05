@@ -97,7 +97,7 @@ Baseline + GEPA re-run (clean `gepa_logs/`), export, server restart, production 
 
 - **SC-001**: Valset + production article: 0 direction violations, 0 unsupported sections.
 - **SC-002**: Optimized score ≥ the previous run (0.850).
-- **SC-003**: The full test suite is GREEN.
+- **SC-003**: The full test suite passes.
 
 ## Out of Scope
 

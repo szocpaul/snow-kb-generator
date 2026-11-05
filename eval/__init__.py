@@ -1,1 +1,1 @@
-# (package marker for the eval folder — currently there is no __init__ content)
+# (a package marker for the eval folder — there is no __init__ content at the moment)

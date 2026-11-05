@@ -1,12 +1,12 @@
 // ============================================================================
 // UI Action Script: Create KB Article (SERVER-SIDE)
 // ============================================================================
-// This script runs on the ServiceNow server and calls our
-// FastAPI server on the VPS. It handles the 200, 409 (Duplicate),
+// This script runs on the ServiceNow server and calls our FastAPI server on
+// the VPS directly from there. It handles the 200, 409 (Duplicate),
 // 422 (Missing Group) and other error codes.
 // ============================================================================
 
-// 1. The 'current' variable automatically contains the opened Story
+// 1. The 'current' variable automatically holds the opened Story
 var storyId = current.number;
 
 // --- SETTINGS ---
@@ -16,22 +16,22 @@ var storyId = current.number;
 var apiUrl = 'http://192.0.2.10:8000/generate-kb';
 var apiKey = 'REPLACE_WITH_RANDOM_KEY';
 
-// 2. Build the payload
+// 2. Assemble the payload
 var payload = {};
-payload.story_id = storyId + ''; // coerce to string
+payload.story_id = storyId + ''; // force to string
 payload.push = true;
-// By clicking the UI Action button the user has already approved the generation,
-// so we send force_update=true to overwrite an existing article if there is one.
+// The user has already approved the generation by clicking the button,
+// so we send force_update=true to overwrite the old one if there is one.
 payload.force_update = true; 
 
-// 3. Start the REST call to our VPS server
+// 3. Send the REST call to our VPS server
 var restMessage = new sn_ws.RESTMessageV2();
 restMessage.setEndpoint(apiUrl);
 restMessage.setHttpMethod('POST');
 restMessage.setRequestHeader('Content-Type', 'application/json');
 restMessage.setRequestHeader('X-API-Key', apiKey);
 restMessage.setRequestBody(JSON.stringify(payload));
-restMessage.setRequestTimeout(120000); // 120 second timeout because the GLM generation takes time
+restMessage.setRequestTimeout(120000); // 120 second timeout because of the GLM generation
 
 var response = restMessage.execute();
 var httpStatus = response.getStatusCode();
@@ -49,18 +49,18 @@ if (httpStatus === 200) {
 } else if (httpStatus === 422) {
     // Unprocessable Entity (e.g. the Assignment Group is missing)
     var errData = JSON.parse(responseBody).detail;
-    current.work_notes = "Generation aborted: " + (errData.message || 'Missing mandatory data (e.g. Assignment Group).');
-    gs.addErrorMessage("Error: the Assignment Group field is mandatory for the Story!");
+    current.work_notes = "Generation aborted: " + (errData.message || 'Missing required data (e.g. Assignment Group).');
+    gs.addErrorMessage("Error: the Assignment Group field is mandatory on the Story!");
 } else if (httpStatus === 409) {
     // Conflict (a KB article already exists for the Story)
-    current.work_notes = "Warning: a KB article already exists for this Story. Clicking the button again overwrites the existing one.";
-    gs.addInfoMessage("A KB article already exists. Click the button again to overwrite it!");
+    current.work_notes = "Warning: a KB article already exists for this Story. Pressing the button again overwrites the old one.";
+    gs.addInfoMessage("A KB article already exists. Press the button again to overwrite it!");
 } else {
     // Other errors (e.g. 500 Internal Server Error, or 0 Connection Refused)
     current.work_notes = "An error occurred (HTTP " + httpStatus + "): " + responseBody.substring(0, 150);
     gs.addErrorMessage("Error during generation (HTTP " + httpStatus + ")");
 }
 
-// 5. Navigation setting: keep the Story open after the update
+// 5. Set the redirect: stay on the Story after the refresh
 action.setRedirectURL(current);
 action.setReturnURL(current);

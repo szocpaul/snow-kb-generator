@@ -5,16 +5,16 @@
 
 ## Format: `[ID] [P?] [Story] Description`
 
-- **[P]**: can be run in parallel (different file, no dependency)
+- **[P]**: can run in parallel (another file, no dependency)
 - **[USn]**: which user story it belongs to
-- **MANUAL GATE**: human decision — the runner/agent MUST NOT tick it
+- **MANUAL GATE**: a human decision — the runner/agent must NOT tick it
 
 ## Phase 1: Setup
 
 - [x] T001 [P] Config extension in `config.yaml`: `verification_gate.enabled` (initial: false), `verification_gate.behavior` (flag/strip/block, default: `flag`), `verification_gate.model` (pinned version), `verification_gate.confidence_threshold` (initial: 0.7), `verification_gate.spotcheck_cache_path`, `verification_gate.recording_path` — + a test for the config parsing
 - [x] T002 [P] `.env.example` check: `TYPESAFE_API_KEY` is already there (since 013); if the spot-check needs a new permission on ServiceNow, document it under deploy/
 
-## Phase 2: Baseline (US1 precondition — playbook: baseline first)
+## Phase 2: Baseline (precondition of US1 — playbook: baseline first)
 
 - [ ] T002b [US1] PDI preparation: import of the Update Sets of the measured stories into the PDI (`scripts_pdi/bootstrap_pdi.py` extension or manual import) + verification with a spot-check of one sample component — the gold samples come from the customer instance, without the import the spot-check gives 100% false positives (spec Assumptions). NOTE (runner, 2026-09-30): T002b was added to the spec AFTER the measurement was CLOSED — the T014 gate accepted SC-001 with the environmental explanation and WITHOUT the import; T002b is a precondition for the FUTURE measurements
 - [x] T003 [US1] Baseline inventory: the component name candidates of the existing gold articles + one freshly generated article sample, extracted (011 pattern: quoted names, CamelCase, dotted), per-example JSON under `artifacts/` — with unchanged code
@@ -54,5 +54,5 @@
 
 - [ ] Every FR has a task (FR-001→T007, FR-002→T006/T008/T010, FR-003→T009/T011, FR-004→T009, FR-005→T001, FR-006→T006/T007)
 - [ ] Every SC has a gate (SC-001→T013, SC-002→T013, SC-003→T006/T008/T010, SC-004→T013)
-- [ ] The tests are in place before the implementation
+- [ ] The tests come before the implementation
 - [ ] Every task names a concrete file

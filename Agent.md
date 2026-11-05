@@ -1025,7 +1025,7 @@ c45e95e (T013), dd36ea9 (T014 package report)
   yet the calibrated layer still called it "exists" with 0.78 → it passed the 0.35 gate
   (flag, non-blocking).
 
-### Lesson
+### Lessons
 - The T009 condition was proven on the first production run: the 0.35 threshold rests on a single
   FP case → it must be RE-MEASURED at the next sample expansion.
 - **New, separate error class**: the EXTRACTOR can also be wrong — it makes a candidate from non-components (project name).
@@ -1070,7 +1070,7 @@ c45e95e (T013), dd36ea9 (T014 package report)
 - The blacklist is exact match: substring filtering would cause a recall catastrophe
   (S4ProjectInterface).
 
-### Lesson
+### Lessons
 - With a new extractor filter, the FIRST trial run covers the full suite + gold recall
   together — the "SolMan" collision (opposite expectations in two specs) only surfaced this way.
 - The responsibility of the extractor and the calibrated layer separates: the extractor filters the
@@ -1115,7 +1115,7 @@ tests; the thresholds stayed at the initial values even after calibration.
 - Spec close-out: SC-002/003/004/005/006 GREEN, SC-001 documented RED
   (accepted end state), suite 415 green.
 
-### Lesson
+### Lessons
 - "No measurable effect" is also a full-value spec output, when the ceiling is
   numeric and the root cause is identified — the stop is NOT a failure, but compliance with the
   "measured, not claimed" principle.

@@ -53,17 +53,18 @@ typesafe-sdk 0.7.2 + dspy 3.4.0 ✅ | SNOW table-API ✅ | pytest 309 green ✅
   the deterministic path.
 
 ### Phase 6 — Measurement (T012/T013)
-- **T012** ✅ `data/examples/verification_labeled.json` — **24 labeled examples**
-  (6 exists + 5 missing_real + 4 variant + 5 fabricated + 4 external), the labels committed.
-  **Labeling facts (at the launcher's request)**: the gold stories are REAL ALDI stories, which
-  live on the **dev** instance (in the gold-7 story HTML the dev service-now URL + the
-  Script Include sys_id is visible); the instance of the measurement (prod instance PDI) is NOT this — the spec
-  Its assumption ("the gold names are real at the time of the measurement") is therefore NOT fully met on the PDI.
-  Update Set coverage: for 8/9 gold stories there is NO update set on the PDI (only STRY0010016) —
-  the spec's edge case is the common path.
+- **T012** ✅ `data/examples/verification_labeled.json` — **24 labelled examples**
+  (6 exists + 5 missing_real + 4 variant + 5 fabricated + 4 external), the labels are committed.
+  **Labelling facts (at the request of the launcher)**: the gold stories are REAL ALDI stories
+  that live on the **dev** instance (the dev ServiceNow URL and the sys_id of the Script
+  Include are visible in the gold-7 story HTML); the instance of the measurement (the PDI
+  prod instance) is NOT that one — the spec assumption ("the gold names are real at the time
+  of the measurement") is therefore not met on the PDI.
+  Update-set coverage: 8 of the 9 gold stories have NO update set on the PDI (only
+  STRY0010016) — the spec edge case is the common path.
 - **T013** ✅ live capture (TypeSafe jev-1.13.0 + PDI spot-check) + deterministic replay
-  + ReAnchor eval-only wrapper (013 T012 sample; the production call directly
-  SDK marad).
+  + ReAnchor evaluation-only wrapper (the 013 T012 pattern; the production call remains
+  a direct SDK call).
 
 ## SC-gate outputs (`python -m eval.verification_sc_gates` → exit 1)
 

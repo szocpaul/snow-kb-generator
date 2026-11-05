@@ -5,7 +5,7 @@
 
 ## Format: `[ID] [P?] [Story] Description`
 
-- **[P]**: can be run in parallel (different file, no dependency)
+- **[P]**: can run in parallel (other file, no dependency)
 - **[USn]**: which user story it belongs to
 - **MANUAL GATE**: human decision — the runner/agent MUST NOT tick it
 
@@ -48,5 +48,5 @@
 
 - [ ] Every FR has a task (FR-001→T005, FR-002→T004/T005, FR-003→T005, FR-004→T004/T005, FR-005→T002/T007, FR-006→T001/T006)
 - [ ] Every SC has a gate (SC-001→T003/T013, SC-002→T007, SC-003→T008, SC-004→T004, SC-005→T007, SC-006→T011/T012)
-- [ ] The tests are in place before the implementation
+- [ ] The tests stand before the implementation
 - [ ] Every task names a concrete file

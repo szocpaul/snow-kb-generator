@@ -1,18 +1,19 @@
 // ============================================================================
 // Script Include: SnowKbGenerator
 // ============================================================================
-// Copy this script into a new Script Include record in ServiceNow.
+// This script must be copied into a new Script Include record in ServiceNow.
 // Name: SnowKbGenerator
-// Client callable: true (required for the UI Action GlideAjax call)
+// Client callable: true (because of the UI Action GlideAjax call)
 //
-// This script runs on the server and makes an HTTP REST call to the FastAPI pipeline.
+// This script runs on the server and makes an HTTP REST call to the FastAPI
+// pipeline.
 // ============================================================================
 
 var SnowKbGenerator = Class.create();
 SnowKbGenerator.prototype = {
     initialize: function() {
         // --- SETTINGS ---
-        // Put the address and API key of your FastAPI server here!
+        // Put your FastAPI server address and API key here!
         this.API_URL = 'http://YOUR_VPS_IP:8000/generate-kb';
         this.API_KEY = 'YOUR_API_KEY_HERE';
     },
@@ -24,7 +25,7 @@ SnowKbGenerator.prototype = {
      * @return {string} JSON response {success, kb_url, title, message}
      */
     generateKb: function(storyId, storySysId) {
-        // Build the HTTP request
+        // Assemble the HTTP request body
         var requestBody = JSON.stringify({
             story_id: storyId,
             push: true
@@ -49,7 +50,7 @@ SnowKbGenerator.prototype = {
         if (httpStatus === 200) {
             var result = JSON.parse(responseBody);
 
-            // On success, store the KB link in the Story's work_notes field
+            // If successful, put the KB link into the Story's work_notes field
             if (result.success && result.kb_url) {
                 this._addWorkNote(storySysId, "KB article created: " + result.kb_url + " (" + result.title + ")");
             }
@@ -75,12 +76,12 @@ SnowKbGenerator.prototype = {
         try {
             var gr = new GlideRecord('rm_story');
             if (gr.get(storySysId)) {
-                // Update the work_notes field
+                // update the work_notes field
                 gr.work_notes = gr.getValue('work_notes') + '\n' + note;
                 gr.update();
             }
         } catch (ex) {
-            // If writing the work note fails, we do not raise an exception
+            // If there is an error while writing the work note, we do not throw
             gs.log('SnowKbGenerator work_note error: ' + ex.message);
         }
     },

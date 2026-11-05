@@ -13,17 +13,19 @@ revision, rubric redesign (the restart condition of the spec) or a stop.
 ## 1. The sweep of the labeled sample (56 parts, EXPLORATORY)
 
 - Current threshold (hide_below=0.25): asymmetric cost **16.5** (5:1).
-- Best candidate: **0.05**, cost **16.0** — the improvement comes from a SINGLE borderline
-  piece verdict fluctuation, not a real separation gain.
-- Recall error (relevant hidden): **0** at both thresholds; the cost is entirely
-  as a whole borderline verdict mismatch.
+- Best candidate: **0.05**, cost **16.0** — the improvement is the verdict
+  fluctuation of a SINGLE borderline part, not a real separation gain.
+- Recall error (relevant hidden): **0** at both thresholds; the entire cost is a
+  borderline verdict mismatch.
 - Ratio sensitivity: 3:1 / 5:1 / 10:1 — **identical** (16.5 / 16.5 / 16.5 →
-  16.0 / 16.0 / 16.0): there is no relevant-hiding in the cost, the ratio does not move.
-- ReAnchor (eval-only wrapper): train score **−0.2946 → −0.2946** — the calibration
-  did not find an improvement.
+  16.0 / 16.0 / 16.0): there is no relevant-hiding in the cost, the ratio does
+  not move it.
+- ReAnchor (eval-only wrapper): train score **−0.2946 → −0.2946** — the
+  calibration found no improvement.
 
-**Runner stance**: the threshold **SHOULD STAY 0.25** — the 0.05 „improvement" is at noise level,
-the config modification is not justified (the „threshold stays" branch is written to a file in the report).
+**Runner position**: the threshold **SHALL STAY 0.25** — the 0.05 "improvement"
+is at noise level, the config change is not justified (the "threshold stays"
+branch is written to a file in the report).
 
 ## 2. The ceiling numbers (the table required by the T009 gate)
 
@@ -57,18 +59,17 @@ primacy of the SC-002 quality gate (T003 decision) draws this line.
 
 ## Decision options
 
-- **(a) THRESHOLD STAYS (0.25) + production state fix (story_context exception in the
-  `_score_piece` from state) + SC-001 target value revision 5% → ~1%** → the runner
-  implements the fix (the own code of the module, the rubric/question unchanged),
-  re-measures T007 with the new state, and the T013 gates with the FIX APPROVED BY
-  runs it with the revised target value.
-- **(b) Rubric/question redesign** — the condition for restarting the spec: the
-  „How much of this piece matters" Score rubric does not separate production
-  condition; a new baseline + re-measurement is needed.
-- **(c) STOP** — the feature stays inactive with `enabled=false`; the
-  the runner report closes the spec; T013 only runs the measurable gates
-  (SC-002/003/004/005 green, SC-001 RED = documented, SC-006 the „stays"
-  decision is green).
+- **(a) THRESHOLD STAYS (0.25) + production state fix (excluding story_context
+  from the `_score_piece` state) + SC-001 target revision 5% → ~1%** → the
+  runner implements the fix (the module's own code, the rubric/question
+  unchanged), re-measures T007 with the new state, and runs the T013 gates
+  with the target revised by the HUMAN.
+- **(b) Rubric/question redesign** — the restart condition of the spec: the
+  "How much of this piece matters" Score rubric does not separate in the
+  production condition; a new baseline + re-measurement is needed.
+- **(c) STOP** — the feature stays inactive with `enabled=false`; the runner
+  report closes the spec; T013 runs only the measurable gates (SC-002/003/004/005
+  GREEN, SC-001 RED = documented, SC-006 GREEN with the "stays" decision).
 
 The threshold change (if there is one) goes into Agent.md with the
 justification — the runner does NOT modify the config before the approval.

@@ -40,22 +40,24 @@ There is no need to "manufacture noise": the deterministic inventory shows
 
 - **Obvious hide candidates** (number/state/assigned_to/assignment_group):
   37 tokens/example × 9 = **333 tokens (3.9%)**.
-- **Summarize candidates** (work_notes/comments): ~1492 tokens; 60–70%
-  With summarization, a further ~900–1000 token saving is expected.
-- Update set payload is only in the gold-5 (of 3536 context tokens 2971 are
-  US); the related-article noise is not measurable in the gold dataset (there is no
-  related_articles_context) — this is the limit of the baseline, marked in the report.
+- **Summarize candidates** (work_notes/comments): ~1492 tokens; with 60–70%
+  compression a further ~900–1000 tokens of savings are expected.
+- The update set payload is present only in gold-5 (of its 3536 context tokens
+  2971 are the US); the related-article noise is not measurable in the gold
+  dataset (there is no related_articles_context) — this is a limitation of the
+  baseline, flagged in the report.
 
 ## Proposed SC-001 target (the HUMAN fixes it)
 
 **Proposal: ≥ 5% context-token reduction** on the gold examples, without quality
 degradation (alongside SC-002).
 
-Justification: the obvious hide candidates alone give 3.9% (recall risk
-without it), the summarize band is expected to add 6–10% above this. The 5% is conservative,
-available, and it is not a bombshell — it comes from the baseline inventory. The full prompt
-(template + signature overhead) ~3200–8100 tokens/example, so the measurement ON CONTEXT
-5% of the full prompt amounts to ~1–2% — the report shows both numbers.
+Rationale: the obvious hide candidates alone give 3.9% (without recall risk),
+the summarize band is expected to add 6–10% on top of that. 5% is conservative,
+reachable, and not a pie in the sky — it comes from the baseline inventory. The
+full prompt (template + signature overhead) is ~3200–8100 tokens/example, so the
+5% measured on the CONTEXT corresponds to ~1–2% on the full prompt — the report
+shows both numbers.
 
 **Alternatives**: 3% (taking only the sure admin hide) | 10% (using the summarize
 band fully — riskier for SC-002).

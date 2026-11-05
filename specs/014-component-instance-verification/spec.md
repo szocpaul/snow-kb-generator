@@ -106,16 +106,16 @@ the calibrated layer reduces the false positives for spelling variants.
 ### Edge Cases
 
 - The name appears in the Story AND in the instance, but means something else (conflicting name usage) →
-  the calibrated layer's job; the deterministic path treats it as "exists".
+   the calibrated layer's job; the deterministic path treats it as "exists".
 - The instance metadata query is partial (some table types are unavailable) → the affected
-  types are skipped with a warning, the remaining checks stay alive.
+   types are skipped with a warning, the remaining checks stay alive.
 - The article contains a placeholder or generic terms → not a component name (011 whitelist).
 - Very large component list in the instance → the cache refresh and memory
-  limits of the spot-check are in plan.md.
+   limits of the spot-check are in plan.md.
 - The Story has no Update Set → the gate only goes as far as the instance spot-check layer
-  (without whitelist); the Phase 0 inventory measures how often this happens.
+   (without whitelist); the Phase 0 inventory measures how often this happens.
 - Threshold operator: following the 013 pattern `<` (not `<=`), the exact boundary value leans
-  in the safe direction.
+   in the safe direction.
 
 ## Requirements *(mandatory)*
 
@@ -136,12 +136,12 @@ the calibrated layer reduces the false positives for spelling variants.
 ### Key Entities
 
 - **Component name candidate**: the named entity extracted from the article (the extraction pattern of 011:
-  quoted names, CamelCase, dotted identifier) + type hint (table/field/script).
+   quoted names, CamelCase, dotted identifier) + type hint (table/field/script).
 - **Ground truth (hierarchical)**: 1) the component names of the Story's Update Set
-  (primary whitelist), 2) per-name spot-check in the instance metadata (cached)
-  for those that are not in the update set.
+   (primary whitelist), 2) per-name spot-check in the instance metadata (cached)
+   for those that are not in the update set.
 - **Validation decision**: per candidate {exists / does not exist / ambiguous} + confidence +
-  logged evidence.
+   logged evidence.
 
 ## Success Criteria *(mandatory)*
 
@@ -177,8 +177,8 @@ the calibrated layer reduces the false positives for spelling variants.
 - Modifying the story-based verification (004/011) — it works, it stays untouched.
 - Changing the generative program (program.py / program.json) and the GEPA program.
 - *Preventing* hallucination in the prompts — this spec is about detection and the gate.
-  *(Restart condition: if the SC-002 measurement shows that the hallucination rate is
-  high even with the calibrated gate, a prevention spec follows.)*
+   *(Restart condition: if the SC-002 measurement shows that the hallucination rate is
+   high even with the calibrated gate, a prevention spec follows.)*
 - Validating non-ServiceNow entities (URLs, objects of external systems).
-  *(Restart condition: if the measurement data shows that most of the outgoing errors are
-  of this kind.)*
+   *(Restart condition: if the measurement data shows that most of the outgoing errors are
+   of this kind.)*

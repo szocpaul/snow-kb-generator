@@ -149,7 +149,7 @@ def step5(dry: bool):
         raise RuntimeError("the rm_story table is not found — is the Agile Development plugin installed?")
     script = (ROOT / "servicenow" / "ui_action_script.js").read_text()
     if WEBHOOK_KEY and WEBHOOK_KEY not in script:
-        print("    ⚠️  WARNING: the apiKey in the script does not match the SNOW_WEBHOOK_API_KEY of the .env!")
+            print("    ⚠️  WARNING: the apiKey in the script does not match the SNOW_WEBHOOK_API_KEY of the .env!")
     existing = api_get1("sys_ui_action", f"name=Create KB Article^table={tbl['sys_id']}", "sys_id")
     if existing:
         print("    UI Action already exists ✅")
